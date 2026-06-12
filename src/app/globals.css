@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-dm-sans: 'DM Sans', sans-serif;
+    --font-fraunces: 'Fraunces', serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #FAF6F0;
+    color: #1a1a1a;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-magenta text-white font-semibold px-6 py-3 rounded-2xl
+           hover:bg-magenta-600 active:bg-magenta-700
+           transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-magenta focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-magenta border-2 border-magenta font-semibold px-6 py-3 rounded-2xl
+           hover:bg-magenta-50 active:bg-magenta-100
+           transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-magenta focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply text-magenta font-semibold px-4 py-2 rounded-xl
+           hover:bg-magenta-50
+           transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-magenta focus:ring-offset-2;
+  }
+
+  .card {
+    @apply bg-white rounded-3xl shadow-sm border border-cream-300 p-6;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-cream-400
+           bg-white text-gray-800 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-magenta focus:border-transparent
+           transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+  }
+
+  .error-message {
+    @apply text-red-500 text-sm mt-1;
+  }
+
+  .section-title {
+    @apply font-fraunces text-3xl md:text-4xl font-bold text-gray-900;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-magenta to-magenta-400 bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  .font-fraunces {
+    font-family: var(--font-fraunces), serif;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
