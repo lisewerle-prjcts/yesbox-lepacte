@@ -3,267 +3,230 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { clsx } from 'clsx'
-import ProgressBar from '@/components/ui/ProgressBar'
-import Spinner from '@/components/ui/Spinner'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
-import { ArrowLeft, ArrowRight, CheckCircle, ChevronLeft } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
-interface ModuleQuestionsProps {
+interface Props {
   moduleInfo: ModuleInfo
   moduleData: Module
   mesReponses: Reponse[]
   reponsesPartenaire: Reponse[]
   userId: string
+  partnerName?: string | null
 }
 
-export default function ModuleQuestions({
-  moduleInfo,
-  moduleData,
-  mesReponses,
-  reponsesPartenaire,
-}: ModuleQuestionsProps) {
+export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, reponsesPartenaire, partnerName }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [idx, setIdx] = useState(() => {
+    const saved: Record<string, string> = {}
+    mesReponses.forEach(r => { if (r.valeur) saved[r.question_slug] = r.valeur })
+    const first = moduleInfo.questions.findIndex(q => !saved[q.slug])
+    return Math.max(0, first < 0 ? 0 : first)
+  })
   const [reponses, setReponses] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
-    mesReponses.forEach((r) => {
-      if (r.valeur) init[r.question_slug] = r.valeur
-    })
+    mesReponses.forEach(r => { if (r.valeur) init[r.question_slug] = r.valeur })
     return init
   })
   const [saving, setSaving] = useState(false)
-  const [completed, setCompleted] = useState(moduleData.statut === 'complete')
+  const [done, setDone] = useState(moduleData.statut === 'complete')
 
-  const questions = moduleInfo.questions
-  const currentQuestion = questions[currentIndex]
-  const isLast = currentIndex === questions.length - 1
-  const isFirst = currentIndex === 0
-
-  const totalAnswered = questions.filter((q) => reponses[q.slug]).length
-  const allAnswered = totalAnswered === questions.length
+  const q = moduleInfo.questions[idx]
+  const total = moduleInfo.questions.length
+  const isFirst = idx === 0
+  const isLast = idx === total - 1
+  const answered = moduleInfo.questions.filter(qq => reponses[qq.slug] !== undefined && reponses[qq.slug] !== '').length
+  const allAnswered = answered === total
+  const partnerDone = reponsesPartenaire.length >= total
 
   async function saveAndNext() {
     setSaving(true)
-    const valeur = reponses[currentQuestion.slug]
-    if (valeur) {
-      await sauvegarderReponse(moduleData.id, currentQuestion.slug, valeur)
+    const val = reponses[q.slug]
+    if (val !== undefined && val !== '') {
+      await sauvegarderReponse(moduleData.id, q.slug, val)
     }
     setSaving(false)
 
     if (!isLast) {
-      setCurrentIndex(currentIndex + 1)
+      setIdx(idx + 1)
     } else if (allAnswered) {
       startTransition(async () => {
         await terminerModule(moduleData.id, moduleInfo.slug)
-        setCompleted(true)
+        setDone(true)
       })
     }
   }
 
-  function setReponse(slug: string, valeur: string) {
-    setReponses((prev) => ({ ...prev, [slug]: valeur }))
-  }
-
-  if (completed) {
-    const partnerAnsweredCount = reponsesPartenaire.length
+  if (done) {
     return (
-      <div className="animate-slide-up">
-        <Link href="/tableau-de-bord" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-magenta mb-6">
-          <ChevronLeft className="w-4 h-4" />
-          Retour au tableau de bord
-        </Link>
-
-        <div className="card text-center py-12">
-          <div className="text-5xl mb-4">🎉</div>
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-          <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">
-            Module {moduleInfo.titre} terminé !
-          </h1>
-          <p className="text-gray-500 mb-2">
-            Tes réponses ont été sauvegardées.
-          </p>
-          {partnerAnsweredCount > 0 ? (
-            <p className="text-sm text-magenta font-medium mb-8">
-              Ton/ta partenaire a déjà répondu à {partnerAnsweredCount} question{partnerAnsweredCount > 1 ? 's' : ''} dans ce module.
+      <div className="card p-10 text-center fade" style={{ maxWidth: 520, margin: '0 auto' }}>
+        {partnerDone ? (
+          <>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'var(--sage-soft)' }}>
+              <CheckCircle className="w-8 h-8" style={{ color: 'var(--sage)' }} />
+            </div>
+            <div className="eyebrow justify-center mb-3">Vous avez tous les deux répondu !</div>
+            <h2 className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
+              Moment de vérité ✦
+            </h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>
+              C'est le moment le plus précieux : découvrir ce que l'autre a écrit, côte à côte.
             </p>
-          ) : (
-            <p className="text-sm text-gray-400 mb-8">
-              En attente des réponses de ton/ta partenaire...
+            <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
+              Ouvrir la session de révélation <ArrowRight className="w-4 h-4" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <div className="text-4xl mb-5">⏳</div>
+            <div className="eyebrow justify-center mb-3">Module terminé</div>
+            <h2 className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
+              Tes réponses sont sauvegardées !
+            </h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
+              En attente de {partnerName || 'ton/ta partenaire'}… La révélation s'ouvrira quand vous aurez tous les deux terminé.
             </p>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/tableau-de-bord" className="btn-secondary">
-              Retour au tableau de bord
-            </Link>
-            <Link href="/pacte" className="btn-primary">
-              Voir notre Pacte
-            </Link>
-          </div>
-        </div>
+            <Link href="/tableau-de-bord" className="btn-ghost">Retour au dashboard</Link>
+          </>
+        )}
       </div>
     )
   }
 
   return (
-    <div className="animate-fade-in">
-      {/* Breadcrumb */}
-      <Link href="/tableau-de-bord" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-magenta mb-6">
-        <ChevronLeft className="w-4 h-4" />
-        Retour au tableau de bord
-      </Link>
-
-      {/* Header du module */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-3xl">{moduleInfo.emoji}</span>
-          <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            {moduleInfo.titre}
-          </h1>
+    <div className="fade" style={{ maxWidth: 600, margin: '0 auto' }}>
+      {/* Top bar */}
+      <div style={{ marginBottom: 28 }}>
+        <Link href="/tableau-de-bord" className="flex items-center gap-1.5 text-sm font-medium mb-4" style={{ color: 'var(--muted)' }}>
+          <ArrowLeft className="w-4 h-4" />Quitter
+        </Link>
+        <div className="flex items-center gap-3 mb-3">
+          <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
+          <div>
+            <p className="font-mono text-xs font-bold" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>MODULE 0{moduleInfo.n}</p>
+            <p className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>{moduleInfo.titre}</p>
+          </div>
         </div>
-        <ProgressBar
-          value={currentIndex}
-          max={questions.length}
-          showLabel={false}
-          className="mt-4"
-        />
-        <p className="text-sm text-gray-400 mt-2">
-          Question {currentIndex + 1} sur {questions.length}
-        </p>
+        {/* Progress */}
+        <div className="bar" style={{ height: 4 }}><i style={{ width: `${Math.round((idx / total) * 100)}%`, background: 'var(--brand)' }} /></div>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Question {idx + 1} sur {total}</p>
       </div>
 
       {/* Question card */}
-      <div className="card mb-6 animate-slide-up" key={currentQuestion.slug}>
-        <div className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-4">
-          Question {currentIndex + 1}
-        </div>
-        <h2 className="font-fraunces text-xl font-bold text-gray-900 mb-6 leading-relaxed">
-          {currentQuestion.texte}
+      <div className="card p-7 mb-5 slide-up" key={q.slug}>
+        <div className="eyebrow mb-4">Question {String(idx + 1).padStart(2, '0')}</div>
+        <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: q.hint ? 8 : 24 }}>
+          {q.texte}
         </h2>
-
-        <QuestionInput
-          question={currentQuestion}
-          value={reponses[currentQuestion.slug] || ''}
-          onChange={(v) => setReponse(currentQuestion.slug, v)}
-        />
+        {q.hint && (
+          <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 20 }}>{q.hint}</p>
+        )}
+        <QuestionInput q={q} value={reponses[q.slug] ?? ''} onChange={v => setReponses(prev => ({ ...prev, [q.slug]: v }))} />
       </div>
 
-      {/* Navigation */}
+      {/* Nav */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-          disabled={isFirst}
-          className={clsx(
-            'flex items-center gap-2 text-sm font-medium transition-colors',
-            isFirst ? 'text-gray-200 cursor-not-allowed' : 'text-gray-500 hover:text-magenta'
-          )}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Précédent
+        <button onClick={() => setIdx(Math.max(0, idx - 1))} disabled={isFirst}
+          className="flex items-center gap-2 text-sm font-medium transition-colors"
+          style={{ color: isFirst ? 'var(--line)' : 'var(--muted)' }}>
+          <ArrowLeft className="w-4 h-4" />Précédent
         </button>
 
-        <button
-          onClick={saveAndNext}
-          disabled={saving || isPending || !reponses[currentQuestion.slug]}
-          className={clsx(
-            'btn-primary flex items-center gap-2',
-            (!reponses[currentQuestion.slug]) && 'opacity-50 cursor-not-allowed'
-          )}
-        >
-          {(saving || isPending) && <Spinner size="sm" />}
-          {isLast && allAnswered ? (
-            <>
-              <CheckCircle className="w-4 h-4" />
-              Terminer le module
-            </>
-          ) : (
-            <>
-              Suivant
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
+        <button onClick={saveAndNext} disabled={saving || isPending || (!reponses[q.slug] && reponses[q.slug] !== '0')}
+          className="btn-brand"
+          style={{ opacity: (!reponses[q.slug] && reponses[q.slug] !== '0') ? .45 : 1 }}>
+          {saving || isPending ? 'Sauvegarde…' : isLast && allAnswered ? 'Terminer le module' : 'Sauvegarder & continuer'}
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Partner status */}
+      <p className="font-mono text-center mt-5" style={{ fontSize: 11, color: 'var(--muted)' }}>
+        {partnerDone
+          ? `✓ ${partnerName || 'Ton/ta partenaire'} a déjà terminé ce module`
+          : reponsesPartenaire.length > 0
+          ? `⏳ ${partnerName || 'Ton/ta partenaire'} répond de son côté…`
+          : `${partnerName || 'Ton/ta partenaire'} n'a pas encore commencé`}
+      </p>
     </div>
   )
 }
 
-function QuestionInput({
-  question,
-  value,
-  onChange,
-}: {
-  question: Question
-  value: string
-  onChange: (v: string) => void
-}) {
-  if (question.type === 'texte') {
+function QuestionInput({ q, value, onChange }: { q: Question; value: string; onChange: (v: string) => void }) {
+  if (q.type === 'text') {
     return (
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Écris ta réponse ici..."
-        rows={4}
-        className="input-field resize-none"
-      />
+      <textarea value={value} onChange={e => onChange(e.target.value)}
+        placeholder="Écris ce qui te vient…" rows={4} className="field" />
     )
   }
 
-  if (question.type === 'choix' && question.options) {
+  if ((q.type === 'choix' || q.type === 'choix_multiple') && q.options) {
+    const isMulti = q.type === 'choix_multiple'
+    const selected: (string | number)[] = isMulti
+      ? (value ? value.split('||') : [])
+      : [value]
+
     return (
-      <div className="space-y-3">
-        {question.options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(option)}
-            className={clsx(
-              'w-full text-left px-4 py-3 rounded-xl border-2 transition-all duration-150 text-sm font-medium',
-              value === option
-                ? 'border-magenta bg-magenta-50 text-magenta'
-                : 'border-cream-400 bg-white text-gray-700 hover:border-magenta-200'
-            )}
-          >
-            {option}
-          </button>
-        ))}
+      <div className="flex flex-col gap-2.5">
+        {q.options.map((opt, i) => {
+          const isOn = isMulti ? selected.includes(String(i)) : value === String(i)
+          return (
+            <button key={i} type="button" onClick={() => {
+              if (isMulti) {
+                const arr = selected.map(String)
+                const si = String(i)
+                const next = arr.includes(si) ? arr.filter(x => x !== si) : [...arr, si]
+                onChange(next.join('||'))
+              } else {
+                onChange(String(i))
+              }
+            }}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-sm font-medium"
+              style={{
+                background: isOn ? 'var(--brand-tint)' : 'var(--cream)',
+                border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--line)'}`,
+                color: isOn ? 'var(--brand)' : 'var(--ink)',
+              }}>
+              <span className="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                style={{ borderColor: isOn ? 'var(--brand)' : 'var(--muted-2)', background: isOn ? 'var(--brand)' : 'transparent' }}>
+                {isOn && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </span>
+              {opt}
+            </button>
+          )
+        })}
       </div>
     )
   }
 
-  if (question.type === 'echelle') {
-    const min = question.min ?? 1
-    const max = question.max ?? 10
+  if (q.type === 'echelle') {
+    const min = q.min ?? 1
+    const max = q.max ?? 10
     const steps = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+    const val = value ? parseInt(value) : null
 
     return (
       <div>
-        <div className="flex gap-2 flex-wrap">
-          {steps.map((step) => (
-            <button
-              key={step}
-              type="button"
-              onClick={() => onChange(String(step))}
-              className={clsx(
-                'w-10 h-10 rounded-xl border-2 font-semibold text-sm transition-all duration-150',
-                value === String(step)
-                  ? 'border-magenta bg-magenta text-white'
-                  : 'border-cream-400 bg-white text-gray-600 hover:border-magenta-200'
-              )}
-            >
-              {step}
+        <div className="flex flex-wrap gap-2">
+          {steps.map(s => (
+            <button key={s} type="button" onClick={() => onChange(String(s))}
+              className="w-10 h-10 rounded-lg font-semibold text-sm transition-all"
+              style={{
+                background: val === s ? 'var(--brand)' : 'var(--cream)',
+                color: val === s ? 'white' : 'var(--ink)',
+                border: `1.5px solid ${val === s ? 'var(--brand)' : 'var(--line)'}`,
+              }}>
+              {s}
             </button>
           ))}
         </div>
-        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
-          <span>Pas du tout</span>
-          <span>Tout à fait</span>
-        </div>
+        {(q.labelMin || q.labelMax) && (
+          <div className="flex justify-between mt-2" style={{ fontSize: 11, color: 'var(--muted)' }}>
+            <span>{q.labelMin}</span><span>{q.labelMax}</span>
+          </div>
+        )}
       </div>
     )
   }

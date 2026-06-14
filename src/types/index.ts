@@ -1,13 +1,6 @@
-export type ModuleSlug =
-  | 'valeurs'
-  | 'communication'
-  | 'intimite'
-  | 'finances'
-  | 'projets'
-  | 'famille'
-  | 'croissance'
-
+export type ModuleSlug = 'moi' | 'toi' | 'nous' | 'communication' | 'conflits' | 'engagement' | 'renouvellement'
 export type ModuleStatut = 'locked' | 'en_cours' | 'complete'
+export type QuestionType = 'text' | 'choix' | 'choix_multiple' | 'echelle'
 
 export interface Profile {
   id: string
@@ -36,8 +29,9 @@ export interface Module {
   couple_id: string
   slug: ModuleSlug
   statut: ModuleStatut
-  score_partenaire1: number | null
-  score_partenaire2: number | null
+  revealed: boolean
+  connivence_score: number | null
+  revealed_at: string | null
   completed_at: string | null
   created_at: string
 }
@@ -52,30 +46,43 @@ export interface Reponse {
   updated_at: string
 }
 
-export interface PacteItem {
+export interface JournalEntry {
   id: string
   couple_id: string
   module_slug: string
   contenu: string
-  signe_partenaire1: boolean
-  signe_partenaire2: boolean
   created_at: string
+  updated_at: string
 }
 
-export interface ModuleInfo {
-  slug: ModuleSlug
-  titre: string
-  description: string
-  emoji: string
-  couleur: string
-  questions: Question[]
+export interface Precommande {
+  id: string
+  prenom: string
+  email: string
+  adresse: string | null
+  message: string | null
+  created_at: string
 }
 
 export interface Question {
   slug: string
+  type: QuestionType
   texte: string
-  type: 'echelle' | 'texte' | 'choix'
+  hint?: string
   options?: string[]
   min?: number
   max?: number
+  labelMin?: string
+  labelMax?: string
+}
+
+export interface ModuleInfo {
+  slug: ModuleSlug
+  n: number
+  titre: string
+  sousTitre: string
+  description: string
+  emoji: string
+  free: boolean
+  questions: Question[]
 }

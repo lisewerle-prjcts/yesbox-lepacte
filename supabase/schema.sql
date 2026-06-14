@@ -294,3 +294,49 @@ begin
   return json_build_object('success', true, 'couple_id', v_couple.id);
 end;
 $$;
+
+-- ============================================================
+-- MISE À JOUR (v2) — colonnes supplémentaires
+-- ============================================================
+
+-- Colonnes révélation sur modules
+alter table public.modules add column if not exists revealed boolean default false;
+alter table public.modules add column if not exists connivence_score integer;
+alter table public.modules add column if not exists revealed_at timestamptz;
+
+-- Table pré-commandes
+create table if not exists public.precommandes (
+  id uuid primary key default uuid_generate_v4(),
+  prenom text not null,
+  email text not null,
+  adresse text,
+  message text,
+  created_at timestamptz default now()
+);
+alter table public.precommandes enable row level security;
+create policy if not exists "Tout le monde peut pré-commander"
+  on public.precommandes for insert with check (true);
+
+-- Table journal
+create table if not exists public.journal_entries (
+  id uuid primary key default uuid_generate_v4(),
+  couple_id uuid not null references public.couples(id) on delete cascade,
+  module_slug text not null,
+  contenu text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(couple_id, module_slug)
+);
+alter table public.journal_entries enable row level security;
+create policy if not exists "Membres du couple voient leur journal"
+  on public.journal_entries for select using (
+    couple_id in (select couple_id from public.profiles where id = auth.uid())
+  );
+create policy if not exists "Membres du couple créent leur journal"
+  on public.journal_entries for insert with check (
+    couple_id in (select couple_id from public.profiles where id = auth.uid())
+  );
+create policy if not exists "Membres du couple modifient leur journal"
+  on public.journal_entries for update using (
+    couple_id in (select couple_id from public.profiles where id = auth.uid())
+  );

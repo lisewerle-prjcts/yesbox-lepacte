@@ -2,28 +2,17 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export const metadata = { title: 'Tableau de bord' }
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/connexion')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, couples(*)')
-    .eq('id', user.id)
-    .single()
-
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   return (
-    <div className="min-h-screen bg-cream">
+    <div style={{ minHeight: '100vh' }}>
       <DashboardNav profile={profile} />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {children}
-      </main>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 24px' }}>{children}</main>
     </div>
   )
 }

@@ -79,7 +79,7 @@ export default function ModuleCard({ moduleInfo, moduleData, statut, index }: Mo
           backgroundColor: isComplete
             ? '#2ECC71'
             : isEnCours
-            ? moduleInfo.couleur
+            ? 'var(--brand)'
             : 'transparent',
         }}
       />
