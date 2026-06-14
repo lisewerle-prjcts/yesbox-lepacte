@@ -142,7 +142,52 @@
   .serif { font-family: var(--font-newsreader), Georgia, serif; }
   .mono { font-family: var(--font-geist-mono), monospace; }
 
-  /* ---- Progress ---- */
+
+  /* ---- Button aliases ---- */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: var(--r-sm);
+    background: var(--brand); color: var(--paper);
+    font-weight: 600; font-size: 14px; transition: all .15s ease;
+    border: 1.5px solid transparent;
+  }
+  .btn-primary:hover { background: var(--brand-deep); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: var(--r-sm);
+    background: var(--paper); color: var(--ink);
+    font-weight: 600; font-size: 14px; transition: all .15s ease;
+    border: 1.5px solid var(--line);
+  }
+  .btn-secondary:hover { background: var(--cream); }
+
+  /* ---- Input aliases ---- */
+  .input-field {
+    width: 100%; padding: 12px 16px;
+    background: var(--paper); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: var(--r-sm);
+    font-size: 14px; outline: none; transition: border-color .15s;
+    font-family: inherit;
+  }
+  .input-field:focus { border-color: var(--brand); }
+  .input-field::placeholder { color: var(--muted-2); }
+
+  .label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--ink-2); margin-bottom: 6px;
+  }
+
+  /* ---- Progress bar aliases ---- */
+  .progress-bar {
+    height: 6px; background: var(--line); border-radius: 999px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    display: block; height: 100%;
+    background: var(--sage); border-radius: 999px;
+    transition: width .5s ease;
+  }
+
+  /* ---- Progress (legacy) ---- */
   .bar {
     height: 6px; background: var(--line); border-radius: 999px; overflow: hidden;
   }

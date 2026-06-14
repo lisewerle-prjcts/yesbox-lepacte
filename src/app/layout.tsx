@@ -7,9 +7,9 @@ const dmMono = DM_Mono({ subsets: ['latin'], variable: '--font-geist-mono', weig
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-newsreader', style: ['normal', 'italic'], display: 'swap' })
 
 export const metadata: Metadata = {
-  title: { default: 'YES BOX — Le pacte des couples qui tiennent', template: '%s | YES BOX' },
-  description: 'Un programme en 7 modules pour poser les bases de votre couple, signer votre CDD de couple et vous retrouver chaque année. Module 1 gratuit. Lancement septembre 2026.',
-  keywords: ['couple', 'mariage', 'préparation mariage', 'programme couple', 'CDD de couple', 'communication couple', 'vœux'],
+  title: { default: 'YES BOX — Le Pacte des couples qui tiennent', template: '%s | YES BOX' },
+  description: 'Un programme en 7 modules pour poser les bases de votre couple, signer votre CDD de couple et vous retrouver chaque année. Module 1 gratuit.',
+  keywords: ['couple', 'mariage', 'préparation mariage', 'programme couple', 'CDD de couple', 'communication couple'],
   authors: [{ name: 'YES BOX' }],
   creator: 'YES BOX',
   openGraph: {
@@ -20,11 +20,7 @@ export const metadata: Metadata = {
     title: 'YES BOX — Le pacte des couples qui tiennent',
     description: 'Un programme en 7 modules pour se choisir en conscience. Module 1 gratuit.',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'YES BOX — Le Pacte',
-    description: 'Le programme pour les couples qui tiennent.',
-  },
+  twitter: { card: 'summary_large_image', title: 'YES BOX — Le Pacte', description: 'Le programme pour les couples qui tiennent.' },
   robots: { index: true, follow: true },
   metadataBase: new URL('https://yesbox-lepacte.fr'),
 }
