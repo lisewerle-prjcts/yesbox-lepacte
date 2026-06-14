@@ -5,7 +5,9 @@ import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import PrecommandeModal from '@/components/PrecommandeModal'
 import { MODULES } from '@/lib/modules-data'
-import { ArrowRight, Check, Menu, X } from 'lucide-react'
+import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw } from 'lucide-react'
+
+const MODULE_ICONS = [User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw]
 
 const TEMOIGNAGES = [
   { texte: "On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", prenom: 'Marie & Tom', lieu: 'Paris' },
@@ -143,10 +145,14 @@ export default function LandingPage() {
             </h2>
           </div>
           <div className="flex flex-col gap-3">
-            {MODULES.map(m => (
+            {MODULES.map((m, i) => {
+              const Icon = MODULE_ICONS[i] || User
+              return (
               <div key={m.slug} className="card flex items-center gap-5 p-5">
-                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--muted)', width: 28 }}>0{m.n}</span>
-                <span style={{ fontSize: 24 }}>{m.emoji}</span>
+                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>0{m.n}</span>
+                <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 38, height: 38, background: 'var(--cream)', borderRadius: 10, border: '1px solid var(--line)' }}>
+                  <Icon className="w-4 h-4" style={{ color: 'var(--ink-2)' }} />
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>{m.titre}</span>
@@ -157,41 +163,46 @@ export default function LandingPage() {
                 {m.free && <span className="tag-sage flex-shrink-0">Gratuit</span>}
                 {m.n === 7 && <span className="tag-muted flex-shrink-0">Annuel</span>}
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </section>
 
       {/* CDD DE COUPLE */}
-      <section className="py-20" style={{ background: 'var(--dark)' }}>
+      <section className="py-20" style={{ background: '#16120e' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="eyebrow mb-4" style={{ color: 'var(--dark-muted)' }}>L&apos;idée signature</div>
-              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, color: 'var(--dark-paper)', lineHeight: 1.15 }}>
-                Un <em style={{ color: '#f7d9e6' }}>CDD de couple</em>,<br />à re-signer chaque année.
+              <div className="eyebrow mb-4" style={{ color: 'rgba(255,255,255,.35)', fontFamily: 'var(--font-geist-mono)' }}>— L&apos;idée signature</div>
+              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'rgba(255,255,255,.92)', lineHeight: 1.15 }}>
+                Un <em style={{ color: 'var(--brand)', fontStyle: 'italic' }}>CDD de couple</em>,<br />à re-signer chaque année.
               </h2>
-              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--dark-muted)', marginTop: 16 }}>
-                À la fin du programme, vous rédigez votre Contrat à Durée Déterminée de couple : vos articles, vos valeurs, vos projets. Avec un rendez-vous annuel inscrit dedans.
+              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'rgba(255,255,255,.5)', marginTop: 20 }}>
+                Comme en entreprise — la clarté des engagements, le bilan régulier, la révision des projets — mais avec amour. À la fin du programme, vous rédigez votre Contrat à Durée Déterminée de couple : vos articles, vos valeurs, vos projets. Avec un rendez-vous annuel inscrit dedans.
               </p>
               <ul className="mt-6 space-y-3">
                 {['Vos engagements, écrits noir sur blanc', 'Un bilan à votre date anniversaire, chaque année', 'Un avenant pour évoluer ensemble, et re-signer « nous »'].map(item => (
                   <li key={item} className="flex gap-3 items-start">
                     <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                    <span style={{ fontSize: 14, color: 'var(--dark-muted)' }}>{item}</span>
+                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.55)' }}>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div style={{ background: 'var(--dark-paper)', borderRadius: 'var(--r-lg)', padding: '28px', border: '1px solid rgba(255,255,255,.08)' }}>
-              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>Contrat à durée déterminée</p>
-              <h3 className="font-serif text-center mb-5" style={{ fontSize: 22, color: 'var(--ink)' }}>Le CDD de couple</h3>
-              {[['Article 1', 'Engagement mutuel'], ['Article 2', 'Valeurs partagées'], ['Article 3', 'Projets communs'], ['Avenant', 'Bilan annuel'], ['Renouvellement', 'Annuel']].map(([k, v]) => (
-                <div key={k} className="flex justify-between py-3" style={{ borderBottom: '1px solid var(--line)', fontSize: 13.5 }}>
-                  <span style={{ color: 'var(--muted)' }}>{k}</span>
-                  <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{v}</span>
+            <div style={{ background: '#1e1a15', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid rgba(255,255,255,.08)' }}>
+              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'rgba(255,255,255,.3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>Contrat à durée déterminée</p>
+              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'rgba(255,255,255,.85)' }}>Le CDD de couple</h3>
+              {[['Article 1', 'Engagement mutuel'], ['Article 2', 'Valeurs partagées'], ['Article 3', 'Projets communs'], ['Avenant', 'Bilan annuel'], ['Renouvellement', 'À re-signer chaque année']].map(([k, v], idx) => (
+                <div key={k} className="flex justify-between py-3" style={{ borderBottom: idx < 4 ? '1px solid rgba(255,255,255,.07)' : 'none', fontSize: 13 }}>
+                  <span className="font-mono uppercase" style={{ color: 'rgba(255,255,255,.35)', letterSpacing: '.08em', fontSize: 11 }}>{k}</span>
+                  <span style={{ color: 'rgba(255,255,255,.7)', fontWeight: 500 }}>{v}</span>
                 </div>
               ))}
+              <div className="flex justify-end mt-4">
+                <div className="flex items-center justify-center text-center font-bold" style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.2 }}>
+                  À re-signer<br />chaque<br />année
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -306,10 +317,11 @@ export default function LandingPage() {
             <div className="font-mono" style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: 2 }}>Le pacte des couples qui tiennent</div>
           </div>
           <div style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}>© 2026 YES BOX · yesbox-lepacte.fr</div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Link href="/connexion" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Connexion</Link>
             <Link href="/inscription" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Inscription</Link>
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Tarifs</Link>
+            <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Mentions légales</Link>
           </div>
         </div>
       </footer>
