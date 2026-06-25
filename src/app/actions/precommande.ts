@@ -32,7 +32,7 @@ export async function soumettrePrecommande(formData: FormData) {
     if (error.message.includes('duplicate') || error.code === '23505') {
       return { error: 'Cet email est déjà inscrit sur la liste !' }
     }
-    return { error: 'Une erreur est survenue, réessaie.' }
+    return { error: `Erreur: ${error.message} (code: ${error.code})` }
   }
 
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
