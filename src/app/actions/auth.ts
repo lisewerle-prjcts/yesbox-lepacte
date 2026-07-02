@@ -36,7 +36,7 @@ export async function inscription(formData: FormData) {
     password,
     options: {
       data: { prenom },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback`,
     },
   })
 
