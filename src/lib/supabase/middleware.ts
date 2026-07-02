@@ -53,5 +53,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Ne pas interférer avec les routes admin — le layout admin gère lui-même la vérification is_admin
+  if (pathname.startsWith('/admin')) {
+    return supabaseResponse
+  }
+
   return supabaseResponse
 }
