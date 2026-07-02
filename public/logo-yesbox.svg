@@ -1,36 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
-  <defs>
-    <!-- Filtre texture grunge -->
-    <filter id="grunge" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch" result="noise"/>
-      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
-      <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply" result="blended"/>
-      <feComposite in="blended" in2="SourceGraphic" operator="in"/>
-    </filter>
-    <!-- Clip cœur -->
-    <clipPath id="heartClip">
-      <path d="M100 148 C100 148 46 118 46 82 C46 64 58 52 72 52 C82 52 92 58 100 68 C108 58 118 52 128 52 C142 52 154 64 154 82 C154 118 100 148 100 148Z"/>
-    </clipPath>
-  </defs>
-
-  <!-- Bulle de dialogue (forme Q) avec texture grunge -->
-  <g filter="url(#grunge)">
-    <!-- Corps principal de la bulle -->
-    <circle cx="100" cy="95" r="78" fill="#4a4441"/>
-    <!-- Queue de la bulle en bas à gauche -->
-    <path d="M38 158 L58 135 L30 128 Z" fill="#4a4441"/>
-  </g>
-
-  <!-- Fond blanc du cœur -->
-  <path d="M100 148 C100 148 46 118 46 82 C46 64 58 52 72 52 C82 52 92 58 100 68 C108 58 118 52 128 52 C142 52 154 64 154 82 C154 118 100 148 100 148Z" fill="white"/>
-
-  <!-- Rayures diagonales magenta clippées au cœur -->
-  <g clipPath="url(#heartClip)">
-    <rect x="40" y="44" width="120" height="110" fill="white"/>
-    <!-- Rayures à ~45° -->
-    <line x1="30" y1="44" x2="110" y2="160" stroke="#c5256e" strokeWidth="16"/>
-    <line x1="60" y1="44" x2="140" y2="160" stroke="#c5256e" strokeWidth="16"/>
-    <line x1="90" y1="44" x2="170" y2="160" stroke="#c5256e" strokeWidth="16"/>
-    <line x1="0"  y1="44" x2="80"  y2="160" stroke="#c5256e" strokeWidth="16"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Bulle de dialogue -->
+  <path d="M50 8 C26 8 8 24 8 44 C8 58 16 70 30 76 L22 92 L44 80 C46 80 48 81 50 81 C74 81 92 65 92 45 C92 25 74 8 50 8Z" fill="#3d3532"/>
+  <!-- Cœur blanc -->
+  <path d="M50 65 C50 65 28 53 28 38 C28 29 34 23 42 23 C46 23 49 25 50 28 C51 25 54 23 58 23 C66 23 72 29 72 38 C72 53 50 65 50 65Z" fill="white"/>
+  <!-- Rayures diagonales magenta -->
+  <clipPath id="h">
+    <path d="M50 65 C50 65 28 53 28 38 C28 29 34 23 42 23 C46 23 49 25 50 28 C51 25 54 23 58 23 C66 23 72 29 72 38 C72 53 50 65 50 65Z"/>
+  </clipPath>
+  <g clip-path="url(#h)">
+    <rect x="22" y="18" width="56" height="52" fill="white"/>
+    <line x1="18" y1="18" x2="58" y2="75" stroke="#c5256e" stroke-width="8"/>
+    <line x1="34" y1="18" x2="74" y2="75" stroke="#c5256e" stroke-width="8"/>
+    <line x1="50" y1="18" x2="90" y2="75" stroke="#c5256e" stroke-width="8"/>
+    <line x1="2"  y1="18" x2="42" y2="75" stroke="#c5256e" stroke-width="8"/>
   </g>
 </svg>
