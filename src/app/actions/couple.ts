@@ -1,10 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
+  const admin = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
@@ -12,7 +13,8 @@ export async function creerCouple(formData: FormData) {
   const nomCouple = formData.get('nom_couple') as string
   const dateAnniversaire = formData.get('date_anniversaire') as string | null
 
-  const { data: couple, error: coupleError } = await supabase
+  // Utilise le client admin pour bypasser la RLS sur couples
+  const { data: couple, error: coupleError } = await admin
     .from('couples')
     .insert({
       nom_couple: nomCouple || null,
@@ -23,14 +25,14 @@ export async function creerCouple(formData: FormData) {
 
   if (coupleError) return { error: coupleError.message }
 
-  const { error: profileError } = await supabase
+  const { error: profileError } = await admin
     .from('profiles')
     .update({ couple_id: couple.id, role: 'initiateur' })
     .eq('id', user.id)
 
   if (profileError) return { error: profileError.message }
 
-  await supabase.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
 
   revalidatePath('/tableau-de-bord')
   return { success: true, couple, inviteToken: couple.invite_token }
