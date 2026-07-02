@@ -1,12 +1,12 @@
 -- ============================================================
--- YES BOX — Le Pacte : Schéma Supabase
+-- YES BOX — Le Pacte : Schéma complet (v3)
+-- À exécuter dans un nouveau projet Supabase
 -- ============================================================
 
--- Extension UUID
 create extension if not exists "uuid-ossp";
 
 -- ============================================================
--- TABLE : profiles
+-- profiles
 -- ============================================================
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -15,31 +15,22 @@ create table public.profiles (
   avatar_url text,
   couple_id uuid,
   role text check (role in ('initiateur', 'partenaire')),
+  is_admin boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
-
 alter table public.profiles enable row level security;
 
-create policy "Les utilisateurs voient leur propre profil"
-  on public.profiles for select
-  using (auth.uid() = id);
-
-create policy "Les utilisateurs modifient leur propre profil"
-  on public.profiles for update
-  using (auth.uid() = id);
-
-create policy "Les utilisateurs voient le profil de leur partenaire"
-  on public.profiles for select
-  using (
-    couple_id is not null and
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
+create policy "profil_own_select" on public.profiles for select using (auth.uid() = id);
+create policy "profil_own_update" on public.profiles for update using (auth.uid() = id);
+create policy "profil_partner_select" on public.profiles for select using (
+  couple_id is not null and
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "profil_insert" on public.profiles for insert with check (auth.uid() = id);
 
 -- ============================================================
--- TABLE : couples
+-- couples
 -- ============================================================
 create table public.couples (
   id uuid primary key default uuid_generate_v4(),
@@ -51,75 +42,47 @@ create table public.couples (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
-
 alter table public.couples enable row level security;
 
-create policy "Les membres du couple voient leur couple"
-  on public.couples for select
-  using (
-    id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
-
-create policy "L'initiateur crée le couple"
-  on public.couples for insert
-  with check (true);
-
-create policy "Les membres du couple modifient leur couple"
-  on public.couples for update
-  using (
-    id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
+create policy "couple_member_select" on public.couples for select using (
+  id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "couple_insert" on public.couples for insert with check (true);
+create policy "couple_member_update" on public.couples for update using (
+  id in (select couple_id from public.profiles where id = auth.uid())
+);
 
 -- ============================================================
--- TABLE : modules
+-- modules
 -- ============================================================
 create table public.modules (
   id uuid primary key default uuid_generate_v4(),
   couple_id uuid not null references public.couples(id) on delete cascade,
   slug text not null check (slug in (
-    'valeurs', 'communication', 'intimite', 'finances',
-    'projets', 'famille', 'croissance'
+    'moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement'
   )),
   statut text default 'locked' check (statut in ('locked', 'en_cours', 'complete')),
-  score_partenaire1 integer,
-  score_partenaire2 integer,
+  revealed boolean default false,
+  connivence_score integer,
   completed_at timestamptz,
+  revealed_at timestamptz,
   created_at timestamptz default now(),
   unique(couple_id, slug)
 );
-
 alter table public.modules enable row level security;
 
-create policy "Les membres du couple voient leurs modules"
-  on public.modules for select
-  using (
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
-
-create policy "Les membres du couple modifient leurs modules"
-  on public.modules for update
-  using (
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
-
-create policy "Les membres du couple créent leurs modules"
-  on public.modules for insert
-  with check (
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
+create policy "module_select" on public.modules for select using (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "module_insert" on public.modules for insert with check (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "module_update" on public.modules for update using (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
 
 -- ============================================================
--- TABLE : reponses
+-- reponses
 -- ============================================================
 create table public.reponses (
   id uuid primary key default uuid_generate_v4(),
@@ -131,101 +94,78 @@ create table public.reponses (
   updated_at timestamptz default now(),
   unique(module_id, user_id, question_slug)
 );
-
 alter table public.reponses enable row level security;
 
-create policy "Les utilisateurs voient leurs propres réponses"
-  on public.reponses for select
-  using (auth.uid() = user_id);
-
-create policy "Les utilisateurs voient les réponses de leur partenaire (même module)"
-  on public.reponses for select
-  using (
-    module_id in (
-      select m.id from public.modules m
-      join public.profiles p on p.couple_id = m.couple_id
-      where p.id = auth.uid()
-    )
-  );
-
-create policy "Les utilisateurs créent leurs propres réponses"
-  on public.reponses for insert
-  with check (auth.uid() = user_id);
-
-create policy "Les utilisateurs modifient leurs propres réponses"
-  on public.reponses for update
-  using (auth.uid() = user_id);
+create policy "reponse_own_select" on public.reponses for select using (auth.uid() = user_id);
+create policy "reponse_partner_select" on public.reponses for select using (
+  module_id in (
+    select m.id from public.modules m
+    join public.profiles p on p.couple_id = m.couple_id
+    where p.id = auth.uid()
+  )
+);
+create policy "reponse_insert" on public.reponses for insert with check (auth.uid() = user_id);
+create policy "reponse_update" on public.reponses for update using (auth.uid() = user_id);
 
 -- ============================================================
--- TABLE : pacte_items
+-- journal_entries
 -- ============================================================
-create table public.pacte_items (
+create table public.journal_entries (
   id uuid primary key default uuid_generate_v4(),
   couple_id uuid not null references public.couples(id) on delete cascade,
   module_slug text not null,
-  contenu text not null,
-  signe_partenaire1 boolean default false,
-  signe_partenaire2 boolean default false,
-  created_at timestamptz default now()
+  contenu text not null default '',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(couple_id, module_slug)
+);
+alter table public.journal_entries enable row level security;
+
+create policy "journal_select" on public.journal_entries for select using (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "journal_insert" on public.journal_entries for insert with check (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "journal_update" on public.journal_entries for update using (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
 );
 
-alter table public.pacte_items enable row level security;
-
-create policy "Les membres du couple voient leurs items de pacte"
-  on public.pacte_items for select
-  using (
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
-
-create policy "Les membres du couple créent leurs items de pacte"
-  on public.pacte_items for insert
-  with check (
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
-
-create policy "Les membres du couple modifient leurs items de pacte"
-  on public.pacte_items for update
-  using (
-    couple_id in (
-      select couple_id from public.profiles where id = auth.uid()
-    )
-  );
-
 -- ============================================================
--- TABLE : notifications
+-- precommandes
 -- ============================================================
-create table public.notifications (
+create table public.precommandes (
   id uuid primary key default uuid_generate_v4(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  type text not null,
-  message text not null,
-  lu boolean default false,
+  prenom text not null,
+  email text not null unique,
+  adresse text,
+  message text,
   created_at timestamptz default now()
 );
+alter table public.precommandes enable row level security;
+create policy "precommande_insert" on public.precommandes for insert with check (true);
+create policy "precommande_admin_select" on public.precommandes for select using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
 
-alter table public.notifications enable row level security;
-
-create policy "Les utilisateurs voient leurs notifications"
-  on public.notifications for select
-  using (auth.uid() = user_id);
-
-create policy "Les utilisateurs modifient leurs notifications"
-  on public.notifications for update
-  using (auth.uid() = user_id);
+-- ============================================================
+-- settings (messages configurables admin)
+-- ============================================================
+create table public.settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz default now()
+);
+alter table public.settings enable row level security;
+create policy "settings_admin" on public.settings using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
 
 -- ============================================================
 -- FONCTION : handle_new_user
--- Crée automatiquement un profil à l'inscription
 -- ============================================================
 create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
+returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into public.profiles (id, email)
   values (new.id, new.email);
@@ -239,15 +179,11 @@ create trigger on_auth_user_created
 
 -- ============================================================
 -- FONCTION : initialiser_modules_couple
--- Crée les 7 modules lors de la création d'un couple
 -- ============================================================
 create or replace function public.initialiser_modules_couple(p_couple_id uuid)
-returns void
-language plpgsql
-security definer
-as $$
+returns void language plpgsql security definer as $$
 declare
-  slugs text[] := array['valeurs', 'communication', 'intimite', 'finances', 'projets', 'famille', 'croissance'];
+  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
   s text;
   i integer := 0;
 begin
@@ -264,10 +200,7 @@ $$;
 -- FONCTION : rejoindre_couple_via_token
 -- ============================================================
 create or replace function public.rejoindre_couple_via_token(p_token uuid, p_user_id uuid)
-returns json
-language plpgsql
-security definer
-as $$
+returns json language plpgsql security definer as $$
 declare
   v_couple public.couples;
 begin
@@ -281,62 +214,10 @@ begin
     return json_build_object('success', false, 'error', 'Token invalide ou expiré');
   end if;
 
-  update public.profiles
-  set couple_id = v_couple.id, role = 'partenaire'
-  where id = p_user_id;
-
-  update public.couples
-  set invite_used = true
-  where id = v_couple.id;
-
+  update public.profiles set couple_id = v_couple.id, role = 'partenaire' where id = p_user_id;
+  update public.couples set invite_used = true where id = v_couple.id;
   perform public.initialiser_modules_couple(v_couple.id);
 
   return json_build_object('success', true, 'couple_id', v_couple.id);
 end;
 $$;
-
--- ============================================================
--- MISE À JOUR (v2) — colonnes supplémentaires
--- ============================================================
-
--- Colonnes révélation sur modules
-alter table public.modules add column if not exists revealed boolean default false;
-alter table public.modules add column if not exists connivence_score integer;
-alter table public.modules add column if not exists revealed_at timestamptz;
-
--- Table pré-commandes
-create table if not exists public.precommandes (
-  id uuid primary key default uuid_generate_v4(),
-  prenom text not null,
-  email text not null,
-  adresse text,
-  message text,
-  created_at timestamptz default now()
-);
-alter table public.precommandes enable row level security;
-create policy if not exists "Tout le monde peut pré-commander"
-  on public.precommandes for insert with check (true);
-
--- Table journal
-create table if not exists public.journal_entries (
-  id uuid primary key default uuid_generate_v4(),
-  couple_id uuid not null references public.couples(id) on delete cascade,
-  module_slug text not null,
-  contenu text not null,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  unique(couple_id, module_slug)
-);
-alter table public.journal_entries enable row level security;
-create policy if not exists "Membres du couple voient leur journal"
-  on public.journal_entries for select using (
-    couple_id in (select couple_id from public.profiles where id = auth.uid())
-  );
-create policy if not exists "Membres du couple créent leur journal"
-  on public.journal_entries for insert with check (
-    couple_id in (select couple_id from public.profiles where id = auth.uid())
-  );
-create policy if not exists "Membres du couple modifient leur journal"
-  on public.journal_entries for update using (
-    couple_id in (select couple_id from public.profiles where id = auth.uid())
-  );
