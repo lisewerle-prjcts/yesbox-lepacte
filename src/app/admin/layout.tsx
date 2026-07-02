@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
 
@@ -8,7 +8,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  // Utilise le client admin (service role) pour bypasser RLS
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) redirect('/tableau-de-bord')
 
   const NAV = [
