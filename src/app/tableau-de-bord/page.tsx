@@ -30,6 +30,12 @@ export default async function TableauDeBordPage() {
   const done = modules.filter(m => m.revealed).length
   const pct = Math.round((done / 7) * 100)
 
+  function getPersonalizedTitle(slug: string, defaultTitre: string, role?: string | null): string {
+    if (slug === 'moi') return role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
+    if (slug === 'toi') return role === 'partenaire' ? 'Moi et toi' : 'Toi et moi'
+    return defaultTitre
+  }
+
   function getModStatus(slug: string): 'done' | 'active' | 'paywall' | 'locked' {
     const mod = modules.find(m => m.slug === slug)
     if (!mod) return 'locked'
@@ -47,8 +53,8 @@ export default async function TableauDeBordPage() {
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
           {couple?.nom_couple
-            ? <>Bonjour, <span style={{ color: 'var(--brand)' }}>{couple.nom_couple}</span> ✨</>
-            : <>Bonjour{profile?.prenom ? `, ${profile.prenom}` : ''} ✨</>}
+            ? <>Bonjour, <span style={{ color: 'var(--brand)' }}>{couple.nom_couple}</span></>
+            : <>Bonjour{profile?.prenom ? `, ${profile.prenom}` : ''}</>}
         </h1>
         <p style={{ color: 'var(--muted)', fontSize: 14 }}>
           {partner
@@ -97,12 +103,12 @@ export default async function TableauDeBordPage() {
       {profile?.couple_id && (() => {
         const next = MODULES.find(m => getModStatus(m.slug) === 'active')
         if (!next) return null
+        const titre = getPersonalizedTitle(next.slug, next.titre, profile?.role)
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
-            <span style={{ fontSize: 32 }}>{next.emoji}</span>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>PROCHAINE ÉTAPE · MODULE 0{next.n}</p>
-              <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{next.titre}</p>
+              <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}>{next.description}</p>
             </div>
             <Link href={`/module/${next.slug}`} className="btn-brand">
@@ -135,9 +141,8 @@ export default async function TableauDeBordPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span style={{ fontSize: 28 }}>{m.emoji}</span>
                 <div>
-                  <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{m.titre}</p>
+                  <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{getPersonalizedTitle(m.slug, m.titre, profile?.role)}</p>
                   <p style={{ fontSize: 12, color: 'var(--muted)' }}>{m.sousTitre}</p>
                 </div>
               </div>
