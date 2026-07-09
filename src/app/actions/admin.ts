@@ -93,6 +93,29 @@ export async function adminSaveMessage(key: string, value: string) {
 }
 
 // ============================================================
+// Configuration d'un espace couple depuis l'admin : nom du couple et
+// prénom de chaque membre.
+// ============================================================
+export async function adminUpdateCoupleInfo(formData: FormData) {
+  const supabase = await assertAdmin()
+  const coupleId = formData.get('couple_id') as string
+  if (!coupleId) return { error: 'Couple introuvable' }
+
+  const nomCouple = (formData.get('nom_couple') as string || '').trim()
+  await supabase.from('couples').update({ nom_couple: nomCouple || null }).eq('id', coupleId)
+
+  for (const [key, value] of Array.from(formData.entries())) {
+    if (!key.startsWith('prenom_')) continue
+    const profileId = key.slice('prenom_'.length)
+    const prenom = (value as string).trim()
+    if (prenom.length >= 2) await supabase.from('profiles').update({ prenom }).eq('id', profileId)
+  }
+
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
+// ============================================================
 // Mode « voir / tester en tant que » — un admin peut se mettre à la place
 // d'un membre d'un couple pour vérifier son parcours, y compris répondre
 // aux questions à sa place.

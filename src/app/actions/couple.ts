@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getEffectiveSession } from '@/lib/effective-session'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -84,4 +85,31 @@ export async function getInviteLink() {
     link: `${baseUrl}/rejoindre?token=${couple.invite_token}`,
     used: couple.invite_used,
   }
+}
+
+export async function modifierReglages(formData: FormData) {
+  const session = await getEffectiveSession()
+  if (!session) return { error: 'Non authentifié' }
+
+  const prenom = (formData.get('prenom') as string || '').trim()
+  const nomCouple = (formData.get('nom_couple') as string || '').trim()
+  const dateAnniversaire = formData.get('date_anniversaire') as string | null
+
+  if (prenom.length < 2) return { error: 'Le prénom doit contenir au moins 2 caractères' }
+
+  const { error: profileError } = await session.db
+    .from('profiles').update({ prenom }).eq('id', session.userId)
+  if (profileError) return { error: profileError.message }
+
+  if (session.profile.couple_id) {
+    const { error: coupleError } = await session.db
+      .from('couples')
+      .update({ nom_couple: nomCouple || null, date_anniversaire: dateAnniversaire || null })
+      .eq('id', session.profile.couple_id)
+    if (coupleError) return { error: coupleError.message }
+  }
+
+  revalidatePath('/reglages')
+  revalidatePath('/tableau-de-bord')
+  return { success: true }
 }

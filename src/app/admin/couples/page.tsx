@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Eye } from 'lucide-react'
 import { adminViewAs } from '@/app/actions/admin'
+import AdminCoupleEditor from '@/components/admin/AdminCoupleEditor'
 
 const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
 const LABELS: Record<string,string> = {
@@ -22,7 +23,7 @@ const STATUS_TEXT: Record<string,string> = {
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const { data: couples } = await supabase.from('couples').select('id, created_at').order('created_at', { ascending: false })
+  const { data: couples } = await supabase.from('couples').select('id, created_at, nom_couple').order('created_at', { ascending: false })
   if (!couples?.length) return (
     <div>
       <h1 className="font-serif text-3xl font-bold mb-6" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
@@ -123,7 +124,7 @@ export default async function AdminCouples() {
               </div>
 
               {/* Actions rapides */}
-              <div className="mt-3 flex gap-2 flex-wrap">
+              <div className="mt-3 flex gap-2 flex-wrap items-start">
                 <Link
                   href={`/admin/actions?couple_id=${couple.id}`}
                   className="text-xs px-3 py-1.5 rounded-lg font-medium"
@@ -131,6 +132,7 @@ export default async function AdminCouples() {
                 >
                   Actions →
                 </Link>
+                <AdminCoupleEditor coupleId={couple.id} nomCoupleInitial={couple.nom_couple} members={members} />
               </div>
             </div>
           )

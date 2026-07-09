@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getEffectiveSession } from '@/lib/effective-session'
-import { MODULES, moduleTitre } from '@/lib/modules-data'
-import { CheckCircle, Lock, Heart, ScrollText } from 'lucide-react'
-import { questionTexte } from '@/lib/modules-data'
+import { MODULES, moduleTitre, questionTexte } from '@/lib/modules-data'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
@@ -57,7 +55,6 @@ export default async function PactePage() {
     <div className="animate-fade-in">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <ScrollText className="w-6 h-6 text-magenta" />
           <h1 className="font-fraunces text-3xl font-bold text-gray-900">
             Notre Pacte
           </h1>
@@ -72,7 +69,6 @@ export default async function PactePage() {
       {tousTermines ? (
         <div className="card bg-gradient-to-r from-magenta to-magenta-600 text-white mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Heart className="w-6 h-6" />
             <h2 className="font-fraunces text-xl font-bold">
               Votre Pacte est prêt !
             </h2>
@@ -104,11 +100,9 @@ export default async function PactePage() {
             return (
               <div key={moduleInfo.slug} className="card opacity-60">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{moduleInfo.emoji}</span>
                   <div>
                     <h3 className="font-fraunces font-bold text-gray-900">{titre}</h3>
                     <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
-                      <Lock className="w-3 h-3" />
                       <span>Module non terminé</span>
                     </div>
                   </div>
@@ -126,10 +120,8 @@ export default async function PactePage() {
           return (
             <div key={moduleInfo.slug} className="card">
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-cream-300">
-                <span className="text-2xl">{moduleInfo.emoji}</span>
                 <h3 className="font-fraunces text-lg font-bold text-gray-900">{titre}</h3>
                 <div className="ml-auto flex items-center gap-1.5 text-xs font-semibold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
-                  <CheckCircle className="w-3 h-3" />
                   Terminé
                 </div>
               </div>
@@ -173,7 +165,6 @@ export default async function PactePage() {
 
       {tousTermines && (
         <div className="card text-center mt-8 py-10">
-          <div className="text-4xl mb-4">💍</div>
           <h2 className="font-fraunces text-2xl font-bold text-gray-900 mb-3">
             Signez votre Pacte
           </h2>
@@ -181,7 +172,6 @@ export default async function PactePage() {
             En signant, vous vous engagez à honorer les valeurs et accords explorés ensemble.
           </p>
           <button className="btn-primary px-8 py-4 text-lg flex items-center gap-2 mx-auto">
-            <Heart className="w-5 h-5" />
             Signer notre Pacte
           </button>
         </div>
