@@ -5,9 +5,9 @@ import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import PrecommandeModal from '@/components/PrecommandeModal'
 import { MODULES } from '@/lib/modules-data'
-import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw } from 'lucide-react'
+import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, Home, Rocket, GraduationCap } from 'lucide-react'
 
-const MODULE_ICONS = [User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw]
+const MODULE_ICONS = [User, User, Heart, Home, Rocket, Users, MessageCircle, Zap, FileText, GraduationCap]
 
 const TEMOIGNAGES = [
   { texte: "On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", prenom: 'Marie & Tom', lieu: 'Paris' },
@@ -71,7 +71,7 @@ export default function LandingPage() {
           Le pacte des couples<br /><em style={{ color: 'var(--brand)' }}>qui tiennent.</em>
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted)' }}>
-          Un programme en 7 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.
+          Un programme en 10 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
@@ -141,7 +141,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3">Le programme</div>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-              Six modules pour poser les bases.<br />Un septième pour les faire durer.
+              Neuf modules pour poser les bases.<br />Un dixième pour les faire durer, chaque année.
             </h2>
           </div>
           <div className="flex flex-col gap-3">
@@ -161,7 +161,7 @@ export default function LandingPage() {
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}>{m.description}</p>
                 </div>
                 {m.free && <span className="tag-sage flex-shrink-0">Gratuit</span>}
-                {m.n === 7 && <span className="tag-muted flex-shrink-0">Annuel</span>}
+                {m.annuel && <span className="tag-muted flex-shrink-0">Annuel</span>}
               </div>
             )})}
           </div>
@@ -250,7 +250,7 @@ export default function LandingPage() {
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>Module 1 gratuit · toujours</div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-              {['Module "Moi et toi"', 'Questions personnelles', 'Espace couple privé'].map(f => (
+              {['Le module 1, à vos deux prénoms', 'Questions personnelles', 'Espace couple privé'].map(f => (
                 <div key={f} className="flex gap-2 items-start">
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
                   <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>{f}</span>
@@ -265,7 +265,7 @@ export default function LandingPage() {
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>paiement unique · accès à vie</div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
-              {['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'Garantie 30 jours'].map(f => (
+              {['Les 10 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'Garantie 30 jours'].map(f => (
                 <div key={f} className="flex gap-2 items-start">
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.8)' }} />
                   <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.9)' }}>{f}</span>
@@ -279,7 +279,7 @@ export default function LandingPage() {
               <div className="tag-brand self-start">Renouvellement</div>
               <div>
                 <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>19 <small style={{ fontSize: 18 }}>€/an</small></div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>module 7 · à activer plus tard</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>module 10 · Le BAC love · à activer plus tard</div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
               {['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Nouvelles questions chaque année', 'Annulable à tout moment'].map(f => (

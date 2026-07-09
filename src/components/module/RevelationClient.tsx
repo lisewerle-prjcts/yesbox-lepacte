@@ -3,20 +3,33 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Star } from 'lucide-react'
-import { scellerModule } from '@/app/actions/modules'
+import { ArrowLeft, ArrowRight, Star, RotateCcw } from 'lucide-react'
+import { noterConnivence, recommencerModule } from '@/app/actions/modules'
 import { sauvegarderJournal } from '@/app/actions/journal'
+import { questionTexte } from '@/lib/modules-data'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
+
+interface HistoriqueCycle {
+  cycle: number
+  revealedAt: string | null
+  myScore: number | null
+  partnerScore: number | null
+}
 
 interface Props {
   moduleInfo: ModuleInfo
+  titre: string
   moduleData: Module
   mesReponses: Reponse[]
   reponsesPartner: Reponse[]
+  myScore: number | null
+  partnerScore: number | null
   myName: string | null
   partnerName: string | null
+  role?: string | null
   coupleId: string
   journalContenu: string | null
+  historique: HistoriqueCycle[]
 }
 
 const CONNIVENCE_VERDICTS: Record<number, [string, string]> = {
@@ -49,28 +62,41 @@ function answersMatch(q: Question, a: string | undefined, b: string | undefined)
   return false
 }
 
-export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, myName, partnerName, coupleId, journalContenu }: Props) {
+function StarRow({ label, score }: { label: string; score: number | null }) {
+  if (!score) return null
+  return (
+    <div className="flex items-center justify-center gap-2 mb-2">
+      <span style={{ fontSize: 13, color: 'var(--dark-muted)', minWidth: 90, textAlign: 'right' }}>{label}</span>
+      <span style={{ color: 'var(--brand)', letterSpacing: 2 }}>{'★'.repeat(score)}{'☆'.repeat(5 - score)}</span>
+    </div>
+  )
+}
+
+export default function RevelationClient({ moduleInfo, titre, moduleData, mesReponses, reponsesPartner, myScore, partnerScore, myName, partnerName, role, coupleId, journalContenu, historique }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [connivence, setConnivence] = useState<number>(moduleData.connivence_score ?? 0)
+  const [restarting, setRestarting] = useState(false)
+  const [monScore, setMonScore] = useState<number>(myScore ?? 0)
   const [hovered, setHovered] = useState(0)
   const [journalText, setJournalText] = useState(journalContenu ?? '')
-  const [revealed, setRevealed] = useState(moduleData.revealed)
   const [journalSaved, setJournalSaved] = useState(false)
+  const [showHistorique, setShowHistorique] = useState(false)
+
+  const dejaNote = myScore !== null
+  const tousLesDeuxOntNote = myScore !== null && partnerScore !== null
 
   const myMap: Record<string, string> = {}
   mesReponses.forEach(r => { if (r.valeur) myMap[r.question_slug] = r.valeur })
   const partnerMap: Record<string, string> = {}
   reponsesPartner.forEach(r => { if (r.valeur) partnerMap[r.question_slug] = r.valeur })
 
-  async function sceller() {
-    if (!connivence) return
+  async function valider() {
+    if (!monScore) return
     startTransition(async () => {
       if (journalText.trim()) {
         await sauvegarderJournal(coupleId, moduleInfo.slug, journalText)
       }
-      await scellerModule(moduleData.id, moduleInfo.slug, connivence)
-      setRevealed(true)
+      await noterConnivence(moduleData.id, moduleInfo.slug, monScore)
       router.refresh()
     })
   }
@@ -82,7 +108,12 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
     setTimeout(() => setJournalSaved(false), 2000)
   }
 
-  const displayConnivence = hovered || connivence
+  async function onRecommencer() {
+    setRestarting(true)
+    await recommencerModule(moduleInfo.slug)
+  }
+
+  const displayScore = dejaNote ? monScore : (hovered || monScore)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--dark)', fontFamily: 'var(--font-geist)' }}>
@@ -92,7 +123,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
           <ArrowLeft className="w-4 h-4" />Tableau de bord
         </Link>
         <div className="font-mono text-xs font-bold" style={{ color: 'var(--dark-muted)', letterSpacing: '.1em' }}>
-          RÉVÉLATION · {moduleInfo.titre.toUpperCase()}
+          RÉVÉLATION · {titre.toUpperCase()}{moduleData.cycle > 1 ? ` · CYCLE ${moduleData.cycle}` : ''}
         </div>
       </div>
 
@@ -119,7 +150,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
             return (
               <div key={q.slug}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{q.texte}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{questionTexte(q, role)}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div style={{ background: match ? 'rgba(197,37,110,.12)' : 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: `1px solid ${match ? 'rgba(197,37,110,.3)' : 'var(--dark-line)'}` }}>
                     <div className="flex items-center gap-2 mb-3">
@@ -154,38 +185,49 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
         <div className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
           <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}>Score de connivence</div>
           <h2 className="font-serif mb-2" style={{ fontSize: 28, fontWeight: 700, color: 'var(--dark-paper)' }}>
-            {revealed ? 'Votre connivence sur ce module' : 'À vous de jouer — notez votre connivence'}
+            {dejaNote ? 'Ta note pour ce module' : 'À toi de jouer — note ta connivence'}
           </h2>
           <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 28 }}>
-            {revealed ? 'Vous aviez évalué à quel point vous vous êtes reconnus.' : 'Touchez une étoile : à quel point vous êtes-vous reconnus dans les réponses de l\'autre ?'}
+            {dejaNote
+              ? (tousLesDeuxOntNote ? 'Vous avez chacun·e évalué à quel point vous vous êtes reconnus.' : `En attente de la note de ${partnerName || 'ton/ta partenaire'}…`)
+              : "Touche une étoile : à quel point t'es-tu reconnu·e dans les réponses de l'autre ?"}
           </p>
 
-          {/* Étoiles */}
-          <div className="flex justify-center gap-3 mb-6">
+          {/* Étoiles — ma note */}
+          <div className="flex justify-center gap-3 mb-2">
             {[1, 2, 3, 4, 5].map(s => (
               <button key={s} type="button"
-                onClick={() => !revealed && setConnivence(s)}
-                onMouseEnter={() => !revealed && setHovered(s)}
+                onClick={() => !dejaNote && setMonScore(s)}
+                onMouseEnter={() => !dejaNote && setHovered(s)}
                 onMouseLeave={() => setHovered(0)}
-                style={{ background: 'none', border: 'none', cursor: revealed ? 'default' : 'pointer', padding: 4 }}>
+                style={{ background: 'none', border: 'none', cursor: dejaNote ? 'default' : 'pointer', padding: 4 }}>
                 <Star
                   className="w-10 h-10 transition-all"
                   style={{
-                    fill: s <= displayConnivence ? 'var(--brand)' : 'transparent',
-                    stroke: s <= displayConnivence ? 'var(--brand)' : 'var(--dark-muted)',
-                    transform: s <= displayConnivence ? 'scale(1.1)' : 'scale(1)',
+                    fill: s <= displayScore ? 'var(--brand)' : 'transparent',
+                    stroke: s <= displayScore ? 'var(--brand)' : 'var(--dark-muted)',
+                    transform: s <= displayScore ? 'scale(1.1)' : 'scale(1)',
                   }}
                 />
               </button>
             ))}
           </div>
+          {!dejaNote && <p style={{ fontSize: 11, color: 'var(--dark-muted)', marginBottom: 10 }}>Toi</p>}
 
-          {displayConnivence > 0 && CONNIVENCE_VERDICTS[displayConnivence] && (
+          {displayScore > 0 && CONNIVENCE_VERDICTS[displayScore] && !dejaNote && (
             <div className="mb-8">
               <p className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--dark-paper)', marginBottom: 6 }}>
-                {CONNIVENCE_VERDICTS[displayConnivence][0]}
+                {CONNIVENCE_VERDICTS[displayScore][0]}
               </p>
-              <p style={{ fontSize: 14, color: 'var(--dark-muted)' }}>{CONNIVENCE_VERDICTS[displayConnivence][1]}</p>
+              <p style={{ fontSize: 14, color: 'var(--dark-muted)' }}>{CONNIVENCE_VERDICTS[displayScore][1]}</p>
+            </div>
+          )}
+
+          {/* Une fois notés tous les deux : les deux scores côte à côte */}
+          {tousLesDeuxOntNote && (
+            <div className="mb-8 mt-2">
+              <StarRow label={myName || 'Toi'} score={myScore} />
+              <StarRow label={partnerName || 'Partenaire'} score={partnerScore} />
             </div>
           )}
 
@@ -203,8 +245,12 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             />
           </div>
 
-          {revealed ? (
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {moduleInfo.outroTexte && tousLesDeuxOntNote && (
+            <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 24, whiteSpace: 'pre-wrap' }}>{moduleInfo.outroTexte}</p>
+          )}
+
+          {dejaNote ? (
+            <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
               {journalText && (
                 <button onClick={saveJournal} className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
                   {journalSaved ? '✓ Sauvegardé' : 'Sauvegarder la conclusion'}
@@ -213,14 +259,50 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
               <Link href="/tableau-de-bord" className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
                 Retour au tableau de bord
               </Link>
+              {tousLesDeuxOntNote && (
+                <button onClick={onRecommencer} disabled={restarting} className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
+                  <RotateCcw className="w-4 h-4" />
+                  {restarting ? 'Préparation…' : 'Recommencer le module'}
+                </button>
+              )}
             </div>
           ) : (
-            <button onClick={sceller} disabled={!connivence || isPending}
+            <button onClick={valider} disabled={!monScore || isPending}
               className="btn-brand lg"
-              style={{ opacity: !connivence ? .4 : 1 }}>
-              {isPending ? 'Scellement…' : 'Sceller ce module'}
+              style={{ opacity: !monScore ? .4 : 1 }}>
+              {isPending ? 'Enregistrement…' : 'Valider ma note'}
               <ArrowRight className="w-4 h-4" />
             </button>
+          )}
+
+          {/* Historique des cycles précédents */}
+          {historique.length > 0 && (
+            <div className="mt-16 text-left" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 32 }}>
+              <button onClick={() => setShowHistorique(v => !v)} className="flex items-center gap-2 mx-auto mb-4"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dark-muted)', fontSize: 13, fontWeight: 600 }}>
+                {moduleInfo.annuel ? 'Vos bilans des années précédentes' : 'Vos réponses précédentes'} ({historique.length}) {showHistorique ? '▲' : '▼'}
+              </button>
+              {showHistorique && (
+                <div className="flex flex-col gap-3">
+                  {historique.map(h => (
+                    <div key={h.cycle} className="flex items-center justify-between flex-wrap gap-2" style={{ background: 'var(--dark-2)', borderRadius: 'var(--r-sm)', padding: '14px 18px', border: '1px solid var(--dark-line)' }}>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-paper)' }}>
+                          {moduleInfo.annuel ? `Bilan ${h.cycle}` : `Cycle ${h.cycle}`}
+                        </p>
+                        <p style={{ fontSize: 11, color: 'var(--dark-muted)' }}>
+                          {h.revealedAt ? new Date(h.revealedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4" style={{ fontSize: 12 }}>
+                        <span style={{ color: 'var(--dark-muted)' }}>{myName || 'Toi'} : <span style={{ color: 'var(--brand)' }}>{h.myScore ? '★'.repeat(h.myScore) : '—'}</span></span>
+                        <span style={{ color: 'var(--dark-muted)' }}>{partnerName || 'Partenaire'} : <span style={{ color: 'var(--brand)' }}>{h.partnerScore ? '★'.repeat(h.partnerScore) : '—'}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

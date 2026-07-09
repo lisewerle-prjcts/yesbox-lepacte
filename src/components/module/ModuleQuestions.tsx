@@ -4,19 +4,23 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { questionTexte } from '@/lib/modules-data'
+import { ArrowLeft, ArrowRight, CheckCircle, History } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
 interface Props {
   moduleInfo: ModuleInfo
+  titre: string
   moduleData: Module
   mesReponses: Reponse[]
   reponsesPartenaire: Reponse[]
   userId: string
+  role?: string | null
   partnerName?: string | null
+  aDesCyclesPrecedents?: boolean
 }
 
-export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, reponsesPartenaire, partnerName }: Props) {
+export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesReponses, reponsesPartenaire, role, partnerName, aDesCyclesPrecedents }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [idx, setIdx] = useState(() => {
@@ -74,6 +78,9 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>
               C'est le moment le plus précieux : découvrir ce que l'autre a écrit, côte à côte.
             </p>
+            {moduleInfo.outroTexte && (
+              <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 28, textAlign: 'left', whiteSpace: 'pre-wrap' }}>{moduleInfo.outroTexte}</p>
+            )}
             <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
               Ouvrir la session de révélation <ArrowRight className="w-4 h-4" />
             </Link>
@@ -102,13 +109,24 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
         <Link href="/tableau-de-bord" className="flex items-center gap-1.5 text-sm font-medium mb-4" style={{ color: 'var(--muted)' }}>
           <ArrowLeft className="w-4 h-4" />Quitter
         </Link>
-        <div className="flex items-center gap-3 mb-3">
-          <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
-          <div>
-            <p className="font-mono text-xs font-bold" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>MODULE 0{moduleInfo.n}</p>
-            <p className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>{moduleInfo.titre}</p>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
+            <div>
+              <p className="font-mono text-xs font-bold" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>MODULE {String(moduleInfo.n).padStart(2, '0')}</p>
+              <p className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>{titre}</p>
+            </div>
           </div>
+          {aDesCyclesPrecedents && (
+            <Link href={`/module/${moduleInfo.slug}/revelation`} className="flex items-center gap-1.5 text-xs font-medium flex-shrink-0" style={{ color: 'var(--muted)' }}>
+              <History className="w-3.5 h-3.5" />Réponses précédentes
+            </Link>
+          )}
         </div>
+        {/* Intro du module, si renseignée */}
+        {idx === 0 && moduleInfo.introTexte && (
+          <p style={{ fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 16, whiteSpace: 'pre-wrap' }}>{moduleInfo.introTexte}</p>
+        )}
         {/* Progress */}
         <div className="bar" style={{ height: 4 }}><i style={{ width: `${Math.round((idx / total) * 100)}%`, background: 'var(--brand)' }} /></div>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Question {idx + 1} sur {total}</p>
@@ -118,7 +136,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
       <div className="card p-7 mb-5 slide-up" key={q.slug}>
         <div className="eyebrow mb-4">Question {String(idx + 1).padStart(2, '0')}</div>
         <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: q.hint ? 8 : 24 }}>
-          {q.texte}
+          {questionTexte(q, role)}
         </h2>
         {q.hint && (
           <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 20 }}>{q.hint}</p>

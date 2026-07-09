@@ -25,20 +25,31 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | `/connexion` | Connexion |
 | `/inviter-partenaire` | Créer un espace couple + lien d'invitation |
 | `/rejoindre?token=...` | Rejoindre un couple via token |
-| `/tableau-de-bord` | Dashboard — les 7 modules |
+| `/bienvenue` | Texte d'introduction, affiché une fois avant le tableau de bord |
+| `/tableau-de-bord` | Dashboard — les 10 modules |
 | `/module/[slug]` | Parcours questions d'un module |
+| `/module/[slug]/revelation` | Révélation des réponses, score de connivence, historique |
 | `/pacte` | Visualisation et signature du Pacte |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |
 
-## Les 7 modules
+## Les 10 modules
 
-1. 💎 **Nos Valeurs** — Le socle commun
-2. 💬 **Notre Communication** — Rituels de dialogue
-3. ❤️ **Notre Intimité** — Besoins affectifs
-4. 💰 **Nos Finances** — Alignement financier
-5. 🚀 **Nos Projets** — L'avenir ensemble
-6. 🏡 **Notre Famille** — Visions familiales
-7. 🌱 **Notre Croissance** — Développement mutuel
+1. 🪞 **Partenaire 1** — nommé au prénom du premier partenaire (module gratuit)
+2. 👁️ **Partenaire 2** — nommé au prénom du second partenaire
+3. 💑 **Notre couple**
+4. 🏠 **Notre quotidien**
+5. 🚀 **Nos projets**
+6. 👪 **La famille**
+7. 💬 **Nos modes de communication**
+8. ⚡ **Nos disputes**
+9. 📜 **Notre CDD de couple**
+10. 🎓 **Le BAC love** — bilan annuel de couple, rejouable chaque année (score suivi dans le temps)
+
+Les modules 1 et 2 portent le prénom réel de chaque partenaire (saisi à l'inscription).
+Chaque module dispose d'un emplacement de texte d'introduction et de conclusion
+(`introTexte` / `outroTexte` dans `src/lib/modules-data.ts`) à compléter.
+Tout module scellé peut être rejoué via « Recommencer le module » : les réponses
+précédentes sont conservées et consultables dans l'historique de la révélation.
 
 ## Installation
 

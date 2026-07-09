@@ -13,11 +13,12 @@ async function assertAdmin() {
   return supabase
 }
 
-const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
+const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
 
+// Les actions admin opèrent sur le cycle 1 (le parcours initial) de chaque module.
 export async function adminUnlockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
-  await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug)
+  await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug).eq('cycle', 1)
   revalidatePath('/admin/couples')
   revalidatePath('/admin/actions')
   return { success: true }
@@ -25,18 +26,20 @@ export async function adminUnlockModule(coupleId: string, slug: string) {
 
 export async function adminLockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
-  await supabase.from('modules').update({ statut: 'locked', revealed: false, connivence_score: null, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
+  const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).eq('cycle', 1).single()
+  if (mod) await supabase.from('scores').delete().eq('module_id', mod.id)
+  await supabase.from('modules').update({ statut: 'locked', revealed: false, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug).eq('cycle', 1)
   revalidatePath('/admin/couples')
   return { success: true }
 }
 
 export async function adminRevealModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
-  await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
+  await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug).eq('cycle', 1)
   // Déverrouille le suivant
   const idx = SLUGS.indexOf(slug)
   if (idx >= 0 && idx < SLUGS.length - 1) {
-    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', SLUGS[idx + 1])
+    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', SLUGS[idx + 1]).eq('cycle', 1)
   }
   revalidatePath('/admin/couples')
   return { success: true }
@@ -44,10 +47,11 @@ export async function adminRevealModule(coupleId: string, slug: string) {
 
 export async function adminResetModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
-  const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).single()
+  const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).eq('cycle', 1).single()
   if (mod) {
     await supabase.from('reponses').delete().eq('module_id', mod.id)
-    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, connivence_score: null, revealed_at: null, completed_at: null }).eq('id', mod.id)
+    await supabase.from('scores').delete().eq('module_id', mod.id)
+    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null }).eq('id', mod.id)
   }
   revalidatePath('/admin/couples')
   return { success: true }

@@ -1,6 +1,8 @@
 -- ============================================================
--- YES BOX — Le Pacte : Schéma complet (v3)
--- À exécuter dans un nouveau projet Supabase
+-- YES BOX — Le Pacte : Schéma complet (v4)
+-- À exécuter dans un nouveau projet Supabase.
+-- Pour un projet déjà déployé avec le schéma v3, utiliser plutôt
+-- supabase/migrations/0002_dix_modules.sql
 -- ============================================================
 
 create extension if not exists "uuid-ossp";
@@ -16,6 +18,7 @@ create table public.profiles (
   couple_id uuid,
   role text check (role in ('initiateur', 'partenaire')),
   is_admin boolean default false,
+  intro_vue boolean not null default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -59,15 +62,19 @@ create table public.modules (
   id uuid primary key default uuid_generate_v4(),
   couple_id uuid not null references public.couples(id) on delete cascade,
   slug text not null check (slug in (
-    'moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement'
+    'partenaire1', 'partenaire2', 'couple', 'quotidien', 'projets', 'famille',
+    'communication', 'disputes', 'cdd', 'bac'
   )),
+  -- Un cycle = un passage complet dans le module. RECOMMENCER LE MODULE crée un
+  -- nouveau cycle (nouvelle ligne) sans effacer les cycles précédents ; le module 10
+  -- (BAC love) s'appuie sur ce même mécanisme pour son bilan rejoué chaque année.
+  cycle integer not null default 1,
   statut text default 'locked' check (statut in ('locked', 'en_cours', 'complete')),
   revealed boolean default false,
-  connivence_score integer,
   completed_at timestamptz,
   revealed_at timestamptz,
   created_at timestamptz default now(),
-  unique(couple_id, slug)
+  unique(couple_id, slug, cycle)
 );
 alter table public.modules enable row level security;
 
@@ -80,6 +87,30 @@ create policy "module_insert" on public.modules for insert with check (
 create policy "module_update" on public.modules for update using (
   couple_id in (select couple_id from public.profiles where id = auth.uid())
 );
+
+-- ============================================================
+-- scores (score de connivence, 1 à 5 étoiles, indépendant par personne)
+-- ============================================================
+create table public.scores (
+  id uuid primary key default uuid_generate_v4(),
+  module_id uuid not null references public.modules(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  score integer not null check (score between 1 and 5),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(module_id, user_id)
+);
+alter table public.scores enable row level security;
+
+create policy "score_select" on public.scores for select using (
+  module_id in (
+    select m.id from public.modules m
+    join public.profiles p on p.couple_id = m.couple_id
+    where p.id = auth.uid()
+  )
+);
+create policy "score_insert" on public.scores for insert with check (auth.uid() = user_id);
+create policy "score_update" on public.scores for update using (auth.uid() = user_id);
 
 -- ============================================================
 -- reponses
@@ -183,14 +214,14 @@ create trigger on_auth_user_created
 create or replace function public.initialiser_modules_couple(p_couple_id uuid)
 returns void language plpgsql security definer as $$
 declare
-  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
+  slugs text[] := array['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac'];
   s text;
   i integer := 0;
 begin
   foreach s in array slugs loop
     insert into public.modules (couple_id, slug, statut)
     values (p_couple_id, s, case when i = 0 then 'en_cours' else 'locked' end)
-    on conflict (couple_id, slug) do nothing;
+    on conflict (couple_id, slug, cycle) do nothing;
     i := i + 1;
   end loop;
 end;

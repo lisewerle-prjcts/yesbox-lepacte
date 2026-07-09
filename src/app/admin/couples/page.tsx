@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
-const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
+const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
 const LABELS: Record<string,string> = {
-  moi:'M1',toi:'M2',nous:'M3',communication:'M4',conflits:'M5',engagement:'M6',renouvellement:'M7'
+  partenaire1:'M1', partenaire2:'M2', couple:'M3', quotidien:'M4', projets:'M5',
+  famille:'M6', communication:'M7', disputes:'M8', cdd:'M9', bac:'M10',
 }
 
 const STATUS_COLOR: Record<string,string> = {
@@ -29,10 +30,20 @@ export default async function AdminCouples() {
 
   const coupleIds = couples.map(c => c.id)
 
-  const [{ data: profiles }, { data: modules }] = await Promise.all([
+  const [{ data: profiles }, { data: modulesRaw }] = await Promise.all([
     supabase.from('profiles').select('id,prenom,email,couple_id').in('couple_id', coupleIds),
-    supabase.from('modules').select('couple_id,slug,statut,revealed,connivence_score,completed_at,revealed_at').in('couple_id', coupleIds),
+    supabase.from('modules').select('id,couple_id,slug,statut,revealed,completed_at,revealed_at').eq('cycle', 1).in('couple_id', coupleIds),
   ])
+
+  const revealedIds = (modulesRaw || []).filter(m => m.revealed).map(m => m.id)
+  const { data: scoresRaw } = revealedIds.length
+    ? await supabase.from('scores').select('module_id,score').in('module_id', revealedIds)
+    : { data: [] as { module_id: string; score: number }[] }
+
+  const modules = (modulesRaw || []).map(m => ({
+    ...m,
+    scores: (scoresRaw || []).filter(s => s.module_id === m.id).map(s => s.score),
+  }))
 
   return (
     <div>
@@ -68,7 +79,7 @@ export default async function AdminCouples() {
               </div>
 
               {/* Grille modules */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                 {SLUGS.map(slug => {
                   const mod = coupleModules.find(m => m.slug === slug)
                   const st = mod?.statut || 'locked'
@@ -77,8 +88,8 @@ export default async function AdminCouples() {
                     <div key={slug} className="rounded-lg p-2 text-center" style={{ background: bg, border: '1px solid rgba(0,0,0,.06)' }}>
                       <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{LABELS[slug]}</div>
                       <div style={{ fontSize: 16 }}>{STATUS_TEXT[mod?.revealed ? 'revealed' : st]}</div>
-                      {mod?.connivence_score && (
-                        <div style={{ fontSize: 9, color: 'var(--sage)', marginTop: 2 }}>{'★'.repeat(mod.connivence_score)}</div>
+                      {mod?.scores && mod.scores.length > 0 && (
+                        <div style={{ fontSize: 9, color: 'var(--sage)', marginTop: 2 }}>{mod.scores.map(s => '★'.repeat(s)).join(' · ')}</div>
                       )}
                     </div>
                   )
@@ -95,7 +106,7 @@ export default async function AdminCouples() {
                   return (
                     <div key={member.id} className="surface p-3 flex items-center justify-between">
                       <span style={{ fontSize: 13, fontWeight: 500 }}>{member.prenom || member.email}</span>
-                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>{done}/7 modules</span>
+                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>{done}/{SLUGS.length} modules</span>
                     </div>
                   )
                 })}
