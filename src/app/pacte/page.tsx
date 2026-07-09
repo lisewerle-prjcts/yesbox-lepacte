@@ -4,6 +4,8 @@ import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULES, moduleTitre, questionTexte } from '@/lib/modules-data'
 import type { Module, Reponse } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PactePage() {
   const session = await getEffectiveSession()
   if (!session) redirect('/connexion')

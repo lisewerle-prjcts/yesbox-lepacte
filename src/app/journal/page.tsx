@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { BookOpen } from 'lucide-react'
 import type { Module } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Journal de couple' }
 
 export default async function JournalPage() {

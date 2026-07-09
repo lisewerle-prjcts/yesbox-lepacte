@@ -3,6 +3,8 @@ import { getEffectiveSession } from '@/lib/effective-session'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Tableau de bord' }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

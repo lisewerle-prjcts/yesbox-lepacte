@@ -3,6 +3,8 @@ import { getEffectiveSession } from '@/lib/effective-session'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Le concept YES BOX' }
 
 export default async function LeConceptLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import AdminActionsClient from './AdminActionsClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminActionsPage({
   searchParams,
 }: {

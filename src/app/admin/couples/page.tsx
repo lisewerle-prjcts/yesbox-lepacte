@@ -4,6 +4,8 @@ import { Eye } from 'lucide-react'
 import { adminViewAs } from '@/app/actions/admin'
 import AdminCoupleEditor from '@/components/admin/AdminCoupleEditor'
 
+export const dynamic = 'force-dynamic'
+
 const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
 const LABELS: Record<string,string> = {
   partenaire1:'M1', partenaire2:'M2', couple:'M3', quotidien:'M4', projets:'M5',

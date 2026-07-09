@@ -1,10 +1,11 @@
 -- ============================================================
--- YES BOX — Le Pacte : Schéma complet (v5)
+-- YES BOX — Le Pacte : Schéma complet (v6)
 -- À exécuter dans un nouveau projet Supabase.
 -- Pour un projet déjà déployé, appliquer plutôt dans l'ordre :
 -- supabase/migrations/0002_dix_modules.sql
 -- supabase/migrations/0003_admin_et_mode_test.sql
 -- supabase/migrations/0004_prenoms_couple.sql
+-- supabase/migrations/0005_content_overrides.sql
 -- ============================================================
 
 create extension if not exists "uuid-ossp";
@@ -196,6 +197,27 @@ create table public.settings (
 );
 alter table public.settings enable row level security;
 create policy "settings_admin" on public.settings using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+
+-- ============================================================
+-- content_overrides (mode édition — textes réécrits par l'admin)
+-- Lecture publique, écriture réservée aux comptes is_admin.
+-- ============================================================
+create table public.content_overrides (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz default now()
+);
+alter table public.content_overrides enable row level security;
+create policy "content_public_select" on public.content_overrides for select using (true);
+create policy "content_admin_insert" on public.content_overrides for insert with check (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "content_admin_update" on public.content_overrides for update using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "content_admin_delete" on public.content_overrides for delete using (
   exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
 );
 

@@ -161,3 +161,21 @@ export async function adminStopViewAs() {
   cookieStore.delete(ADMIN_VIEW_AS_COOKIE)
   redirect('/admin/couples')
 }
+
+// ============================================================
+// Mode édition — réécrit un texte de l'appli (identifié par une clé
+// stable) ou efface la réécriture pour revenir au texte par défaut.
+// ============================================================
+export async function saveContentOverride(key: string, value: string) {
+  const supabase = await assertAdmin()
+  const propre = value.trim()
+  const { error } = propre
+    ? await supabase.from('content_overrides').upsert({ key, value: propre, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+    : await supabase.from('content_overrides').delete().eq('key', key)
+  if (error) return { error: error.message }
+
+  // Le contenu est lu à la racine et partagé par toute l'appli : on
+  // invalide tout pour que le changement apparaisse instantanément partout.
+  revalidatePath('/', 'layout')
+  return { success: true }
+}

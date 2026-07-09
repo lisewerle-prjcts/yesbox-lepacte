@@ -1,11 +1,14 @@
 import { redirect } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
 import ReglagesForm from '@/components/ReglagesForm'
+import SecuriteForm from '@/components/SecuriteForm'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ReglagesPage() {
   const session = await getEffectiveSession()
   if (!session) redirect('/connexion')
-  const { db: supabase, profile } = session
+  const { db: supabase, profile, isImpersonating } = session
 
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
   let partner: { prenom: string | null; email: string } | null = null
@@ -32,6 +35,7 @@ export default async function ReglagesPage() {
         aCouple={!!profile.couple_id}
         partnerName={partner?.prenom || partner?.email || null}
       />
+      {!isImpersonating && <SecuriteForm />}
     </div>
   )
 }

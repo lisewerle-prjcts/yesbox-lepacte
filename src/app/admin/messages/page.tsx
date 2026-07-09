@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import MessagesEditor from './MessagesEditor'
 
+export const dynamic = 'force-dynamic'
+
 const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multiline?: boolean }> = {
   precommande_success: {
     label: 'Message après pré-commande (affiché dans le modal)',

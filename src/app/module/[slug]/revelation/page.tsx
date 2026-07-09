@@ -3,6 +3,8 @@ import { getEffectiveSession } from '@/lib/effective-session'
 import { getModuleBySlug, moduleTitre } from '@/lib/modules-data'
 import RevelationClient from '@/components/module/RevelationClient'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps { params: Promise<{ slug: string }> }
 
 export default async function RevelationPage({ params }: PageProps) {

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import { deconnexion } from '@/app/actions/auth'
+import EditableText from '@/components/edit/EditableText'
 import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck, Info, Settings } from 'lucide-react'
 
 interface DashboardNavProps {
@@ -35,7 +36,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
-              {l.icon}{l.label}
+              {l.icon}<EditableText k={`nav.${l.href.replace(/\//g, '') || 'accueil'}`} as="span">{l.label}</EditableText>
             </Link>
           ))}
         </nav>
@@ -62,7 +63,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--ink)' }}
               onClick={() => setOpen(false)}>
-              {l.icon}{l.label}
+              {l.icon}<EditableText k={`nav.${l.href.replace(/\//g, '') || 'accueil'}`} as="span">{l.label}</EditableText>
             </Link>
           ))}
           <div style={{ borderTop: '1px solid var(--line)', marginTop: 8, paddingTop: 8 }}>

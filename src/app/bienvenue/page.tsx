@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
 import BienvenueClient from '@/components/BienvenueClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Bienvenue' }
 
 export default async function BienvenuePage() {

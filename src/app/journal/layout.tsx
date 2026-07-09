@@ -3,6 +3,8 @@ import { getEffectiveSession } from '@/lib/effective-session'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner'
 
+export const dynamic = 'force-dynamic'
+
 export default async function JournalLayout({ children }: { children: React.ReactNode }) {
   const session = await getEffectiveSession()
   if (!session) redirect('/connexion')

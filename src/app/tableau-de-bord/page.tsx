@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULES, moduleTitre } from '@/lib/modules-data'
 import type { Module } from '@/types'
+import EditableText from '@/components/edit/EditableText'
 import { Lock, CheckCircle, ChevronRight, UserPlus, ArrowRight, RotateCcw } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 
 export default async function TableauDeBordPage() {
   const session = await getEffectiveSession()
@@ -161,7 +164,7 @@ export default async function TableauDeBordPage() {
             <div style={{ flex: 1, minWidth: 200 }}>
               <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>PROCHAINE ÉTAPE · MODULE {String(next.n).padStart(2, '0')}</p>
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
-              <p style={{ fontSize: 13, color: 'var(--muted)' }}>{next.description}</p>
+              <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText k={`module.${next.slug}.description`} as="span" multiline>{next.description}</EditableText></p>
             </div>
             <Link href={`/module/${next.slug}`} className="btn-brand">
               Commencer <ArrowRight className="w-4 h-4" />
@@ -200,11 +203,11 @@ export default async function TableauDeBordPage() {
               <div className="flex items-center gap-3">
                 <div>
                   <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{titre}</p>
-                  <p style={{ fontSize: 12, color: 'var(--muted)' }}>{m.sousTitre}</p>
+                  <p style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText k={`module.${m.slug}.soustitre`} as="span">{m.sousTitre}</EditableText></p>
                 </div>
               </div>
 
-              <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.55 }}>{m.description}</p>
+              <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.55 }}><EditableText k={`module.${m.slug}.description`} as="span" multiline>{m.description}</EditableText></p>
 
               {/* Pied de carte */}
               {isDone && (scoresParModule[m.slug]?.moi || scoresParModule[m.slug]?.partenaire) && (

@@ -3,6 +3,8 @@ import { getEffectiveSession } from '@/lib/effective-session'
 import { getModuleBySlug, moduleTitre } from '@/lib/modules-data'
 import ModuleQuestions from '@/components/module/ModuleQuestions'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps { params: Promise<{ slug: string }> }
 
 export default async function ModulePage({ params }: PageProps) {
