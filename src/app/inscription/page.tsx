@@ -7,6 +7,7 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import { inscription } from '@/app/actions/auth'
+import EditableText from '@/components/edit/EditableText'
 import { Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton() {
@@ -35,10 +36,10 @@ export default function InscriptionPage() {
         <div className="text-center mb-8">
           <Logo size="md" className="inline-block mb-4" />
           <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            Crée ton compte
+            <EditableText k="inscription.titre" as="span">Crée ton compte</EditableText>
           </h1>
           <p className="text-gray-500 mt-2">
-            Et commence à construire votre pacte
+            <EditableText k="inscription.soustitre" as="span">Et commence à construire votre pacte</EditableText>
           </p>
         </div>
 

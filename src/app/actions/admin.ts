@@ -163,6 +163,27 @@ export async function adminStopViewAs() {
 }
 
 // ============================================================
+// Accès admin — un admin peut promouvoir/rétrograder un autre compte,
+// jamais le sien (pour éviter un auto-verrouillage accidentel).
+// ============================================================
+export async function adminToggleAdminAccess(profileId: string, value: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+  if (user.id === profileId) return { error: 'Tu ne peux pas modifier ton propre accès admin.' }
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).single()
+  if (!profile?.is_admin) return { error: 'Accès refusé' }
+
+  const { error } = await admin.from('profiles').update({ is_admin: value }).eq('id', profileId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/securite')
+  return { success: true }
+}
+
+// ============================================================
 // Mode édition — réécrit un texte de l'appli (identifié par une clé
 // stable) ou efface la réécriture pour revenir au texte par défaut.
 // ============================================================

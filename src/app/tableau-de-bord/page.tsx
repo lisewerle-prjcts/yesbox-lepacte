@@ -91,13 +91,13 @@ export default async function TableauDeBordPage() {
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
           {couple?.nom_couple
-            ? <>Bonjour, <span style={{ color: 'var(--brand)' }}>{couple.nom_couple}</span></>
-            : <>Bonjour{profile?.prenom ? `, ${profile.prenom}` : ''}</>}
+            ? <><EditableText k="dashboard.bonjour" as="span">Bonjour,</EditableText> <span style={{ color: 'var(--brand)' }}>{couple.nom_couple}</span></>
+            : <><EditableText k="dashboard.bonjour_seul" as="span">Bonjour</EditableText>{profile?.prenom ? `, ${profile.prenom}` : ''}</>}
         </h1>
         <p style={{ color: 'var(--muted)', fontSize: 14 }}>
           {partner
-            ? `Tu construis ce pacte avec ${partner.prenom || partner.email}`
-            : "Invite ton/ta partenaire pour commencer le voyage ensemble"}
+            ? <EditableText k="dashboard.soustitre_avec_partenaire" as="span">{`Tu construis ce pacte avec ${partner.prenom || partner.email}`}</EditableText>
+            : <EditableText k="dashboard.soustitre_sans_partenaire" as="span">Invite ton/ta partenaire pour commencer le voyage ensemble</EditableText>}
         </p>
       </div>
 
@@ -109,11 +109,11 @@ export default async function TableauDeBordPage() {
               <UserPlus className="w-4 h-4" style={{ color: 'var(--brand)' }} />
             </div>
             <div>
-              <p className="font-semibold text-sm" style={{ color: 'var(--ink)' }}>Invite ton/ta partenaire</p>
-              <p className="text-xs" style={{ color: 'var(--muted)' }}>Le parcours est bien plus riche à deux</p>
+              <p className="font-semibold text-sm" style={{ color: 'var(--ink)' }}><EditableText k="dashboard.banniere_invitation.titre" as="span">Invite ton/ta partenaire</EditableText></p>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}><EditableText k="dashboard.banniere_invitation.soustitre" as="span">Le parcours est bien plus riche à deux</EditableText></p>
             </div>
           </div>
-          <Link href="/inviter-partenaire" className="btn-brand text-sm py-2">Envoyer l'invitation</Link>
+          <Link href="/inviter-partenaire" className="btn-brand text-sm py-2"><EditableText k="dashboard.banniere_invitation.cta" as="span">Envoyer l'invitation</EditableText></Link>
         </div>
       )}
 
@@ -122,7 +122,7 @@ export default async function TableauDeBordPage() {
         <div className="card p-5 mb-6">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>Votre progression</h2>
+              <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}><EditableText k="dashboard.progression.titre" as="span">Votre progression</EditableText></h2>
               <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{done} module{done > 1 ? 's' : ''} révélé{done > 1 ? 's' : ''} sur {MODULES.length}</p>
             </div>
             <span className="font-serif font-bold" style={{ fontSize: 28, color: pct === 100 ? 'var(--sage)' : 'var(--brand)' }}>{pct}%</span>
@@ -130,8 +130,8 @@ export default async function TableauDeBordPage() {
           <div className="bar sage"><i style={{ width: `${pct}%` }} /></div>
           {pct === 100 && (
             <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-              <span className="text-sm font-semibold" style={{ color: 'var(--sage)' }}>🎉 Votre pacte est prêt à être signé !</span>
-              <Link href="/pacte" className="btn-sage text-sm py-2">Voir notre Pacte</Link>
+              <span className="text-sm font-semibold" style={{ color: 'var(--sage)' }}>🎉 <EditableText k="dashboard.progression.complete" as="span">Votre pacte est prêt à être signé !</EditableText></span>
+              <Link href="/pacte" className="btn-sage text-sm py-2"><EditableText k="dashboard.progression.cta_pacte" as="span">Voir notre Pacte</EditableText></Link>
             </div>
           )}
         </div>
@@ -140,14 +140,14 @@ export default async function TableauDeBordPage() {
       {/* Score total de connivence — à la fin des 9 premiers modules */}
       {scoreTotal && (
         <div className="card p-5 mb-6" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
-          <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 12 }}>Score total de connivence</h2>
+          <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 12 }}><EditableText k="dashboard.score_total.titre" as="span">Score total de connivence</EditableText></h2>
           <div className="flex flex-wrap gap-8">
             <div>
-              <p style={{ fontSize: 12, color: 'var(--muted)' }}>{profile?.prenom || 'Toi'}</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)' }}>{profile?.prenom || <EditableText k="dashboard.score_total.toi" as="span">Toi</EditableText>}</p>
               <p className="font-serif font-bold" style={{ fontSize: 26, color: 'var(--brand)' }}>{scoreTotal.moi} <span style={{ fontSize: 14, color: 'var(--muted)', fontFamily: 'inherit', fontWeight: 500 }}>/ {(MODULES.length - 1) * 5}</span></p>
             </div>
             <div>
-              <p style={{ fontSize: 12, color: 'var(--muted)' }}>{partner?.prenom || 'Ton/ta partenaire'}</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)' }}>{partner?.prenom || <EditableText k="dashboard.score_total.partenaire" as="span">Ton/ta partenaire</EditableText>}</p>
               <p className="font-serif font-bold" style={{ fontSize: 26, color: 'var(--brand)' }}>{scoreTotal.partenaire} <span style={{ fontSize: 14, color: 'var(--muted)', fontFamily: 'inherit', fontWeight: 500 }}>/ {(MODULES.length - 1) * 5}</span></p>
             </div>
           </div>
@@ -162,19 +162,23 @@ export default async function TableauDeBordPage() {
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>PROCHAINE ÉTAPE · MODULE {String(next.n).padStart(2, '0')}</p>
+              <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>
+                <EditableText k="dashboard.prochaine_etape.label" as="span">PROCHAINE ÉTAPE</EditableText> · MODULE {String(next.n).padStart(2, '0')}
+              </p>
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText k={`module.${next.slug}.description`} as="span" multiline>{next.description}</EditableText></p>
             </div>
             <Link href={`/module/${next.slug}`} className="btn-brand">
-              Commencer <ArrowRight className="w-4 h-4" />
+              <EditableText k="dashboard.prochaine_etape.cta" as="span">Commencer</EditableText> <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         )
       })()}
 
       {/* Grille des 10 modules */}
-      <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>Les 10 modules de votre Pacte</h2>
+      <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>
+        <EditableText k="dashboard.grille.titre" as="span">Les 10 modules de votre Pacte</EditableText>
+      </h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MODULES.map((m, i) => {
           const st = profile?.couple_id ? getModStatus(m.slug) : (i === 0 ? 'active' : 'locked')
@@ -193,10 +197,10 @@ export default async function TableauDeBordPage() {
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE {String(m.n).padStart(2, '0')}</span>
                 <div className="flex items-center gap-1.5">
-                  {m.annuel && <span className="tag-muted">Annuel</span>}
-                  {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" />Révélé</span>}
-                  {isActive && <span className="tag-brand">En cours</span>}
-                  {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" />Verrouillé</span>}
+                  {m.annuel && <span className="tag-muted"><EditableText k="dashboard.badge.annuel" as="span">Annuel</EditableText></span>}
+                  {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" /><EditableText k="dashboard.badge.revele" as="span">Révélé</EditableText></span>}
+                  {isActive && <span className="tag-brand"><EditableText k="dashboard.badge.en_cours" as="span">En cours</EditableText></span>}
+                  {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText k="dashboard.badge.verrouille" as="span">Verrouillé</EditableText></span>}
                 </div>
               </div>
 
@@ -213,21 +217,21 @@ export default async function TableauDeBordPage() {
               {isDone && (scoresParModule[m.slug]?.moi || scoresParModule[m.slug]?.partenaire) && (
                 <div className="flex flex-col gap-0.5" style={{ fontSize: 11.5 }}>
                   {scoresParModule[m.slug]?.moi != null && (
-                    <span style={{ color: 'var(--muted)' }}>Toi <span style={{ color: 'var(--brand)' }}>{'★'.repeat(scoresParModule[m.slug]!.moi!)}{'☆'.repeat(5 - scoresParModule[m.slug]!.moi!)}</span></span>
+                    <span style={{ color: 'var(--muted)' }}><EditableText k="dashboard.carte.toi" as="span">Toi</EditableText> <span style={{ color: 'var(--brand)' }}>{'★'.repeat(scoresParModule[m.slug]!.moi!)}{'☆'.repeat(5 - scoresParModule[m.slug]!.moi!)}</span></span>
                   )}
                   {scoresParModule[m.slug]?.partenaire != null && (
-                    <span style={{ color: 'var(--muted)' }}>{partner?.prenom || 'Partenaire'} <span style={{ color: 'var(--brand)' }}>{'★'.repeat(scoresParModule[m.slug]!.partenaire!)}{'☆'.repeat(5 - scoresParModule[m.slug]!.partenaire!)}</span></span>
+                    <span style={{ color: 'var(--muted)' }}>{partner?.prenom || <EditableText k="dashboard.carte.partenaire" as="span">Partenaire</EditableText>} <span style={{ color: 'var(--brand)' }}>{'★'.repeat(scoresParModule[m.slug]!.partenaire!)}{'☆'.repeat(5 - scoresParModule[m.slug]!.partenaire!)}</span></span>
                   )}
                 </div>
               )}
               {aEteRejoue && (
                 <div className="flex items-center gap-1.5" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                  <RotateCcw className="w-3 h-3" />Rejoué {cyclesParSlug[m.slug]} fois
+                  <RotateCcw className="w-3 h-3" /><EditableText k="dashboard.carte.rejoue" as="span">Rejoué</EditableText> {cyclesParSlug[m.slug]} <EditableText k="dashboard.carte.fois" as="span">fois</EditableText>
                 </div>
               )}
               {isActive && !isDone && (
                 <div className="flex items-center justify-between text-xs" style={{ color: 'var(--brand)' }}>
-                  <span>Continuer</span>
+                  <span><EditableText k="dashboard.carte.continuer" as="span">Continuer</EditableText></span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
               )}
