@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import MessagesEditor from './MessagesEditor'
 
 const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multiline?: boolean }> = {
@@ -33,7 +33,7 @@ const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multili
 }
 
 export default async function AdminMessages() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: settings } = await supabase.from('settings').select('key,value')
   const settingsMap: Record<string, string> = {}
   settings?.forEach(s => { settingsMap[s.key] = s.value })

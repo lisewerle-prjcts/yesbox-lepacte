@@ -2,16 +2,15 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULE_ORDER } from '@/lib/modules-data'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  const session = await getEffectiveSession()
+  if (!session) return { error: 'Non authentifié' }
 
-  const { error } = await supabase.from('reponses').upsert(
-    { module_id: moduleId, user_id: user.id, question_slug: questionSlug, valeur },
+  const { error } = await session.db.from('reponses').upsert(
+    { module_id: moduleId, user_id: session.userId, question_slug: questionSlug, valeur },
     { onConflict: 'module_id,user_id,question_slug' }
   )
   if (error) return { error: error.message }
@@ -19,14 +18,11 @@ export async function sauvegarderReponse(moduleId: string, questionSlug: string,
 }
 
 export async function terminerModule(moduleId: string, moduleSlug: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  const session = await getEffectiveSession()
+  if (!session) return { error: 'Non authentifié' }
+  if (!session.profile.couple_id) return { error: 'Aucun couple trouvé' }
 
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
-
-  await supabase.from('modules').update({ statut: 'complete', completed_at: new Date().toISOString() }).eq('id', moduleId)
+  await session.db.from('modules').update({ statut: 'complete', completed_at: new Date().toISOString() }).eq('id', moduleId)
 
   revalidatePath('/tableau-de-bord')
   revalidatePath(`/module/${moduleSlug}`)
@@ -34,15 +30,13 @@ export async function terminerModule(moduleId: string, moduleSlug: string) {
 }
 
 export async function noterConnivence(moduleId: string, moduleSlug: string, score: number) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
-
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
+  const session = await getEffectiveSession()
+  if (!session) return { error: 'Non authentifié' }
+  if (!session.profile.couple_id) return { error: 'Aucun couple trouvé' }
+  const { db: supabase, userId, profile } = session
 
   const { error } = await supabase.from('scores').upsert(
-    { module_id: moduleId, user_id: user.id, score },
+    { module_id: moduleId, user_id: userId, score },
     { onConflict: 'module_id,user_id' }
   )
   if (error) return { error: error.message }
@@ -76,12 +70,10 @@ export async function noterConnivence(moduleId: string, moduleSlug: string, scor
 }
 
 export async function recommencerModule(moduleSlug: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
-
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
+  const session = await getEffectiveSession()
+  if (!session) return { error: 'Non authentifié' }
+  if (!session.profile.couple_id) return { error: 'Aucun couple trouvé' }
+  const { db: supabase, profile } = session
 
   const { data: dernierCycle } = await supabase
     .from('modules')

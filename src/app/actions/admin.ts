@@ -1,16 +1,23 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { ADMIN_VIEW_AS_COOKIE } from '@/lib/effective-session'
 import nodemailer from 'nodemailer'
 
+// Vérifie l'admin via la session réelle (cookies), puis renvoie le client
+// service role : les couples gérés par l'admin ne sont pas les siens, donc
+// il faut contourner les RLS scoping "mon propre couple" pour lire/écrire.
 async function assertAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) throw new Error('Accès refusé')
-  return supabase
+  return admin
 }
 
 const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
@@ -83,4 +90,29 @@ export async function adminSaveMessage(key: string, value: string) {
   await supabase.from('settings').upsert({ key, value }, { onConflict: 'key' })
   revalidatePath('/admin/messages')
   return { success: true }
+}
+
+// ============================================================
+// Mode « voir / tester en tant que » — un admin peut se mettre à la place
+// d'un membre d'un couple pour vérifier son parcours, y compris répondre
+// aux questions à sa place.
+// ============================================================
+
+export async function adminViewAs(profileId: string) {
+  await assertAdmin()
+  const cookieStore = await cookies()
+  cookieStore.set(ADMIN_VIEW_AS_COOKIE, profileId, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 4, // 4h
+  })
+  redirect('/tableau-de-bord')
+}
+
+export async function adminStopViewAs() {
+  const cookieStore = await cookies()
+  cookieStore.delete(ADMIN_VIEW_AS_COOKIE)
+  redirect('/admin/couples')
 }

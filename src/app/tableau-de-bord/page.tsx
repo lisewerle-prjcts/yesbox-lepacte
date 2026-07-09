@@ -1,17 +1,16 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULES, moduleTitre } from '@/lib/modules-data'
 import type { Module } from '@/types'
 import { Lock, CheckCircle, ChevronRight, UserPlus, ArrowRight, RotateCcw } from 'lucide-react'
 
 export default async function TableauDeBordPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  const session = await getEffectiveSession()
+  if (!session) redirect('/connexion')
+  const { db: supabase, userId, profile, isImpersonating } = session
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (profile && !profile.intro_vue) redirect('/bienvenue')
+  if (profile && !profile.intro_vue && !isImpersonating) redirect('/bienvenue')
 
   let modulesRaw: Module[] = []
   let partner: { prenom: string | null; email: string; role: string | null } | null = null
@@ -20,7 +19,7 @@ export default async function TableauDeBordPage() {
   if (profile?.couple_id) {
     const [{ data: mods }, { data: part }, { data: coup }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('cycle'),
-      supabase.from('profiles').select('prenom, email, role').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
+      supabase.from('profiles').select('prenom, email, role').eq('couple_id', profile.couple_id).neq('id', userId).single(),
       supabase.from('couples').select('nom_couple').eq('id', profile.couple_id).single(),
     ])
     modulesRaw = mods || []
@@ -64,8 +63,8 @@ export default async function TableauDeBordPage() {
   if (idsRevealed.length > 0) {
     const { data: scoresModules } = await supabase.from('scores').select('module_id, user_id, score').in('module_id', idsRevealed)
     for (const m of modules) {
-      const moi = scoresModules?.find(s => s.module_id === m.id && s.user_id === user.id)?.score ?? null
-      const partenaireScore = scoresModules?.find(s => s.module_id === m.id && s.user_id !== user.id)?.score ?? null
+      const moi = scoresModules?.find(s => s.module_id === m.id && s.user_id === userId)?.score ?? null
+      const partenaireScore = scoresModules?.find(s => s.module_id === m.id && s.user_id !== userId)?.score ?? null
       scoresParModule[m.slug] = { moi, partenaire: partenaireScore }
     }
   }
@@ -77,8 +76,8 @@ export default async function TableauDeBordPage() {
     const idsScorables = MODULES.filter(m => m.slug !== 'bac').map(m => getModData(m.slug)?.id).filter(Boolean) as string[]
     if (idsScorables.length > 0) {
       const { data: scores } = await supabase.from('scores').select('user_id, score').in('module_id', idsScorables)
-      const moi = (scores || []).filter(s => s.user_id === user.id).reduce((acc, s) => acc + s.score, 0)
-      const partenaireTotal = (scores || []).filter(s => s.user_id !== user.id).reduce((acc, s) => acc + s.score, 0)
+      const moi = (scores || []).filter(s => s.user_id === userId).reduce((acc, s) => acc + s.score, 0)
+      const partenaireTotal = (scores || []).filter(s => s.user_id !== userId).reduce((acc, s) => acc + s.score, 0)
       scoreTotal = { moi, partenaire: partenaireTotal }
     }
   }

@@ -1,23 +1,17 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULES, moduleTitre } from '@/lib/modules-data'
 import { CheckCircle, Lock, Heart, ScrollText } from 'lucide-react'
 import { questionTexte } from '@/lib/modules-data'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  const session = await getEffectiveSession()
+  if (!session) redirect('/connexion')
+  const { db: supabase, userId: myId, profile } = session
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, couples(*)')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.couple_id) {
+  if (!profile.couple_id) {
     redirect('/inviter-partenaire')
   }
 
@@ -46,7 +40,7 @@ export default async function PactePage() {
     .from('profiles')
     .select('prenom, email, id, role')
     .eq('couple_id', profile.couple_id)
-    .neq('id', user.id)
+    .neq('id', myId)
     .single()
 
   const prenomInitiateur = profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null
@@ -126,7 +120,7 @@ export default async function PactePage() {
             )
           }
 
-          const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
+          const mesReponses = moduleData ? getReponsesModule(moduleData.id, myId) : []
           const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
 
           return (

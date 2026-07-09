@@ -1,8 +1,8 @@
 -- ============================================================
 -- YES BOX — Le Pacte : Schéma complet (v4)
 -- À exécuter dans un nouveau projet Supabase.
--- Pour un projet déjà déployé avec le schéma v3, utiliser plutôt
--- supabase/migrations/0002_dix_modules.sql
+-- Pour un projet déjà déployé, appliquer plutôt dans l'ordre :
+-- supabase/migrations/0002_dix_modules.sql puis 0003_admin_et_mode_test.sql
 -- ============================================================
 
 create extension if not exists "uuid-ossp";
@@ -198,8 +198,8 @@ create policy "settings_admin" on public.settings using (
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email);
+  insert into public.profiles (id, email, is_admin)
+  values (new.id, new.email, new.email = 'lise.yesbox@gmail.com');
   return new;
 end;
 $$;

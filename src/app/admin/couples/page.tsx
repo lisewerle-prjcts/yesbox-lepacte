@@ -1,5 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Eye } from 'lucide-react'
+import { adminViewAs } from '@/app/actions/admin'
 
 const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
 const LABELS: Record<string,string> = {
@@ -18,7 +20,7 @@ const STATUS_TEXT: Record<string,string> = {
 }
 
 export default async function AdminCouples() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: couples } = await supabase.from('couples').select('id, created_at').order('created_at', { ascending: false })
   if (!couples?.length) return (
@@ -104,9 +106,17 @@ export default async function AdminCouples() {
                   )
                   const done = memberModules.length
                   return (
-                    <div key={member.id} className="surface p-3 flex items-center justify-between">
-                      <span style={{ fontSize: 13, fontWeight: 500 }}>{member.prenom || member.email}</span>
-                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>{done}/{SLUGS.length} modules</span>
+                    <div key={member.id} className="surface p-3 flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{member.prenom || member.email}</span>
+                        <span style={{ fontSize: 12, color: 'var(--muted)', marginLeft: 8 }}>{done}/{SLUGS.length} modules</span>
+                      </div>
+                      <form action={adminViewAs.bind(null, member.id)}>
+                        <button type="submit" className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-medium"
+                          style={{ background: 'var(--brand-tint)', color: 'var(--brand)', border: '1px solid var(--brand-soft)' }}>
+                          <Eye className="w-3 h-3" />Voir son espace
+                        </button>
+                      </form>
                     </div>
                   )
                 })}

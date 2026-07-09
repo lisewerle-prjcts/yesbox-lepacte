@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
 export default async function AdminHome() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [
     { count: totalPrecommandes },

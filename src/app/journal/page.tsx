@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULES, moduleTitre } from '@/lib/modules-data'
 import Link from 'next/link'
 import { BookOpen } from 'lucide-react'
@@ -8,14 +8,12 @@ import type { Module } from '@/types'
 export const metadata = { title: 'Journal de couple' }
 
 export default async function JournalPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  const session = await getEffectiveSession()
+  if (!session) redirect('/connexion')
+  const { db: supabase, userId, profile } = session
+  if (!profile.couple_id) redirect('/tableau-de-bord')
 
-  const { data: profile } = await supabase.from('profiles').select('couple_id, prenom, role').eq('id', user.id).single()
-  if (!profile?.couple_id) redirect('/tableau-de-bord')
-
-  const { data: partner } = await supabase.from('profiles').select('prenom, role').eq('couple_id', profile.couple_id).neq('id', user.id).single()
+  const { data: partner } = await supabase.from('profiles').select('prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single()
 
   const [{ data: modulesRaw }, { data: entries }] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('cycle'),
@@ -38,8 +36,8 @@ export default async function JournalPage() {
     const { data: scores } = await supabase.from('scores').select('module_id, user_id, score').in('module_id', revealedModules.map(m => m.id))
     for (const m of revealedModules) {
       scoresParModule[m.slug] = {
-        moi: scores?.find(s => s.module_id === m.id && s.user_id === user.id)?.score ?? null,
-        partenaire: scores?.find(s => s.module_id === m.id && s.user_id !== user.id)?.score ?? null,
+        moi: scores?.find(s => s.module_id === m.id && s.user_id === userId)?.score ?? null,
+        partenaire: scores?.find(s => s.module_id === m.id && s.user_id !== userId)?.score ?? null,
       }
     }
   }

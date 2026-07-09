@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getEffectiveSession } from '@/lib/effective-session'
 import { getModuleBySlug, moduleTitre } from '@/lib/modules-data'
 import RevelationClient from '@/components/module/RevelationClient'
 
@@ -7,15 +7,14 @@ interface PageProps { params: Promise<{ slug: string }> }
 
 export default async function RevelationPage({ params }: PageProps) {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  const session = await getEffectiveSession()
+  if (!session) redirect('/connexion')
+  const { db: supabase, userId, profile } = session
 
   const moduleInfo = getModuleBySlug(slug)
   if (!moduleInfo) notFound()
 
-  const { data: profile } = await supabase.from('profiles').select('couple_id, prenom, role').eq('id', user.id).single()
-  if (!profile?.couple_id) redirect('/tableau-de-bord')
+  if (!profile.couple_id) redirect('/tableau-de-bord')
 
   const { data: moduleData } = await supabase
     .from('modules').select('*')
@@ -23,14 +22,14 @@ export default async function RevelationPage({ params }: PageProps) {
     .order('cycle', { ascending: false }).limit(1).single()
   if (!moduleData || moduleData.statut === 'locked') redirect('/tableau-de-bord')
 
-  const { data: partner } = await supabase.from('profiles').select('id, prenom, role').eq('couple_id', profile.couple_id).neq('id', user.id).single()
+  const { data: partner } = await supabase.from('profiles').select('id, prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single()
 
   const prenomInitiateur = profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null
   const prenomPartenaire = profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null
   const titre = moduleTitre(moduleInfo, prenomInitiateur, prenomPartenaire)
 
   const [{ data: mesReponses }, { data: reponsesPartner }, { data: scores }, { data: journalEntry }, { data: cyclesPrecedents }] = await Promise.all([
-    supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', user.id),
+    supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', userId),
     partner ? supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', partner.id) : Promise.resolve({ data: [] }),
     supabase.from('scores').select('*').eq('module_id', moduleData.id),
     supabase.from('journal_entries').select('contenu').eq('couple_id', profile.couple_id).eq('module_slug', slug).single(),
@@ -40,7 +39,7 @@ export default async function RevelationPage({ params }: PageProps) {
       .order('cycle', { ascending: false }),
   ])
 
-  const myScore = scores?.find(s => s.user_id === user.id)?.score ?? null
+  const myScore = scores?.find(s => s.user_id === userId)?.score ?? null
   const partnerScore = partner ? scores?.find(s => s.user_id === partner.id)?.score ?? null : null
 
   let historique: { cycle: number; revealedAt: string | null; myScore: number | null; partnerScore: number | null }[] = []
@@ -50,7 +49,7 @@ export default async function RevelationPage({ params }: PageProps) {
     historique = cyclesPrecedents.map(c => ({
       cycle: c.cycle,
       revealedAt: c.revealed_at,
-      myScore: scoresHistorique?.find(s => s.module_id === c.id && s.user_id === user.id)?.score ?? null,
+      myScore: scoresHistorique?.find(s => s.module_id === c.id && s.user_id === userId)?.score ?? null,
       partnerScore: partner ? scoresHistorique?.find(s => s.module_id === c.id && s.user_id === partner.id)?.score ?? null : null,
     }))
   }
