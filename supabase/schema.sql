@@ -1,8 +1,10 @@
 -- ============================================================
--- YES BOX — Le Pacte : Schéma complet (v4)
+-- YES BOX — Le Pacte : Schéma complet (v5)
 -- À exécuter dans un nouveau projet Supabase.
 -- Pour un projet déjà déployé, appliquer plutôt dans l'ordre :
--- supabase/migrations/0002_dix_modules.sql puis 0003_admin_et_mode_test.sql
+-- supabase/migrations/0002_dix_modules.sql
+-- supabase/migrations/0003_admin_et_mode_test.sql
+-- supabase/migrations/0004_prenoms_couple.sql
 -- ============================================================
 
 create extension if not exists "uuid-ossp";
@@ -39,6 +41,11 @@ create table public.couples (
   id uuid primary key default uuid_generate_v4(),
   nom_couple text,
   date_anniversaire date,
+  -- Source de vérité pour le nom des modules 1 et 2 : synchronisés depuis
+  -- profiles.prenom quand un membre renseigne le sien, mais éditables
+  -- directement par l'admin, même avant que les deux comptes existent.
+  prenom_partenaire1 text,
+  prenom_partenaire2 text,
   invite_token uuid unique default uuid_generate_v4(),
   invite_token_expires_at timestamptz default (now() + interval '7 days'),
   invite_used boolean default false,

@@ -34,15 +34,13 @@ export default async function PactePage() {
     .select('*')
     .in('module_id', modules.map((m: Module) => m.id))
 
-  const { data: partner } = await supabase
-    .from('profiles')
-    .select('prenom, email, id, role')
-    .eq('couple_id', profile.couple_id)
-    .neq('id', myId)
-    .single()
+  const [{ data: partner }, { data: couple }] = await Promise.all([
+    supabase.from('profiles').select('prenom, email, id, role').eq('couple_id', profile.couple_id).neq('id', myId).single(),
+    supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single(),
+  ])
 
-  const prenomInitiateur = profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null
-  const prenomPartenaire = profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null
+  const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)
+  const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null)
 
   const modulesTermines = modules.filter((m: Module) => m.statut === 'complete')
   const tousTermines = modulesTermines.length === MODULES.length

@@ -23,7 +23,7 @@ const STATUS_TEXT: Record<string,string> = {
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const { data: couples } = await supabase.from('couples').select('id, created_at, nom_couple').order('created_at', { ascending: false })
+  const { data: couples } = await supabase.from('couples').select('id, created_at, nom_couple, prenom_partenaire1, prenom_partenaire2').order('created_at', { ascending: false })
   if (!couples?.length) return (
     <div>
       <h1 className="font-serif text-3xl font-bold mb-6" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
@@ -34,7 +34,7 @@ export default async function AdminCouples() {
   const coupleIds = couples.map(c => c.id)
 
   const [{ data: profiles }, { data: modulesRaw }] = await Promise.all([
-    supabase.from('profiles').select('id,prenom,email,couple_id').in('couple_id', coupleIds),
+    supabase.from('profiles').select('id,prenom,email,couple_id,role').in('couple_id', coupleIds),
     supabase.from('modules').select('id,couple_id,slug,statut,revealed,completed_at,revealed_at').eq('cycle', 1).in('couple_id', coupleIds),
   ])
 
@@ -59,21 +59,32 @@ export default async function AdminCouples() {
         {couples.map(couple => {
           const members = (profiles || []).filter(p => p.couple_id === couple.id)
           const coupleModules = (modules || []).filter(m => m.couple_id === couple.id)
+          const membre1 = members.find(m => m.role === 'initiateur')
+          const membre2 = members.find(m => m.role === 'partenaire')
+          const prenom1 = couple.prenom_partenaire1 || membre1?.prenom || null
+          const prenom2 = couple.prenom_partenaire2 || membre2?.prenom || null
+          const revealedCount = coupleModules.filter(m => m.revealed).length
 
           return (
             <div key={couple.id} className="card p-5">
               {/* En-tête couple */}
               <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
                 <div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {members.map(m => (
-                      <span key={m.id} className="font-semibold" style={{ fontSize: 15 }}>{m.prenom || '—'}</span>
-                    )).reduce((acc: React.ReactNode[], el, i) => i === 0 ? [el] : [...acc, <span key={`sep-${i}`} style={{ color: 'var(--muted)' }}>&</span>, el], [])}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-serif font-bold" style={{ fontSize: 17, color: 'var(--ink)' }}>
+                      {couple.nom_couple || `${prenom1 || 'Partenaire 1'} & ${prenom2 || 'Partenaire 2'}`}
+                    </span>
+                    <span className="tag-muted" style={{ fontSize: 11 }}>{revealedCount}/{SLUGS.length} modules révélés</span>
                   </div>
-                  <div className="flex gap-3 flex-wrap mt-1">
-                    {members.map(m => (
-                      <span key={m.id} className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{m.email}</span>
-                    ))}
+                  <div className="flex gap-4 flex-wrap mt-1.5">
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                      Partenaire 1 : <strong style={{ color: 'var(--ink-2)' }}>{prenom1 || 'pas encore inscrit·e'}</strong>
+                      {membre1 && <span className="font-mono" style={{ fontSize: 10.5, marginLeft: 5 }}>({membre1.email})</span>}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                      Partenaire 2 : <strong style={{ color: 'var(--ink-2)' }}>{prenom2 || 'pas encore inscrit·e'}</strong>
+                      {membre2 && <span className="font-mono" style={{ fontSize: 10.5, marginLeft: 5 }}>({membre2.email})</span>}
+                    </span>
                   </div>
                 </div>
                 <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
@@ -99,19 +110,12 @@ export default async function AdminCouples() {
                 })}
               </div>
 
-              {/* Progression membres */}
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {members.map(member => {
-                  const memberModules = coupleModules.filter(m =>
-                    m.statut === 'complete' || m.statut === 'revealed' || m.revealed
-                  )
-                  const done = memberModules.length
-                  return (
+              {/* Voir l'espace de chaque membre inscrit */}
+              {members.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {members.map(member => (
                     <div key={member.id} className="surface p-3 flex items-center justify-between gap-2 flex-wrap">
-                      <div>
-                        <span style={{ fontSize: 13, fontWeight: 500 }}>{member.prenom || member.email}</span>
-                        <span style={{ fontSize: 12, color: 'var(--muted)', marginLeft: 8 }}>{done}/{SLUGS.length} modules</span>
-                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{member.prenom || member.email}</span>
                       <form action={adminViewAs.bind(null, member.id)}>
                         <button type="submit" className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-medium"
                           style={{ background: 'var(--brand-tint)', color: 'var(--brand)', border: '1px solid var(--brand-soft)' }}>
@@ -119,9 +123,9 @@ export default async function AdminCouples() {
                         </button>
                       </form>
                     </div>
-                  )
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Actions rapides */}
               <div className="mt-3 flex gap-2 flex-wrap items-start">
@@ -132,7 +136,13 @@ export default async function AdminCouples() {
                 >
                   Actions →
                 </Link>
-                <AdminCoupleEditor coupleId={couple.id} nomCoupleInitial={couple.nom_couple} members={members} />
+                <AdminCoupleEditor
+                  coupleId={couple.id}
+                  nomCoupleInitial={couple.nom_couple}
+                  prenom1Initial={prenom1}
+                  prenom2Initial={prenom2}
+                  peutSupprimer={members.length === 0}
+                />
               </div>
             </div>
           )

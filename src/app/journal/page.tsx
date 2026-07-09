@@ -14,6 +14,7 @@ export default async function JournalPage() {
   if (!profile.couple_id) redirect('/tableau-de-bord')
 
   const { data: partner } = await supabase.from('profiles').select('prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single()
+  const { data: couple } = await supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single()
 
   const [{ data: modulesRaw }, { data: entries }] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('cycle'),
@@ -42,8 +43,8 @@ export default async function JournalPage() {
     }
   }
 
-  const prenomInitiateur = profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null
-  const prenomPartenaire = profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null
+  const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)
+  const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null)
 
   return (
     <div className="fade" style={{ maxWidth: 680, margin: '0 auto' }}>

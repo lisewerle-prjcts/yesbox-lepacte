@@ -94,7 +94,10 @@ export async function adminSaveMessage(key: string, value: string) {
 
 // ============================================================
 // Configuration d'un espace couple depuis l'admin : nom du couple et
-// prénom de chaque membre.
+// prénom des deux partenaires. Ces prénoms sont la source de vérité pour
+// le nom des modules 1 et 2 — modifiables même avant que les deux comptes
+// existent. Si un compte correspondant existe déjà, son profil est
+// synchronisé pour que l'accueil ("Bonjour, X") reste cohérent.
 // ============================================================
 export async function adminUpdateCoupleInfo(formData: FormData) {
   const supabase = await assertAdmin()
@@ -102,14 +105,33 @@ export async function adminUpdateCoupleInfo(formData: FormData) {
   if (!coupleId) return { error: 'Couple introuvable' }
 
   const nomCouple = (formData.get('nom_couple') as string || '').trim()
-  await supabase.from('couples').update({ nom_couple: nomCouple || null }).eq('id', coupleId)
+  const prenom1 = (formData.get('prenom_partenaire1') as string || '').trim()
+  const prenom2 = (formData.get('prenom_partenaire2') as string || '').trim()
 
-  for (const [key, value] of Array.from(formData.entries())) {
-    if (!key.startsWith('prenom_')) continue
-    const profileId = key.slice('prenom_'.length)
-    const prenom = (value as string).trim()
-    if (prenom.length >= 2) await supabase.from('profiles').update({ prenom }).eq('id', profileId)
-  }
+  const { error } = await supabase.from('couples').update({
+    nom_couple: nomCouple || null,
+    prenom_partenaire1: prenom1 || null,
+    prenom_partenaire2: prenom2 || null,
+  }).eq('id', coupleId)
+  if (error) return { error: error.message }
+
+  if (prenom1.length >= 2) await supabase.from('profiles').update({ prenom: prenom1 }).eq('couple_id', coupleId).eq('role', 'initiateur')
+  if (prenom2.length >= 2) await supabase.from('profiles').update({ prenom: prenom2 }).eq('couple_id', coupleId).eq('role', 'partenaire')
+
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
+// Supprime un couple qui n'a aucun membre inscrit (doublon, test abandonné…).
+// Refuse si des comptes y sont déjà rattachés, pour ne jamais perdre de
+// données réelles depuis l'admin.
+export async function adminDeleteCouple(coupleId: string) {
+  const supabase = await assertAdmin()
+  const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('couple_id', coupleId)
+  if ((count ?? 0) > 0) return { error: 'Ce couple a des membres inscrits — suppression refusée.' }
+
+  const { error } = await supabase.from('couples').delete().eq('id', coupleId)
+  if (error) return { error: error.message }
 
   revalidatePath('/admin/couples')
   return { success: true }

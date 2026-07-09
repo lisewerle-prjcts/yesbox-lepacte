@@ -14,13 +14,13 @@ export default async function TableauDeBordPage() {
 
   let modulesRaw: Module[] = []
   let partner: { prenom: string | null; email: string; role: string | null } | null = null
-  let couple: { nom_couple: string | null } | null = null
+  let couple: { nom_couple: string | null; prenom_partenaire1: string | null; prenom_partenaire2: string | null } | null = null
 
   if (profile?.couple_id) {
     const [{ data: mods }, { data: part }, { data: coup }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('cycle'),
       supabase.from('profiles').select('prenom, email, role').eq('couple_id', profile.couple_id).neq('id', userId).single(),
-      supabase.from('couples').select('nom_couple').eq('id', profile.couple_id).single(),
+      supabase.from('couples').select('nom_couple, prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single(),
     ])
     modulesRaw = mods || []
     partner = part
@@ -40,8 +40,8 @@ export default async function TableauDeBordPage() {
     }
   }
 
-  const prenomInitiateur = profile?.role === 'initiateur' ? profile?.prenom : partner?.prenom ?? null
-  const prenomPartenaire = profile?.role === 'partenaire' ? profile?.prenom : partner?.prenom ?? null
+  const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile?.role === 'initiateur' ? profile?.prenom : partner?.prenom ?? null)
+  const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile?.role === 'partenaire' ? profile?.prenom : partner?.prenom ?? null)
 
   const done = modules.filter(m => m.revealed).length
   const pct = Math.round((done / MODULES.length) * 100)

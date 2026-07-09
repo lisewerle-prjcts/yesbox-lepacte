@@ -29,6 +29,8 @@ export interface Couple {
   id: string
   nom_couple: string | null
   date_anniversaire: string | null
+  prenom_partenaire1: string | null
+  prenom_partenaire2: string | null
   invite_token: string | null
   invite_token_expires_at: string | null
   invite_used: boolean

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveSession } from '@/lib/effective-session'
+import { syncPrenomVersCouple } from '@/lib/couple-sync'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -14,12 +15,15 @@ export async function creerCouple(formData: FormData) {
   const nomCouple = formData.get('nom_couple') as string
   const dateAnniversaire = formData.get('date_anniversaire') as string | null
 
+  const { data: monProfil } = await admin.from('profiles').select('prenom').eq('id', user.id).single()
+
   // Utilise le client admin pour bypasser la RLS sur couples
   const { data: couple, error: coupleError } = await admin
     .from('couples')
     .insert({
       nom_couple: nomCouple || null,
       date_anniversaire: dateAnniversaire || null,
+      prenom_partenaire1: monProfil?.prenom || null,
     })
     .select()
     .single()
@@ -52,6 +56,9 @@ export async function rejoindreCouple(token: string) {
 
   if (error) return { error: error.message }
   if (!data.success) return { error: data.error }
+
+  const { data: monProfil } = await supabase.from('profiles').select('prenom').eq('id', user.id).single()
+  if (monProfil?.prenom) await syncPrenomVersCouple(supabase, data.couple_id, 'partenaire', monProfil.prenom)
 
   revalidatePath('/tableau-de-bord')
   return { success: true }
@@ -107,6 +114,8 @@ export async function modifierReglages(formData: FormData) {
       .update({ nom_couple: nomCouple || null, date_anniversaire: dateAnniversaire || null })
       .eq('id', session.profile.couple_id)
     if (coupleError) return { error: coupleError.message }
+
+    await syncPrenomVersCouple(session.db, session.profile.couple_id, session.profile.role, prenom)
   }
 
   revalidatePath('/reglages')

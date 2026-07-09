@@ -22,10 +22,13 @@ export default async function RevelationPage({ params }: PageProps) {
     .order('cycle', { ascending: false }).limit(1).single()
   if (!moduleData || moduleData.statut === 'locked') redirect('/tableau-de-bord')
 
-  const { data: partner } = await supabase.from('profiles').select('id, prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single()
+  const [{ data: partner }, { data: couple }] = await Promise.all([
+    supabase.from('profiles').select('id, prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single(),
+    supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single(),
+  ])
 
-  const prenomInitiateur = profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null
-  const prenomPartenaire = profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null
+  const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)
+  const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null)
   const titre = moduleTitre(moduleInfo, prenomInitiateur, prenomPartenaire)
 
   const [{ data: mesReponses }, { data: reponsesPartner }, { data: scores }, { data: journalEntry }, { data: cyclesPrecedents }] = await Promise.all([
