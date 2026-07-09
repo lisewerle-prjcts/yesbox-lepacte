@@ -1,5 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import AdminActionsClient from './AdminActionsClient'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AdminActionsPage({
   searchParams,
@@ -7,7 +9,7 @@ export default async function AdminActionsPage({
   searchParams: Promise<{ couple_id?: string }>
 }) {
   const { couple_id } = await searchParams
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: couples } = await supabase.from('couples').select('id,created_at').order('created_at', { ascending: false })
   const { data: profiles } = await supabase.from('profiles').select('id,prenom,email,couple_id')

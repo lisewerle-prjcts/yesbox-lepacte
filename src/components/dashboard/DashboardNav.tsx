@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import { deconnexion } from '@/app/actions/auth'
-import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus } from 'lucide-react'
+import EditableText from '@/components/edit/EditableText'
+import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck, Info, Settings } from 'lucide-react'
 
 interface DashboardNavProps {
-  profile: { prenom: string | null; email: string; couple_id: string | null } | null
+  profile: { prenom: string | null; email: string; couple_id: string | null; is_admin?: boolean | null } | null
 }
 
 export default function DashboardNav({ profile }: DashboardNavProps) {
@@ -19,7 +20,10 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
     { href: '/tableau-de-bord', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: '/pacte', label: 'Notre Pacte', icon: <ScrollText className="w-4 h-4" /> },
     { href: '/journal', label: 'Journal', icon: <BookOpen className="w-4 h-4" /> },
+    { href: '/le-concept', label: 'Le concept', icon: <Info className="w-4 h-4" /> },
+    { href: '/reglages', label: 'Réglages', icon: <Settings className="w-4 h-4" /> },
     ...(!profile?.couple_id ? [{ href: '/inviter-partenaire', label: 'Inviter', icon: <UserPlus className="w-4 h-4" /> }] : []),
+    ...(profile?.is_admin ? [{ href: '/admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
   ]
 
   return (
@@ -32,7 +36,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
-              {l.icon}{l.label}
+              {l.icon}<EditableText k={`nav.${l.href.replace(/\//g, '') || 'accueil'}`} as="span">{l.label}</EditableText>
             </Link>
           ))}
         </nav>
@@ -59,7 +63,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--ink)' }}
               onClick={() => setOpen(false)}>
-              {l.icon}{l.label}
+              {l.icon}<EditableText k={`nav.${l.href.replace(/\//g, '') || 'accueil'}`} as="span">{l.label}</EditableText>
             </Link>
           ))}
           <div style={{ borderTop: '1px solid var(--line)', marginTop: 8, paddingTop: 8 }}>

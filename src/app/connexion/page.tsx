@@ -7,6 +7,7 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import { connexion } from '@/app/actions/auth'
+import EditableText from '@/components/edit/EditableText'
 import { Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton() {
@@ -35,10 +36,10 @@ export default function ConnexionPage() {
         <div className="text-center mb-8">
           <Logo size="md" className="inline-block mb-4" />
           <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            Content·e de te revoir !
+            <EditableText k="connexion.titre" as="span">Content·e de te revoir !</EditableText>
           </h1>
           <p className="text-gray-500 mt-2">
-            Connecte-toi à ton espace couple
+            <EditableText k="connexion.soustitre" as="span">Connecte-toi à ton espace couple</EditableText>
           </p>
         </div>
 

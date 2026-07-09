@@ -1,5 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import MessagesEditor from './MessagesEditor'
+
+export const dynamic = 'force-dynamic'
 
 const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multiline?: boolean }> = {
   precommande_success: {
@@ -33,7 +35,7 @@ const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multili
 }
 
 export default async function AdminMessages() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: settings } = await supabase.from('settings').select('key,value')
   const settingsMap: Record<string, string> = {}
   settings?.forEach(s => { settingsMap[s.key] = s.value })
