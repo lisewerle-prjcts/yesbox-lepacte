@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Eye } from 'lucide-react'
-import { adminViewAs } from '@/app/actions/admin'
+import { Eye, Lock, Unlock } from 'lucide-react'
+import { adminViewAs, adminTogglePaye } from '@/app/actions/admin'
 import AdminCoupleEditor from '@/components/admin/AdminCoupleEditor'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +25,7 @@ const STATUS_TEXT: Record<string,string> = {
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const { data: couples } = await supabase.from('couples').select('id, created_at, nom_couple, prenom_partenaire1, prenom_partenaire2').order('created_at', { ascending: false })
+  const { data: couples } = await supabase.from('couples').select('id, created_at, nom_couple, prenom_partenaire1, prenom_partenaire2, a_paye').order('created_at', { ascending: false })
   if (!couples?.length) return (
     <div>
       <h1 className="font-serif text-3xl font-bold mb-6" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
@@ -77,6 +77,9 @@ export default async function AdminCouples() {
                       {couple.nom_couple || `${prenom1 || 'Partenaire 1'} & ${prenom2 || 'Partenaire 2'}`}
                     </span>
                     <span className="tag-muted" style={{ fontSize: 11 }}>{revealedCount}/{SLUGS.length} modules révélés</span>
+                    {couple.a_paye
+                      ? <span className="tag-sage" style={{ fontSize: 11 }}>✓ Accès complet payé</span>
+                      : <span className="tag-muted" style={{ fontSize: 11 }}>Non payé</span>}
                   </div>
                   <div className="flex gap-4 flex-wrap mt-1.5">
                     <span style={{ fontSize: 12, color: 'var(--muted)' }}>
@@ -130,6 +133,12 @@ export default async function AdminCouples() {
               )}
 
               {/* Actions rapides */}
+              {(() => {
+                async function toggleP() {
+                  'use server'
+                  await adminTogglePaye(couple.id, !couple.a_paye)
+                }
+                return (
               <div className="mt-3 flex gap-2 flex-wrap items-start">
                 <Link
                   href={`/admin/actions?couple_id=${couple.id}`}
@@ -138,6 +147,14 @@ export default async function AdminCouples() {
                 >
                   Actions →
                 </Link>
+                <form action={toggleP}>
+                  <button type="submit" className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
+                    style={couple.a_paye
+                      ? { background: 'none', border: '1px solid #fca5a5', color: '#dc2626' }
+                      : { background: 'var(--sage-soft)', color: 'var(--sage)', border: '1px solid var(--sage)' }}>
+                    {couple.a_paye ? <><Lock className="w-3 h-3" />Marquer non payé</> : <><Unlock className="w-3 h-3" />Marquer comme payé</>}
+                  </button>
+                </form>
                 <AdminCoupleEditor
                   coupleId={couple.id}
                   nomCoupleInitial={couple.nom_couple}
@@ -146,6 +163,8 @@ export default async function AdminCouples() {
                   peutSupprimer={members.length === 0}
                 />
               </div>
+                )
+              })()}
             </div>
           )
         })}

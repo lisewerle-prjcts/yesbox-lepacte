@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
 import { getModuleBySlug, moduleTitre } from '@/lib/modules-data'
 import RevelationClient from '@/components/module/RevelationClient'
+import PaywallRevelation from '@/components/module/PaywallRevelation'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +27,12 @@ export default async function RevelationPage({ params }: PageProps) {
 
   const [{ data: partner }, { data: couple }] = await Promise.all([
     supabase.from('profiles').select('id, prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single(),
-    supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single(),
+    supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2, a_paye').eq('id', profile.couple_id).single(),
   ])
+
+  if (!couple?.a_paye) {
+    return <PaywallRevelation titre={moduleTitre(moduleInfo, couple?.prenom_partenaire1 ?? null, couple?.prenom_partenaire2 ?? null)} />
+  }
 
   const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)
   const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null)

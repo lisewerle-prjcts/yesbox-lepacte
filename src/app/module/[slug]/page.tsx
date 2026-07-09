@@ -26,7 +26,7 @@ export default async function ModulePage({ params }: PageProps) {
 
   const [{ data: partner }, { data: couple }] = await Promise.all([
     supabase.from('profiles').select('id, prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single(),
-    supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single(),
+    supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2, a_paye').eq('id', profile.couple_id).single(),
   ])
 
   const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)
@@ -53,6 +53,7 @@ export default async function ModulePage({ params }: PageProps) {
       role={profile.role}
       partnerName={partner?.prenom || null}
       aDesCyclesPrecedents={(cyclesPrecedents ?? 0) > 0}
+      aPaye={!!couple?.a_paye}
     />
   )
 }

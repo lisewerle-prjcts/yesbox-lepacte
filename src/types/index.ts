@@ -34,6 +34,10 @@ export interface Couple {
   invite_token: string | null
   invite_token_expires_at: string | null
   invite_used: boolean
+  a_paye: boolean
+  paye_at: string | null
+  stripe_customer_id: string | null
+  stripe_checkout_session_id: string | null
   created_at: string
   updated_at: string
 }

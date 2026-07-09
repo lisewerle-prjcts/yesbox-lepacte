@@ -1,14 +1,8 @@
-'use client'
-
-import { useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
-import PrecommandeModal from '@/components/PrecommandeModal'
 import { Check, ArrowRight } from 'lucide-react'
 
 export default function TarifsPage() {
-  const [modal, setModal] = useState(false)
-
   const li = (t: string) => (
     <div key={t} className="flex gap-2 items-start">
       <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
@@ -55,16 +49,15 @@ export default function TarifsPage() {
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>paiement unique · accès à vie</div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
-            {['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé'].map(f => (
+            {['Les 10 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé'].map(f => (
               <div key={f} className="flex gap-2 items-start">
                 <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.8)' }} />
                 <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.9)' }}>{f}</span>
               </div>
             ))}
-            <button onClick={() => setModal(true)} className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
-              Pré-commander <ArrowRight className="w-4 h-4" />
-            </button>
-            <p className="text-center" style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>Aucun paiement maintenant · au lancement</p>
+            <Link href="/inscription" className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
+              Pré-inscription <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
           {/* Renouvellement */}
@@ -72,7 +65,7 @@ export default function TarifsPage() {
             <div className="tag-brand self-start">Renouvellement</div>
             <div>
               <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>€/an</small></div>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>module 7 · à activer plus tard</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>module 10 · à activer plus tard</div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
             {['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Nouvelles questions chaque année', 'Annulable à tout moment'].map(li)}
@@ -85,12 +78,10 @@ export default function TarifsPage() {
           <div className="text-3xl mb-3">🛡️</div>
           <h3 className="font-serif font-bold mb-2" style={{ fontSize: 20, color: 'var(--ink)' }}>Garantie 30 jours</h3>
           <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7 }}>
-            Si après avoir terminé les 7 modules vous n'êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu'on croit vraiment à ce programme.
+            Si après avoir terminé les 10 modules vous n'êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu'on croit vraiment à ce programme.
           </p>
         </div>
       </main>
-
-      {modal && <PrecommandeModal onClose={() => setModal(false)} />}
     </div>
   )
 }

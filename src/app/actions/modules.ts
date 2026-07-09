@@ -35,6 +35,9 @@ export async function noterConnivence(moduleId: string, moduleSlug: string, scor
   if (!session.profile.couple_id) return { error: 'Aucun couple trouvé' }
   const { db: supabase, userId, profile } = session
 
+  const { data: couple } = await supabase.from('couples').select('a_paye').eq('id', profile.couple_id).single()
+  if (!couple?.a_paye) return { error: 'Le reveal est réservé à l\'accès complet — payez pour le débloquer.' }
+
   const { error } = await supabase.from('scores').upsert(
     { module_id: moduleId, user_id: userId, score },
     { onConflict: 'module_id,user_id' }

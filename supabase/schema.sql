@@ -50,6 +50,12 @@ create table public.couples (
   invite_token uuid unique default uuid_generate_v4(),
   invite_token_expires_at timestamptz default (now() + interval '7 days'),
   invite_used boolean default false,
+  -- Paiement Stripe : le module 1 est jouable gratuitement, mais la révélation
+  -- (et donc l'accès aux modules suivants) exige l'accès complet payant.
+  a_paye boolean not null default false,
+  paye_at timestamptz,
+  stripe_customer_id text,
+  stripe_checkout_session_id text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

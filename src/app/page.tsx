@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
-import PrecommandeModal from '@/components/PrecommandeModal'
 import EditableText from '@/components/edit/EditableText'
 import { MODULES } from '@/lib/modules-data'
 import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, Home, Rocket, GraduationCap } from 'lucide-react'
@@ -42,7 +41,6 @@ const OFFRE_COMPLETE = ['Les 10 modules complets', 'Sessions de révélation à 
 const OFFRE_RENOUVELLEMENT = ['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Nouvelles questions chaque année', 'Annulable à tout moment']
 
 export default function LandingPage() {
-  const [modalOpen, setModalOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -60,9 +58,9 @@ export default function LandingPage() {
           </nav>
           <div className="hidden md:flex items-center gap-3">
             <Link href="/connexion" className="btn-ghost text-sm py-2 px-4">Se connecter</Link>
-            <button onClick={() => setModalOpen(true)} className="btn-brand text-sm py-2 px-4">
-              Pré-commander
-            </button>
+            <Link href="/inscription" className="btn-brand text-sm py-2 px-4">
+              <EditableText k="landing.nav.cta" as="span">Pré-inscription</EditableText>
+            </Link>
           </div>
           <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -75,7 +73,7 @@ export default function LandingPage() {
             ))}
             <div className="flex gap-3 pt-2">
               <Link href="/connexion" className="btn-ghost text-sm py-2 px-4 flex-1 justify-center">Connexion</Link>
-              <button onClick={() => { setModalOpen(true); setMenuOpen(false) }} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">Pré-commander</button>
+              <Link href="/inscription" onClick={() => setMenuOpen(false)} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">Pré-inscription</Link>
             </div>
           </div>
         )}
@@ -94,9 +92,9 @@ export default function LandingPage() {
           <EditableText k="landing.hero.soustitre" as="span" multiline>Un programme en 10 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.</EditableText>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
-          <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            <EditableText k="landing.hero.cta_principal" as="span">Pré-commander — 89€</EditableText> <ArrowRight className="w-4 h-4" />
-          </button>
+          <Link href="/inscription" className="btn-brand lg">
+            <EditableText k="landing.hero.cta_principal" as="span">Pré-inscription — gratuite</EditableText> <ArrowRight className="w-4 h-4" />
+          </Link>
           <a href="#modules" className="btn-ghost lg"><EditableText k="landing.hero.cta_secondaire" as="span">Voir le programme</EditableText></a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
@@ -317,9 +315,9 @@ export default function LandingPage() {
                   <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.9)' }}><EditableText k={`landing.offre2.point${i}`} as="span">{f}</EditableText></span>
                 </div>
               ))}
-              <button onClick={() => setModalOpen(true)} className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
-                <EditableText k="landing.offre2.cta" as="span">Pré-commander</EditableText> <ArrowRight className="w-4 h-4" />
-              </button>
+              <Link href="/inscription" className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
+                <EditableText k="landing.offre2.cta" as="span">Pré-inscription</EditableText> <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
             <div className="card p-6 flex flex-col gap-4">
               <div className="tag-brand self-start"><EditableText k="landing.offre3.tag" as="span">Renouvellement</EditableText></div>
@@ -350,10 +348,9 @@ export default function LandingPage() {
           <EditableText k="landing.ctafinal.soustitre" as="span">Le module 1 est gratuit. Commencez à deux, ce soir.</EditableText>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            <EditableText k="landing.ctafinal.cta_principal" as="span">Pré-commander — 89€</EditableText> <ArrowRight className="w-4 h-4" />
-          </button>
-          <Link href="/inscription" className="btn-ghost lg"><EditableText k="landing.ctafinal.cta_secondaire" as="span">Essayer gratuitement</EditableText></Link>
+          <Link href="/inscription" className="btn-brand lg">
+            <EditableText k="landing.ctafinal.cta_principal" as="span">Pré-inscription — gratuite</EditableText> <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
 
@@ -375,8 +372,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-
-      {modalOpen && <PrecommandeModal onClose={() => setModalOpen(false)} />}
     </div>
   )
 }

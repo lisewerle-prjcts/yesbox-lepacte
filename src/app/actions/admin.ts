@@ -122,6 +122,19 @@ export async function adminUpdateCoupleInfo(formData: FormData) {
   return { success: true }
 }
 
+// Bascule manuellement le statut de paiement d'un couple (paiement hors
+// Stripe, geste commercial, test) — indépendant du webhook Stripe.
+export async function adminTogglePaye(coupleId: string, value: boolean) {
+  const supabase = await assertAdmin()
+  const { error } = await supabase.from('couples').update({
+    a_paye: value,
+    paye_at: value ? new Date().toISOString() : null,
+  }).eq('id', coupleId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
 // Supprime un couple qui n'a aucun membre inscrit (doublon, test abandonné…).
 // Refuse si des comptes y sont déjà rattachés, pour ne jamais perdre de
 // données réelles depuis l'admin.

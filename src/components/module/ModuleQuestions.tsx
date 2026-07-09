@@ -4,8 +4,9 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
+import { creerSessionPaiement } from '@/app/actions/paiement'
 import { questionTexte } from '@/lib/modules-data'
-import { ArrowLeft, ArrowRight, CheckCircle, History } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, History, Lock } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
 interface Props {
@@ -18,9 +19,10 @@ interface Props {
   role?: string | null
   partnerName?: string | null
   aDesCyclesPrecedents?: boolean
+  aPaye: boolean
 }
 
-export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesReponses, reponsesPartenaire, role, partnerName, aDesCyclesPrecedents }: Props) {
+export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesReponses, reponsesPartenaire, role, partnerName, aDesCyclesPrecedents, aPaye }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [idx, setIdx] = useState(() => {
@@ -81,9 +83,22 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
             {moduleInfo.outroTexte && (
               <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 28, textAlign: 'left', whiteSpace: 'pre-wrap' }}>{moduleInfo.outroTexte}</p>
             )}
-            <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
-              Ouvrir la session de révélation <ArrowRight className="w-4 h-4" />
-            </Link>
+            {aPaye ? (
+              <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
+                Ouvrir la session de révélation <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <>
+                <form action={creerSessionPaiement}>
+                  <button type="submit" className="btn-brand lg">
+                    <Lock className="w-4 h-4" />Débloquer l&apos;accès complet — 89€
+                  </button>
+                </form>
+                <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 12 }}>
+                  La révélation et la suite des modules sont réservées à l&apos;accès complet.
+                </p>
+              </>
+            )}
             {!moduleData.revealed && (
               <button onClick={() => { setIdx(0); setDone(false) }}
                 className="block mx-auto mt-4 text-sm font-medium underline"
