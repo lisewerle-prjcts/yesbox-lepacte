@@ -20,6 +20,7 @@ export interface Profile {
   couple_id: string | null
   role: 'initiateur' | 'partenaire' | null
   intro_vue: boolean
+  is_admin: boolean
   created_at: string
   updated_at: string
 }

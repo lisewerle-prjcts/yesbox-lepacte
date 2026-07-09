@@ -266,7 +266,15 @@ export default function RevelationClient({ moduleInfo, titre, moduleData, mesRep
                 </button>
               )}
             </div>
-          ) : (
+          ) : null}
+
+          {tousLesDeuxOntNote && (
+            <p style={{ fontSize: 12, color: 'var(--dark-muted)', marginTop: 14, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
+              Recommencer ne supprime rien : vos réponses et votre score actuels restent conservés et consultables ci-dessous, dans l&apos;historique.
+            </p>
+          )}
+
+          {!dejaNote && (
             <button onClick={valider} disabled={!monScore || isPending}
               className="btn-brand lg"
               style={{ opacity: !monScore ? .4 : 1 }}>

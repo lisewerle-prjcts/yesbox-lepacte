@@ -84,6 +84,13 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
             <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
               Ouvrir la session de révélation <ArrowRight className="w-4 h-4" />
             </Link>
+            {!moduleData.revealed && (
+              <button onClick={() => { setIdx(0); setDone(false) }}
+                className="block mx-auto mt-4 text-sm font-medium underline"
+                style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+                Modifier mes réponses avant la révélation
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -95,7 +102,14 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
               En attente de {partnerName || 'ton/ta partenaire'}… La révélation s'ouvrira quand vous aurez tous les deux terminé.
             </p>
-            <Link href="/tableau-de-bord" className="btn-ghost">Retour au dashboard</Link>
+            <div className="flex flex-col items-center gap-3">
+              <Link href="/tableau-de-bord" className="btn-ghost">Retour au dashboard</Link>
+              <button onClick={() => { setIdx(0); setDone(false) }}
+                className="text-sm font-medium underline"
+                style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+                Modifier mes réponses
+              </button>
+            </div>
           </>
         )}
       </div>
