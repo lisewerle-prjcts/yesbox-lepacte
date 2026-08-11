@@ -9,11 +9,15 @@ import { sauvegarderJournal } from '@/app/actions/journal'
 import { questionTexte } from '@/lib/modules-data'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
+interface ReponseLite { question_slug: string; valeur: string | null; question_texte: string | null }
+
 interface HistoriqueCycle {
   cycle: number
   revealedAt: string | null
   myScore: number | null
   partnerScore: number | null
+  mesReponses: ReponseLite[]
+  reponsesPartner: ReponseLite[]
 }
 
 interface Props {
@@ -81,6 +85,16 @@ export default function RevelationClient({ moduleInfo, titre, moduleData, mesRep
   const [journalText, setJournalText] = useState(journalContenu ?? '')
   const [journalSaved, setJournalSaved] = useState(false)
   const [showHistorique, setShowHistorique] = useState(false)
+  const [cyclesOuverts, setCyclesOuverts] = useState<Set<number>>(new Set())
+
+  function toggleCycle(cycle: number) {
+    setCyclesOuverts(prev => {
+      const next = new Set(prev)
+      if (next.has(cycle)) next.delete(cycle)
+      else next.add(cycle)
+      return next
+    })
+  }
 
   const dejaNote = myScore !== null
   const tousLesDeuxOntNote = myScore !== null && partnerScore !== null
@@ -292,22 +306,62 @@ export default function RevelationClient({ moduleInfo, titre, moduleData, mesRep
               </button>
               {showHistorique && (
                 <div className="flex flex-col gap-3">
-                  {historique.map(h => (
-                    <div key={h.cycle} className="flex items-center justify-between flex-wrap gap-2" style={{ background: 'var(--dark-2)', borderRadius: 'var(--r-sm)', padding: '14px 18px', border: '1px solid var(--dark-line)' }}>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-paper)' }}>
-                          {moduleInfo.annuel ? `Bilan ${h.cycle}` : `Cycle ${h.cycle}`}
-                        </p>
-                        <p style={{ fontSize: 11, color: 'var(--dark-muted)' }}>
-                          {h.revealedAt ? new Date(h.revealedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
-                        </p>
+                  {historique.map(h => {
+                    const myMapH: Record<string, string> = {}
+                    h.mesReponses.forEach(r => { if (r.valeur) myMapH[r.question_slug] = r.valeur })
+                    const partnerMapH: Record<string, string> = {}
+                    h.reponsesPartner.forEach(r => { if (r.valeur) partnerMapH[r.question_slug] = r.valeur })
+                    const texteMapH: Record<string, string> = {}
+                    h.mesReponses.forEach(r => { if (r.question_texte) texteMapH[r.question_slug] = r.question_texte })
+                    const ouvert = cyclesOuverts.has(h.cycle)
+
+                    return (
+                      <div key={h.cycle} style={{ background: 'var(--dark-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--dark-line)', overflow: 'hidden' }}>
+                        <button onClick={() => toggleCycle(h.cycle)}
+                          className="flex items-center justify-between flex-wrap gap-2 w-full text-left"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '14px 18px' }}>
+                          <div>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-paper)' }}>
+                              {moduleInfo.annuel ? `Bilan ${h.cycle}` : `Cycle ${h.cycle}`}
+                            </p>
+                            <p style={{ fontSize: 11, color: 'var(--dark-muted)' }}>
+                              {h.revealedAt ? new Date(h.revealedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-4" style={{ fontSize: 12 }}>
+                            <span style={{ color: 'var(--dark-muted)' }}>{myName || 'Toi'} : <span style={{ color: 'var(--brand)' }}>{h.myScore ? '★'.repeat(h.myScore) : '—'}</span></span>
+                            <span style={{ color: 'var(--dark-muted)' }}>{partnerName || 'Partenaire'} : <span style={{ color: 'var(--brand)' }}>{h.partnerScore ? '★'.repeat(h.partnerScore) : '—'}</span></span>
+                            <span style={{ color: 'var(--dark-muted)' }}>{ouvert ? '▲' : '▼'}</span>
+                          </div>
+                        </button>
+                        {ouvert && (
+                          <div className="flex flex-col gap-5" style={{ padding: '4px 18px 20px' }}>
+                            {moduleInfo.questions.map(q => {
+                              const myFmt = fmtAnswer(q, myMapH[q.slug])
+                              const partnerFmt = fmtAnswer(q, partnerMapH[q.slug])
+                              return (
+                                <div key={q.slug}>
+                                  <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 8 }}>
+                                    {texteMapH[q.slug] || questionTexte(q, role)}
+                                  </p>
+                                  <div className="grid sm:grid-cols-2 gap-2">
+                                    <div style={{ background: 'var(--dark)', borderRadius: 'var(--r-sm)', padding: '10px 14px', border: '1px solid var(--dark-line)' }}>
+                                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--dark-muted)' }}>{myName || 'Toi'}</span>
+                                      <p style={{ fontSize: 13, color: myFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: myFmt ? 'normal' : 'italic', marginTop: 3 }}>{myFmt || '— pas de réponse —'}</p>
+                                    </div>
+                                    <div style={{ background: 'var(--dark)', borderRadius: 'var(--r-sm)', padding: '10px 14px', border: '1px solid var(--dark-line)' }}>
+                                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--dark-muted)' }}>{partnerName || 'Partenaire'}</span>
+                                      <p style={{ fontSize: 13, color: partnerFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: partnerFmt ? 'normal' : 'italic', marginTop: 3 }}>{partnerFmt || '— pas de réponse —'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4" style={{ fontSize: 12 }}>
-                        <span style={{ color: 'var(--dark-muted)' }}>{myName || 'Toi'} : <span style={{ color: 'var(--brand)' }}>{h.myScore ? '★'.repeat(h.myScore) : '—'}</span></span>
-                        <span style={{ color: 'var(--dark-muted)' }}>{partnerName || 'Partenaire'} : <span style={{ color: 'var(--brand)' }}>{h.partnerScore ? '★'.repeat(h.partnerScore) : '—'}</span></span>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

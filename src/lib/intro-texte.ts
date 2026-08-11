@@ -18,3 +18,14 @@ export const INTRO_OUTRO_PARAGRAPHS: string[] = [
 ]
 
 export const INTRO_CLOSING = "Et rappelez-vous : le couple qui tient n'est pas le couple parfait. C'est celui qui sait revenir. Qui sait se choisir, encore et encore."
+
+export const REGLES_DU_JEU_TITRE = 'Les règles du jeu'
+
+export const REGLES_DU_JEU: string[] = [
+  "Répondez chacun·e de votre côté, sans regarder ni discuter vos réponses avec l'autre avant la révélation.",
+  "Il n'y a pas de bonnes ou de mauvaises réponses — seulement les vôtres, honnêtes.",
+  "Prenez le temps qu'il faut. Vous pouvez revenir modifier une réponse tant que le module n'a pas été révélé.",
+  "Vos réponses ne sont visibles par l'autre qu'au moment de la révélation, quand vous aurez tous les deux terminé le module.",
+  "Accueillez ce que l'autre a écrit sans juger : c'est un espace de vérité, pas de débat.",
+  "Une fois un module révélé, vous pouvez le recommencer à tout moment — rien n'est perdu, tout reste consultable dans l'historique.",
+]

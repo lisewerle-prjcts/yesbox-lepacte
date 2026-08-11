@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import { deconnexion } from '@/app/actions/auth'
 import EditableText from '@/components/edit/EditableText'
-import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck, Info, Settings } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck, Info, Settings, BookOpenCheck } from 'lucide-react'
 
 interface DashboardNavProps {
   profile: { prenom: string | null; email: string; couple_id: string | null; is_admin?: boolean | null } | null
@@ -21,6 +21,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
     { href: '/pacte', label: 'Notre Pacte', icon: <ScrollText className="w-4 h-4" /> },
     { href: '/journal', label: 'Journal', icon: <BookOpen className="w-4 h-4" /> },
     { href: '/le-concept', label: 'Le concept', icon: <Info className="w-4 h-4" /> },
+    { href: '/regles-du-jeu', label: 'Règles du jeu', icon: <BookOpenCheck className="w-4 h-4" /> },
     { href: '/reglages', label: 'Réglages', icon: <Settings className="w-4 h-4" /> },
     ...(!profile?.couple_id ? [{ href: '/inviter-partenaire', label: 'Inviter', icon: <UserPlus className="w-4 h-4" /> }] : []),
     ...(profile?.is_admin ? [{ href: '/admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),

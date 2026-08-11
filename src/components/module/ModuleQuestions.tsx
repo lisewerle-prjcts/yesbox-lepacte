@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
 import { questionTexte } from '@/lib/modules-data'
-import { ArrowLeft, ArrowRight, CheckCircle, History } from 'lucide-react'
+import ReglesDuJeu from '@/components/ReglesDuJeu'
+import { ArrowLeft, ArrowRight, CheckCircle, History, ChevronDown, ChevronUp } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
 interface Props {
@@ -36,6 +37,7 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
   })
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(moduleData.statut === 'complete')
+  const [reglesOuvertes, setReglesOuvertes] = useState(true)
 
   const q = moduleInfo.questions[idx]
   const total = moduleInfo.questions.length
@@ -145,6 +147,23 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
         <div className="bar" style={{ height: 4 }}><i style={{ width: `${Math.round((idx / total) * 100)}%`, background: 'var(--brand)' }} /></div>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Question {idx + 1} sur {total}</p>
       </div>
+
+      {/* Règles du jeu — rappelées avant chaque module */}
+      {idx === 0 && (
+        <div className="card p-6 mb-5" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
+          <button onClick={() => setReglesOuvertes(v => !v)}
+            className="flex items-center justify-between w-full text-left"
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <span className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}>Un rappel avant de vous lancer ✦</span>
+            {reglesOuvertes ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--brand)' }} /> : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />}
+          </button>
+          {reglesOuvertes && (
+            <div className="mt-4">
+              <ReglesDuJeu />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Question card */}
       <div className="card p-7 mb-5 slide-up" key={q.slug}>

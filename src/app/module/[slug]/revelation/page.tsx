@@ -52,15 +52,24 @@ export default async function RevelationPage({ params }: PageProps) {
   const myScore = scores?.find(s => s.user_id === userId)?.score ?? null
   const partnerScore = partner ? scores?.find(s => s.user_id === partner.id)?.score ?? null : null
 
-  let historique: { cycle: number; revealedAt: string | null; myScore: number | null; partnerScore: number | null }[] = []
+  let historique: {
+    cycle: number; revealedAt: string | null; myScore: number | null; partnerScore: number | null
+    mesReponses: { question_slug: string; valeur: string | null; question_texte: string | null }[]
+    reponsesPartner: { question_slug: string; valeur: string | null; question_texte: string | null }[]
+  }[] = []
   if (cyclesPrecedents && cyclesPrecedents.length > 0) {
     const ids = cyclesPrecedents.map(c => c.id)
-    const { data: scoresHistorique } = await supabase.from('scores').select('*').in('module_id', ids)
+    const [{ data: scoresHistorique }, { data: reponsesHistorique }] = await Promise.all([
+      supabase.from('scores').select('*').in('module_id', ids),
+      supabase.from('reponses').select('module_id, user_id, question_slug, valeur, question_texte').in('module_id', ids),
+    ])
     historique = cyclesPrecedents.map(c => ({
       cycle: c.cycle,
       revealedAt: c.revealed_at,
       myScore: scoresHistorique?.find(s => s.module_id === c.id && s.user_id === userId)?.score ?? null,
       partnerScore: partner ? scoresHistorique?.find(s => s.module_id === c.id && s.user_id === partner.id)?.score ?? null : null,
+      mesReponses: (reponsesHistorique || []).filter(r => r.module_id === c.id && r.user_id === userId),
+      reponsesPartner: partner ? (reponsesHistorique || []).filter(r => r.module_id === c.id && r.user_id === partner.id) : [],
     }))
   }
 
