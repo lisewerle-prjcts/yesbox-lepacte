@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { randomInt } from 'crypto'
 import nodemailer from 'nodemailer'
+import { normalizeOverrides, emptyOverrides, type ModuleContentOverrides, type QuestionOverride } from '@/lib/modules-effective'
+import type { QuestionType } from '@/types'
 
 async function assertAdmin() {
   const supabase = await createClient()
@@ -104,14 +106,6 @@ export async function adminSaveMessage(key: string, value: string) {
   return { success: true }
 }
 
-interface QuestionOverride {
-  texte?: string
-  hint?: string
-  options?: string[]
-  labelMin?: string
-  labelMax?: string
-}
-
 function revalidateModuleContent(moduleSlug: string) {
   revalidatePath('/admin/contenu')
   revalidatePath(`/module/${moduleSlug}`)
@@ -120,26 +114,96 @@ function revalidateModuleContent(moduleSlug: string) {
   revalidatePath('/admin/voir-en-tant-que')
 }
 
+async function readModuleOverrides(supabase: Awaited<ReturnType<typeof createClient>>, moduleSlug: string): Promise<ModuleContentOverrides> {
+  const key = `module_questions_override::${moduleSlug}`
+  const { data } = await supabase.from('settings').select('value').eq('key', key).single()
+  if (!data?.value) return emptyOverrides()
+  try {
+    return normalizeOverrides(JSON.parse(data.value))
+  } catch {
+    return emptyOverrides()
+  }
+}
+
+async function writeModuleOverrides(supabase: Awaited<ReturnType<typeof createClient>>, moduleSlug: string, overrides: ModuleContentOverrides) {
+  const key = `module_questions_override::${moduleSlug}`
+  await supabase.from('settings').upsert({ key, value: JSON.stringify(overrides) }, { onConflict: 'key' })
+}
+
 export async function adminSaveQuestionOverride(moduleSlug: string, questionSlug: string, fields: QuestionOverride) {
   const supabase = await assertAdmin()
-  const key = `module_questions_override::${moduleSlug}`
-  const { data: existing } = await supabase.from('settings').select('value').eq('key', key).single()
-  const current = existing?.value ? JSON.parse(existing.value) : {}
-  current[questionSlug] = fields
-  await supabase.from('settings').upsert({ key, value: JSON.stringify(current) }, { onConflict: 'key' })
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  current.overrides[questionSlug] = fields
+  await writeModuleOverrides(supabase, moduleSlug, current)
   revalidateModuleContent(moduleSlug)
   return { success: true }
 }
 
 export async function adminResetQuestionOverride(moduleSlug: string, questionSlug: string) {
   const supabase = await assertAdmin()
-  const key = `module_questions_override::${moduleSlug}`
-  const { data: existing } = await supabase.from('settings').select('value').eq('key', key).single()
-  if (existing?.value) {
-    const current = JSON.parse(existing.value)
-    delete current[questionSlug]
-    await supabase.from('settings').upsert({ key, value: JSON.stringify(current) }, { onConflict: 'key' })
-  }
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  delete current.overrides[questionSlug]
+  await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+export async function adminRemoveQuestion(moduleSlug: string, questionSlug: string) {
+  const supabase = await assertAdmin()
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  if (!current.hidden.includes(questionSlug)) current.hidden.push(questionSlug)
+  await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+export async function adminRestoreQuestion(moduleSlug: string, questionSlug: string) {
+  const supabase = await assertAdmin()
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  current.hidden = current.hidden.filter(s => s !== questionSlug)
+  await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+interface NewQuestionInput {
+  type: QuestionType
+  texte: string
+  hint?: string
+  options?: string[]
+  min?: number
+  max?: number
+  labelMin?: string
+  labelMax?: string
+}
+
+export async function adminAddQuestion(moduleSlug: string, input: NewQuestionInput) {
+  const supabase = await assertAdmin()
+  if (!input.texte.trim()) return { error: 'Le texte de la question est requis' }
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  const slug = `custom_${Math.random().toString(36).slice(2, 8)}`
+  current.custom.push({ slug, ...input, texte: input.texte.trim() })
+  await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true, slug }
+}
+
+export async function adminUpdateCustomQuestion(moduleSlug: string, questionSlug: string, input: NewQuestionInput) {
+  const supabase = await assertAdmin()
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  const idx = current.custom.findIndex(q => q.slug === questionSlug)
+  if (idx === -1) return { error: 'Question introuvable' }
+  current.custom[idx] = { ...current.custom[idx], ...input }
+  await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+export async function adminRemoveCustomQuestion(moduleSlug: string, questionSlug: string) {
+  const supabase = await assertAdmin()
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  current.custom = current.custom.filter(q => q.slug !== questionSlug)
+  await writeModuleOverrides(supabase, moduleSlug, current)
   revalidateModuleContent(moduleSlug)
   return { success: true }
 }

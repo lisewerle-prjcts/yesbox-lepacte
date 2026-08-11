@@ -10,7 +10,7 @@ export default async function AdminContenuPage() {
       <div className="mb-6">
         <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Contenu des modules</h1>
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-          Modifie le texte des questions, les indices et les options de chaque module. Les changements s&apos;appliquent immédiatement pour tous les couples.
+          Modifie, retire ou ajoute des questions dans chaque module. Les changements s&apos;appliquent immédiatement pour tous les couples.
         </p>
       </div>
       <ContenuClient modules={MODULES} overrides={overrides} />

@@ -5,33 +5,57 @@ import type { ModuleInfo, Question } from '@/types'
 export const OVERRIDE_KEY_PREFIX = 'module_questions_override::'
 
 export type QuestionOverride = Partial<Pick<Question, 'texte' | 'hint' | 'options' | 'labelMin' | 'labelMax'>>
-export type ModuleOverrides = Record<string, QuestionOverride> // question_slug -> override
 
-export async function getAllOverrides(): Promise<Record<string, ModuleOverrides>> {
+export interface ModuleContentOverrides {
+  overrides: Record<string, QuestionOverride> // question_slug -> édition d'une question existante
+  hidden: string[]                             // question_slug de questions de base retirées
+  custom: Question[]                           // questions ajoutées de toutes pièces
+}
+
+export function emptyOverrides(): ModuleContentOverrides {
+  return { overrides: {}, hidden: [], custom: [] }
+}
+
+// Accepte aussi l'ancien format à plat { [questionSlug]: QuestionOverride }
+export function normalizeOverrides(raw: unknown): ModuleContentOverrides {
+  if (!raw || typeof raw !== 'object') return emptyOverrides()
+  const r = raw as Record<string, unknown>
+  if ('overrides' in r || 'hidden' in r || 'custom' in r) {
+    return {
+      overrides: (r.overrides as Record<string, QuestionOverride>) || {},
+      hidden: (r.hidden as string[]) || [],
+      custom: (r.custom as Question[]) || [],
+    }
+  }
+  return { overrides: r as Record<string, QuestionOverride>, hidden: [], custom: [] }
+}
+
+export async function getAllOverrides(): Promise<Record<string, ModuleContentOverrides>> {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('settings')
     .select('key, value')
     .like('key', `${OVERRIDE_KEY_PREFIX}%`)
 
-  const overrides: Record<string, ModuleOverrides> = {}
+  const result: Record<string, ModuleContentOverrides> = {}
   for (const row of data || []) {
     const slug = row.key.slice(OVERRIDE_KEY_PREFIX.length)
     try {
-      overrides[slug] = JSON.parse(row.value)
+      result[slug] = normalizeOverrides(JSON.parse(row.value))
     } catch {
-      overrides[slug] = {}
+      result[slug] = emptyOverrides()
     }
   }
-  return overrides
+  return result
 }
 
-function applyOverrides(moduleInfo: ModuleInfo, moduleOverrides: ModuleOverrides | undefined): ModuleInfo {
+function applyOverrides(moduleInfo: ModuleInfo, moduleOverrides: ModuleContentOverrides | undefined): ModuleInfo {
   if (!moduleOverrides) return moduleInfo
-  return {
-    ...moduleInfo,
-    questions: moduleInfo.questions.map(q => ({ ...q, ...(moduleOverrides[q.slug] || {}) })),
-  }
+  const hidden = new Set(moduleOverrides.hidden)
+  const questions = moduleInfo.questions
+    .filter(q => !hidden.has(q.slug))
+    .map(q => ({ ...q, ...(moduleOverrides.overrides[q.slug] || {}) }))
+  return { ...moduleInfo, questions: [...questions, ...moduleOverrides.custom] }
 }
 
 export async function getEffectiveModules(): Promise<ModuleInfo[]> {
