@@ -9,7 +9,7 @@ function SubmitBtn() {
   const { pending } = useFormStatus()
   return (
     <button type="submit" disabled={pending} className="btn-brand lg w-full justify-center">
-      {pending ? 'Envoi en cours…' : 'Réserver ma place — 89 €'}
+      {pending ? 'Envoi en cours…' : 'Réserver ma place — 29 €/mois'}
     </button>
   )
 }
@@ -52,7 +52,7 @@ export default function PrecommandeModal({ onClose }: Props) {
             <h3 className="font-serif text-xl font-bold mb-2">Tu es sur la liste !</h3>
             <p className="text-sm" style={{ color: 'var(--muted)' }}>
               On t'envoie un email dès le 1er septembre 2026 avec ton accès.
-              Accès complet à vie — 89 € au lancement.
+              Abonnement à 29 €/mois, résiliable à tout moment, au lancement.
             </p>
             <button onClick={onClose} className="btn-ghost mt-6">Fermer</button>
           </div>
@@ -61,7 +61,7 @@ export default function PrecommandeModal({ onClose }: Props) {
             <div className="p-4 rounded-lg mb-6 flex items-center gap-3" style={{ background: 'var(--brand-tint)', border: '1px solid var(--brand-soft)' }}>
               <Heart className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
               <p className="text-sm" style={{ color: 'var(--brand)' }}>
-                <strong>89 € · accès à vie</strong> — paiement sécurisé au lancement. Tu ne paies rien maintenant.
+                <strong>29 €/mois · résiliable à tout moment</strong> — paiement sécurisé au lancement. Tu ne paies rien maintenant.
               </p>
             </div>
 

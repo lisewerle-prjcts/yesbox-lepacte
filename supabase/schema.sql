@@ -6,6 +6,28 @@
 create extension if not exists "uuid-ossp";
 
 -- ============================================================
+-- FONCTION : generate_pairing_code
+-- Code aléatoire à 6 caractères (lettres majuscules + chiffres) utilisé
+-- par le 1er membre d'un couple pour que son/sa partenaire le/la rejoigne.
+-- ============================================================
+create or replace function public.generate_pairing_code()
+returns text language plpgsql as $$
+declare
+  chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; -- sans I/O pour éviter la confusion avec 1/0
+  code text;
+begin
+  loop
+    code := '';
+    for i in 1..6 loop
+      code := code || substr(chars, floor(random() * length(chars))::int + 1, 1);
+    end loop;
+    exit when not exists (select 1 from public.couples where pairing_code = code);
+  end loop;
+  return code;
+end;
+$$;
+
+-- ============================================================
 -- profiles
 -- ============================================================
 create table public.profiles (
@@ -34,11 +56,13 @@ create policy "profil_insert" on public.profiles for insert with check (auth.uid
 -- ============================================================
 create table public.couples (
   id uuid primary key default uuid_generate_v4(),
+  numero integer generated always as identity, -- numérotation "Couple 1, 2, ..." réservée à l'admin
   nom_couple text,
   date_anniversaire date,
   invite_token uuid unique default uuid_generate_v4(),
   invite_token_expires_at timestamptz default (now() + interval '7 days'),
   invite_used boolean default false,
+  pairing_code text unique default public.generate_pairing_code(), -- code à 6 caractères pour pairer le/la partenaire
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -219,5 +243,76 @@ begin
   perform public.initialiser_modules_couple(v_couple.id);
 
   return json_build_object('success', true, 'couple_id', v_couple.id);
+end;
+$$;
+
+-- ============================================================
+-- FONCTION : rejoindre_couple_via_code
+-- Pairing par code à 6 caractères : le 2ᵉ membre saisit le code obtenu
+-- par le 1er membre à la création de son profil (immédiatement à
+-- l'inscription, ou plus tard depuis son espace s'il/elle a créé son
+-- profil sans indiquer de code).
+-- ============================================================
+create or replace function public.rejoindre_couple_via_code(p_code text, p_user_id uuid)
+returns json language plpgsql security definer as $$
+declare
+  v_couple public.couples;
+  v_member_count integer;
+  v_previous_couple_id uuid;
+  v_previous_member_count integer;
+begin
+  select * into v_couple
+  from public.couples
+  where pairing_code = upper(trim(p_code));
+
+  if not found then
+    return json_build_object('success', false, 'error', 'Code invalide');
+  end if;
+
+  select count(*) into v_member_count from public.profiles where couple_id = v_couple.id;
+  if v_member_count >= 2 then
+    return json_build_object('success', false, 'error', 'Ce couple a déjà deux membres');
+  end if;
+
+  select couple_id into v_previous_couple_id from public.profiles where id = p_user_id;
+
+  if v_previous_couple_id = v_couple.id then
+    return json_build_object('success', false, 'error', 'Tu fais déjà partie de ce couple');
+  end if;
+
+  update public.profiles
+  set couple_id = v_couple.id, role = case when v_member_count = 0 then 'initiateur' else 'partenaire' end
+  where id = p_user_id;
+
+  perform public.initialiser_modules_couple(v_couple.id);
+
+  -- Nettoie l'espace solo précédent si celui-ci devient vide (profil créé sans code, code ajouté plus tard)
+  if v_previous_couple_id is not null and v_previous_couple_id is distinct from v_couple.id then
+    select count(*) into v_previous_member_count from public.profiles where couple_id = v_previous_couple_id;
+    if v_previous_member_count = 0 then
+      delete from public.couples where id = v_previous_couple_id;
+    end if;
+  end if;
+
+  return json_build_object('success', true, 'couple_id', v_couple.id);
+end;
+$$;
+
+-- ============================================================
+-- MIGRATION — à exécuter tel quel sur un projet Supabase existant
+-- (déjà initialisé avec une version antérieure de ce schéma).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists numero integer generated always as identity;
+alter table public.couples add column if not exists pairing_code text unique;
+alter table public.couples alter column pairing_code set default public.generate_pairing_code();
+
+do $$
+declare
+  c record;
+begin
+  for c in select id from public.couples where pairing_code is null loop
+    update public.couples set pairing_code = public.generate_pairing_code() where id = c.id;
+  end loop;
 end;
 $$;

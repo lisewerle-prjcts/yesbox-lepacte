@@ -15,11 +15,13 @@ export interface Profile {
 
 export interface Couple {
   id: string
+  numero: number
   nom_couple: string | null
   date_anniversaire: string | null
   invite_token: string | null
   invite_token_expires_at: string | null
   invite_used: boolean
+  pairing_code: string | null
   created_at: string
   updated_at: string
 }

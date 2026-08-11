@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
 const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
@@ -17,9 +17,9 @@ const STATUS_TEXT: Record<string,string> = {
 }
 
 export default async function AdminCouples() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
-  const { data: couples } = await supabase.from('couples').select('id, created_at').order('created_at', { ascending: false })
+  const { data: couples } = await supabase.from('couples').select('id, numero, pairing_code, created_at').order('created_at', { ascending: false })
   if (!couples?.length) return (
     <div>
       <h1 className="font-serif text-3xl font-bold mb-6" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
@@ -51,6 +51,12 @@ export default async function AdminCouples() {
               {/* En-tête couple */}
               <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
                 <div>
+                  <div className="flex items-center gap-3 flex-wrap mb-1">
+                    <span className="tag-brand" style={{ fontSize: 11 }}>Couple {couple.numero}</span>
+                    {couple.pairing_code && (
+                      <span className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>Code : {couple.pairing_code}</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     {members.map(m => (
                       <span key={m.id} className="font-semibold" style={{ fontSize: 15 }}>{m.prenom || '—'}</span>

@@ -100,6 +100,24 @@ export default function InscriptionPage() {
               </div>
             </div>
 
+            <div>
+              <label htmlFor="partner_code" className="label">
+                Code de ton/ta partenaire <span className="text-gray-400 font-normal">(optionnel)</span>
+              </label>
+              <input
+                id="partner_code"
+                name="partner_code"
+                type="text"
+                placeholder="Ex : A3F9K2"
+                maxLength={6}
+                autoCapitalize="characters"
+                className="input-field uppercase"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 6 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.
+              </p>
+            </div>
+
             <SubmitButton />
           </form>
 
@@ -114,7 +132,10 @@ export default function InscriptionPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          En créant un compte, tu acceptes nos conditions d'utilisation.
+          En créant un compte, tu acceptes nos{' '}
+          <Link href="/mentions-legales" className="text-magenta hover:underline">
+            conditions d&apos;utilisation
+          </Link>.
         </p>
       </div>
     </div>

@@ -66,7 +66,7 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <div className="tag-brand mb-6 mx-auto w-fit">✦ Lancement le 1er septembre 2026</div>
+        <div className="tag-brand mb-6 mx-auto w-fit">✦ Inscription au module 1 — Gratuit</div>
         <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-6" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           Le pacte des couples<br /><em style={{ color: 'var(--brand)' }}>qui tiennent.</em>
         </h1>
@@ -75,15 +75,15 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            Pré-commander — 89€ <ArrowRight className="w-4 h-4" />
+            Pré-commander — 29€/mois <ArrowRight className="w-4 h-4" />
           </button>
           <a href="#modules" className="btn-ghost lg">Voir le programme</a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
-          <span>✦ Module 1 gratuit</span>
+          <span>✦ Module 1 gratuit pour vous deux</span>
           <span>✦ À votre rythme</span>
           <span>✦ Lancement 1er sept. 2026</span>
-          <span>✦ Accès à vie</span>
+          <span>✦ Résiliable à tout moment</span>
         </div>
       </section>
 
@@ -238,19 +238,19 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3">Tarifs</div>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-              Un seul achat. Une vie de rendez-vous.
+              Un abonnement simple. Une vie de rendez-vous.
             </h2>
-            <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>Le module 1 est gratuit. Lancement le <strong style={{ color: 'var(--ink)' }}>1er septembre 2026</strong>.</p>
+            <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation. Lancement le <strong style={{ color: 'var(--ink)' }}>1er septembre 2026</strong>.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             <div className="card p-6 flex flex-col gap-4">
               <div className="tag-muted self-start">Découverte</div>
               <div>
                 <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>0 <small style={{ fontSize: 18 }}>€</small></div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Module 1 gratuit · toujours</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Module 1 gratuit · pour vous deux · jusqu&apos;à la révélation</div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-              {['Module "Moi et toi"', 'Questions personnelles', 'Espace couple privé'].map(f => (
+              {['Module "Moi et toi" pour chaque membre', 'Questions personnelles', 'Espace couple privé'].map(f => (
                 <div key={f} className="flex gap-2 items-start">
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
                   <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>{f}</span>
@@ -261,8 +261,8 @@ export default function LandingPage() {
             <div className="card p-6 flex flex-col gap-4" style={{ background: 'var(--brand)', border: 'none' }}>
               <div className="self-start px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(255,255,255,.2)', color: 'white' }}>Accès complet</div>
               <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>89 <small style={{ fontSize: 18 }}>€</small></div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>paiement unique · accès à vie</div>
+                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>29 <small style={{ fontSize: 18 }}>€/mois</small></div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>abonnement · résiliable à tout moment</div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
               {['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'Garantie 30 jours'].map(f => (
@@ -276,13 +276,13 @@ export default function LandingPage() {
               </button>
             </div>
             <div className="card p-6 flex flex-col gap-4">
-              <div className="tag-brand self-start">Renouvellement</div>
+              <div className="tag-brand self-start">BAC annuel</div>
               <div>
                 <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>19 <small style={{ fontSize: 18 }}>€/an</small></div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>module 7 · à activer plus tard</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Bilan Annuel de Couple · à activer plus tard</div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-              {['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Nouvelles questions chaque année', 'Annulable à tout moment'].map(f => (
+              {['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous le souhaitez', 'Annulable à tout moment'].map(f => (
                 <div key={f} className="flex gap-2 items-start">
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
                   <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>{f}</span>
@@ -300,10 +300,10 @@ export default function LandingPage() {
         <h2 className="font-serif text-4xl font-bold mb-4" style={{ color: 'var(--ink)' }}>
           Posez les bases. Maintenant.
         </h2>
-        <p className="text-lg mb-8" style={{ color: 'var(--muted)' }}>Le module 1 est gratuit. Commencez à deux, ce soir.</p>
+        <p className="text-lg mb-8" style={{ color: 'var(--muted)' }}>Le module 1 est gratuit pour vous deux. Commencez à deux, ce soir.</p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            Pré-commander — 89€ <ArrowRight className="w-4 h-4" />
+            Pré-commander — 29€/mois <ArrowRight className="w-4 h-4" />
           </button>
           <Link href="/inscription" className="btn-ghost lg">Essayer gratuitement</Link>
         </div>

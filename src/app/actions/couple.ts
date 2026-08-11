@@ -56,6 +56,37 @@ export async function rejoindreCouple(token: string) {
   return { success: true }
 }
 
+export async function rejoindreCoupleParCode(userId: string, code: string) {
+  const supabase = await createClient()
+
+  const cleanCode = code.trim().toUpperCase()
+  if (!/^[A-Z0-9]{6}$/.test(cleanCode)) {
+    return { error: 'Le code doit contenir 6 lettres/chiffres' }
+  }
+
+  const { data, error } = await supabase.rpc('rejoindre_couple_via_code', {
+    p_code: cleanCode,
+    p_user_id: userId,
+  })
+
+  if (error) return { error: error.message }
+  if (!data.success) return { error: data.error }
+
+  revalidatePath('/tableau-de-bord')
+  revalidatePath('/inviter-partenaire')
+  return { success: true, coupleId: data.couple_id }
+}
+
+export async function rejoindrePartenaireParCode(formData: FormData) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const code = formData.get('code') as string
+  return rejoindreCoupleParCode(user.id, code)
+}
+
 export async function getInviteLink() {
   const supabase = await createClient()
 
@@ -72,16 +103,23 @@ export async function getInviteLink() {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('invite_token, invite_used')
+    .select('invite_token, invite_used, pairing_code')
     .eq('id', profile.couple_id)
     .single()
 
   if (!couple) return { error: 'Couple introuvable' }
+
+  const { count: memberCount } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('couple_id', profile.couple_id)
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   return {
     success: true,
     link: `${baseUrl}/rejoindre?token=${couple.invite_token}`,
     used: couple.invite_used,
+    pairingCode: couple.pairing_code,
+    paired: (memberCount ?? 0) >= 2,
   }
 }

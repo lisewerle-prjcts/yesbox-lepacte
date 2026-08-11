@@ -79,7 +79,7 @@ export async function soumettrePrecommande(formData: FormData) {
             <p style="font-size:15px;line-height:1.7;color:#3b3733;margin:0 0 24px;">Le programme ouvre le <strong>1er septembre 2026</strong>. Tu recevras un email dès que tu pourras accéder à ton espace couple et commencer le Module 1 gratuitement.</p>
             <div style="background:#f7d9e6;border-radius:12px;padding:20px 24px;margin:0 0 24px;">
               <p style="font-size:13px;color:#c5256e;font-weight:600;margin:0 0 4px;font-family:monospace;letter-spacing:.08em;text-transform:uppercase;">Ce qui t'attend</p>
-              <p style="font-size:14px;color:#3b3733;margin:0;line-height:1.7;">7 modules pour se choisir en conscience · Sessions de révélation à deux · Votre CDD de couple à re-signer chaque année</p>
+              <p style="font-size:14px;color:#3b3733;margin:0;line-height:1.7;">7 modules pour se choisir en conscience · Sessions de révélation à deux · Votre CDD de couple à re-signer chaque année · Abonnement à 29€/mois, résiliable à tout moment</p>
             </div>
             <p style="font-size:13px;color:#736c63;margin:0;">Des questions ? Réponds à cet email ou écris-nous à <a href="mailto:lise.werle@gmail.com" style="color:#c5256e;">lise.werle@gmail.com</a>.</p>
           </div>

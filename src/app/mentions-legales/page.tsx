@@ -84,6 +84,54 @@ export default function MentionsLegales() {
           </section>
 
           <section>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Conditions d&apos;utilisation & tarifs</h2>
+            <p>
+              L&apos;utilisation de YES BOX — Le Pacte est soumise aux conditions suivantes, applicables aux deux membres d&apos;un couple :
+            </p>
+            <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Module 1 gratuit :</strong> le premier module (« Moi et toi ») est accessible gratuitement aux deux membres du couple, sans carte bancaire, jusqu&apos;à la révélation de vos réponses respectives. Vous découvrez ainsi le fonctionnement du programme avant tout engagement — sans mauvaise surprise.
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Abonnement mensuel — 29 €/mois :</strong> donne accès aux 7 modules complets, aux sessions de révélation à deux, au score de connivence, au journal et au CDD de couple. Sans engagement de durée, résiliable à tout moment depuis votre espace ; l&apos;accès reste actif jusqu&apos;à la fin de la période déjà payée.
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>BAC annuel (Bilan Annuel de Couple) — 19 €/an :</strong> abonnement annuel qui déclenche votre rappel et votre fiche avenant à la date anniversaire de votre couple, et vous permet de refaire l&apos;intégralité des modules si vous souhaitez recommencer le programme. Annulable à tout moment ; le renouvellement n&apos;est jamais automatique sans information préalable.
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Garantie :</strong> si après avoir terminé les 7 modules vous n&apos;êtes pas satisfait·s, nous vous remboursons intégralement dans les 30 jours suivant la fin du programme, sans justification.
+              </li>
+              <li>
+                Les tarifs sont indiqués par couple (un seul abonnement pour les deux membres) et peuvent évoluer ; toute modification vous sera communiquée avant d&apos;être appliquée à votre abonnement en cours.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Règles du jeu</h2>
+            <p>
+              Pour que l&apos;expérience reste juste et sincère pour les deux membres du couple, YES BOX applique les règles suivantes :
+            </p>
+            <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Pairage du couple :</strong> le premier membre qui crée son profil obtient un code unique de 6 lettres/chiffres. Le second membre saisit ce code lors de son inscription (ou plus tard, depuis son espace) pour rejoindre le même couple. Un couple ne peut compter que deux membres.
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Réponses individuelles :</strong> chaque membre répond seul aux questions de chaque module. Aucun des deux ne peut voir les réponses de l&apos;autre avant que le module ne soit marqué « révélé ».
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>La révélation :</strong> un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que le module suivant se débloque.
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Confidentialité :</strong> les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers.
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>Le CDD de couple :</strong> rédigé à la fin du programme, il est réexaminé chaque année via le BAC annuel, avec la possibilité de le faire évoluer par avenant.
+              </li>
+            </ul>
+          </section>
+
+          <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Contact</h2>
             <p>
               Pour toute question : <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>

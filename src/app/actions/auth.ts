@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { rejoindreCoupleParCode } from '@/app/actions/couple'
 import { z } from 'zod'
 
 const inscriptionSchema = z.object({
@@ -47,11 +48,20 @@ export async function inscription(formData: FormData) {
     return { error: error.message }
   }
 
+  const partnerCode = (formData.get('partner_code') as string | null)?.trim()
+
   if (data.user) {
     await supabase
       .from('profiles')
       .update({ prenom })
       .eq('id', data.user.id)
+
+    if (partnerCode) {
+      const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
+      revalidatePath('/', 'layout')
+      if (result.success) redirect('/tableau-de-bord')
+      redirect(`/inviter-partenaire?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
+    }
   }
 
   revalidatePath('/', 'layout')

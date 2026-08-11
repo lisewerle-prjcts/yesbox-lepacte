@@ -27,10 +27,10 @@ export default function TarifsPage() {
         <div className="text-center mb-12">
           <div className="eyebrow justify-center mb-3">Tarifs</div>
           <h1 className="font-serif" style={{ fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
-            Un seul achat. Une vie de rendez-vous.
+            Un abonnement simple. Une vie de rendez-vous.
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
-            Le module 1 est gratuit. Lancement le <strong style={{ color: 'var(--ink)' }}>1er septembre 2026</strong>.
+            Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation. Lancement le <strong style={{ color: 'var(--ink)' }}>1er septembre 2026</strong>.
           </p>
         </div>
 
@@ -40,19 +40,19 @@ export default function TarifsPage() {
             <div className="tag-muted self-start">Découverte</div>
             <div>
               <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>0 <small style={{ fontSize: 20 }}>€</small></div>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>Module 1 gratuit · toujours</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>Module 1 gratuit · pour vous deux · jusqu&apos;à la révélation</div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-            {['Module "Moi et toi"', '5 questions introspectives', 'Espace couple privé'].map(li)}
+            {['Module "Moi et toi" pour chaque membre du couple', '5 questions introspectives', 'Espace couple privé', 'Aucune carte bancaire requise'].map(li)}
             <Link href="/inscription" className="btn-ghost justify-center mt-auto">Commencer gratuitement</Link>
           </div>
 
-          {/* Complet */}
+          {/* Abonnement mensuel */}
           <div className="card p-6 flex flex-col gap-4" style={{ background: 'var(--brand)', border: 'none', transform: 'scale(1.02)' }}>
             <div className="self-start px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(255,255,255,.2)', color: 'white' }}>⭐ Recommandé</div>
             <div>
-              <div className="font-serif font-bold" style={{ fontSize: 40, color: 'white' }}>89 <small style={{ fontSize: 20 }}>€</small></div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>paiement unique · accès à vie</div>
+              <div className="font-serif font-bold" style={{ fontSize: 40, color: 'white' }}>29 <small style={{ fontSize: 20 }}>€/mois</small></div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}>abonnement · résiliable à tout moment</div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
             {['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé'].map(f => (
@@ -67,15 +67,15 @@ export default function TarifsPage() {
             <p className="text-center" style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>Aucun paiement maintenant · au lancement</p>
           </div>
 
-          {/* Renouvellement */}
+          {/* BAC annuel */}
           <div className="card p-6 flex flex-col gap-4">
-            <div className="tag-brand self-start">Renouvellement</div>
+            <div className="tag-brand self-start">BAC annuel</div>
             <div>
               <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>€/an</small></div>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>module 7 · à activer plus tard</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>Bilan Annuel de Couple · à activer plus tard</div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-            {['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Nouvelles questions chaque année', 'Annulable à tout moment'].map(li)}
+            {['Rappel annuel à votre date anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous voulez recommencer', 'Nouvelles questions chaque année', 'Annulable à tout moment'].map(li)}
             <Link href="/inscription" className="btn-ghost justify-center mt-auto">Plus tard, dans l'app</Link>
           </div>
         </div>
@@ -88,6 +88,10 @@ export default function TarifsPage() {
             Si après avoir terminé les 7 modules vous n'êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu'on croit vraiment à ce programme.
           </p>
         </div>
+
+        <p className="text-center mt-8" style={{ fontSize: 12, color: 'var(--muted)' }}>
+          Détail des abonnements, résiliation et règles du jeu : <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}>conditions d&apos;utilisation</Link>.
+        </p>
       </main>
 
       {modal && <PrecommandeModal onClose={() => setModal(false)} />}

@@ -1,7 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { randomInt } from 'crypto'
 import nodemailer from 'nodemailer'
 
 async function assertAdmin() {
@@ -11,6 +12,28 @@ async function assertAdmin() {
   const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) throw new Error('Accès refusé')
   return supabase
+}
+
+function getMailTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+  })
+}
+
+function mailHtml(body: string) {
+  return `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fbf8f3;border-radius:16px;overflow:hidden;">
+    <div style="background:#c5256e;padding:24px 32px;"><p style="color:white;font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">YES BOX — Le Pacte</p></div>
+    <div style="padding:32px;color:#1a1816;font-size:15px;line-height:1.7;">${body}</div>
+    <div style="background:#1a1816;padding:16px 32px;text-align:center;"><p style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin:0;">YES BOX · yesbox-lepacte.fr</p></div>
+  </div>`
+}
+
+function generateTempPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  let pwd = ''
+  for (let i = 0; i < 12; i++) pwd += chars[randomInt(chars.length)]
+  return pwd
 }
 
 const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
@@ -79,4 +102,75 @@ export async function adminSaveMessage(key: string, value: string) {
   await supabase.from('settings').upsert({ key, value }, { onConflict: 'key' })
   revalidatePath('/admin/messages')
   return { success: true }
+}
+
+export async function adminAssignMemberToCouple(userId: string, coupleId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { count } = await admin.from('profiles').select('id', { count: 'exact', head: true }).eq('couple_id', coupleId)
+  if ((count ?? 0) >= 2) return { error: 'Ce couple a déjà deux membres.' }
+
+  const { error } = await admin
+    .from('profiles')
+    .update({ couple_id: coupleId, role: (count ?? 0) === 0 ? 'initiateur' : 'partenaire' })
+    .eq('id', userId)
+  if (error) return { error: error.message }
+
+  await admin.rpc('initialiser_modules_couple', { p_couple_id: coupleId })
+
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/securite')
+  return { success: true }
+}
+
+export async function adminUnassignMember(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('profiles').update({ couple_id: null, role: null }).eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/securite')
+  return { success: true }
+}
+
+export async function adminCreateEmptyCouple() {
+  await assertAdmin()
+  const admin = createAdminClient()
+  const { data, error } = await admin.from('couples').insert({}).select('id, numero').single()
+  if (error) return { error: error.message }
+  revalidatePath('/admin/securite')
+  return { success: true, coupleId: data.id, numero: data.numero }
+}
+
+export async function adminResetAndSendPassword(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const newPassword = generateTempPassword()
+  const { data, error } = await admin.auth.admin.updateUserById(userId, { password: newPassword })
+  if (error) return { error: error.message }
+
+  const email = data.user?.email
+  const { data: profile } = await admin.from('profiles').select('prenom').eq('id', userId).single()
+  if (!email) return { error: 'Email introuvable pour ce membre' }
+
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    return { success: true, password: newPassword, emailed: false }
+  }
+
+  const transporter = getMailTransporter()
+  await transporter.sendMail({
+    from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: 'Ton nouveau mot de passe YES BOX',
+    html: mailHtml(`
+      <p>Bonjour ${profile?.prenom || ''},</p>
+      <p>Voici ton nouveau mot de passe pour te connecter à ton espace YES BOX — Le Pacte :</p>
+      <p style="font-family:monospace;font-size:20px;font-weight:700;background:#f7d9e6;color:#c5256e;padding:12px 20px;border-radius:10px;display:inline-block;letter-spacing:.05em;">${newPassword}</p>
+      <p>Connecte-toi puis change-le si tu le souhaites depuis ton espace.</p>
+    `),
+  })
+
+  return { success: true, password: newPassword, emailed: true }
 }
