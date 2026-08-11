@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { MODULES } from '@/lib/modules-data'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import { CheckCircle, Lock, Heart, ScrollText } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
 
@@ -9,6 +9,8 @@ export default async function PactePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
+
+  const MODULES = await getEffectiveModules()
 
   const { data: profile } = await supabase
     .from('profiles')

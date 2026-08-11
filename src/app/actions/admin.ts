@@ -104,6 +104,46 @@ export async function adminSaveMessage(key: string, value: string) {
   return { success: true }
 }
 
+interface QuestionOverride {
+  texte?: string
+  hint?: string
+  options?: string[]
+  labelMin?: string
+  labelMax?: string
+}
+
+function revalidateModuleContent(moduleSlug: string) {
+  revalidatePath('/admin/contenu')
+  revalidatePath(`/module/${moduleSlug}`)
+  revalidatePath(`/module/${moduleSlug}/revelation`)
+  revalidatePath('/pacte')
+  revalidatePath('/admin/voir-en-tant-que')
+}
+
+export async function adminSaveQuestionOverride(moduleSlug: string, questionSlug: string, fields: QuestionOverride) {
+  const supabase = await assertAdmin()
+  const key = `module_questions_override::${moduleSlug}`
+  const { data: existing } = await supabase.from('settings').select('value').eq('key', key).single()
+  const current = existing?.value ? JSON.parse(existing.value) : {}
+  current[questionSlug] = fields
+  await supabase.from('settings').upsert({ key, value: JSON.stringify(current) }, { onConflict: 'key' })
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+export async function adminResetQuestionOverride(moduleSlug: string, questionSlug: string) {
+  const supabase = await assertAdmin()
+  const key = `module_questions_override::${moduleSlug}`
+  const { data: existing } = await supabase.from('settings').select('value').eq('key', key).single()
+  if (existing?.value) {
+    const current = JSON.parse(existing.value)
+    delete current[questionSlug]
+    await supabase.from('settings').upsert({ key, value: JSON.stringify(current) }, { onConflict: 'key' })
+  }
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
 export async function adminAssignMemberToCouple(userId: string, coupleId: string) {
   await assertAdmin()
   const admin = createAdminClient()

@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { MODULES } from '@/lib/modules-data'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import MemberPicker from './MemberPicker'
 import { CheckCircle, Lock, Clock } from 'lucide-react'
 
@@ -83,6 +83,7 @@ export default async function VoirEnTantQuePage({
   }
 
   const done = modules.filter(m => m.revealed).length
+  const effectiveModules = member.couple_id ? await getEffectiveModules() : []
 
   return (
     <div>
@@ -109,7 +110,7 @@ export default async function VoirEnTantQuePage({
         </div>
       ) : (
         <div className="space-y-5">
-          {MODULES.map(moduleInfo => {
+          {effectiveModules.map(moduleInfo => {
             const modData = modules.find(m => m.slug === moduleInfo.slug)
             const statutKey = modData?.revealed ? 'revealed' : (modData?.statut || 'locked')
             const status = STATUS_LABEL[statutKey] || STATUS_LABEL.locked

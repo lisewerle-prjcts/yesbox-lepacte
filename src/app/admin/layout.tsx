@@ -10,7 +10,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Utilise le client admin (service role) pour bypasser RLS
   const adminClient = createAdminClient()
-  const { data: profile } = await adminClient.from('profiles').select('is_admin').eq('id', user.id).single()
+  const { data: profile, error: profileError } = await adminClient.from('profiles').select('is_admin').eq('id', user.id).single()
+
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--cream)' }}>
+        <div className="card p-6 max-w-lg" style={{ borderColor: '#dc2626' }}>
+          <h1 className="font-serif text-xl font-bold mb-2" style={{ color: '#dc2626' }}>Configuration admin incomplète</h1>
+          <p style={{ fontSize: 14, color: 'var(--ink-2)', marginBottom: 12 }}>
+            Impossible de vérifier ton statut admin : <code style={{ background: 'var(--paper)', padding: '2px 6px', borderRadius: 4 }}>{profileError.message}</code>
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>
+            C&apos;est généralement un problème de variable d&apos;environnement <code>SUPABASE_SERVICE_ROLE_KEY</code> manquante ou incorrecte
+            dans les réglages du projet Vercel (Production). Vérifie qu&apos;elle correspond bien à la clé <em>service_role</em> de Supabase
+            (Project Settings → API), puis redéploie.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (!profile?.is_admin) redirect('/tableau-de-bord')
 
   const NAV = [
@@ -20,6 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/actions', label: 'Actions manuelles' },
     { href: '/admin/securite', label: 'Sécurité' },
     { href: '/admin/voir-en-tant-que', label: 'Voir en tant que' },
+    { href: '/admin/contenu', label: 'Contenu des modules' },
   ]
 
   return (
