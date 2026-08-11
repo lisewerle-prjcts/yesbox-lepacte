@@ -6,6 +6,8 @@
 -- supabase/migrations/0003_admin_et_mode_test.sql
 -- supabase/migrations/0004_prenoms_couple.sql
 -- supabase/migrations/0005_content_overrides.sql
+-- supabase/migrations/0006_stripe_paiement.sql
+-- supabase/migrations/0007_nom_et_abonnement.sql
 -- ============================================================
 
 create extension if not exists "uuid-ossp";
@@ -16,6 +18,7 @@ create extension if not exists "uuid-ossp";
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
+  nom text,
   prenom text,
   avatar_url text,
   couple_id uuid,
@@ -56,6 +59,10 @@ create table public.couples (
   paye_at timestamptz,
   stripe_customer_id text,
   stripe_checkout_session_id text,
+  -- Accès complet en abonnement mensuel : a_paye reflète l'abonnement actif,
+  -- tenu à jour par le webhook Stripe à chaque évènement.
+  stripe_subscription_id text,
+  abonnement_statut text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -135,6 +142,10 @@ create table public.reponses (
   user_id uuid not null references auth.users(id) on delete cascade,
   question_slug text not null,
   valeur text,
+  -- Texte de la question tel qu'affiché au moment de la réponse : gèle
+  -- l'énoncé pour cette personne même si l'admin modifie la question après
+  -- coup (seul un "recommencer le module" repart du texte à jour).
+  question_texte text,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   unique(module_id, user_id, question_slug)

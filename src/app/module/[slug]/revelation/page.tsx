@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
 import { getModuleBySlug, moduleTitre } from '@/lib/modules-data'
 import RevelationClient from '@/components/module/RevelationClient'
-import PaywallRevelation from '@/components/module/PaywallRevelation'
+import Paywall from '@/components/module/Paywall'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,8 +30,8 @@ export default async function RevelationPage({ params }: PageProps) {
     supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2, a_paye').eq('id', profile.couple_id).single(),
   ])
 
-  if (!couple?.a_paye) {
-    return <PaywallRevelation titre={moduleTitre(moduleInfo, couple?.prenom_partenaire1 ?? null, couple?.prenom_partenaire2 ?? null)} />
+  if (!moduleInfo.free && !couple?.a_paye) {
+    return <Paywall titre={moduleTitre(moduleInfo, couple?.prenom_partenaire1 ?? null, couple?.prenom_partenaire2 ?? null)} />
   }
 
   const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)

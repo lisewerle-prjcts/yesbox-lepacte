@@ -15,6 +15,7 @@ export type QuestionType = 'text' | 'choix' | 'choix_multiple' | 'echelle'
 export interface Profile {
   id: string
   email: string
+  nom: string | null
   prenom: string | null
   avatar_url: string | null
   couple_id: string | null
@@ -38,6 +39,8 @@ export interface Couple {
   paye_at: string | null
   stripe_customer_id: string | null
   stripe_checkout_session_id: string | null
+  stripe_subscription_id: string | null
+  abonnement_statut: string | null
   created_at: string
   updated_at: string
 }
@@ -68,6 +71,7 @@ export interface Reponse {
   user_id: string
   question_slug: string
   valeur: string | null
+  question_texte: string | null
   created_at: string
   updated_at: string
 }

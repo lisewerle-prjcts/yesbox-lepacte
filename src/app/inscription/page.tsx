@@ -7,7 +7,6 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import { inscription } from '@/app/actions/auth'
-import EditableText from '@/components/edit/EditableText'
 import { Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton() {
@@ -26,6 +25,12 @@ export default function InscriptionPage() {
 
   async function handleAction(formData: FormData) {
     setError(null)
+    const password = formData.get('password') as string
+    const passwordConfirmation = formData.get('passwordConfirmation') as string
+    if (password !== passwordConfirmation) {
+      setError('Les mots de passe ne correspondent pas')
+      return
+    }
     const result = await inscription(formData)
     if (result?.error) setError(result.error)
   }
@@ -36,10 +41,10 @@ export default function InscriptionPage() {
         <div className="text-center mb-8">
           <Logo size="md" className="inline-block mb-4" />
           <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            <EditableText k="inscription.titre" as="span">Crée ton compte</EditableText>
+            Crée ton compte
           </h1>
           <p className="text-gray-500 mt-2">
-            <EditableText k="inscription.soustitre" as="span">Et commence à construire votre pacte</EditableText>
+            Et commence à construire votre pacte
           </p>
         </div>
 
@@ -47,19 +52,35 @@ export default function InscriptionPage() {
           {error && <Alert type="error" message={error} className="mb-5" />}
 
           <form action={handleAction} className="space-y-5">
-            <div>
-              <label htmlFor="prenom" className="label">
-                Ton prénom
-              </label>
-              <input
-                id="prenom"
-                name="prenom"
-                type="text"
-                placeholder="Marie"
-                autoComplete="given-name"
-                required
-                className="input-field"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="prenom" className="label">
+                  Prénom
+                </label>
+                <input
+                  id="prenom"
+                  name="prenom"
+                  type="text"
+                  placeholder="Marie"
+                  autoComplete="given-name"
+                  required
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label htmlFor="nom" className="label">
+                  Nom
+                </label>
+                <input
+                  id="nom"
+                  name="nom"
+                  type="text"
+                  placeholder="Dupont"
+                  autoComplete="family-name"
+                  required
+                  className="input-field"
+                />
+              </div>
             </div>
 
             <div>
@@ -99,6 +120,21 @@ export default function InscriptionPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="passwordConfirmation" className="label">
+                Confirme le mot de passe
+              </label>
+              <input
+                id="passwordConfirmation"
+                name="passwordConfirmation"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Retape le même mot de passe"
+                autoComplete="new-password"
+                required
+                className="input-field"
+              />
             </div>
 
             <SubmitButton />

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
-import { MODULE_ORDER } from '@/lib/modules-data'
+import { MODULE_ORDER, getModuleBySlug } from '@/lib/modules-data'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const session = await getEffectiveSession()
@@ -35,8 +35,13 @@ export async function noterConnivence(moduleId: string, moduleSlug: string, scor
   if (!session.profile.couple_id) return { error: 'Aucun couple trouvé' }
   const { db: supabase, userId, profile } = session
 
-  const { data: couple } = await supabase.from('couples').select('a_paye').eq('id', profile.couple_id).single()
-  if (!couple?.a_paye) return { error: 'Le reveal est réservé à l\'accès complet — payez pour le débloquer.' }
+  // Le module 1 reste jouable (et révélable) gratuitement ; l'accès complet
+  // (abonnement) n'est requis qu'à partir du module 2.
+  const moduleInfo = getModuleBySlug(moduleSlug)
+  if (!moduleInfo?.free) {
+    const { data: couple } = await supabase.from('couples').select('a_paye').eq('id', profile.couple_id).single()
+    if (!couple?.a_paye) return { error: 'Ce module est réservé à l\'accès complet — abonnez-vous pour le débloquer.' }
+  }
 
   const { error } = await supabase.from('scores').upsert(
     { module_id: moduleId, user_id: userId, score },

@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
 import { getModuleBySlug, moduleTitre } from '@/lib/modules-data'
 import ModuleQuestions from '@/components/module/ModuleQuestions'
+import Paywall from '@/components/module/Paywall'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,10 @@ export default async function ModulePage({ params }: PageProps) {
   const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null)
   const titre = moduleTitre(moduleInfo, prenomInitiateur, prenomPartenaire)
 
+  if (!moduleInfo.free && !couple?.a_paye) {
+    return <Paywall titre={titre} message="Ce module fait partie de l'accès complet. Le module 1 est gratuit — passez à l'accès complet pour continuer le parcours à deux." />
+  }
+
   const [{ data: mesReponses }, { data: reponsesPartenaire }, { count: cyclesPrecedents }] = await Promise.all([
     supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', userId),
     partner
@@ -53,7 +58,6 @@ export default async function ModulePage({ params }: PageProps) {
       role={profile.role}
       partnerName={partner?.prenom || null}
       aDesCyclesPrecedents={(cyclesPrecedents ?? 0) > 0}
-      aPaye={!!couple?.a_paye}
     />
   )
 }

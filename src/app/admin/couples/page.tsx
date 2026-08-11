@@ -78,8 +78,8 @@ export default async function AdminCouples() {
                     </span>
                     <span className="tag-muted" style={{ fontSize: 11 }}>{revealedCount}/{SLUGS.length} modules révélés</span>
                     {couple.a_paye
-                      ? <span className="tag-sage" style={{ fontSize: 11 }}>✓ Accès complet payé</span>
-                      : <span className="tag-muted" style={{ fontSize: 11 }}>Non payé</span>}
+                      ? <span className="tag-sage" style={{ fontSize: 11 }}>✓ Abonné (29€/mois)</span>
+                      : <span className="tag-muted" style={{ fontSize: 11 }}>Non abonné</span>}
                   </div>
                   <div className="flex gap-4 flex-wrap mt-1.5">
                     <span style={{ fontSize: 12, color: 'var(--muted)' }}>
@@ -152,7 +152,7 @@ export default async function AdminCouples() {
                     style={couple.a_paye
                       ? { background: 'none', border: '1px solid #fca5a5', color: '#dc2626' }
                       : { background: 'var(--sage-soft)', color: 'var(--sage)', border: '1px solid var(--sage)' }}>
-                    {couple.a_paye ? <><Lock className="w-3 h-3" />Marquer non payé</> : <><Unlock className="w-3 h-3" />Marquer comme payé</>}
+                    {couple.a_paye ? <><Lock className="w-3 h-3" />Marquer non abonné</> : <><Unlock className="w-3 h-3" />Marquer comme abonné</>}
                   </button>
                 </form>
                 <AdminCoupleEditor

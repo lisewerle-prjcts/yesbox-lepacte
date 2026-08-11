@@ -2,7 +2,13 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Lock } from 'lucide-react'
 import { creerSessionPaiement } from '@/app/actions/paiement'
 
-export default function PaywallRevelation({ titre }: { titre: string }) {
+interface Props {
+  titre: string
+  /** Texte adapté selon qu'on bloque la révélation ou l'accès au module lui-même. */
+  message?: string
+}
+
+export default function Paywall({ titre, message }: Props) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--dark)', fontFamily: 'var(--font-geist)' }}>
       <div style={{ borderBottom: '1px solid var(--dark-line)', padding: '16px 24px', maxWidth: 860, margin: '0 auto' }}>
@@ -17,16 +23,17 @@ export default function PaywallRevelation({ titre }: { titre: string }) {
         </div>
         <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}>{titre}</div>
         <h1 className="font-serif" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 700, color: 'var(--dark-paper)', lineHeight: 1.2, marginBottom: 16 }}>
-          Vos réponses vous attendent
+          La suite vous attend
         </h1>
         <p style={{ color: 'var(--dark-muted)', fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>
-          Vous avez toutes les deux terminé ce module. Pour ouvrir la session de révélation, noter votre connivence et débloquer la suite du parcours, passez à l&apos;accès complet — un paiement unique de 89€, à vie.
+          {message || 'Le module 1 est gratuit. Pour continuer le parcours à deux — les modules suivants, les sessions de révélation, votre CDD de couple — passez à l\'accès complet.'}
         </p>
         <form action={creerSessionPaiement}>
           <button type="submit" className="btn-brand lg">
-            Débloquer l&apos;accès complet — 89€ <ArrowRight className="w-4 h-4" />
+            Débloquer l&apos;accès complet — 29€/mois <ArrowRight className="w-4 h-4" />
           </button>
         </form>
+        <p style={{ fontSize: 12, color: 'var(--dark-muted)', marginTop: 12 }}>Résiliable à tout moment.</p>
       </div>
     </div>
   )

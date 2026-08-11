@@ -30,6 +30,8 @@ export default async function PaiementSuccesPage({ searchParams }: PageProps) {
           paye_at: new Date().toISOString(),
           stripe_customer_id: typeof checkoutSession.customer === 'string' ? checkoutSession.customer : null,
           stripe_checkout_session_id: checkoutSession.id,
+          stripe_subscription_id: typeof checkoutSession.subscription === 'string' ? checkoutSession.subscription : null,
+          abonnement_statut: 'active',
         }).eq('id', profile.couple_id)
       }
     } catch {}
@@ -44,7 +46,7 @@ export default async function PaiementSuccesPage({ searchParams }: PageProps) {
         Merci, c&apos;est réglé ✦
       </h1>
       <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>
-        Votre accès complet est débloqué. Les 10 modules, les sessions de révélation et votre CDD de couple vous attendent.
+        Votre abonnement est actif. Les 10 modules, les sessions de révélation et votre CDD de couple vous attendent.
       </p>
       <Link href="/tableau-de-bord" className="btn-brand lg">
         Retour au tableau de bord <ArrowRight className="w-4 h-4" />

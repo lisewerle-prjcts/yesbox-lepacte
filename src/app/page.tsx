@@ -36,9 +36,8 @@ const CDD_POINTS = [
   'Un avenant pour évoluer ensemble, et re-signer « nous »',
 ]
 
-const OFFRE_GRATUITE = ['Le module 1, à vos deux prénoms', 'Questions personnelles', 'Espace couple privé']
-const OFFRE_COMPLETE = ['Les 10 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'Garantie 30 jours']
-const OFFRE_RENOUVELLEMENT = ['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Nouvelles questions chaque année', 'Annulable à tout moment']
+const OFFRE_GRATUITE = ['Le module 1, à vos deux prénoms', 'Questions personnelles', 'Session de révélation incluse', 'Espace couple privé']
+const OFFRE_COMPLETE = ['Les modules 2 à 10', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'BAC love annuel inclus', 'Résiliable à tout moment']
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -101,7 +100,7 @@ export default function LandingPage() {
           <span>✦ <EditableText k="landing.hero.badge1" as="span">Module 1 gratuit</EditableText></span>
           <span>✦ <EditableText k="landing.hero.badge2" as="span">À votre rythme</EditableText></span>
           <span>✦ <EditableText k="landing.hero.badge3" as="span">Lancement 1er sept. 2026</EditableText></span>
-          <span>✦ <EditableText k="landing.hero.badge4" as="span">Accès à vie</EditableText></span>
+          <span>✦ <EditableText k="landing.hero.badge4" as="span">Résiliable à tout moment</EditableText></span>
         </div>
       </section>
 
@@ -278,13 +277,13 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3"><EditableText k="landing.tarifs.eyebrow" as="span">Tarifs</EditableText></div>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-              <EditableText k="landing.tarifs.titre" as="span">Un seul achat. Une vie de rendez-vous.</EditableText>
+              <EditableText k="landing.tarifs.titre" as="span">Commencez gratuitement. Continuez si ça vous ressemble.</EditableText>
             </h2>
             <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
-              <EditableText k="landing.tarifs.soustitre" as="span">Le module 1 est gratuit. Lancement le</EditableText> <strong style={{ color: 'var(--ink)' }}>1er septembre 2026</strong>.
+              <EditableText k="landing.tarifs.soustitre" as="span">Le module 1, révélation incluse, est gratuit. Lancement le</EditableText> <strong style={{ color: 'var(--ink)' }}>1er septembre 2026</strong>.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
             <div className="card p-6 flex flex-col gap-4">
               <div className="tag-muted self-start"><EditableText k="landing.offre1.tag" as="span">Découverte</EditableText></div>
               <div>
@@ -305,8 +304,8 @@ export default function LandingPage() {
                 <EditableText k="landing.offre2.tag" as="span">Accès complet</EditableText>
               </div>
               <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>89 <small style={{ fontSize: 18 }}>€</small></div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}><EditableText k="landing.offre2.souslabel" as="span">paiement unique · accès à vie</EditableText></div>
+                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>29 <small style={{ fontSize: 18 }}>€/mois</small></div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}><EditableText k="landing.offre2.souslabel" as="span">abonnement mensuel · résiliable à tout moment</EditableText></div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
               {OFFRE_COMPLETE.map((f, i) => (
@@ -318,21 +317,6 @@ export default function LandingPage() {
               <Link href="/inscription" className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
                 <EditableText k="landing.offre2.cta" as="span">Pré-inscription</EditableText> <ArrowRight className="w-4 h-4" />
               </Link>
-            </div>
-            <div className="card p-6 flex flex-col gap-4">
-              <div className="tag-brand self-start"><EditableText k="landing.offre3.tag" as="span">Renouvellement</EditableText></div>
-              <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>19 <small style={{ fontSize: 18 }}>€/an</small></div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText k="landing.offre3.souslabel" as="span">module 10 · Le BAC love · à activer plus tard</EditableText></div>
-              </div>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-              {OFFRE_RENOUVELLEMENT.map((f, i) => (
-                <div key={f} className="flex gap-2 items-start">
-                  <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                  <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}><EditableText k={`landing.offre3.point${i}`} as="span">{f}</EditableText></span>
-                </div>
-              ))}
-              <Link href="/inscription" className="btn-ghost text-center justify-center mt-auto"><EditableText k="landing.offre3.cta" as="span">Plus tard, dans l'app</EditableText></Link>
             </div>
           </div>
         </div>
