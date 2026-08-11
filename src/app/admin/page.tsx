@@ -1,8 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminHome() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [
     { count: totalPrecommandes },
@@ -18,11 +20,12 @@ export default async function AdminHome() {
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
   ])
 
-  const moduleSlugs = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
+  const moduleSlugs = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
   const moduleNames: Record<string, string> = {
-    moi: 'Moi et toi', toi: 'Toi et moi', nous: 'Nous',
-    communication: 'Parlons-nous', conflits: 'Les conflits',
-    engagement: 'Le Pacte', renouvellement: 'Le Renouvellement',
+    partenaire1: 'Partenaire 1', partenaire2: 'Partenaire 2', couple: 'Notre couple',
+    quotidien: 'Notre quotidien', projets: 'Nos projets', famille: 'La famille',
+    communication: 'Nos modes de communication', disputes: 'Nos disputes',
+    cdd: 'Notre CDD de couple', bac: 'Le BAC love',
   }
 
   const statsBySlug = moduleSlugs.map(slug => {

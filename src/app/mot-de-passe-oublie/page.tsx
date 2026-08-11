@@ -2,33 +2,31 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useFormStatus } from 'react-dom'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
-import { createClient } from '@/lib/supabase/client'
+import { demanderResetMotDePasse } from '@/app/actions/auth'
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button type="submit" disabled={pending} className="btn-primary w-full flex items-center justify-center gap-2">
+      {pending ? <Spinner size="sm" /> : null}
+      {pending ? 'Envoi...' : 'Envoyer le lien'}
+    </button>
+  )
+}
 
 export default function MotDePasseOubliePage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+  async function handleAction(formData: FormData) {
     setError(null)
-
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    })
-
-    if (error) {
-      setError(error.message)
-    } else {
-      setSent(true)
-    }
-    setLoading(false)
+    const result = await demanderResetMotDePasse(formData)
+    if (result?.error) setError(result.error)
+    else setSent(true)
   }
 
   return (
@@ -47,7 +45,7 @@ export default function MotDePasseOubliePage() {
               <div className="text-4xl mb-4">📬</div>
               <h2 className="font-fraunces text-xl font-bold mb-2">Email envoyé !</h2>
               <p className="text-gray-500 text-sm mb-6">
-                Vérifie ta boîte mail pour réinitialiser ton mot de passe.
+                Si un compte existe avec cette adresse, tu vas recevoir un lien pour réinitialiser ton mot de passe.
               </p>
               <Link href="/connexion" className="btn-primary">
                 Retour à la connexion
@@ -56,23 +54,20 @@ export default function MotDePasseOubliePage() {
           ) : (
             <>
               {error && <Alert type="error" message={error} className="mb-5" />}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form action={handleAction} className="space-y-5">
                 <div>
                   <label htmlFor="email" className="label">Email</label>
                   <input
                     id="email"
+                    name="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="ton@email.fr"
+                    autoComplete="email"
                     required
                     className="input-field"
                   />
                 </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
-                  {loading && <Spinner size="sm" />}
-                  {loading ? 'Envoi...' : 'Envoyer le lien'}
-                </button>
+                <SubmitButton />
               </form>
               <div className="mt-4 text-center">
                 <Link href="/connexion" className="text-sm text-gray-400 hover:text-magenta">

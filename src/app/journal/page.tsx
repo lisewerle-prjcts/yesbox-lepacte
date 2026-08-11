@@ -1,26 +1,52 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { MODULES } from '@/lib/modules-data'
+import { getEffectiveSession } from '@/lib/effective-session'
+import { MODULES, moduleTitre } from '@/lib/modules-data'
 import Link from 'next/link'
 import { BookOpen } from 'lucide-react'
 import type { Module } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = { title: 'Journal de couple' }
 
 export default async function JournalPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  const session = await getEffectiveSession()
+  if (!session) redirect('/connexion')
+  const { db: supabase, userId, profile } = session
+  if (!profile.couple_id) redirect('/tableau-de-bord')
 
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) redirect('/tableau-de-bord')
+  const { data: partner } = await supabase.from('profiles').select('prenom, role').eq('couple_id', profile.couple_id).neq('id', userId).single()
+  const { data: couple } = await supabase.from('couples').select('prenom_partenaire1, prenom_partenaire2').eq('id', profile.couple_id).single()
 
-  const [{ data: modules }, { data: entries }] = await Promise.all([
-    supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
+  const [{ data: modulesRaw }, { data: entries }] = await Promise.all([
+    supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('cycle'),
     supabase.from('journal_entries').select('*').eq('couple_id', profile.couple_id),
   ])
 
-  const revealedModules = (modules || []).filter((m: Module) => m.revealed)
+  // Cycle le plus récent par module
+  const modules: Module[] = []
+  for (const m of modulesRaw || []) {
+    const existing = modules.find(x => x.slug === m.slug)
+    if (!existing || m.cycle > existing.cycle) {
+      if (existing) modules.splice(modules.indexOf(existing), 1, m)
+      else modules.push(m)
+    }
+  }
+  const revealedModules = modules.filter((m: Module) => m.revealed)
+
+  const scoresParModule: Record<string, { moi: number | null; partenaire: number | null }> = {}
+  if (revealedModules.length > 0) {
+    const { data: scores } = await supabase.from('scores').select('module_id, user_id, score').in('module_id', revealedModules.map(m => m.id))
+    for (const m of revealedModules) {
+      scoresParModule[m.slug] = {
+        moi: scores?.find(s => s.module_id === m.id && s.user_id === userId)?.score ?? null,
+        partenaire: scores?.find(s => s.module_id === m.id && s.user_id !== userId)?.score ?? null,
+      }
+    }
+  }
+
+  const prenomInitiateur = couple?.prenom_partenaire1 ?? (profile.role === 'initiateur' ? profile.prenom : partner?.prenom ?? null)
+  const prenomPartenaire = couple?.prenom_partenaire2 ?? (profile.role === 'partenaire' ? profile.prenom : partner?.prenom ?? null)
 
   return (
     <div className="fade" style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -47,21 +73,26 @@ export default async function JournalPage() {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
             if (!modData) return null
             const entry = entries?.find(e => e.module_slug === moduleInfo.slug)
+            const scores = scoresParModule[moduleInfo.slug]
+            const titre = moduleTitre(moduleInfo, prenomInitiateur, prenomPartenaire)
             return (
               <div key={moduleInfo.slug} className="card p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span style={{ fontSize: 22 }}>{moduleInfo.emoji}</span>
                     <div>
-                      <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}>{moduleInfo.titre}</p>
+                      <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}>{titre}</p>
                       <p style={{ fontSize: 12, color: 'var(--muted)' }}>{moduleInfo.sousTitre}</p>
                     </div>
                   </div>
-                  {modData.connivence_score && (
-                    <div className="flex items-center gap-1" style={{ fontSize: 13 }}>
-                      <span style={{ color: 'var(--brand)' }}>{'★'.repeat(modData.connivence_score)}{'☆'.repeat(5 - modData.connivence_score)}</span>
-                    </div>
-                  )}
+                  <div className="flex flex-col items-end gap-0.5" style={{ fontSize: 11.5 }}>
+                    {scores?.moi != null && (
+                      <span style={{ color: 'var(--muted)' }}>Toi <span style={{ color: 'var(--brand)' }}>{'★'.repeat(scores.moi)}{'☆'.repeat(5 - scores.moi)}</span></span>
+                    )}
+                    {scores?.partenaire != null && (
+                      <span style={{ color: 'var(--muted)' }}>{partner?.prenom || 'Partenaire'} <span style={{ color: 'var(--brand)' }}>{'★'.repeat(scores.partenaire)}{'☆'.repeat(5 - scores.partenaire)}</span></span>
+                    )}
+                  </div>
                 </div>
                 {entry?.contenu ? (
                   <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>

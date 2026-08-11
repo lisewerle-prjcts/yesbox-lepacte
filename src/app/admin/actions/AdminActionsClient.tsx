@@ -7,11 +7,12 @@ import {
   adminResetModule, adminSendEmail,
 } from '@/app/actions/admin'
 
-const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
+const SLUGS = ['partenaire1','partenaire2','couple','quotidien','projets','famille','communication','disputes','cdd','bac']
 const NAMES: Record<string,string> = {
-  moi:'M1 — Moi et toi',toi:'M2 — Toi et moi',nous:'M3 — Nous',
-  communication:'M4 — Parlons-nous',conflits:'M5 — Les conflits',
-  engagement:'M6 — Le Pacte',renouvellement:'M7 — Renouvellement',
+  partenaire1:'M1 — Partenaire 1', partenaire2:'M2 — Partenaire 2', couple:'M3 — Notre couple',
+  quotidien:'M4 — Notre quotidien', projets:'M5 — Nos projets', famille:'M6 — La famille',
+  communication:'M7 — Nos modes de communication', disputes:'M8 — Nos disputes',
+  cdd:'M9 — Notre CDD de couple', bac:'M10 — Le BAC love',
 }
 
 interface Couple { id: string; created_at: string; members: { prenom?: string; email: string }[] }
