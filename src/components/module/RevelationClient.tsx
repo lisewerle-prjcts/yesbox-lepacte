@@ -103,6 +103,10 @@ export default function RevelationClient({ moduleInfo, titre, moduleData, mesRep
   mesReponses.forEach(r => { if (r.valeur) myMap[r.question_slug] = r.valeur })
   const partnerMap: Record<string, string> = {}
   reponsesPartner.forEach(r => { if (r.valeur) partnerMap[r.question_slug] = r.valeur })
+  // Texte figé au moment de la réponse — pour ne pas changer rétroactivement
+  // ce qui a été lu si l'admin modifie la question après coup.
+  const myTexteMap: Record<string, string> = {}
+  mesReponses.forEach(r => { if (r.question_texte) myTexteMap[r.question_slug] = r.question_texte })
 
   async function valider() {
     if (!monScore) return
@@ -164,7 +168,7 @@ export default function RevelationClient({ moduleInfo, titre, moduleData, mesRep
 
             return (
               <div key={q.slug}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{questionTexte(q, role)}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{myTexteMap[q.slug] || questionTexte(q, role)}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div style={{ background: match ? 'rgba(197,37,110,.12)' : 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: `1px solid ${match ? 'rgba(197,37,110,.3)' : 'var(--dark-line)'}` }}>
                     <div className="flex items-center gap-2 mb-3">

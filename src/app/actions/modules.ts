@@ -5,12 +5,16 @@ import { redirect } from 'next/navigation'
 import { getEffectiveSession } from '@/lib/effective-session'
 import { MODULE_ORDER, getModuleBySlug } from '@/lib/modules-data'
 
-export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
+// questionTexteAffiche : le texte de la question tel qu'affiché à
+// l'instant de la sauvegarde (overrides d'édition compris) — figé dans la
+// réponse pour que l'admin puisse modifier les questions sans changer
+// rétroactivement ce que cette personne a déjà lu et auquel elle a répondu.
+export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string, questionTexteAffiche?: string) {
   const session = await getEffectiveSession()
   if (!session) return { error: 'Non authentifié' }
 
   const { error } = await session.db.from('reponses').upsert(
-    { module_id: moduleId, user_id: session.userId, question_slug: questionSlug, valeur },
+    { module_id: moduleId, user_id: session.userId, question_slug: questionSlug, valeur, question_texte: questionTexteAffiche || null },
     { onConflict: 'module_id,user_id,question_slug' }
   )
   if (error) return { error: error.message }

@@ -4,8 +4,10 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
-import { questionTexte } from '@/lib/modules-data'
+import { questionTexte, questionOverrideKey } from '@/lib/modules-data'
 import ReglesDuJeu from '@/components/ReglesDuJeu'
+import EditableText from '@/components/edit/EditableText'
+import { useEditMode } from '@/components/edit/EditModeProvider'
 import { ArrowLeft, ArrowRight, CheckCircle, History, ChevronDown, ChevronUp } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
@@ -38,6 +40,7 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(moduleData.statut === 'complete')
   const [reglesOuvertes, setReglesOuvertes] = useState(true)
+  const { overrides } = useEditMode()
 
   const q = moduleInfo.questions[idx]
   const total = moduleInfo.questions.length
@@ -47,11 +50,18 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
   const allAnswered = answered === total
   const partnerDone = reponsesPartenaire.length >= total
 
+  // Une question déjà répondue (dans une session précédente) garde le
+  // texte tel qu'il était au moment de la réponse, même si l'admin modifie
+  // la question depuis — seul un "recommencer le module" en repart à zéro.
+  const reponseFigee = mesReponses.find(r => r.question_slug === q.slug && r.valeur)
+  const texteLive = overrides[questionOverrideKey(moduleInfo.slug, q, role)] ?? questionTexte(q, role)
+  const texteQuestion = reponseFigee?.question_texte || texteLive
+
   async function saveAndNext() {
     setSaving(true)
     const val = reponses[q.slug]
     if (val !== undefined && val !== '') {
-      await sauvegarderReponse(moduleData.id, q.slug, val)
+      await sauvegarderReponse(moduleData.id, q.slug, val, texteLive)
     }
     setSaving(false)
 
@@ -168,9 +178,16 @@ export default function ModuleQuestions({ moduleInfo, titre, moduleData, mesRepo
       {/* Question card */}
       <div className="card p-7 mb-5 slide-up" key={q.slug}>
         <div className="eyebrow mb-4">Question {String(idx + 1).padStart(2, '0')}</div>
-        <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: q.hint ? 8 : 24 }}>
-          {questionTexte(q, role)}
-        </h2>
+        {reponseFigee ? (
+          <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: q.hint ? 8 : 24 }}>
+            {texteQuestion}
+          </h2>
+        ) : (
+          <EditableText k={questionOverrideKey(moduleInfo.slug, q, role)} as="h2" className="font-serif"
+            style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: q.hint ? 8 : 24 }}>
+            {questionTexte(q, role)}
+          </EditableText>
+        )}
         {q.hint && (
           <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 20 }}>{q.hint}</p>
         )}

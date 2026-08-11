@@ -305,4 +305,15 @@ export function questionTexte(q: ModuleInfo['questions'][number], role?: string 
   return q.texte
 }
 
+// Clé de réécriture (mode édition) pour le texte d'une question. Les
+// questions à formulation différente par rôle (ex: "Quelles sont VOS
+// qualités" / "Quelles sont SES qualités") ont une clé par rôle pour ne pas
+// écraser l'une avec l'autre ; les questions à texte unique partagent une
+// seule clé quel que soit le rôle qui la modifie.
+export function questionOverrideKey(moduleSlug: string, q: ModuleInfo['questions'][number], role?: string | null): string {
+  const aDesVariantes = !!(q.texteInitiateur || q.textePartenaire)
+  if (!aDesVariantes) return `question.${moduleSlug}.${q.slug}.texte`
+  return `question.${moduleSlug}.${q.slug}.${role === 'partenaire' ? 'partenaire' : 'initiateur'}`
+}
+
 export const MODULE_ORDER = MODULES.map(m => m.slug)
