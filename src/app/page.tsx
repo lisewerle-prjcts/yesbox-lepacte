@@ -322,6 +322,7 @@ export default function LandingPage() {
             <Link href="/inscription" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Inscription</Link>
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Tarifs</Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Mentions légales</Link>
+            <Link href="/admin" style={{ color: 'rgba(255,255,255,.35)', fontSize: 12 }}>Admin</Link>
           </div>
         </div>
       </footer>

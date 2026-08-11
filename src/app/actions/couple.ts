@@ -103,7 +103,7 @@ export async function getInviteLink() {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('invite_token, invite_used, pairing_code')
+    .select('invite_token, invite_used, pairing_code, date_anniversaire')
     .eq('id', profile.couple_id)
     .single()
 
@@ -120,6 +120,7 @@ export async function getInviteLink() {
     link: `${baseUrl}/rejoindre?token=${couple.invite_token}`,
     used: couple.invite_used,
     pairingCode: couple.pairing_code,
+    dateAnniversaire: couple.date_anniversaire,
     paired: (memberCount ?? 0) >= 2,
   }
 }

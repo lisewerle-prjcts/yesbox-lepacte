@@ -2,11 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import { creerCouple, getInviteLink, rejoindrePartenaireParCode } from '@/app/actions/couple'
-import { Copy, Check, Send, ArrowRight, KeyRound } from 'lucide-react'
+import { getProchainAnniversaire } from '@/lib/anniversaires'
+import { Copy, Check, Send, ArrowRight, KeyRound, ArrowLeft, Gift } from 'lucide-react'
 
 function InviterPartenaireContent() {
   const router = useRouter()
@@ -16,10 +18,10 @@ function InviterPartenaireContent() {
   const [error, setError] = useState<string | null>(searchParams.get('code_error'))
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [pairingCode, setPairingCode] = useState<string | null>(null)
+  const [dateAnniversaire, setDateAnniversaire] = useState<string | null>(null)
   const [paired, setPaired] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const [joinCode, setJoinCode] = useState('')
   const [joinLoading, setJoinLoading] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(null)
 
@@ -29,6 +31,7 @@ function InviterPartenaireContent() {
       if (result.success && result.link) {
         setInviteLink(result.link)
         setPairingCode(result.pairingCode || null)
+        setDateAnniversaire(result.dateAnniversaire || null)
         setPaired(!!result.paired)
         setStep('invite')
       }
@@ -47,9 +50,12 @@ function InviterPartenaireContent() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
     setInviteLink(`${baseUrl}/rejoindre?token=${result.couple?.invite_token}`)
     setPairingCode(result.couple?.pairing_code || null)
+    setDateAnniversaire(result.couple?.date_anniversaire || null)
     setStep('invite')
     setLoading(false)
   }
+
+  const prochainAnniversaire = dateAnniversaire ? getProchainAnniversaire(dateAnniversaire) : null
 
   async function copyLink() {
     if (!inviteLink) return
@@ -92,6 +98,13 @@ function InviterPartenaireContent() {
 
   return (
     <div className="w-full max-w-md">
+      <Link
+        href="/tableau-de-bord"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-magenta transition-colors mb-4"
+      >
+        <ArrowLeft className="w-4 h-4" /> Retour au tableau de bord
+      </Link>
+
       <div className="text-center mb-8">
         <Logo size="md" className="inline-block mb-4" />
         <div className="flex items-center justify-center gap-3 mb-4">
@@ -222,6 +235,28 @@ function InviterPartenaireContent() {
               {paired ? 'Aller au tableau de bord →' : "Continuer seul·e pour l'instant →"}
             </button>
           </div>
+
+          {prochainAnniversaire && (
+            <div className="card animate-slide-up">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="w-4 h-4 text-magenta" />
+                <h2 className="font-fraunces text-lg font-bold text-gray-900">
+                  Votre prochain anniversaire
+                </h2>
+              </div>
+              <p className="text-gray-700 text-sm mb-2">
+                Le{' '}
+                <strong>
+                  {prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </strong>
+                {' '}— vos <strong>{prochainAnniversaire.years}</strong> an{prochainAnniversaire.years > 1 ? 's' : ''}, les{' '}
+                <span className="text-magenta font-semibold">noces de {prochainAnniversaire.matiere}</span>.
+              </p>
+              <p className="text-gray-500 text-sm">
+                Une idée de rituel : offrez-vous, ce jour-là, un petit geste symbolique autour du {prochainAnniversaire.matiere} — un cadeau modeste, à la mesure de l&apos;année écoulée.
+              </p>
+            </div>
+          )}
 
           {!paired && (
             <div className="card animate-slide-up">
