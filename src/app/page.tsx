@@ -66,7 +66,7 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <div className="tag-brand mb-6 mx-auto w-fit">✦ Inscription au module 1 — Gratuit</div>
+        <div className="tag-brand mb-6 mx-auto w-fit">✦ Lancement le 1er septembre 2026</div>
         <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-6" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           Le pacte des couples<br /><em style={{ color: 'var(--brand)' }}>qui tiennent.</em>
         </h1>
@@ -74,9 +74,9 @@ export default function LandingPage() {
           Un programme en 7 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
-          <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            Pré-commander — 29€/mois <ArrowRight className="w-4 h-4" />
-          </button>
+          <Link href="/inscription" className="btn-brand lg">
+            Inscription au module 1 — Gratuit <ArrowRight className="w-4 h-4" />
+          </Link>
           <a href="#modules" className="btn-ghost lg">Voir le programme</a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
