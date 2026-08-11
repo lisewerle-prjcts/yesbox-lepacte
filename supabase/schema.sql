@@ -187,12 +187,15 @@ create policy "settings_admin" on public.settings using (
 
 -- ============================================================
 -- FONCTION : handle_new_user
+-- Les adresses listées dans admin_emails deviennent admin dès l'inscription.
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  admin_emails text[] := array['lise.werle@gmail.com', 'lise.yesbox@gmail.com'];
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email);
+  insert into public.profiles (id, email, is_admin)
+  values (new.id, new.email, lower(new.email) = any(admin_emails));
   return new;
 end;
 $$;
@@ -316,3 +319,8 @@ begin
   end loop;
 end;
 $$;
+
+-- Accès admin complet pour les comptes déjà inscrits avec ces adresses
+-- (les nouvelles inscriptions avec ces adresses deviennent admin automatiquement, cf. handle_new_user)
+update public.profiles set is_admin = true
+where lower(email) in ('lise.werle@gmail.com', 'lise.yesbox@gmail.com');

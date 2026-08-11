@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/messages', label: 'Messages & emails' },
     { href: '/admin/actions', label: 'Actions manuelles' },
     { href: '/admin/securite', label: 'Sécurité' },
+    { href: '/admin/voir-en-tant-que', label: 'Voir en tant que' },
   ]
 
   return (
