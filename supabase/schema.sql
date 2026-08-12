@@ -34,6 +34,7 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   prenom text,
+  nom text,
   avatar_url text,
   couple_id uuid,
   role text check (role in ('initiateur', 'partenaire')),
@@ -306,6 +307,8 @@ $$;
 -- (déjà initialisé avec une version antérieure de ce schéma).
 -- Idempotent : peut être relancé sans risque.
 -- ============================================================
+alter table public.profiles add column if not exists nom text;
+
 alter table public.couples add column if not exists numero integer generated always as identity;
 alter table public.couples add column if not exists pairing_code text unique;
 alter table public.couples alter column pairing_code set default public.generate_pairing_code();
