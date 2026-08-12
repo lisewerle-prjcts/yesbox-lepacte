@@ -34,6 +34,7 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   prenom text,
+  nom text,
   avatar_url text,
   couple_id uuid,
   role text check (role in ('initiateur', 'partenaire')),
@@ -306,6 +307,8 @@ $$;
 -- (déjà initialisé avec une version antérieure de ce schéma).
 -- Idempotent : peut être relancé sans risque.
 -- ============================================================
+alter table public.profiles add column if not exists nom text;
+
 alter table public.couples add column if not exists numero integer generated always as identity;
 alter table public.couples add column if not exists pairing_code text unique;
 alter table public.couples alter column pairing_code set default public.generate_pairing_code();
@@ -324,3 +327,18 @@ $$;
 -- (les nouvelles inscriptions avec ces adresses deviennent admin automatiquement, cf. handle_new_user)
 update public.profiles set is_admin = true
 where lower(email) in ('lise.werle@gmail.com', 'lise.yesbox@gmail.com');
+
+-- Backfill : donne un espace couple (solo) + code de pairage aux comptes déjà
+-- inscrits qui n'en ont pas encore (créés avant l'auto-création à l'inscription).
+do $$
+declare
+  p record;
+  v_couple_id uuid;
+begin
+  for p in select id from public.profiles where couple_id is null loop
+    insert into public.couples default values returning id into v_couple_id;
+    update public.profiles set couple_id = v_couple_id, role = 'initiateur' where id = p.id;
+    perform public.initialiser_modules_couple(v_couple_id);
+  end loop;
+end;
+$$;
