@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { rejoindreCoupleParCode } from '@/app/actions/couple'
+import { rejoindreCoupleParCode, creerCoupleSolo } from '@/app/actions/couple'
 import { z } from 'zod'
 
 const inscriptionSchema = z.object({
@@ -62,6 +62,8 @@ export async function inscription(formData: FormData) {
       if (result.success) redirect('/tableau-de-bord')
       redirect(`/inviter-partenaire?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
     }
+
+    await creerCoupleSolo(data.user.id)
   }
 
   revalidatePath('/', 'layout')

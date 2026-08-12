@@ -13,12 +13,12 @@ export default async function ProfilPage() {
     .eq('id', user.id)
     .single()
 
-  let couple: { pairing_code: string | null; date_anniversaire: string | null } | null = null
+  let couple: { pairing_code: string | null; date_anniversaire: string | null; nom_couple: string | null } | null = null
   let partner: { prenom: string | null; email: string } | null = null
 
   if (profile?.couple_id) {
     const [{ data: coup }, { data: part }] = await Promise.all([
-      supabase.from('couples').select('pairing_code, date_anniversaire').eq('id', profile.couple_id).single(),
+      supabase.from('couples').select('pairing_code, date_anniversaire, nom_couple').eq('id', profile.couple_id).single(),
       supabase.from('profiles').select('prenom, email').eq('couple_id', profile.couple_id).neq('id', user.id).maybeSingle(),
     ])
     couple = coup

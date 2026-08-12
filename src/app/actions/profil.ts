@@ -34,7 +34,7 @@ export async function updateIdentite(formData: FormData) {
   return { success: true }
 }
 
-export async function updateDateCouple(formData: FormData) {
+export async function updateCouple(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
@@ -47,11 +47,12 @@ export async function updateDateCouple(formData: FormData) {
 
   if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
 
+  const nomCouple = (formData.get('nom_couple') as string | null)?.trim()
   const dateAnniversaire = (formData.get('date_anniversaire') as string | null)?.trim()
 
   const { error } = await supabase
     .from('couples')
-    .update({ date_anniversaire: dateAnniversaire || null })
+    .update({ nom_couple: nomCouple || null, date_anniversaire: dateAnniversaire || null })
     .eq('id', profile.couple_id)
 
   if (error) return { error: error.message }

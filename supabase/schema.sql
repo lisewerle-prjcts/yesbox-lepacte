@@ -327,3 +327,18 @@ $$;
 -- (les nouvelles inscriptions avec ces adresses deviennent admin automatiquement, cf. handle_new_user)
 update public.profiles set is_admin = true
 where lower(email) in ('lise.werle@gmail.com', 'lise.yesbox@gmail.com');
+
+-- Backfill : donne un espace couple (solo) + code de pairage aux comptes déjà
+-- inscrits qui n'en ont pas encore (créés avant l'auto-création à l'inscription).
+do $$
+declare
+  p record;
+  v_couple_id uuid;
+begin
+  for p in select id from public.profiles where couple_id is null loop
+    insert into public.couples default values returning id into v_couple_id;
+    update public.profiles set couple_id = v_couple_id, role = 'initiateur' where id = p.id;
+    perform public.initialiser_modules_couple(v_couple_id);
+  end loop;
+end;
+$$;

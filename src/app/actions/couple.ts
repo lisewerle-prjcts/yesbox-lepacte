@@ -38,6 +38,29 @@ export async function creerCouple(formData: FormData) {
   return { success: true, couple, inviteToken: couple.invite_token }
 }
 
+export async function creerCoupleSolo(userId: string) {
+  const admin = createAdminClient()
+
+  const { data: couple, error: coupleError } = await admin
+    .from('couples')
+    .insert({})
+    .select()
+    .single()
+
+  if (coupleError) return { error: coupleError.message }
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .update({ couple_id: couple.id, role: 'initiateur' })
+    .eq('id', userId)
+
+  if (profileError) return { error: profileError.message }
+
+  await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+
+  return { success: true, couple }
+}
+
 export async function rejoindreCouple(token: string) {
   const supabase = await createClient()
 

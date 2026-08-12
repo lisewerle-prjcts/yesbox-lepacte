@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { updateIdentite, updateDateCouple } from '@/app/actions/profil'
+import { updateIdentite, updateCouple } from '@/app/actions/profil'
 import { rejoindrePartenaireParCode } from '@/app/actions/couple'
 import { getProchainAnniversaire } from '@/lib/anniversaires'
 import { User, Heart, KeyRound, Copy, Check } from 'lucide-react'
@@ -12,7 +12,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 interface Props {
   profile: { prenom: string | null; nom: string | null; email: string } | null
-  couple: { pairing_code: string | null; date_anniversaire: string | null } | null
+  couple: { pairing_code: string | null; date_anniversaire: string | null; nom_couple: string | null } | null
   partner: { prenom: string | null; email: string } | null
 }
 
@@ -44,9 +44,9 @@ export default function ProfilClient({ profile, couple, partner }: Props) {
     setTimeout(() => setIdentiteStatus('idle'), 2000)
   }
 
-  async function saveDate(formData: FormData) {
+  async function saveCouple(formData: FormData) {
     setDateStatus('saving')
-    const result = await updateDateCouple(formData)
+    const result = await updateCouple(formData)
     setDateStatus(result.error ? 'error' : 'saved')
     router.refresh()
     setTimeout(() => setDateStatus('idle'), 2000)
@@ -173,18 +173,32 @@ export default function ProfilClient({ profile, couple, partner }: Props) {
         </div>
       )}
 
-      {/* Date de couple */}
+      {/* Notre couple */}
       {couple && (
         <div className="card p-5">
           <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>
-            Date de couple
+            Notre couple
           </h2>
           <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
-            La date où votre histoire a commencé.
+            Le nom de votre couple et la date où votre histoire a commencé.
           </p>
-          <form action={saveDate} className="flex gap-2 flex-wrap items-end">
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label className="flabel">Date d&apos;anniversaire</label>
+          <form action={saveCouple} className="space-y-3">
+            <div>
+              <label className="flabel">
+                Nom du couple <span style={{ color: 'var(--muted-2)', fontWeight: 400 }}>(optionnel)</span>
+              </label>
+              <input
+                type="text"
+                name="nom_couple"
+                defaultValue={couple.nom_couple || ''}
+                placeholder="Ex : Marie & Pierre"
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="flabel">
+                Date d&apos;anniversaire <span style={{ color: 'var(--muted-2)', fontWeight: 400 }}>(optionnel)</span>
+              </label>
               <input
                 type="date"
                 name="date_anniversaire"
