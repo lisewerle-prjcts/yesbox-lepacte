@@ -20,12 +20,12 @@ const STATUS_TEXT: Record<string,string> = {
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const { data: precommandes } = await supabase
+  const { data: precommandes, error: precommandesError } = await supabase
     .from('precommandes')
     .select('id,prenom,nom,email,adresse,message,partenaire_prenom,couple_code,paired_with,created_at')
     .order('created_at', { ascending: false })
 
-  const { data: couples } = await supabase.from('couples').select('id, numero, pairing_code, created_at').order('created_at', { ascending: false })
+  const { data: couples, error: couplesError } = await supabase.from('couples').select('id, numero, pairing_code, created_at').order('created_at', { ascending: false })
 
   const hasCouples = !!couples?.length
   const coupleIds = hasCouples ? couples!.map(c => c.id) : []
@@ -46,6 +46,15 @@ export default async function AdminCouples() {
         </div>
         <p style={{ fontSize: 13, color: 'var(--muted)' }}>Gère les inscriptions pré-lancement : codes couple, appairage, corrections, suppressions.</p>
       </div>
+
+      {(precommandesError || couplesError) && (
+        <div className="alert-error mb-4">
+          Erreur de lecture en base : {precommandesError?.message || couplesError?.message}.
+          {' '}Si tu viens de mettre à jour l&apos;app, il faut d&apos;abord exécuter la migration SQL
+          (<code>supabase/schema.sql</code>) sur le projet Supabase — les nouvelles colonnes
+          (<code>nom</code>, <code>couple_code</code>, etc.) n&apos;existent probablement pas encore en base.
+        </div>
+      )}
 
       <PrecommandesManager precommandes={precommandes || []} />
 
