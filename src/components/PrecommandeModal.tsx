@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { soumettrePrecommande } from '@/app/actions/precommande'
-import { X, Heart, CheckCircle } from 'lucide-react'
+import { X, Heart, CheckCircle, Copy, Check } from 'lucide-react'
 
 function SubmitBtn() {
   const { pending } = useFormStatus()
   return (
     <button type="submit" disabled={pending} className="btn-brand lg w-full justify-center">
-      {pending ? 'Envoi en cours…' : 'Réserver ma place — 29 €/mois'}
+      {pending ? 'Envoi en cours…' : 'Réserver ma place'}
     </button>
   )
 }
@@ -21,12 +21,22 @@ interface Props {
 export default function PrecommandeModal({ onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [coupleCode, setCoupleCode] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setError(null)
     const result = await soumettrePrecommande(formData)
     if (result.error) { setError(result.error); return }
+    setCoupleCode(result.coupleCode || null)
     setSuccess(true)
+  }
+
+  async function copyCode() {
+    if (!coupleCode) return
+    await navigator.clipboard.writeText(coupleCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 3000)
   }
 
   return (
@@ -36,7 +46,7 @@ export default function PrecommandeModal({ onClose }: Props) {
           <div>
             <p className="eyebrow mb-2">Lancement · 1er septembre 2026</p>
             <h2 className="font-serif text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-              Pré-commander YES BOX
+              Inscription YES BOX
             </h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream transition-colors flex-shrink-0">
@@ -49,11 +59,28 @@ export default function PrecommandeModal({ onClose }: Props) {
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--sage-soft)' }}>
               <CheckCircle className="w-8 h-8" style={{ color: 'var(--sage)' }} />
             </div>
-            <h3 className="font-serif text-xl font-bold mb-2">Tu es sur la liste !</h3>
-            <p className="text-sm" style={{ color: 'var(--muted)' }}>
-              On t'envoie un email dès le 1er septembre 2026 avec ton accès.
-              Abonnement à 29 €/mois, résiliable à tout moment, au lancement.
+            <h3 className="font-serif text-xl font-bold mb-2">Ton espace est prêt !</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--muted)' }}>
+              On t&apos;envoie un email dès le 1er septembre 2026 avec ton accès.
+              Module 1 entièrement gratuit, puis 29 €/mois, résiliable à tout moment.
             </p>
+
+            {coupleCode && (
+              <div className="rounded-2xl p-4 mb-2 text-center" style={{ background: 'var(--brand-tint)' }}>
+                <p className="text-xs mb-2 font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
+                  Ton code couple
+                </p>
+                <p className="text-3xl font-mono font-bold tracking-[0.3em] mb-3" style={{ color: 'var(--brand)' }}>{coupleCode}</p>
+                <button onClick={copyCode} className="btn-ghost text-sm py-2 px-4 inline-flex items-center gap-2">
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? 'Copié !' : 'Copier le code'}
+                </button>
+                <p className="text-xs mt-3" style={{ color: 'var(--muted)' }}>
+                  Partage-le à ton/ta binôme pour que vous soyez associé·es. On te l&apos;a aussi envoyé par email.
+                </p>
+              </div>
+            )}
+
             <button onClick={onClose} className="btn-ghost mt-6">Fermer</button>
           </div>
         ) : (
@@ -61,20 +88,30 @@ export default function PrecommandeModal({ onClose }: Props) {
             <div className="p-4 rounded-lg mb-6 flex items-center gap-3" style={{ background: 'var(--brand-tint)', border: '1px solid var(--brand-soft)' }}>
               <Heart className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
               <p className="text-sm" style={{ color: 'var(--brand)' }}>
-                <strong>29 €/mois · résiliable à tout moment</strong> — paiement sécurisé au lancement. Tu ne paies rien maintenant.
+                <strong>Module 1 entièrement gratuit, puis 29 €/mois</strong> — résiliable à tout moment, paiement sécurisé au lancement. Tu ne paies rien maintenant.
               </p>
             </div>
 
             {error && <div className="alert-error mb-4">{error}</div>}
 
             <form action={handleSubmit} className="space-y-4">
-              <div>
-                <label className="flabel">Ton prénom *</label>
-                <input name="prenom" type="text" placeholder="Marie" required className="field" autoComplete="given-name" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="flabel">Ton prénom *</label>
+                  <input name="prenom" type="text" placeholder="Marie" required className="field" autoComplete="given-name" />
+                </div>
+                <div>
+                  <label className="flabel">Ton nom *</label>
+                  <input name="nom" type="text" placeholder="Dupont" required className="field" autoComplete="family-name" />
+                </div>
               </div>
               <div>
                 <label className="flabel">Ton email *</label>
                 <input name="email" type="email" placeholder="marie@exemple.fr" required className="field" autoComplete="email" />
+              </div>
+              <div>
+                <label className="flabel">Prénom de ton binôme <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
+                <input name="partenaire_prenom" type="text" placeholder="Tom" className="field" />
               </div>
               <div>
                 <label className="flabel">Ville / Pays <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>

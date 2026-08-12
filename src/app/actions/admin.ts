@@ -247,6 +247,116 @@ export async function adminCreateEmptyCouple() {
   return { success: true, coupleId: data.id, numero: data.numero }
 }
 
+interface PrecommandeEditableFields {
+  prenom?: string | null
+  nom?: string | null
+  email?: string | null
+  adresse?: string | null
+  partenaire_prenom?: string | null
+  message?: string | null
+}
+
+export async function adminUpdatePrecommande(id: string, fields: PrecommandeEditableFields) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const update: PrecommandeEditableFields = {}
+  if (fields.prenom !== undefined) update.prenom = fields.prenom?.trim() || ''
+  if (fields.nom !== undefined) update.nom = fields.nom?.trim() || ''
+  if (fields.email !== undefined) update.email = fields.email?.trim() || ''
+  if (fields.adresse !== undefined) update.adresse = fields.adresse?.trim() || null
+  if (fields.partenaire_prenom !== undefined) update.partenaire_prenom = fields.partenaire_prenom?.trim() || null
+  if (fields.message !== undefined) update.message = fields.message?.trim() || null
+
+  if (update.prenom === '') return { error: 'Le prénom est requis' }
+  if (update.nom === '') return { error: 'Le nom est requis' }
+  if (update.email === '' || (update.email && !update.email.includes('@'))) return { error: 'Email invalide' }
+
+  const { error } = await admin.from('precommandes').update(update).eq('id', id)
+  if (error) {
+    if (error.code === '23505') return { error: 'Cet email est déjà utilisé par une autre inscription' }
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
+export async function adminSetCoupleCode(id: string, code: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const cleanCode = code.trim().toUpperCase()
+  if (!/^[A-Z0-9]{5}$/.test(cleanCode)) return { error: 'Le code doit contenir 5 lettres/chiffres' }
+
+  const { error } = await admin.from('precommandes').update({ couple_code: cleanCode }).eq('id', id)
+  if (error) {
+    if (error.code === '23505') return { error: 'Ce code est déjà utilisé par une autre inscription' }
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/couples')
+  return { success: true, code: cleanCode }
+}
+
+export async function adminRegenerateCoupleCode(id: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data, error } = await admin.rpc('generate_precommande_code')
+  if (error) return { error: error.message }
+
+  const { error: updateError } = await admin.from('precommandes').update({ couple_code: data }).eq('id', id)
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/admin/couples')
+  return { success: true, code: data as string }
+}
+
+export async function adminPairPrecommandes(idA: string, idB: string) {
+  await assertAdmin()
+  if (idA === idB) return { error: 'Sélectionne deux inscriptions différentes' }
+  const admin = createAdminClient()
+
+  const { error: errorA } = await admin.from('precommandes').update({ paired_with: idB }).eq('id', idA)
+  if (errorA) return { error: errorA.message }
+  const { error: errorB } = await admin.from('precommandes').update({ paired_with: idA }).eq('id', idB)
+  if (errorB) return { error: errorB.message }
+
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
+export async function adminUnpairPrecommande(id: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data: row } = await admin.from('precommandes').select('paired_with').eq('id', id).single()
+  await admin.from('precommandes').update({ paired_with: null }).eq('id', id)
+  if (row?.paired_with) {
+    await admin.from('precommandes').update({ paired_with: null }).eq('id', row.paired_with)
+  }
+
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
+export async function adminDeletePrecommande(id: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data: row } = await admin.from('precommandes').select('paired_with').eq('id', id).single()
+  if (row?.paired_with) {
+    await admin.from('precommandes').update({ paired_with: null }).eq('id', row.paired_with)
+  }
+
+  const { error } = await admin.from('precommandes').delete().eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
 export async function adminResetAndSendPassword(userId: string) {
   await assertAdmin()
   const admin = createAdminClient()

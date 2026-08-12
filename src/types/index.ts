@@ -60,9 +60,13 @@ export interface JournalEntry {
 export interface Precommande {
   id: string
   prenom: string
+  nom: string | null
   email: string
   adresse: string | null
   message: string | null
+  partenaire_prenom: string | null
+  couple_code: string | null
+  paired_with: string | null
   created_at: string
 }
 

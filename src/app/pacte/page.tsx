@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
-import { CheckCircle, Lock, Heart, ScrollText } from 'lucide-react'
+import { getProchainAnniversaire } from '@/lib/anniversaires'
+import { CheckCircle, Lock, Heart, ScrollText, Gift, KeyRound } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
@@ -46,6 +47,10 @@ export default async function PactePage() {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
   }
 
+  const couple = Array.isArray(profile.couples) ? profile.couples[0] : profile.couples
+  const prochainAnniversaire = couple?.date_anniversaire ? getProchainAnniversaire(couple.date_anniversaire) : null
+  const anneesEnsemble = prochainAnniversaire ? prochainAnniversaire.years - 1 : null
+
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
@@ -61,6 +66,37 @@ export default async function PactePage() {
             : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur 7`}
         </p>
       </div>
+
+      {couple?.pairing_code && (
+        <div className="card flex items-center gap-3 mb-4 bg-magenta-50 border-magenta-100">
+          <KeyRound className="w-4 h-4 text-magenta flex-shrink-0" />
+          <p className="text-sm text-gray-700">
+            Code de votre pacte : <span className="font-mono font-bold tracking-widest text-magenta">{couple.pairing_code}</span>
+          </p>
+        </div>
+      )}
+
+      {prochainAnniversaire && (
+        <div className="card mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <Gift className="w-4 h-4 text-magenta" />
+            <h2 className="font-fraunces text-lg font-bold text-gray-900">Votre anniversaire de couple</h2>
+          </div>
+          {anneesEnsemble !== null && anneesEnsemble > 0 && (
+            <p className="text-gray-700 text-sm mb-1">
+              Vous êtes ensemble depuis <strong>{anneesEnsemble}</strong> an{anneesEnsemble > 1 ? 's' : ''}.
+            </p>
+          )}
+          <p className="text-gray-700 text-sm mb-2">
+            Prochain anniversaire le{' '}
+            <strong>
+              {prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </strong>
+            {' '}— vos <strong>{prochainAnniversaire.years}</strong> an{prochainAnniversaire.years > 1 ? 's' : ''}, les{' '}
+            <span className="text-magenta font-semibold">noces de {prochainAnniversaire.matiere}</span>.
+          </p>
+        </div>
+      )}
 
       {tousTermines ? (
         <div className="card bg-gradient-to-r from-magenta to-magenta-600 text-white mb-8">
