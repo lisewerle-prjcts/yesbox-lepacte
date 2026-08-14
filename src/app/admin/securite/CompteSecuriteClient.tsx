@@ -1,29 +1,57 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, KeyRound, LogOut, ShieldCheck, Check, X } from 'lucide-react'
+import { Mail, KeyRound, LogOut, ShieldCheck, Check, X, Monitor, Copy, RefreshCw } from 'lucide-react'
 import {
   setRecoveryEmail, changerMotDePasse, deconnecterAutresSessions,
-  demarrerActivationMfa, confirmerActivationMfa, desactiverMfa,
+  demarrerActivationMfa, confirmerActivationMfa, desactiverMfa, genererCodesSecours,
 } from '@/app/actions/security'
 
 interface MfaFactor { id: string; friendlyName: string }
+interface Session { id: string; createdAt: string; updatedAt: string; userAgent: string | null; ip: string | null; isCurrent: boolean }
+
+function parseUserAgent(ua: string | null): string {
+  if (!ua) return 'Appareil inconnu'
+  let browser = 'Navigateur inconnu'
+  if (/Edg\//.test(ua)) browser = 'Edge'
+  else if (/OPR\//.test(ua)) browser = 'Opera'
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome'
+  else if (/Firefox\//.test(ua)) browser = 'Firefox'
+  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = 'Safari'
+
+  let os = 'OS inconnu'
+  if (/Windows/.test(ua)) os = 'Windows'
+  else if (/Mac OS X/.test(ua)) os = 'macOS'
+  else if (/Android/.test(ua)) os = 'Android'
+  else if (/iPhone|iPad/.test(ua)) os = 'iOS'
+  else if (/Linux/.test(ua)) os = 'Linux'
+
+  return `${browser} sur ${os}`
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })
+}
 
 export default function CompteSecuriteClient({
   email,
   recoveryEmail: initialRecoveryEmail,
   mfaFactors: initialMfaFactors,
+  sessions,
+  recoveryCodesCount: initialRecoveryCodesCount,
 }: {
   email: string
   recoveryEmail: string
   mfaFactors: MfaFactor[]
+  sessions: Session[]
+  recoveryCodesCount: number
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <RecoveryEmailCard email={email} initialRecoveryEmail={initialRecoveryEmail} />
       <PasswordCard />
-      <SessionsCard />
-      <MfaCard initialFactors={initialMfaFactors} />
+      <SessionsCard sessions={sessions} />
+      <MfaCard initialFactors={initialMfaFactors} initialRecoveryCodesCount={initialRecoveryCodesCount} />
     </div>
   )
 }
@@ -107,7 +135,7 @@ function PasswordCard() {
   )
 }
 
-function SessionsCard() {
+function SessionsCard({ sessions }: { sessions: Session[] }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
 
   async function disconnect() {
@@ -126,21 +154,48 @@ function SessionsCard() {
       <button
         onClick={disconnect}
         disabled={status === 'loading'}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium mb-4"
         style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: '#dc2626', opacity: status === 'loading' ? 0.5 : 1 }}
       >
         {status === 'done' ? <><Check className="w-3.5 h-3.5" /> Sessions déconnectées</> : status === 'error' ? 'Erreur — réessaie' : status === 'loading' ? 'Déconnexion…' : <><LogOut className="w-3.5 h-3.5" /> Déconnecter les autres sessions</>}
       </button>
+
+      <h3 className="font-semibold mb-2" style={{ fontSize: 12, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Historique des connexions</h3>
+      {sessions.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--muted)' }}>Aucune session trouvée.</p>
+      ) : (
+        <div className="space-y-2">
+          {sessions.map(s => (
+            <div key={s.id} className="surface p-3 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-3.5 h-3.5" style={{ color: 'var(--muted)' }} />
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 500 }}>
+                    {parseUserAgent(s.userAgent)}
+                    {s.isCurrent && <span className="ml-2 px-1.5 py-0.5 rounded" style={{ fontSize: 10, background: 'var(--brand-tint)', color: 'var(--brand)' }}>session actuelle</span>}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                    {s.ip ?? 'IP inconnue'} · dernière activité {formatDate(s.updatedAt)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
-function MfaCard({ initialFactors }: { initialFactors: MfaFactor[] }) {
+function MfaCard({ initialFactors, initialRecoveryCodesCount }: { initialFactors: MfaFactor[]; initialRecoveryCodesCount: number }) {
   const [factors, setFactors] = useState(initialFactors)
   const [enrolling, setEnrolling] = useState<{ factorId: string; qrCode: string; secret: string } | null>(null)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [recoveryCodesCount, setRecoveryCodesCount] = useState(initialRecoveryCodesCount)
+  const [revealedCodes, setRevealedCodes] = useState<string[] | null>(null)
+  const [copied, setCopied] = useState(false)
 
   async function startEnroll() {
     setError('')
@@ -168,6 +223,7 @@ function MfaCard({ initialFactors }: { initialFactors: MfaFactor[] }) {
     await desactiverMfa(factorId)
     setBusy(false)
     setFactors(f => f.filter(x => x.id !== factorId))
+    setRecoveryCodesCount(0)
   }
 
   async function cancelEnroll() {
@@ -180,6 +236,22 @@ function MfaCard({ initialFactors }: { initialFactors: MfaFactor[] }) {
     setError('')
   }
 
+  async function generateCodes() {
+    setError('')
+    setBusy(true)
+    const res = await genererCodesSecours()
+    setBusy(false)
+    if (res.error || !res.codes) { setError(res.error || 'Erreur'); return }
+    setRevealedCodes(res.codes)
+    setRecoveryCodesCount(res.codes.length)
+    setCopied(false)
+  }
+
+  function copyCodes() {
+    if (!revealedCodes) return
+    navigator.clipboard.writeText(revealedCodes.join('\n')).then(() => setCopied(true))
+  }
+
   return (
     <div className="card p-5">
       <h2 className="font-semibold mb-1 flex items-center gap-2" style={{ fontSize: 15 }}><ShieldCheck className="w-4 h-4" /> Double authentification (2FA)</h2>
@@ -187,14 +259,47 @@ function MfaCard({ initialFactors }: { initialFactors: MfaFactor[] }) {
         Protège le compte admin même si le mot de passe fuite, avec une application comme Google Authenticator.
       </p>
 
-      {factors.length > 0 && !enrolling && (
-        <div className="space-y-2">
-          {factors.map(f => (
-            <div key={f.id} className="surface p-3 flex items-center justify-between gap-3">
-              <span style={{ fontSize: 13 }}><Check className="w-3.5 h-3.5 inline mr-1" style={{ color: 'var(--sage)' }} /> {f.friendlyName} — activée</span>
-              <button disabled={busy} onClick={() => remove(f.id)} className="text-xs" style={{ color: '#dc2626' }}>Désactiver</button>
+      {factors.length > 0 && !enrolling && !revealedCodes && (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            {factors.map(f => (
+              <div key={f.id} className="surface p-3 flex items-center justify-between gap-3">
+                <span style={{ fontSize: 13 }}><Check className="w-3.5 h-3.5 inline mr-1" style={{ color: 'var(--sage)' }} /> {f.friendlyName} — activée</span>
+                <button disabled={busy} onClick={() => remove(f.id)} className="text-xs" style={{ color: '#dc2626' }}>Désactiver</button>
+              </div>
+            ))}
+          </div>
+
+          <div className="surface p-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>Codes de secours</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  {recoveryCodesCount > 0 ? `${recoveryCodesCount} code(s) non utilisé(s)` : 'Aucun code généré — à faire si tu perds ton téléphone'}
+                </div>
+              </div>
+              <button disabled={busy} onClick={generateCodes} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--brand)' }}>
+                <RefreshCw className="w-3.5 h-3.5" /> {recoveryCodesCount > 0 ? 'Régénérer' : 'Générer'} les codes
+              </button>
             </div>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {revealedCodes && (
+        <div className="space-y-3">
+          <p style={{ fontSize: 12, color: 'var(--muted)' }}>
+            Note ces 8 codes de secours dans un endroit sûr (gestionnaire de mots de passe). Chacun ne fonctionne qu&apos;une fois et permet de te reconnecter si tu perds l&apos;accès à ton application d&apos;authentification. Les anciens codes ne fonctionnent plus.
+          </p>
+          <div className="surface p-3 font-mono grid grid-cols-2 gap-2" style={{ fontSize: 13 }}>
+            {revealedCodes.map(c => <span key={c}>{c}</span>)}
+          </div>
+          <div className="flex gap-2 items-center flex-wrap">
+            <button onClick={copyCodes} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
+              <Copy className="w-3.5 h-3.5" /> {copied ? 'Copié !' : 'Copier les codes'}
+            </button>
+            <button onClick={() => setRevealedCodes(null)} className="btn-brand" style={{ padding: '8px 16px' }}>J&apos;ai bien noté mes codes</button>
+          </div>
         </div>
       )}
 

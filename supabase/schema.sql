@@ -332,3 +332,51 @@ $$;
 -- (les nouvelles inscriptions avec ces adresses deviennent admin automatiquement, cf. handle_new_user)
 update public.profiles set is_admin = true
 where lower(email) in ('lise.werle@gmail.com', 'lise.yesbox@gmail.com');
+
+-- ============================================================
+-- SÉCURITÉ ADMIN (v4) : historique des connexions, rate limiting,
+-- codes de secours 2FA. À exécuter une fois sur un projet existant.
+-- ============================================================
+
+-- Historique des sessions actives du compte connecté (lecture seule, colonnes non sensibles).
+-- security definer : nécessaire pour lire auth.sessions, mais restreint à auth.uid() du côté where.
+create or replace function public.admin_list_own_sessions()
+returns table (
+  id uuid,
+  created_at timestamptz,
+  updated_at timestamptz,
+  user_agent text,
+  ip text,
+  is_current boolean
+)
+language sql security definer set search_path = public, auth as $$
+  select s.id, s.created_at, s.updated_at, s.user_agent, s.ip::text,
+         s.id = (nullif(auth.jwt() ->> 'session_id', ''))::uuid as is_current
+  from auth.sessions s
+  where s.user_id = auth.uid()
+  order by s.updated_at desc;
+$$;
+grant execute on function public.admin_list_own_sessions() to authenticated;
+
+-- Rate limiting sur la page de connexion. Verrouillé aux clients (RLS activée,
+-- aucune policy) : uniquement lisible/modifiable via le service role côté serveur.
+create table if not exists public.login_attempts (
+  email text primary key,
+  attempts integer not null default 0,
+  locked_until timestamptz,
+  updated_at timestamptz not null default now()
+);
+alter table public.login_attempts enable row level security;
+
+-- Codes de secours 2FA à usage unique. Seuls les hashs sont stockés ; jamais
+-- exposés au client sauf au moment de la génération. Verrouillé aux clients
+-- (RLS activée, aucune policy) : uniquement accessible via le service role.
+create table if not exists public.mfa_recovery_codes (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  code_hash text not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+alter table public.mfa_recovery_codes enable row level security;
+create index if not exists mfa_recovery_codes_user_id_idx on public.mfa_recovery_codes(user_id);
