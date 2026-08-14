@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
+import EditableText from '@/components/edit-mode/EditableText'
 
 export const metadata: Metadata = {
   title: 'Mentions légales',
@@ -15,19 +16,19 @@ export default function MentionsLegales() {
       <header className="sticky top-0 z-40 border-b" style={{ background: 'rgba(251,248,243,0.92)', borderColor: 'var(--line)', backdropFilter: 'blur(12px)' }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <YesBoxLogo size="sm" />
-          <Link href="/" className="btn-ghost text-sm py-2 px-4">← Retour</Link>
+          <Link href="/" className="btn-ghost text-sm py-2 px-4">← <EditableText id="mentions.retour">Retour</EditableText></Link>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-16">
-        <div className="eyebrow mb-4">Légal</div>
-        <h1 className="font-serif text-4xl font-bold mb-10" style={{ color: 'var(--ink)' }}>Mentions légales</h1>
+        <div className="eyebrow mb-4"><EditableText id="mentions.eyebrow">Légal</EditableText></div>
+        <h1 className="font-serif text-4xl font-bold mb-10" style={{ color: 'var(--ink)' }}><EditableText id="mentions.titre">Mentions légales</EditableText></h1>
 
         <div className="space-y-10" style={{ color: 'var(--ink-2)', lineHeight: 1.8, fontSize: 14.5 }}>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Éditeur du site</h2>
-            <p>Le site <strong>yesbox-lepacte.fr</strong> est édité par :</p>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.editeur.titre">Éditeur du site</EditableText></h2>
+            <p><EditableText id="mentions.editeur.texte">Le site yesbox-lepacte.fr est édité par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>Nom : YES BOX</li>
               <li>Adresse e-mail : <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a></li>
@@ -35,8 +36,8 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Hébergement</h2>
-            <p>Le site est hébergé par :</p>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.hebergement.titre">Hébergement</EditableText></h2>
+            <p><EditableText id="mentions.hebergement.texte">Le site est hébergé par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>Vercel Inc. — 340 Pine Street, Suite 700, San Francisco, CA 94104, USA</li>
               <li>Supabase Inc. (base de données) — 970 Toa Payoh North, Singapour</li>
@@ -44,9 +45,9 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Données personnelles</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.donnees.titre">Données personnelles</EditableText></h2>
             <p>
-              Dans le cadre de l&apos;utilisation du site YES BOX, nous collectons uniquement les données nécessaires au fonctionnement du service :
+              <EditableText id="mentions.donnees.intro" multiline>Dans le cadre de l&apos;utilisation du site YES BOX, nous collectons uniquement les données nécessaires au fonctionnement du service :</EditableText>
             </p>
             <ul className="mt-3 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>Adresse e-mail (compte utilisateur)</li>
@@ -55,38 +56,38 @@ export default function MentionsLegales() {
               <li>Informations de pré-commande (nom, e-mail, adresse optionnelle)</li>
             </ul>
             <p className="mt-4">
-              Ces données sont stockées sur des serveurs sécurisés (Supabase). Elles ne sont ni vendues, ni transmises à des tiers. Chaque couple dispose d&apos;un espace isolé et privé, protégé par des règles d&apos;accès strictes (Row Level Security).
+              <EditableText id="mentions.donnees.stockage" multiline>Ces données sont stockées sur des serveurs sécurisés (Supabase). Elles ne sont ni vendues, ni transmises à des tiers. Chaque couple dispose d&apos;un espace isolé et privé, protégé par des règles d&apos;accès strictes (Row Level Security).</EditableText>
             </p>
             <p className="mt-3">
-              Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ce droit, contactez-nous à <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>.
+              <EditableText id="mentions.donnees.rgpd" multiline>Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ce droit, contactez-nous à</EditableText> <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>.
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Cookies</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.cookies.titre">Cookies</EditableText></h2>
             <p>
-              Le site utilise uniquement un cookie de session pour maintenir votre connexion. Aucun cookie publicitaire ou de tracking n&apos;est utilisé.
+              <EditableText id="mentions.cookies.texte" multiline>Le site utilise uniquement un cookie de session pour maintenir votre connexion. Aucun cookie publicitaire ou de tracking n&apos;est utilisé.</EditableText>
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Propriété intellectuelle</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.propriete.titre">Propriété intellectuelle</EditableText></h2>
             <p>
-              L&apos;ensemble du contenu du site (textes, visuels, structure, concept) est la propriété exclusive de YES BOX. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.
+              <EditableText id="mentions.propriete.texte" multiline>L&apos;ensemble du contenu du site (textes, visuels, structure, concept) est la propriété exclusive de YES BOX. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.</EditableText>
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Responsabilité</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.responsabilite.titre">Responsabilité</EditableText></h2>
             <p>
-              YES BOX est un programme d&apos;accompagnement pour couples et ne constitue en aucun cas une thérapie de couple, un conseil juridique ou une médiation professionnelle. L&apos;utilisateur reste seul responsable de l&apos;usage qu&apos;il fait du programme.
+              <EditableText id="mentions.responsabilite.texte" multiline>YES BOX est un programme d&apos;accompagnement pour couples et ne constitue en aucun cas une thérapie de couple, un conseil juridique ou une médiation professionnelle. L&apos;utilisateur reste seul responsable de l&apos;usage qu&apos;il fait du programme.</EditableText>
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Conditions d&apos;utilisation & tarifs</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.conditions.titre">Conditions d&apos;utilisation &amp; tarifs</EditableText></h2>
             <p>
-              L&apos;utilisation de YES BOX — Le Pacte est soumise aux conditions suivantes, applicables aux deux membres d&apos;un couple :
+              <EditableText id="mentions.conditions.intro" multiline>L&apos;utilisation de YES BOX — Le Pacte est soumise aux conditions suivantes, applicables aux deux membres d&apos;un couple :</EditableText>
             </p>
             <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>
@@ -108,9 +109,9 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Règles du jeu</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.regles.titre">Règles du jeu</EditableText></h2>
             <p>
-              Pour que l&apos;expérience reste juste et sincère pour les deux membres du couple, YES BOX applique les règles suivantes :
+              <EditableText id="mentions.regles.intro" multiline>Pour que l&apos;expérience reste juste et sincère pour les deux membres du couple, YES BOX applique les règles suivantes :</EditableText>
             </p>
             <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>
@@ -132,19 +133,19 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>Contact</h2>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.contact.titre">Contact</EditableText></h2>
             <p>
-              Pour toute question : <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>
+              <EditableText id="mentions.contact.texte">Pour toute question :</EditableText> <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>
             </p>
           </section>
 
-          <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}>Dernière mise à jour : juin 2026</p>
+          <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="mentions.majdate">Dernière mise à jour : juin 2026</EditableText></p>
         </div>
       </main>
 
       <footer className="py-8 mt-10" style={{ borderTop: '1px solid var(--line)' }}>
         <div className="max-w-6xl mx-auto px-6 text-center" style={{ fontSize: 12, color: 'var(--muted)' }}>
-          © 2026 YES BOX · <Link href="/" style={{ color: 'var(--brand)' }}>yesbox-lepacte.fr</Link>
+          <EditableText id="mentions.footer.copyright">© 2026 YES BOX ·</EditableText> <Link href="/" style={{ color: 'var(--brand)' }}>yesbox-lepacte.fr</Link>
         </div>
       </footer>
     </div>

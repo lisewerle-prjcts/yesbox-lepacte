@@ -174,6 +174,9 @@ create policy "precommande_admin_select" on public.precommandes for select using
 
 -- ============================================================
 -- settings (messages configurables admin)
+-- Clés préfixées utilisées par convention :
+--   module_questions_override::<slug>  → contenu des modules (admin/contenu)
+--   site_content::<clé>                → textes & boutons édités en mode édition (site + espaces couples)
 -- ============================================================
 create table public.settings (
   key text primary key,

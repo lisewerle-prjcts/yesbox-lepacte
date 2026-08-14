@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { DM_Sans, Playfair_Display, DM_Mono } from 'next/font/google'
 import './globals.css'
+import { createClient } from '@/lib/supabase/server'
+import { getSiteContentMap } from '@/lib/site-content'
+import { EditModeProvider } from '@/components/edit-mode/EditModeContext'
+import EditModeToggle from '@/components/edit-mode/EditModeToggle'
 
 const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
 const dmMono = DM_Mono({ subsets: ['latin'], variable: '--font-geist-mono', weight: ['400', '500'], display: 'swap' })
@@ -25,10 +29,26 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://yesbox-lepacte.fr'),
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let isAdmin = false
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+    isAdmin = !!profile?.is_admin
+  }
+
+  const content = await getSiteContentMap()
+
   return (
     <html lang="fr" className={`${dmSans.variable} ${dmMono.variable} ${playfair.variable}`}>
-      <body>{children}</body>
+      <body>
+        <EditModeProvider isAdmin={isAdmin} initialContent={content}>
+          {children}
+          <EditModeToggle />
+        </EditModeProvider>
+      </body>
     </html>
   )
 }

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
+import EditableText from '@/components/edit-mode/EditableText'
 import { creerCouple, getInviteLink, rejoindrePartenaireParCode } from '@/app/actions/couple'
 import { getProchainAnniversaire } from '@/lib/anniversaires'
 import { Copy, Check, Send, ArrowRight, KeyRound, ArrowLeft, Gift } from 'lucide-react'
@@ -102,7 +103,7 @@ function InviterPartenaireContent() {
         href="/tableau-de-bord"
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-magenta transition-colors mb-4"
       >
-        <ArrowLeft className="w-4 h-4" /> Retour au tableau de bord
+        <ArrowLeft className="w-4 h-4" /> <EditableText id="inviter.retour">Retour au tableau de bord</EditableText>
       </Link>
 
       <div className="text-center mb-8">
@@ -125,10 +126,10 @@ function InviterPartenaireContent() {
       {step === 'setup' ? (
         <div className="card animate-slide-up">
           <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">
-            Personnalisez votre espace
+            <EditableText id="inviter.setup.titre">Personnalisez votre espace</EditableText>
           </h1>
           <p className="text-gray-500 mb-6 text-sm">
-            Optionnel — tu peux compléter plus tard aussi.
+            <EditableText id="inviter.setup.souscritre">Optionnel — tu peux compléter plus tard aussi.</EditableText>
           </p>
 
           {error && <Alert type="error" message={error} className="mb-5" />}
@@ -136,7 +137,7 @@ function InviterPartenaireContent() {
           <form action={handleSetup} className="space-y-5">
             <div>
               <label htmlFor="nom_couple" className="label">
-                Le nom de votre couple <span className="text-gray-400 font-normal">(optionnel)</span>
+                <EditableText id="inviter.field.nomcouple">Le nom de votre couple</EditableText> <span className="text-gray-400 font-normal">(optionnel)</span>
               </label>
               <input
                 id="nom_couple"
@@ -149,7 +150,7 @@ function InviterPartenaireContent() {
 
             <div>
               <label htmlFor="date_anniversaire" className="label">
-                Date d'anniversaire de relation <span className="text-gray-400 font-normal">(optionnel)</span>
+                <EditableText id="inviter.field.date">Date d&apos;anniversaire de relation</EditableText> <span className="text-gray-400 font-normal">(optionnel)</span>
               </label>
               <input
                 id="date_anniversaire"
@@ -165,7 +166,7 @@ function InviterPartenaireContent() {
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {loading ? <Spinner size="sm" /> : <ArrowRight className="w-4 h-4" />}
-              {loading ? 'Création...' : 'Continuer'}
+              {loading ? 'Création...' : <EditableText id="inviter.setup.cta">Continuer</EditableText>}
             </button>
           </form>
         </div>
@@ -175,19 +176,19 @@ function InviterPartenaireContent() {
             <div className="text-center mb-6">
               <div className="text-4xl mb-3">🎉</div>
               <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">
-                Ton espace est prêt !
+                <EditableText id="inviter.pret.titre">Ton espace est prêt !</EditableText>
               </h1>
               <p className="text-gray-500 text-sm">
                 {paired
-                  ? 'Vous êtes pairé·es ! Vous pouvez commencer le module 1.'
-                  : "Partage ce code ou ce lien à ton/ta partenaire pour qu'il/elle rejoigne ton pacte."}
+                  ? <EditableText id="inviter.pret.paire" multiline>Vous êtes pairé·es ! Vous pouvez commencer le module 1.</EditableText>
+                  : <EditableText id="inviter.pret.nonpaire" multiline>Partage ce code ou ce lien à ton/ta partenaire pour qu&apos;il/elle rejoigne ton pacte.</EditableText>}
               </p>
             </div>
 
             {!paired && pairingCode && (
               <div className="bg-magenta-50 rounded-2xl p-4 mb-4 text-center">
                 <p className="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">
-                  Code de pairage
+                  <EditableText id="inviter.codepairage.label">Code de pairage</EditableText>
                 </p>
                 <p className="text-3xl font-mono font-bold tracking-[0.3em] text-magenta mb-3">{pairingCode}</p>
                 <button
@@ -195,7 +196,7 @@ function InviterPartenaireContent() {
                   className="btn-secondary text-sm py-2 px-4 inline-flex items-center gap-2"
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? 'Copié !' : 'Copier le code'}
+                  {copied ? 'Copié !' : <EditableText id="inviter.copiercode">Copier le code</EditableText>}
                 </button>
               </div>
             )}
@@ -204,7 +205,7 @@ function InviterPartenaireContent() {
               <>
                 <div className="bg-cream-100 rounded-2xl p-4 mb-5">
                   <p className="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">
-                    Ou le lien d'invitation
+                    <EditableText id="inviter.lien.label">Ou le lien d&apos;invitation</EditableText>
                   </p>
                   <p className="text-sm text-gray-600 break-all font-mono">{inviteLink}</p>
                 </div>
@@ -215,14 +216,14 @@ function InviterPartenaireContent() {
                     className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm"
                   >
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copié !' : 'Copier le lien'}
+                    {copied ? 'Copié !' : <EditableText id="inviter.copierlien">Copier le lien</EditableText>}
                   </button>
                   <button
                     onClick={shareLink}
                     className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm"
                   >
                     <Send className="w-4 h-4" />
-                    Partager
+                    <EditableText id="inviter.partager">Partager</EditableText>
                   </button>
                 </div>
               </>
@@ -232,7 +233,9 @@ function InviterPartenaireContent() {
               onClick={() => router.push('/tableau-de-bord')}
               className="w-full text-center text-sm text-gray-400 hover:text-magenta transition-colors mt-4"
             >
-              {paired ? 'Aller au tableau de bord →' : "Continuer seul·e pour l'instant →"}
+              {paired
+                ? <EditableText id="inviter.aller.paire">Aller au tableau de bord →</EditableText>
+                : <EditableText id="inviter.aller.solo">Continuer seul·e pour l&apos;instant →</EditableText>}
             </button>
           </div>
 
@@ -241,7 +244,7 @@ function InviterPartenaireContent() {
               <div className="flex items-center gap-2 mb-2">
                 <Gift className="w-4 h-4 text-magenta" />
                 <h2 className="font-fraunces text-lg font-bold text-gray-900">
-                  Votre prochain anniversaire
+                  <EditableText id="inviter.anniversaire.titre">Votre prochain anniversaire</EditableText>
                 </h2>
               </div>
               <p className="text-gray-700 text-sm mb-2">
@@ -253,7 +256,7 @@ function InviterPartenaireContent() {
                 <span className="text-magenta font-semibold">noces de {prochainAnniversaire.matiere}</span>.
               </p>
               <p className="text-gray-500 text-sm">
-                Une idée de rituel : offrez-vous, ce jour-là, un petit geste symbolique autour du {prochainAnniversaire.matiere} — un cadeau modeste, à la mesure de l&apos;année écoulée.
+                <EditableText id="inviter.anniversaire.rituel.prefix">Une idée de rituel : offrez-vous, ce jour-là, un petit geste symbolique autour du</EditableText> {prochainAnniversaire.matiere} <EditableText id="inviter.anniversaire.rituel.suffix">— un cadeau modeste, à la mesure de l&apos;année écoulée.</EditableText>
               </p>
             </div>
           )}
@@ -263,11 +266,11 @@ function InviterPartenaireContent() {
               <div className="flex items-center gap-2 mb-2">
                 <KeyRound className="w-4 h-4 text-magenta" />
                 <h2 className="font-fraunces text-lg font-bold text-gray-900">
-                  Ton/ta partenaire a déjà un code ?
+                  <EditableText id="inviter.dejacode.titre">Ton/ta partenaire a déjà un code ?</EditableText>
                 </h2>
               </div>
               <p className="text-gray-500 text-sm mb-4">
-                S'il/elle a créé son profil de son côté sans indiquer ton code, renseigne le sien ici pour vous pairer.
+                <EditableText id="inviter.dejacode.texte" multiline>S&apos;il/elle a créé son profil de son côté sans indiquer ton code, renseigne le sien ici pour vous pairer.</EditableText>
               </p>
               {joinError && <Alert type="error" message={joinError} className="mb-4" />}
               <form action={handleJoin} className="flex gap-2">
@@ -285,7 +288,7 @@ function InviterPartenaireContent() {
                   disabled={joinLoading}
                   className="btn-primary px-5 flex items-center justify-center"
                 >
-                  {joinLoading ? <Spinner size="sm" /> : 'Pairer'}
+                  {joinLoading ? <Spinner size="sm" /> : <EditableText id="inviter.pairer">Pairer</EditableText>}
                 </button>
               </form>
             </div>

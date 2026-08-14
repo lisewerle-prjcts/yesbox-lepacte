@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
+import EditableText from '@/components/edit-mode/EditableText'
 import { rejoindreCouple } from '@/app/actions/couple'
 import { createClient } from '@/lib/supabase/client'
 import { Heart } from 'lucide-react'
@@ -62,10 +63,10 @@ function RejoindreContent() {
         <>
           <div className="text-5xl mb-4">🎉</div>
           <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">
-            Vous êtes maintenant connectés !
+            <EditableText id="rejoindre.succes.titre">Vous êtes maintenant connectés !</EditableText>
           </h1>
           <p className="text-gray-500 mb-4">
-            Redirection vers votre tableau de bord...
+            <EditableText id="rejoindre.succes.texte">Redirection vers votre tableau de bord...</EditableText>
           </p>
           <Spinner className="mx-auto" />
         </>
@@ -75,12 +76,12 @@ function RejoindreContent() {
             <Heart className="w-8 h-8 text-magenta" />
           </div>
           <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">
-            Tu es invité·e à rejoindre un pacte !
+            <EditableText id="rejoindre.titre">Tu es invité·e à rejoindre un pacte !</EditableText>
           </h1>
           <p className="text-gray-500 mb-6">
             {user
-              ? `Tu rejoindras le pacte avec le compte ${user.email}`
-              : 'Connecte-toi ou crée un compte pour rejoindre ce pacte.'}
+              ? <><EditableText id="rejoindre.avecompte">Tu rejoindras le pacte avec le compte</EditableText> {user.email}</>
+              : <EditableText id="rejoindre.sanscompte" multiline>Connecte-toi ou crée un compte pour rejoindre ce pacte.</EditableText>}
           </p>
 
           {error && <Alert type="error" message={error} className="mb-5" />}
@@ -92,7 +93,7 @@ function RejoindreContent() {
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {status === 'loading' ? <Spinner size="sm" /> : <Heart className="w-4 h-4" />}
-              {status === 'loading' ? 'Connexion...' : 'Rejoindre le pacte'}
+              {status === 'loading' ? 'Connexion...' : <EditableText id="rejoindre.cta">Rejoindre le pacte</EditableText>}
             </button>
           ) : (
             <div className="space-y-3">
@@ -100,13 +101,13 @@ function RejoindreContent() {
                 onClick={() => router.push(`/connexion?redirect=/rejoindre?token=${token}`)}
                 className="btn-primary w-full"
               >
-                Se connecter pour rejoindre
+                <EditableText id="rejoindre.seconnecter">Se connecter pour rejoindre</EditableText>
               </button>
               <button
                 onClick={() => router.push(`/inscription?redirect=/rejoindre?token=${token}`)}
                 className="btn-secondary w-full"
               >
-                Créer un compte
+                <EditableText id="rejoindre.creercompte">Créer un compte</EditableText>
               </button>
             </div>
           )}

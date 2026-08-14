@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
+import EditableText from '@/components/edit-mode/EditableText'
 import { createClient } from '@/lib/supabase/client'
 
 export default function MotDePasseOubliePage() {
@@ -37,7 +38,7 @@ export default function MotDePasseOubliePage() {
         <div className="text-center mb-8">
           <Logo size="md" className="inline-block mb-4" />
           <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            Mot de passe oublié
+            <EditableText id="mdpoublie.titre">Mot de passe oublié</EditableText>
           </h1>
         </div>
 
@@ -45,12 +46,12 @@ export default function MotDePasseOubliePage() {
           {sent ? (
             <div className="text-center py-4">
               <div className="text-4xl mb-4">📬</div>
-              <h2 className="font-fraunces text-xl font-bold mb-2">Email envoyé !</h2>
+              <h2 className="font-fraunces text-xl font-bold mb-2"><EditableText id="mdpoublie.envoye.titre">Email envoyé !</EditableText></h2>
               <p className="text-gray-500 text-sm mb-6">
-                Vérifie ta boîte mail pour réinitialiser ton mot de passe.
+                <EditableText id="mdpoublie.envoye.texte" multiline>Vérifie ta boîte mail pour réinitialiser ton mot de passe.</EditableText>
               </p>
               <Link href="/connexion" className="btn-primary">
-                Retour à la connexion
+                <EditableText id="mdpoublie.retour">Retour à la connexion</EditableText>
               </Link>
             </div>
           ) : (
@@ -58,7 +59,7 @@ export default function MotDePasseOubliePage() {
               {error && <Alert type="error" message={error} className="mb-5" />}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="email" className="label">Email</label>
+                  <label htmlFor="email" className="label"><EditableText id="mdpoublie.field.email">Email</EditableText></label>
                   <input
                     id="email"
                     type="email"
@@ -71,12 +72,12 @@ export default function MotDePasseOubliePage() {
                 </div>
                 <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
                   {loading && <Spinner size="sm" />}
-                  {loading ? 'Envoi...' : 'Envoyer le lien'}
+                  {loading ? 'Envoi...' : <EditableText id="mdpoublie.submit">Envoyer le lien</EditableText>}
                 </button>
               </form>
               <div className="mt-4 text-center">
                 <Link href="/connexion" className="text-sm text-gray-400 hover:text-magenta">
-                  ← Retour à la connexion
+                  ← <EditableText id="mdpoublie.retourlien">Retour à la connexion</EditableText>
                 </Link>
               </div>
             </>
