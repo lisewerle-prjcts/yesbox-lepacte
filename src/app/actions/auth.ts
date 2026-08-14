@@ -116,10 +116,13 @@ export async function verifierCodeMfa(code: string) {
   const supabase = await createClient()
 
   const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
-  if (factorsError || !factors?.totp?.[0]) return { error: 'Aucun facteur de double authentification trouvé' }
+  if (factorsError) return { error: factorsError.message }
 
-  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factors.totp[0].id, code })
-  if (error) return { error: 'Code invalide' }
+  const factor = factors?.totp?.find(f => f.status === 'verified')
+  if (!factor) return { error: 'Aucun facteur de double authentification actif trouvé' }
+
+  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.trim() })
+  if (error) return { error: error.message }
 
   revalidatePath('/', 'layout')
   redirect('/tableau-de-bord')
