@@ -34,6 +34,7 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   prenom text,
+  nom text,
   avatar_url text,
   couple_id uuid,
   role text check (role in ('initiateur', 'partenaire')),
@@ -75,6 +76,11 @@ create policy "couple_insert" on public.couples for insert with check (true);
 create policy "couple_member_update" on public.couples for update using (
   id in (select couple_id from public.profiles where id = auth.uid())
 );
+
+-- Lien FK profiles.couple_id -> couples.id, ajouté ici (après la création de
+-- la table couples) pour permettre l'embedding PostgREST `select('*, couples(*)')`.
+alter table public.profiles add constraint profiles_couple_id_fkey
+  foreign key (couple_id) references public.couples(id) on delete set null;
 
 -- ============================================================
 -- modules
@@ -156,6 +162,29 @@ create policy "journal_update" on public.journal_entries for update using (
 );
 
 -- ============================================================
+-- FONCTION : generate_precommande_code
+-- Code aléatoire à 5 caractères (lettres majuscules + chiffres) attribué à
+-- chaque nouvelle inscription pré-lancement, envoyé par email, et utilisé
+-- par l'admin pour pairer manuellement deux inscrits en couple.
+-- ============================================================
+create or replace function public.generate_precommande_code()
+returns text language plpgsql as $$
+declare
+  chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; -- sans I/O pour éviter la confusion avec 1/0
+  code text;
+begin
+  loop
+    code := '';
+    for i in 1..5 loop
+      code := code || substr(chars, floor(random() * length(chars))::int + 1, 1);
+    end loop;
+    exit when not exists (select 1 from public.precommandes where couple_code = code);
+  end loop;
+  return code;
+end;
+$$;
+
+-- ============================================================
 -- precommandes
 -- ============================================================
 create table public.precommandes (
@@ -163,14 +192,22 @@ create table public.precommandes (
   prenom text not null,
   nom text,
   email text not null unique,
-  partner_prenom text,
   adresse text,
   message text,
+  partenaire_prenom text,
+  couple_code text unique default public.generate_precommande_code(),
+  paired_with uuid references public.precommandes(id) on delete set null,
   created_at timestamptz default now()
 );
 alter table public.precommandes enable row level security;
 create policy "precommande_insert" on public.precommandes for insert with check (true);
 create policy "precommande_admin_select" on public.precommandes for select using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "precommande_admin_update" on public.precommandes for update using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+create policy "precommande_admin_delete" on public.precommandes for delete using (
   exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
 );
 
@@ -316,7 +353,13 @@ alter table public.couples add column if not exists pairing_code text unique;
 alter table public.couples alter column pairing_code set default public.generate_pairing_code();
 
 alter table public.precommandes add column if not exists nom text;
-alter table public.precommandes add column if not exists partner_prenom text;
+
+-- Nettoyage : colonne introduite en parallèle puis remplacée par partenaire_prenom
+-- (voir plus bas) avant que le code ne l'utilise en production.
+alter table public.precommandes drop column if exists partner_prenom;
+
+-- Nom de famille, éditable par chaque utilisateur·rice depuis /profil.
+alter table public.profiles add column if not exists nom text;
 
 do $$
 declare
@@ -332,3 +375,48 @@ $$;
 -- (les nouvelles inscriptions avec ces adresses deviennent admin automatiquement, cf. handle_new_user)
 update public.profiles set is_admin = true
 where lower(email) in ('lise.werle@gmail.com', 'lise.yesbox@gmail.com');
+
+-- ============================================================
+-- MIGRATION — inscriptions pré-lancement enrichies (nom, binôme, code
+-- couple à 5 caractères, appairage manuel par l'admin).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.precommandes add column if not exists nom text;
+alter table public.precommandes add column if not exists partenaire_prenom text;
+alter table public.precommandes add column if not exists couple_code text unique;
+alter table public.precommandes add column if not exists paired_with uuid references public.precommandes(id) on delete set null;
+alter table public.precommandes alter column couple_code set default public.generate_precommande_code();
+
+do $$
+declare
+  p record;
+begin
+  for p in select id from public.precommandes where couple_code is null loop
+    update public.precommandes set couple_code = public.generate_precommande_code() where id = p.id;
+  end loop;
+end;
+$$;
+
+drop policy if exists "precommande_admin_update" on public.precommandes;
+create policy "precommande_admin_update" on public.precommandes for update using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+drop policy if exists "precommande_admin_delete" on public.precommandes;
+create policy "precommande_admin_delete" on public.precommandes for delete using (
+  exists (select 1 from public.profiles where id = auth.uid() and is_admin = true)
+);
+
+-- Lien FK profiles.couple_id -> couples.id (installations existantes créées
+-- avant l'ajout de cette contrainte) : nécessaire pour l'embedding PostgREST
+-- `select('*, couples(*)')` utilisé par la page /pacte.
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_name = 'profiles_couple_id_fkey' and table_name = 'profiles'
+  ) then
+    alter table public.profiles add constraint profiles_couple_id_fkey
+      foreign key (couple_id) references public.couples(id) on delete set null;
+  end if;
+end;
+$$;

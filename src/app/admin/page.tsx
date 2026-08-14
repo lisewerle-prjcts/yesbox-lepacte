@@ -14,7 +14,7 @@ export default async function AdminHome() {
     supabase.from('precommandes').select('*', { count: 'exact', head: true }),
     supabase.from('couples').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('precommandes').select('prenom,nom,email,partner_prenom,adresse,message,created_at').order('created_at', { ascending: false }).limit(10),
+    supabase.from('precommandes').select('prenom,nom,email,partenaire_prenom,couple_code,adresse,message,created_at').order('created_at', { ascending: false }).limit(10),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
   ])
 
@@ -73,7 +73,8 @@ export default async function AdminHome() {
                 <div>
                   <div className="font-medium">{p.prenom} {p.nom}</div>
                   <div style={{ color: 'var(--brand)' }}>{p.email}</div>
-                  {p.partner_prenom && <div style={{ color: 'var(--muted)' }}>Partenaire : {p.partner_prenom}</div>}
+                  {p.couple_code && <div className="font-mono" style={{ color: 'var(--muted)' }}>Code : {p.couple_code}</div>}
+                  {p.partenaire_prenom && <div style={{ color: 'var(--muted)' }}>Binôme : {p.partenaire_prenom}</div>}
                   {p.adresse && <div style={{ color: 'var(--muted)' }}>{p.adresse}</div>}
                   {p.message && <div style={{ color: 'var(--muted)', fontStyle: 'italic', marginTop: 2 }}>&ldquo;{p.message}&rdquo;</div>}
                 </div>

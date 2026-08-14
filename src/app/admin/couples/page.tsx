@@ -1,13 +1,19 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import CouplesClient from './CouplesClient'
+import PrecommandesManager from './PrecommandesManager'
 
 const SLUGS = ['moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement']
 
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const [{ data: couples }, { data: profiles }, effectiveModules] = await Promise.all([
+  const { data: precommandes, error: precommandesError } = await supabase
+    .from('precommandes')
+    .select('id,prenom,nom,email,adresse,message,partenaire_prenom,couple_code,paired_with,created_at')
+    .order('created_at', { ascending: false })
+
+  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules] = await Promise.all([
     supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at').order('numero', { ascending: true }),
     supabase.from('profiles').select('id, prenom, email, couple_id, role').order('email'),
     getEffectiveModules(),
@@ -60,11 +66,32 @@ export default async function AdminCouples() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
-        <span className="tag-muted">{couplesData.length} couple{couplesData.length > 1 ? 's' : ''}</span>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
+          <span className="tag-muted">{(precommandes || []).length} inscription{(precommandes || []).length > 1 ? 's' : ''}</span>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--muted)' }}>Gère les inscriptions pré-lancement : codes couple, appairage, corrections, suppressions.</p>
       </div>
-      <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} />
+
+      {(precommandesError || couplesError) && (
+        <div className="alert-error mb-4">
+          Erreur de lecture en base : {precommandesError?.message || couplesError?.message}.
+          {' '}Si tu viens de mettre à jour l&apos;app, il faut d&apos;abord exécuter la migration SQL
+          (<code>supabase/schema.sql</code>) sur le projet Supabase — les nouvelles colonnes
+          (<code>nom</code>, <code>couple_code</code>, etc.) n&apos;existent probablement pas encore en base.
+        </div>
+      )}
+
+      <PrecommandesManager precommandes={precommandes || []} />
+
+      <div className="mt-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-serif text-2xl font-bold" style={{ color: 'var(--ink)' }}>Couples actifs</h2>
+          <span className="tag-muted">{couplesData.length} couple{couplesData.length > 1 ? 's' : ''}</span>
+        </div>
+        <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} />
+      </div>
     </div>
   )
 }

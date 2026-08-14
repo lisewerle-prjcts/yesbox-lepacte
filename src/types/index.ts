@@ -6,6 +6,7 @@ export interface Profile {
   id: string
   email: string
   prenom: string | null
+  nom: string | null
   avatar_url: string | null
   couple_id: string | null
   role: 'initiateur' | 'partenaire' | null
@@ -60,9 +61,13 @@ export interface JournalEntry {
 export interface Precommande {
   id: string
   prenom: string
+  nom: string | null
   email: string
   adresse: string | null
   message: string | null
+  partenaire_prenom: string | null
+  couple_code: string | null
+  paired_with: string | null
   created_at: string
 }
 

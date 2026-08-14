@@ -77,7 +77,7 @@ export default function LandingPage() {
               <EditableText id="home.nav.seconnecter">Se connecter</EditableText>
             </Link>
             <button onClick={() => setModalOpen(true)} className="btn-brand text-sm py-2 px-4">
-              <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
+              <EditableText id="home.nav.sinscrire">Inscription</EditableText>
             </button>
           </div>
           <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
@@ -96,7 +96,7 @@ export default function LandingPage() {
                 <EditableText id="home.nav.connexion.mobile">Connexion</EditableText>
               </Link>
               <button onClick={() => { setModalOpen(true); setMenuOpen(false) }} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
-                <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
+                <EditableText id="home.nav.sinscrire">Inscription</EditableText>
               </button>
             </div>
           </div>
