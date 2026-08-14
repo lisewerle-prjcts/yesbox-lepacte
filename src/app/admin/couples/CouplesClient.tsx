@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Download } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
-  adminUpdateCouple, adminDeleteCouple,
+  adminUpdateCouple, adminDeleteCouple, adminUpdateProfile, adminGetCoupleArchive,
 } from '@/app/actions/admin'
 
-interface UnassignedMember { id: string; prenom: string | null; email: string; role: string | null }
-interface MemberProgress { id: string; prenom: string | null; email: string; role: string | null; modulesCompleted: number }
+interface UnassignedMember { id: string; prenom: string | null; nom: string | null; email: string; role: string | null }
+interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number }
 interface ModuleStatus { slug: string; statut: string; revealed: boolean; connivence_score: number | null }
 interface Couple {
   id: string
@@ -77,16 +77,44 @@ function CoupleCard({
   const [editing, setEditing] = useState(false)
   const [nomCouple, setNomCouple] = useState(couple.nom_couple || '')
   const [dateAnniversaire, setDateAnniversaire] = useState(couple.date_anniversaire || '')
+  const [pairingCode, setPairingCode] = useState(couple.pairing_code || '')
   const [saving, setSaving] = useState(false)
   const [assignChoice, setAssignChoice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   async function save() {
     setSaving(true)
-    await adminUpdateCouple(couple.id, { nom_couple: nomCouple || null, date_anniversaire: dateAnniversaire || null })
+    const code = pairingCode.trim().toUpperCase()
+    const res = await adminUpdateCouple(couple.id, {
+      nom_couple: nomCouple || null,
+      date_anniversaire: dateAnniversaire || null,
+      ...(code ? { pairing_code: code } : {}),
+    })
     setSaving(false)
+    if (res?.error) {
+      alert(res.error)
+      return
+    }
     setEditing(false)
     router.refresh()
+  }
+
+  async function downloadArchive() {
+    setDownloading(true)
+    const res = await adminGetCoupleArchive(couple.id)
+    setDownloading(false)
+    if ('error' in res) {
+      alert(res.error)
+      return
+    }
+    const blob = new Blob([res.content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = res.filename
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function remove() {
@@ -132,6 +160,9 @@ function CoupleCard({
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
             Créé le {new Date(couple.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
+          <button onClick={downloadArchive} disabled={downloading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)', opacity: downloading ? 0.6 : 1 }}>
+            <Download className="w-3.5 h-3.5" /> {downloading ? 'Préparation…' : 'Télécharger les réponses'}
+          </button>
           <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
             <Pencil className="w-3.5 h-3.5" /> Modifier
           </button>
@@ -151,6 +182,18 @@ function CoupleCard({
             <label className="flabel">Date d&apos;anniversaire</label>
             <input type="date" className="field" value={dateAnniversaire} onChange={e => setDateAnniversaire(e.target.value)} />
           </div>
+          <div>
+            <label className="flabel">Code couple</label>
+            <input
+              type="text"
+              className="field font-mono"
+              style={{ textTransform: 'uppercase', width: 100 }}
+              maxLength={6}
+              value={pairingCode}
+              onChange={e => setPairingCode(e.target.value.toUpperCase())}
+              placeholder="Ex : A1B2C3"
+            />
+          </div>
           <button onClick={save} disabled={saving} className="btn-brand text-xs py-2 px-3">
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </button>
@@ -160,20 +203,7 @@ function CoupleCard({
       {/* Membres */}
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
         {couple.members.map(member => (
-          <div key={member.id} className="surface p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>
-                  {member.prenom || '—'} <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>({member.role || 'membre'})</span>
-                </div>
-                <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{member.email}</div>
-                <div style={{ fontSize: 11, color: 'var(--sage)', marginTop: 4 }}>{member.modulesCompleted}/{totalModules} modules terminés</div>
-              </div>
-              <button onClick={() => unassign(member.id)} disabled={busy} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs flex-shrink-0" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: '#dc2626' }}>
-                <UserMinus className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
+          <MemberRow key={member.id} member={member} totalModules={totalModules} busy={busy} onUnassign={() => unassign(member.id)} />
         ))}
         {Array.from({ length: emptySlots }).map((_, i) => (
           <div key={i} className="surface p-3 flex items-center gap-2" style={{ borderStyle: 'dashed' }}>
@@ -220,6 +250,74 @@ function CoupleCard({
       >
         Actions →
       </Link>
+    </div>
+  )
+}
+
+function MemberRow({
+  member,
+  totalModules,
+  busy,
+  onUnassign,
+}: {
+  member: MemberProgress
+  totalModules: number
+  busy: boolean
+  onUnassign: () => void
+}) {
+  const router = useRouter()
+  const [editing, setEditing] = useState(false)
+  const [prenom, setPrenom] = useState(member.prenom || '')
+  const [nom, setNom] = useState(member.nom || '')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    const res = await adminUpdateProfile(member.id, { prenom: prenom || null, nom: nom || null })
+    setSaving(false)
+    if (res?.error) {
+      alert(res.error)
+      return
+    }
+    setEditing(false)
+    router.refresh()
+  }
+
+  return (
+    <div className="surface p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>
+            {[member.prenom, member.nom].filter(Boolean).join(' ') || '—'} <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>({member.role || 'membre'})</span>
+          </div>
+          <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{member.email}</div>
+          <div style={{ fontSize: 11, color: 'var(--sage)', marginTop: 4 }}>{member.modulesCompleted}/{totalModules} modules terminés</div>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
+            <Pencil className="w-3 h-3" />
+          </button>
+          <button onClick={onUnassign} disabled={busy} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: '#dc2626' }}>
+            <UserMinus className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {editing && (
+        <div className="flex flex-wrap gap-2 items-end mt-3">
+          <div style={{ flex: 1, minWidth: 100 }}>
+            <label className="flabel">Prénom</label>
+            <input type="text" className="field" value={prenom} onChange={e => setPrenom(e.target.value)} />
+          </div>
+          <div style={{ flex: 1, minWidth: 100 }}>
+            <label className="flabel">Nom</label>
+            <input type="text" className="field" value={nom} onChange={e => setNom(e.target.value)} />
+          </div>
+          <button onClick={save} disabled={saving} className="btn-brand text-xs py-2 px-3">
+            {saving ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

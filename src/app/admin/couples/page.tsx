@@ -9,7 +9,7 @@ export default async function AdminCouples() {
 
   const [{ data: couples }, { data: profiles }, effectiveModules] = await Promise.all([
     supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at').order('numero', { ascending: true }),
-    supabase.from('profiles').select('id, prenom, email, couple_id, role').order('email'),
+    supabase.from('profiles').select('id, prenom, nom, email, couple_id, role').order('email'),
     getEffectiveModules(),
   ])
 
@@ -28,7 +28,7 @@ export default async function AdminCouples() {
     : { data: [] }
 
   const allProfiles = profiles || []
-  const unassigned = allProfiles.filter(p => !p.couple_id).map(p => ({ id: p.id, prenom: p.prenom, email: p.email, role: p.role }))
+  const unassigned = allProfiles.filter(p => !p.couple_id).map(p => ({ id: p.id, prenom: p.prenom, nom: p.nom, email: p.email, role: p.role }))
 
   const couplesData = (couples || []).map(couple => {
     const members = allProfiles.filter(p => p.couple_id === couple.id)
@@ -43,7 +43,7 @@ export default async function AdminCouples() {
         const answered = (reponses || []).filter(r => r.module_id === mod.id && r.user_id === member.id).length
         if (total > 0 && answered >= total) modulesCompleted += 1
       }
-      return { id: member.id, prenom: member.prenom, email: member.email, role: member.role, modulesCompleted }
+      return { id: member.id, prenom: member.prenom, nom: member.nom, email: member.email, role: member.role, modulesCompleted }
     })
 
     return {

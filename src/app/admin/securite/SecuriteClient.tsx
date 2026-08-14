@@ -1,13 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { KeyRound, Mail } from 'lucide-react'
-import { adminResetAndSendPassword } from '@/app/actions/admin'
+import { useRouter } from 'next/navigation'
+import { KeyRound, Mail, Trash2 } from 'lucide-react'
+import { adminResetAndSendPassword, adminDeleteUser } from '@/app/actions/admin'
 
 interface Member { id: string; prenom: string | null; email: string; coupleNumero: number | null }
 
-export default function SecuriteClient({ members }: { members: Member[] }) {
+export default function SecuriteClient({ members: initialMembers }: { members: Member[] }) {
+  const router = useRouter()
+  const [members, setMembers] = useState(initialMembers)
   const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const [deleting, setDeleting] = useState<Record<string, boolean>>({})
   const [passwordShown, setPasswordShown] = useState<Record<string, { password: string; emailed: boolean }>>({})
 
   async function sendPassword(member: Member) {
@@ -16,6 +20,19 @@ export default function SecuriteClient({ members }: { members: Member[] }) {
     setLoading(l => ({ ...l, [member.id]: false }))
     if (res.success) {
       setPasswordShown(p => ({ ...p, [member.id]: { password: res.password!, emailed: !!res.emailed } }))
+    }
+  }
+
+  async function deleteMember(member: Member) {
+    if (!window.confirm(`Supprimer définitivement le compte de ${member.prenom || member.email} (${member.email}) ? Cette action est irréversible : le profil et toutes ses réponses seront effacés.`)) return
+    setDeleting(d => ({ ...d, [member.id]: true }))
+    const res = await adminDeleteUser(member.id)
+    setDeleting(d => ({ ...d, [member.id]: false }))
+    if (res.success) {
+      setMembers(m => m.filter(x => x.id !== member.id))
+      router.refresh()
+    } else if (res.error) {
+      alert(res.error)
     }
   }
 
@@ -51,15 +68,26 @@ export default function SecuriteClient({ members }: { members: Member[] }) {
                     </div>
                   )}
                 </div>
-                <button
-                  disabled={loading[member.id]}
-                  onClick={() => sendPassword(member)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--brand)', opacity: loading[member.id] ? 0.5 : 1 }}
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  {loading[member.id] ? 'Envoi…' : 'Envoyer un nouveau mot de passe'}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    disabled={loading[member.id]}
+                    onClick={() => sendPassword(member)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--brand)', opacity: loading[member.id] ? 0.5 : 1 }}
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    {loading[member.id] ? 'Envoi…' : 'Envoyer un nouveau mot de passe'}
+                  </button>
+                  <button
+                    disabled={deleting[member.id]}
+                    onClick={() => deleteMember(member)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: '#dc2626', opacity: deleting[member.id] ? 0.5 : 1 }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {deleting[member.id] ? 'Suppression…' : 'Supprimer'}
+                  </button>
+                </div>
               </div>
             )
           })}
