@@ -34,6 +34,7 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   prenom text,
+  nom text,
   avatar_url text,
   couple_id uuid,
   role text check (role in ('initiateur', 'partenaire')),
@@ -356,6 +357,9 @@ alter table public.precommandes add column if not exists nom text;
 -- Nettoyage : colonne introduite en parallèle puis remplacée par partenaire_prenom
 -- (voir plus bas) avant que le code ne l'utilise en production.
 alter table public.precommandes drop column if exists partner_prenom;
+
+-- Nom de famille, éditable par chaque utilisateur·rice depuis /profil.
+alter table public.profiles add column if not exists nom text;
 
 do $$
 declare

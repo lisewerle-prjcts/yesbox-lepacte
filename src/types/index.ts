@@ -6,6 +6,7 @@ export interface Profile {
   id: string
   email: string
   prenom: string | null
+  nom: string | null
   avatar_url: string | null
   couple_id: string | null
   role: 'initiateur' | 'partenaire' | null
