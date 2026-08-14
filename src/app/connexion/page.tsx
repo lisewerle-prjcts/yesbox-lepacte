@@ -7,15 +7,15 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
-import { connexion } from '@/app/actions/auth'
+import { connexion, verifierCodeMfa } from '@/app/actions/auth'
 import { Eye, EyeOff } from 'lucide-react'
 
-function SubmitButton() {
+function SubmitButton({ label, pendingLabel }: { label: React.ReactNode; pendingLabel: string }) {
   const { pending } = useFormStatus()
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full flex items-center justify-center gap-2">
       {pending ? <Spinner size="sm" /> : null}
-      {pending ? 'Connexion...' : <EditableText id="connexion.submit">Se connecter</EditableText>}
+      {pending ? pendingLabel : label}
     </button>
   )
 }
@@ -23,11 +23,53 @@ function SubmitButton() {
 export default function ConnexionPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [mfaRequired, setMfaRequired] = useState(false)
 
   async function handleAction(formData: FormData) {
     setError(null)
     const result = await connexion(formData)
     if (result?.error) setError(result.error)
+    else if (result?.mfaRequired) setMfaRequired(true)
+  }
+
+  async function handleMfaAction(formData: FormData) {
+    setError(null)
+    const code = (formData.get('code') as string) || ''
+    const result = await verifierCodeMfa(code)
+    if (result?.error) setError(result.error)
+  }
+
+  if (mfaRequired) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Logo size="md" className="inline-block mb-4" />
+            <h1 className="font-fraunces text-2xl font-bold text-gray-900">Vérification en deux étapes</h1>
+            <p className="text-gray-500 mt-2">Saisis le code à 6 chiffres de ton application d&apos;authentification</p>
+          </div>
+          <div className="card">
+            {error && <Alert type="error" message={error} className="mb-5" />}
+            <form action={handleMfaAction} className="space-y-5">
+              <div>
+                <label htmlFor="code" className="label">Code</label>
+                <input
+                  id="code"
+                  name="code"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="123456"
+                  autoComplete="one-time-code"
+                  required
+                  className="input-field"
+                />
+              </div>
+              <SubmitButton label="Vérifier" pendingLabel="Vérification..." />
+            </form>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -86,7 +128,7 @@ export default function ConnexionPage() {
               </div>
             </div>
 
-            <SubmitButton />
+            <SubmitButton label={<EditableText id="connexion.submit">Se connecter</EditableText>} pendingLabel="Connexion..." />
           </form>
 
           <div className="mt-6 text-center space-y-2">

@@ -91,6 +91,24 @@ export async function connexion(formData: FormData) {
     return { error: error.message }
   }
 
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (aal && aal.nextLevel === 'aal2' && aal.nextLevel !== aal.currentLevel) {
+    return { mfaRequired: true }
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/tableau-de-bord')
+}
+
+export async function verifierCodeMfa(code: string) {
+  const supabase = await createClient()
+
+  const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+  if (factorsError || !factors?.totp?.[0]) return { error: 'Aucun facteur de double authentification trouvé' }
+
+  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factors.totp[0].id, code })
+  if (error) return { error: 'Code invalide' }
+
   revalidatePath('/', 'layout')
   redirect('/tableau-de-bord')
 }
