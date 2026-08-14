@@ -353,6 +353,10 @@ alter table public.couples alter column pairing_code set default public.generate
 
 alter table public.precommandes add column if not exists nom text;
 
+-- Nettoyage : colonne introduite en parallèle puis remplacée par partenaire_prenom
+-- (voir plus bas) avant que le code ne l'utilise en production.
+alter table public.precommandes drop column if exists partner_prenom;
+
 do $$
 declare
   c record;
