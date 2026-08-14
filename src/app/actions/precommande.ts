@@ -43,7 +43,7 @@ export async function soumettrePrecommande(formData: FormData) {
 
     // Notification admin
     await transporter.sendMail({
-      from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+      from: '"YES BOX" <lise.yesbox@gmail.com>',
       to: 'lise.werle@gmail.com',
       subject: `✦ Nouvelle pré-commande — ${prenom}`,
       html: `
@@ -68,7 +68,7 @@ export async function soumettrePrecommande(formData: FormData) {
 
     // Confirmation au pré-commandeur
     await transporter.sendMail({
-      from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+      from: '"YES BOX" <lise.yesbox@gmail.com>',
       to: email,
       subject: 'Ta pré-commande YES BOX est confirmée ✦',
       html: `

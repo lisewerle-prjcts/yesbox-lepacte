@@ -88,7 +88,7 @@ export async function adminSendEmail(to: string, subject: string, body: string) 
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
   })
   await transporter.sendMail({
-    from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+    from: '"YES BOX" <lise.yesbox@gmail.com>',
     to,
     subject,
     html: `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fbf8f3;border-radius:16px;overflow:hidden;">
@@ -298,7 +298,7 @@ export async function adminResetAndSendPassword(userId: string) {
 
   const transporter = getMailTransporter()
   await transporter.sendMail({
-    from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+    from: '"YES BOX" <lise.yesbox@gmail.com>',
     to: email,
     subject: 'Ton nouveau mot de passe YES BOX',
     html: mailHtml(`
