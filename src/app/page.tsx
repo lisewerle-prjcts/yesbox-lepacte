@@ -74,9 +74,9 @@ export default function LandingPage() {
           Un programme en 7 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
-          <Link href="/inscription" className="btn-brand lg">
+          <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             Inscription au module 1 — Gratuit <ArrowRight className="w-4 h-4" />
-          </Link>
+          </button>
           <a href="#modules" className="btn-ghost lg">Voir le programme</a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
