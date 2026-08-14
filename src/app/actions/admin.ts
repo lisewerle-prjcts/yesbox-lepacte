@@ -243,8 +243,29 @@ export async function adminCreateEmptyCouple() {
   const admin = createAdminClient()
   const { data, error } = await admin.from('couples').insert({}).select('id, numero').single()
   if (error) return { error: error.message }
+  revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
   return { success: true, coupleId: data.id, numero: data.numero }
+}
+
+export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null }) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('couples').update(fields).eq('id', coupleId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/couples')
+  return { success: true }
+}
+
+export async function adminDeleteCouple(coupleId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  await admin.from('profiles').update({ couple_id: null, role: null }).eq('couple_id', coupleId)
+  const { error } = await admin.from('couples').delete().eq('id', coupleId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/securite')
+  return { success: true }
 }
 
 export async function adminResetAndSendPassword(userId: string) {
