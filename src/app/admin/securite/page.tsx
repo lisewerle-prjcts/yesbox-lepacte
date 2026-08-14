@@ -4,27 +4,30 @@ import SecuriteClient from './SecuriteClient'
 export default async function AdminSecurite() {
   const supabase = createAdminClient()
 
-  const [{ data: couples }, { data: profiles }] = await Promise.all([
-    supabase.from('couples').select('id, numero, pairing_code, created_at').order('numero', { ascending: true }),
-    supabase.from('profiles').select('id, prenom, email, couple_id, role').order('email'),
+  const [{ data: profiles }, { data: couples }] = await Promise.all([
+    supabase.from('profiles').select('id, prenom, email, couple_id').order('email'),
+    supabase.from('couples').select('id, numero'),
   ])
 
-  const couplesWithMembers = (couples || []).map(c => ({
-    ...c,
-    members: (profiles || []).filter(p => p.couple_id === c.id),
-  }))
+  const numeroByCoupleId: Record<string, number> = {}
+  for (const c of couples || []) numeroByCoupleId[c.id] = c.numero
 
-  const unassigned = (profiles || []).filter(p => !p.couple_id)
+  const members = (profiles || []).map(p => ({
+    id: p.id,
+    prenom: p.prenom,
+    email: p.email,
+    coupleNumero: p.couple_id ? numeroByCoupleId[p.couple_id] ?? null : null,
+  }))
 
   return (
     <div>
       <div className="mb-6">
         <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Sécurité</h1>
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-          Pairage manuel des couples par numéro et envoi de mots de passe en cas d&apos;oubli.
+          Envoie un nouveau mot de passe à un membre en cas d&apos;oubli. Le pairage des couples se gère depuis l&apos;onglet « Couples & progression ».
         </p>
       </div>
-      <SecuriteClient couples={couplesWithMembers} unassigned={unassigned} />
+      <SecuriteClient members={members} />
     </div>
   )
 }

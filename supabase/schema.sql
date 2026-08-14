@@ -212,6 +212,9 @@ create policy "precommande_admin_delete" on public.precommandes for delete using
 
 -- ============================================================
 -- settings (messages configurables admin)
+-- Clés préfixées utilisées par convention :
+--   module_questions_override::<slug>  → contenu des modules (admin/contenu)
+--   site_content::<clé>                → textes & boutons édités en mode édition (site + espaces couples)
 -- ============================================================
 create table public.settings (
   key text primary key,
@@ -347,6 +350,8 @@ $$;
 alter table public.couples add column if not exists numero integer generated always as identity;
 alter table public.couples add column if not exists pairing_code text unique;
 alter table public.couples alter column pairing_code set default public.generate_pairing_code();
+
+alter table public.precommandes add column if not exists nom text;
 
 do $$
 declare

@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
+import EditableText from '@/components/edit-mode/EditableText'
 import { inscription } from '@/app/actions/auth'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -14,7 +15,7 @@ function SubmitButton() {
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full flex items-center justify-center gap-2">
       {pending ? <Spinner size="sm" /> : null}
-      {pending ? 'Création en cours...' : 'Créer mon compte'}
+      {pending ? 'Création en cours...' : <EditableText id="inscription.submit">Créer mon compte</EditableText>}
     </button>
   )
 }
@@ -35,10 +36,10 @@ export default function InscriptionPage() {
         <div className="text-center mb-8">
           <Logo size="md" className="inline-block mb-4" />
           <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            Crée ton compte
+            <EditableText id="inscription.titre">Crée ton compte</EditableText>
           </h1>
           <p className="text-gray-500 mt-2">
-            Et commence à construire votre pacte
+            <EditableText id="inscription.souscritre">Et commence à construire votre pacte</EditableText>
           </p>
         </div>
 
@@ -48,7 +49,7 @@ export default function InscriptionPage() {
           <form action={handleAction} className="space-y-5">
             <div>
               <label htmlFor="prenom" className="label">
-                Ton prénom
+                <EditableText id="inscription.field.prenom">Ton prénom</EditableText>
               </label>
               <input
                 id="prenom"
@@ -63,7 +64,7 @@ export default function InscriptionPage() {
 
             <div>
               <label htmlFor="email" className="label">
-                Email
+                <EditableText id="inscription.field.email">Email</EditableText>
               </label>
               <input
                 id="email"
@@ -78,7 +79,7 @@ export default function InscriptionPage() {
 
             <div>
               <label htmlFor="password" className="label">
-                Mot de passe
+                <EditableText id="inscription.field.password">Mot de passe</EditableText>
               </label>
               <div className="relative">
                 <input
@@ -102,7 +103,7 @@ export default function InscriptionPage() {
 
             <div>
               <label htmlFor="partner_code" className="label">
-                Code de ton/ta partenaire <span className="text-gray-400 font-normal">(optionnel)</span>
+                <EditableText id="inscription.field.code">Code de ton/ta partenaire</EditableText> <span className="text-gray-400 font-normal">(optionnel)</span>
               </label>
               <input
                 id="partner_code"
@@ -114,7 +115,7 @@ export default function InscriptionPage() {
                 className="input-field uppercase"
               />
               <p className="text-xs text-gray-400 mt-1">
-                Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 6 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.
+                <EditableText id="inscription.field.code.aide" multiline>Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 6 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.</EditableText>
               </p>
             </div>
 
@@ -123,18 +124,18 @@ export default function InscriptionPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              Tu as déjà un compte ?{' '}
+              <EditableText id="inscription.dejacompte">Tu as déjà un compte ?</EditableText>{' '}
               <Link href="/connexion" className="text-magenta font-semibold hover:underline">
-                Se connecter
+                <EditableText id="inscription.seconnecter">Se connecter</EditableText>
               </Link>
             </p>
           </div>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          En créant un compte, tu acceptes nos{' '}
+          <EditableText id="inscription.cgu.prefix">En créant un compte, tu acceptes nos</EditableText>{' '}
           <Link href="/mentions-legales" className="text-magenta hover:underline">
-            conditions d&apos;utilisation
+            <EditableText id="inscription.cgu.lien">conditions d&apos;utilisation</EditableText>
           </Link>.
         </p>
       </div>

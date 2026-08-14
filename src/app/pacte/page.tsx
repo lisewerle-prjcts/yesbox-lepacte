@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getProchainAnniversaire } from '@/lib/anniversaires'
+import EditableText from '@/components/edit-mode/EditableText'
 import { CheckCircle, Lock, Heart, ScrollText, Gift, KeyRound } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
 
@@ -57,12 +58,12 @@ export default async function PactePage() {
         <div className="flex items-center gap-3 mb-2">
           <ScrollText className="w-6 h-6 text-magenta" />
           <h1 className="font-fraunces text-3xl font-bold text-gray-900">
-            Notre Pacte
+            <EditableText id="pacte.titre">Notre Pacte</EditableText>
           </h1>
         </div>
         <p className="text-gray-500">
           {tousTermines
-            ? 'Votre pacte est complet — découvrez vos réponses et alignements.'
+            ? <EditableText id="pacte.souscritre.complet" multiline>Votre pacte est complet — découvrez vos réponses et alignements.</EditableText>
             : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur 7`}
         </p>
       </div>
@@ -103,21 +104,20 @@ export default async function PactePage() {
           <div className="flex items-center gap-3 mb-2">
             <Heart className="w-6 h-6" />
             <h2 className="font-fraunces text-xl font-bold">
-              Votre Pacte est prêt !
+              <EditableText id="pacte.pret.titre">Votre Pacte est prêt !</EditableText>
             </h2>
           </div>
           <p className="text-magenta-100 text-sm">
-            Vous avez répondu à toutes les questions. Explorez vos alignements ci-dessous
-            et signez votre pacte ensemble.
+            <EditableText id="pacte.pret.texte" multiline>Vous avez répondu à toutes les questions. Explorez vos alignements ci-dessous et signez votre pacte ensemble.</EditableText>
           </p>
         </div>
       ) : (
         <div className="card bg-cream-100 border-cream-300 mb-8">
           <p className="text-gray-600 text-sm">
-            Terminez tous les modules pour accéder à votre pacte complet et le signer ensemble.
+            <EditableText id="pacte.incomplet.texte" multiline>Terminez tous les modules pour accéder à votre pacte complet et le signer ensemble.</EditableText>
           </p>
           <Link href="/tableau-de-bord" className="text-magenta text-sm font-semibold hover:underline mt-2 inline-block">
-            Continuer les modules →
+            <EditableText id="pacte.incomplet.cta">Continuer les modules →</EditableText>
           </Link>
         </div>
       )}
@@ -134,14 +134,14 @@ export default async function PactePage() {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{moduleInfo.emoji}</span>
                   <div>
-                    <h3 className="font-fraunces font-bold text-gray-900">{moduleInfo.titre}</h3>
+                    <h3 className="font-fraunces font-bold text-gray-900"><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></h3>
                     <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
                       <Lock className="w-3 h-3" />
-                      <span>Module non terminé</span>
+                      <span><EditableText id="pacte.nonterminee">Module non terminé</EditableText></span>
                     </div>
                   </div>
                   <Link href={`/module/${moduleInfo.slug}`} className="ml-auto btn-primary text-sm py-1.5">
-                    Commencer
+                    <EditableText id="pacte.commencer">Commencer</EditableText>
                   </Link>
                 </div>
               </div>
@@ -155,10 +155,10 @@ export default async function PactePage() {
             <div key={moduleInfo.slug} className="card">
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-cream-300">
                 <span className="text-2xl">{moduleInfo.emoji}</span>
-                <h3 className="font-fraunces text-lg font-bold text-gray-900">{moduleInfo.titre}</h3>
+                <h3 className="font-fraunces text-lg font-bold text-gray-900"><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></h3>
                 <div className="ml-auto flex items-center gap-1.5 text-xs font-semibold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
                   <CheckCircle className="w-3 h-3" />
-                  Terminé
+                  <EditableText id="pacte.terminee">Terminé</EditableText>
                 </div>
               </div>
 
@@ -203,14 +203,14 @@ export default async function PactePage() {
         <div className="card text-center mt-8 py-10">
           <div className="text-4xl mb-4">💍</div>
           <h2 className="font-fraunces text-2xl font-bold text-gray-900 mb-3">
-            Signez votre Pacte
+            <EditableText id="pacte.signature.titre">Signez votre Pacte</EditableText>
           </h2>
           <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            En signant, vous vous engagez à honorer les valeurs et accords explorés ensemble.
+            <EditableText id="pacte.signature.texte" multiline>En signant, vous vous engagez à honorer les valeurs et accords explorés ensemble.</EditableText>
           </p>
           <button className="btn-primary px-8 py-4 text-lg flex items-center gap-2 mx-auto">
             <Heart className="w-5 h-5" />
-            Signer notre Pacte
+            <EditableText id="pacte.signature.cta">Signer notre Pacte</EditableText>
           </button>
         </div>
       )}

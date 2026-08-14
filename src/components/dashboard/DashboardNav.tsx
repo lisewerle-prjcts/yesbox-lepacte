@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import YesBoxLogo from '@/components/YesBoxLogo'
+import EditableText from '@/components/edit-mode/EditableText'
 import { deconnexion } from '@/app/actions/auth'
 import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck } from 'lucide-react'
 
@@ -16,11 +17,11 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
   const pathname = usePathname()
 
   const links = [
-    { href: '/tableau-de-bord', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { href: '/pacte', label: 'Notre Pacte', icon: <ScrollText className="w-4 h-4" /> },
-    { href: '/journal', label: 'Journal', icon: <BookOpen className="w-4 h-4" /> },
-    ...(!profile?.couple_id ? [{ href: '/inviter-partenaire', label: 'Inviter', icon: <UserPlus className="w-4 h-4" /> }] : []),
-    ...(profile?.is_admin ? [{ href: '/admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
+    { href: '/tableau-de-bord', key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { href: '/pacte', key: 'pacte', label: 'Notre Pacte', icon: <ScrollText className="w-4 h-4" /> },
+    { href: '/journal', key: 'journal', label: 'Journal', icon: <BookOpen className="w-4 h-4" /> },
+    ...(!profile?.couple_id ? [{ href: '/inviter-partenaire', key: 'inviter', label: 'Inviter', icon: <UserPlus className="w-4 h-4" /> }] : []),
+    ...(profile?.is_admin ? [{ href: '/admin', key: 'admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
   ]
 
   return (
@@ -33,7 +34,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
-              {l.icon}{l.label}
+              {l.icon}<EditableText id={`dashboard.nav.${l.key}`}>{l.label}</EditableText>
             </Link>
           ))}
         </nav>
@@ -44,7 +45,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
           </span>
           <form action={deconnexion}>
             <button type="submit" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg transition-all" style={{ color: 'var(--muted)' }}>
-              <LogOut className="w-4 h-4" />Déconnexion
+              <LogOut className="w-4 h-4" /><EditableText id="dashboard.nav.deconnexion">Déconnexion</EditableText>
             </button>
           </form>
         </div>
@@ -60,13 +61,13 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--ink)' }}
               onClick={() => setOpen(false)}>
-              {l.icon}{l.label}
+              {l.icon}<EditableText id={`dashboard.nav.${l.key}`}>{l.label}</EditableText>
             </Link>
           ))}
           <div style={{ borderTop: '1px solid var(--line)', marginTop: 8, paddingTop: 8 }}>
             <form action={deconnexion}>
               <button type="submit" className="flex items-center gap-2 px-3 py-2 text-sm" style={{ color: 'var(--muted)' }}>
-                <LogOut className="w-4 h-4" />Se déconnecter
+                <LogOut className="w-4 h-4" /><EditableText id="dashboard.nav.sedeconnecter">Se déconnecter</EditableText>
               </button>
             </form>
           </div>
