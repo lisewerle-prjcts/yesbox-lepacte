@@ -10,7 +10,7 @@ function SubmitBtn() {
   const { pending } = useFormStatus()
   return (
     <button type="submit" disabled={pending} className="btn-brand lg w-full justify-center">
-      {pending ? 'Envoi en cours…' : <EditableText id="modal.precommande.submit">Réserver ma place — 29 €/mois</EditableText>}
+      {pending ? 'Envoi en cours…' : <EditableText id="modal.precommande.submit">Réserver ma place</EditableText>}
     </button>
   )
 }
@@ -61,7 +61,7 @@ export default function PrecommandeModal({ onClose }: Props) {
             <div className="p-4 rounded-lg mb-6 flex items-center gap-3" style={{ background: 'var(--brand-tint)', border: '1px solid var(--brand-soft)' }}>
               <Heart className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
               <p className="text-sm" style={{ color: 'var(--brand)' }}>
-                <EditableText id="modal.precommande.pitch" multiline>29 €/mois · résiliable à tout moment — paiement sécurisé au lancement. Tu ne paies rien maintenant.</EditableText>
+                <EditableText id="modal.precommande.pitch" multiline>1er module gratuit, puis 29 €/mois · résiliable à tout moment — paiement sécurisé au lancement. Tu ne paies rien maintenant.</EditableText>
               </p>
             </div>
 
@@ -73,8 +73,16 @@ export default function PrecommandeModal({ onClose }: Props) {
                 <input name="prenom" type="text" placeholder="Marie" required className="field" autoComplete="given-name" />
               </div>
               <div>
+                <label className="flabel"><EditableText id="modal.precommande.field.nom">Ton nom de famille</EditableText></label>
+                <input name="nom" type="text" placeholder="Dupont" className="field" autoComplete="family-name" />
+              </div>
+              <div>
                 <label className="flabel"><EditableText id="modal.precommande.field.email">Ton email *</EditableText></label>
                 <input name="email" type="email" placeholder="marie@exemple.fr" required className="field" autoComplete="email" />
+              </div>
+              <div>
+                <label className="flabel"><EditableText id="modal.precommande.field.partner_prenom">Le prénom de ton/ta partenaire</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
+                <input name="partner_prenom" type="text" placeholder="Tom" className="field" />
               </div>
               <div>
                 <label className="flabel"><EditableText id="modal.precommande.field.adresse">Ville / Pays</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>

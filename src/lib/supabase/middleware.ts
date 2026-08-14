@@ -38,7 +38,10 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Routes publiques accessibles sans authentification
-  const publicRoutes = ['/', '/connexion', '/inscription', '/rejoindre']
+  const publicRoutes = [
+    '/', '/connexion', '/inscription', '/rejoindre',
+    '/tarifs', '/mentions-legales', '/mot-de-passe-oublie', '/auth',
+  ]
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   )

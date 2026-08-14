@@ -161,7 +161,9 @@ create policy "journal_update" on public.journal_entries for update using (
 create table public.precommandes (
   id uuid primary key default uuid_generate_v4(),
   prenom text not null,
+  nom text,
   email text not null unique,
+  partner_prenom text,
   adresse text,
   message text,
   created_at timestamptz default now()
@@ -312,6 +314,9 @@ $$;
 alter table public.couples add column if not exists numero integer generated always as identity;
 alter table public.couples add column if not exists pairing_code text unique;
 alter table public.couples alter column pairing_code set default public.generate_pairing_code();
+
+alter table public.precommandes add column if not exists nom text;
+alter table public.precommandes add column if not exists partner_prenom text;
 
 do $$
 declare

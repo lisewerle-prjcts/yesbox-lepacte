@@ -17,7 +17,9 @@ export async function soumettrePrecommande(formData: FormData) {
   const supabase = await createClient()
 
   const prenom = (formData.get('prenom') as string)?.trim()
+  const nom = (formData.get('nom') as string)?.trim() || null
   const email = (formData.get('email') as string)?.trim()
+  const partnerPrenom = (formData.get('partner_prenom') as string)?.trim() || null
   const adresse = (formData.get('adresse') as string)?.trim() || null
   const message = (formData.get('message') as string)?.trim() || null
 
@@ -26,7 +28,7 @@ export async function soumettrePrecommande(formData: FormData) {
 
   const { error } = await supabase
     .from('precommandes')
-    .insert({ prenom, email, adresse, message })
+    .insert({ prenom, nom, email, partner_prenom: partnerPrenom, adresse, message })
 
   if (error) {
     if (error.message.includes('duplicate') || error.code === '23505') {
@@ -53,7 +55,9 @@ export async function soumettrePrecommande(formData: FormData) {
           <div style="padding:32px;color:#1a1816;">
             <table style="width:100%;border-collapse:collapse;font-size:14px;">
               <tr style="border-bottom:1px solid #e6dfd1;"><td style="padding:10px 0;color:#736c63;width:120px;">Prénom</td><td style="padding:10px 0;font-weight:600;">${prenom}</td></tr>
+              ${nom ? `<tr style="border-bottom:1px solid #e6dfd1;"><td style="padding:10px 0;color:#736c63;">Nom</td><td style="padding:10px 0;font-weight:600;">${nom}</td></tr>` : ''}
               <tr style="border-bottom:1px solid #e6dfd1;"><td style="padding:10px 0;color:#736c63;">Email</td><td style="padding:10px 0;"><a href="mailto:${email}" style="color:#c5256e;">${email}</a></td></tr>
+              ${partnerPrenom ? `<tr style="border-bottom:1px solid #e6dfd1;"><td style="padding:10px 0;color:#736c63;">Partenaire</td><td style="padding:10px 0;">${partnerPrenom}</td></tr>` : ''}
               ${adresse ? `<tr style="border-bottom:1px solid #e6dfd1;"><td style="padding:10px 0;color:#736c63;">Adresse</td><td style="padding:10px 0;">${adresse}</td></tr>` : ''}
               ${message ? `<tr><td style="padding:10px 0;color:#736c63;vertical-align:top;">Message</td><td style="padding:10px 0;font-style:italic;">${message}</td></tr>` : ''}
             </table>
