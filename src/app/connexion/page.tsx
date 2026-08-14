@@ -7,7 +7,7 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
-import { connexion } from '@/app/actions/auth'
+import { connexion, renvoyerConfirmation } from '@/app/actions/auth'
 import { Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton() {
@@ -23,11 +23,30 @@ function SubmitButton() {
 export default function ConnexionPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState<string | null>(null)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
 
   async function handleAction(formData: FormData) {
     setError(null)
+    setEmailNotConfirmed(null)
+    setResendState('idle')
     const result = await connexion(formData)
-    if (result?.error) setError(result.error)
+    if (result?.error) {
+      setError(result.error)
+      if (result.emailNotConfirmed && result.email) setEmailNotConfirmed(result.email)
+    }
+  }
+
+  async function handleResend() {
+    if (!emailNotConfirmed) return
+    setResendState('sending')
+    const result = await renvoyerConfirmation(emailNotConfirmed)
+    if (result?.error) {
+      setResendState('idle')
+      setError(result.error)
+    } else {
+      setResendState('sent')
+    }
   }
 
   return (
@@ -44,7 +63,25 @@ export default function ConnexionPage() {
         </div>
 
         <div className="card">
-          {error && <Alert type="error" message={error} className="mb-5" />}
+          {error && (
+            <div className="mb-5 space-y-2">
+              <Alert type="error" message={error} />
+              {emailNotConfirmed && (
+                resendState === 'sent' ? (
+                  <Alert type="success" message="Email de confirmation renvoyé ! Vérifie ta boîte mail (et tes spams)." />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendState === 'sending'}
+                    className="text-sm text-magenta font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {resendState === 'sending' ? 'Envoi...' : "Renvoyer l'email de confirmation"}
+                  </button>
+                )
+              )}
+            </div>
+          )}
 
           <form action={handleAction} className="space-y-5">
             <div>

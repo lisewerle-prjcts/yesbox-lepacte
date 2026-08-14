@@ -88,11 +88,41 @@ export async function connexion(formData: FormData) {
     if (error.message.includes('Invalid login credentials')) {
       return { error: 'Email ou mot de passe incorrect' }
     }
+    if (error.message.includes('Email not confirmed')) {
+      return {
+        error: "Ton email n'est pas encore confirmé. Vérifie ta boîte mail (et tes spams), ou renvoie l'email ci-dessous.",
+        emailNotConfirmed: true,
+        email,
+      }
+    }
     return { error: error.message }
   }
 
   revalidatePath('/', 'layout')
   redirect('/tableau-de-bord')
+}
+
+export async function renvoyerConfirmation(email: string) {
+  const parsed = z.string().email().safeParse(email)
+  if (!parsed.success) {
+    return { error: 'Email invalide' }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: parsed.data,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true }
 }
 
 export async function deconnexion() {
