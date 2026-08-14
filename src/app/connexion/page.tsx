@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
+import EditableText from '@/components/edit-mode/EditableText'
 import { connexion } from '@/app/actions/auth'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -14,7 +15,7 @@ function SubmitButton() {
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full flex items-center justify-center gap-2">
       {pending ? <Spinner size="sm" /> : null}
-      {pending ? 'Connexion...' : 'Se connecter'}
+      {pending ? 'Connexion...' : <EditableText id="connexion.submit">Se connecter</EditableText>}
     </button>
   )
 }
@@ -35,10 +36,10 @@ export default function ConnexionPage() {
         <div className="text-center mb-8">
           <Logo size="md" className="inline-block mb-4" />
           <h1 className="font-fraunces text-2xl font-bold text-gray-900">
-            Content·e de te revoir !
+            <EditableText id="connexion.titre">Content·e de te revoir !</EditableText>
           </h1>
           <p className="text-gray-500 mt-2">
-            Connecte-toi à ton espace couple
+            <EditableText id="connexion.souscritre">Connecte-toi à ton espace couple</EditableText>
           </p>
         </div>
 
@@ -48,7 +49,7 @@ export default function ConnexionPage() {
           <form action={handleAction} className="space-y-5">
             <div>
               <label htmlFor="email" className="label">
-                Email
+                <EditableText id="connexion.field.email">Email</EditableText>
               </label>
               <input
                 id="email"
@@ -63,7 +64,7 @@ export default function ConnexionPage() {
 
             <div>
               <label htmlFor="password" className="label">
-                Mot de passe
+                <EditableText id="connexion.field.password">Mot de passe</EditableText>
               </label>
               <div className="relative">
                 <input
@@ -90,14 +91,14 @@ export default function ConnexionPage() {
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-500">
-              Pas encore de compte ?{' '}
+              <EditableText id="connexion.pasdecompte">Pas encore de compte ?</EditableText>{' '}
               <Link href="/inscription" className="text-magenta font-semibold hover:underline">
-                S'inscrire
+                <EditableText id="connexion.sinscrire">S&apos;inscrire</EditableText>
               </Link>
             </p>
             <p className="text-sm">
               <Link href="/mot-de-passe-oublie" className="text-gray-400 hover:text-magenta text-sm">
-                Mot de passe oublié ?
+                <EditableText id="connexion.mdpoublie">Mot de passe oublié ?</EditableText>
               </Link>
             </p>
           </div>

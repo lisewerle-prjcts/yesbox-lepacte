@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
+import EditableText from '@/components/edit-mode/EditableText'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
@@ -67,28 +68,28 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'var(--sage-soft)' }}>
               <CheckCircle className="w-8 h-8" style={{ color: 'var(--sage)' }} />
             </div>
-            <div className="eyebrow justify-center mb-3">Vous avez tous les deux répondu !</div>
+            <div className="eyebrow justify-center mb-3"><EditableText id="module.attente.eyebrow">Vous avez tous les deux répondu !</EditableText></div>
             <h2 className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
-              Moment de vérité ✦
+              <EditableText id="module.attente.titre">Moment de vérité ✦</EditableText>
             </h2>
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>
-              C'est le moment le plus précieux : découvrir ce que l'autre a écrit, côte à côte.
+              <EditableText id="module.attente.texte" multiline>C&apos;est le moment le plus précieux : découvrir ce que l&apos;autre a écrit, côte à côte.</EditableText>
             </p>
             <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
-              Ouvrir la session de révélation <ArrowRight className="w-4 h-4" />
+              <EditableText id="module.attente.cta">Ouvrir la session de révélation</EditableText> <ArrowRight className="w-4 h-4" />
             </Link>
           </>
         ) : (
           <>
             <div className="text-4xl mb-5">⏳</div>
-            <div className="eyebrow justify-center mb-3">Module terminé</div>
+            <div className="eyebrow justify-center mb-3"><EditableText id="module.termine.eyebrow">Module terminé</EditableText></div>
             <h2 className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
-              Tes réponses sont sauvegardées !
+              <EditableText id="module.termine.titre">Tes réponses sont sauvegardées !</EditableText>
             </h2>
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
-              En attente de {partnerName || 'ton/ta partenaire'}… La révélation s'ouvrira quand vous aurez tous les deux terminé.
+              <EditableText id="module.termine.attente.prefix">En attente de</EditableText> {partnerName || 'ton/ta partenaire'}<EditableText id="module.termine.attente.suffix" multiline>… La révélation s&apos;ouvrira quand vous aurez tous les deux terminé.</EditableText>
             </p>
-            <Link href="/tableau-de-bord" className="btn-ghost">Retour au dashboard</Link>
+            <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
           </>
         )}
       </div>
@@ -100,18 +101,18 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
       {/* Top bar */}
       <div style={{ marginBottom: 28 }}>
         <Link href="/tableau-de-bord" className="flex items-center gap-1.5 text-sm font-medium mb-4" style={{ color: 'var(--muted)' }}>
-          <ArrowLeft className="w-4 h-4" />Quitter
+          <ArrowLeft className="w-4 h-4" /><EditableText id="module.quitter">Quitter</EditableText>
         </Link>
         <div className="flex items-center gap-3 mb-3">
           <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
           <div>
             <p className="font-mono text-xs font-bold" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>MODULE 0{moduleInfo.n}</p>
-            <p className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>{moduleInfo.titre}</p>
+            <p className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
           </div>
         </div>
         {/* Progress */}
         <div className="bar" style={{ height: 4 }}><i style={{ width: `${Math.round((idx / total) * 100)}%`, background: 'var(--brand)' }} /></div>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Question {idx + 1} sur {total}</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}><EditableText id="module.question.compteur">Question</EditableText> {idx + 1} <EditableText id="module.question.sur">sur</EditableText> {total}</p>
       </div>
 
       {/* Question card */}
@@ -131,13 +132,17 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
         <button onClick={() => setIdx(Math.max(0, idx - 1))} disabled={isFirst}
           className="flex items-center gap-2 text-sm font-medium transition-colors"
           style={{ color: isFirst ? 'var(--line)' : 'var(--muted)' }}>
-          <ArrowLeft className="w-4 h-4" />Précédent
+          <ArrowLeft className="w-4 h-4" /><EditableText id="module.precedent">Précédent</EditableText>
         </button>
 
         <button onClick={saveAndNext} disabled={saving || isPending || (!reponses[q.slug] && reponses[q.slug] !== '0')}
           className="btn-brand"
           style={{ opacity: (!reponses[q.slug] && reponses[q.slug] !== '0') ? .45 : 1 }}>
-          {saving || isPending ? 'Sauvegarde…' : isLast && allAnswered ? 'Terminer le module' : 'Sauvegarder & continuer'}
+          {saving || isPending
+            ? <EditableText id="module.sauvegarde">Sauvegarde…</EditableText>
+            : isLast && allAnswered
+            ? <EditableText id="module.terminer">Terminer le module</EditableText>
+            : <EditableText id="module.suivant">Sauvegarder & continuer</EditableText>}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -145,10 +150,10 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
       {/* Partner status */}
       <p className="font-mono text-center mt-5" style={{ fontSize: 11, color: 'var(--muted)' }}>
         {partnerDone
-          ? `✓ ${partnerName || 'Ton/ta partenaire'} a déjà terminé ce module`
+          ? <>✓ {partnerName || 'Ton/ta partenaire'} <EditableText id="module.partenaire.termine">a déjà terminé ce module</EditableText></>
           : reponsesPartenaire.length > 0
-          ? `⏳ ${partnerName || 'Ton/ta partenaire'} répond de son côté…`
-          : `${partnerName || 'Ton/ta partenaire'} n'a pas encore commencé`}
+          ? <>⏳ {partnerName || 'Ton/ta partenaire'} <EditableText id="module.partenaire.encours">répond de son côté…</EditableText></>
+          : <>{partnerName || 'Ton/ta partenaire'} <EditableText id="module.partenaire.pascommence">n&apos;a pas encore commencé</EditableText></>}
       </p>
     </div>
   )

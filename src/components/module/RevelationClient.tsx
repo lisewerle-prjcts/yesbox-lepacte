@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Star } from 'lucide-react'
 import { scellerModule } from '@/app/actions/modules'
 import { sauvegarderJournal } from '@/app/actions/journal'
+import EditableText from '@/components/edit-mode/EditableText'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
 interface Props {
@@ -89,22 +90,22 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
       {/* Top */}
       <div style={{ borderBottom: '1px solid var(--dark-line)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 860, margin: '0 auto' }}>
         <Link href="/tableau-de-bord" className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--dark-muted)' }}>
-          <ArrowLeft className="w-4 h-4" />Tableau de bord
+          <ArrowLeft className="w-4 h-4" /><EditableText id="revelation.retour">Tableau de bord</EditableText>
         </Link>
         <div className="font-mono text-xs font-bold" style={{ color: 'var(--dark-muted)', letterSpacing: '.1em' }}>
-          RÉVÉLATION · {moduleInfo.titre.toUpperCase()}
+          <EditableText id="revelation.label">RÉVÉLATION</EditableText> · {moduleInfo.titre.toUpperCase()}
         </div>
       </div>
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px 80px' }}>
         {/* Intro */}
         <div className="text-center mb-12">
-          <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}>Vos réponses, enfin réunies</div>
+          <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}><EditableText id="revelation.eyebrow">Vos réponses, enfin réunies</EditableText></div>
           <h1 className="font-serif" style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, color: 'var(--dark-paper)', lineHeight: 1.1, marginBottom: 14 }}>
-            Moment de vérité ✦
+            <EditableText id="revelation.titre">Moment de vérité ✦</EditableText>
           </h1>
           <p style={{ color: 'var(--dark-muted)', fontSize: 15, maxWidth: 480, margin: '0 auto' }}>
-            Prenez le temps de lire ce que l'autre a écrit. Sans juger. C'est ça, se choisir.
+            <EditableText id="revelation.souscritre" multiline>Prenez le temps de lire ce que l&apos;autre a écrit. Sans juger. C&apos;est ça, se choisir.</EditableText>
           </p>
         </div>
 
@@ -142,7 +143,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 </div>
                 {match && (
                   <p className="text-center mt-2" style={{ fontSize: 12, color: 'var(--brand-soft)' }}>
-                    ★ Vous êtes sur la même longueur d'onde
+                    ★ <EditableText id="revelation.match">Vous êtes sur la même longueur d&apos;onde</EditableText>
                   </p>
                 )}
               </div>
@@ -152,12 +153,16 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
         {/* Connivence */}
         <div className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
-          <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}>Score de connivence</div>
+          <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}><EditableText id="revelation.connivence.eyebrow">Score de connivence</EditableText></div>
           <h2 className="font-serif mb-2" style={{ fontSize: 28, fontWeight: 700, color: 'var(--dark-paper)' }}>
-            {revealed ? 'Votre connivence sur ce module' : 'À vous de jouer — notez votre connivence'}
+            {revealed
+              ? <EditableText id="revelation.connivence.titre.apres">Votre connivence sur ce module</EditableText>
+              : <EditableText id="revelation.connivence.titre.avant">À vous de jouer — notez votre connivence</EditableText>}
           </h2>
           <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 28 }}>
-            {revealed ? 'Vous aviez évalué à quel point vous vous êtes reconnus.' : 'Touchez une étoile : à quel point vous êtes-vous reconnus dans les réponses de l\'autre ?'}
+            {revealed
+              ? <EditableText id="revelation.connivence.souscritre.apres" multiline>Vous aviez évalué à quel point vous vous êtes reconnus.</EditableText>
+              : <EditableText id="revelation.connivence.souscritre.avant" multiline>Touchez une étoile : à quel point vous êtes-vous reconnus dans les réponses de l&apos;autre ?</EditableText>}
           </p>
 
           {/* Étoiles */}
@@ -183,16 +188,16 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
           {displayConnivence > 0 && CONNIVENCE_VERDICTS[displayConnivence] && (
             <div className="mb-8">
               <p className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--dark-paper)', marginBottom: 6 }}>
-                {CONNIVENCE_VERDICTS[displayConnivence][0]}
+                <EditableText id={`revelation.verdict.${displayConnivence}.titre`}>{CONNIVENCE_VERDICTS[displayConnivence][0]}</EditableText>
               </p>
-              <p style={{ fontSize: 14, color: 'var(--dark-muted)' }}>{CONNIVENCE_VERDICTS[displayConnivence][1]}</p>
+              <p style={{ fontSize: 14, color: 'var(--dark-muted)' }}><EditableText id={`revelation.verdict.${displayConnivence}.texte`} multiline>{CONNIVENCE_VERDICTS[displayConnivence][1]}</EditableText></p>
             </div>
           )}
 
           {/* Journal */}
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 28, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              Votre conclusion — en quelques mots (optionnel)
+              <EditableText id="revelation.journal.label">Votre conclusion — en quelques mots (optionnel)</EditableText>
             </label>
             <textarea
               value={journalText}
@@ -207,18 +212,18 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               {journalText && (
                 <button onClick={saveJournal} className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
-                  {journalSaved ? '✓ Sauvegardé' : 'Sauvegarder la conclusion'}
+                  {journalSaved ? '✓ Sauvegardé' : <EditableText id="revelation.journal.sauvegarder">Sauvegarder la conclusion</EditableText>}
                 </button>
               )}
               <Link href="/tableau-de-bord" className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
-                Retour au tableau de bord
+                <EditableText id="revelation.retour.dashboard">Retour au tableau de bord</EditableText>
               </Link>
             </div>
           ) : (
             <button onClick={sceller} disabled={!connivence || isPending}
               className="btn-brand lg"
               style={{ opacity: !connivence ? .4 : 1 }}>
-              {isPending ? 'Scellement…' : 'Sceller ce module'}
+              {isPending ? 'Scellement…' : <EditableText id="revelation.sceller">Sceller ce module</EditableText>}
               <ArrowRight className="w-4 h-4" />
             </button>
           )}

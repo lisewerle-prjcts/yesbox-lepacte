@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MODULES } from '@/lib/modules-data'
 import Link from 'next/link'
+import EditableText from '@/components/edit-mode/EditableText'
 import { BookOpen } from 'lucide-react'
 import type { Module } from '@/types'
 
@@ -29,17 +30,17 @@ export default async function JournalPage() {
           <BookOpen className="w-5 h-5" style={{ color: 'var(--brand)' }} />
         </div>
         <div>
-          <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink)' }}>Journal de couple</h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)' }}>Vos conclusions après chaque révélation</p>
+          <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink)' }}><EditableText id="journal.titre">Journal de couple</EditableText></h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre">Vos conclusions après chaque révélation</EditableText></p>
         </div>
       </div>
 
       {revealedModules.length === 0 ? (
         <div className="card p-10 text-center">
           <div className="text-4xl mb-4">📓</div>
-          <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}>Pas encore d'entrées</h2>
-          <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 20 }}>Le journal se remplit après chaque session de révélation.</p>
-          <Link href="/tableau-de-bord" className="btn-brand">Aller aux modules</Link>
+          <h2 className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}><EditableText id="journal.vide.titre">Pas encore d&apos;entrées</EditableText></h2>
+          <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 20 }}><EditableText id="journal.vide.texte" multiline>Le journal se remplit après chaque session de révélation.</EditableText></p>
+          <Link href="/tableau-de-bord" className="btn-brand"><EditableText id="journal.vide.cta">Aller aux modules</EditableText></Link>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -53,8 +54,8 @@ export default async function JournalPage() {
                   <div className="flex items-center gap-3">
                     <span style={{ fontSize: 22 }}>{moduleInfo.emoji}</span>
                     <div>
-                      <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}>{moduleInfo.titre}</p>
-                      <p style={{ fontSize: 12, color: 'var(--muted)' }}>{moduleInfo.sousTitre}</p>
+                      <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
+                      <p style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id={`module.${moduleInfo.slug}.sousTitre`}>{moduleInfo.sousTitre}</EditableText></p>
                     </div>
                   </div>
                   {modData.connivence_score && (
@@ -69,9 +70,9 @@ export default async function JournalPage() {
                   </div>
                 ) : (
                   <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px' }}>
-                    <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>Aucune conclusion rédigée pour ce module.</p>
+                    <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}><EditableText id="journal.aucuneconclusion">Aucune conclusion rédigée pour ce module.</EditableText></p>
                     <Link href={`/module/${moduleInfo.slug}/revelation`} style={{ fontSize: 13, color: 'var(--brand)', fontWeight: 600, marginTop: 6, display: 'inline-block' }}>
-                      Ajouter une conclusion →
+                      <EditableText id="journal.ajouterconclusion">Ajouter une conclusion →</EditableText>
                     </Link>
                   </div>
                 )}
