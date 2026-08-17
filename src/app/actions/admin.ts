@@ -8,6 +8,7 @@ import nodemailer from 'nodemailer'
 import { normalizeOverrides, emptyOverrides, type ModuleContentOverrides, type QuestionOverride } from '@/lib/modules-effective'
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
+import { sendWelcomeEmail } from '@/lib/welcome-email'
 import type { QuestionType } from '@/types'
 
 function generateTempPassword() {
@@ -231,11 +232,13 @@ export async function adminUnassignMember(userId: string) {
 export async function adminCreateEmptyCouple() {
   await assertAdmin()
   const admin = createAdminClient()
-  const { data, error } = await admin.from('couples').insert({}).select('id, numero').single()
+  const { data, error } = await admin.from('couples').insert({}).select('id').single()
   if (error) return { error: error.message }
+  await admin.rpc('renumeroter_couples')
+  const { data: refreshed } = await admin.from('couples').select('numero').eq('id', data.id).single()
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
-  return { success: true, coupleId: data.id, numero: data.numero }
+  return { success: true, coupleId: data.id, numero: refreshed?.numero }
 }
 
 export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null }) {
@@ -253,6 +256,7 @@ export async function adminDeleteCouple(coupleId: string) {
   await admin.from('profiles').update({ couple_id: null, role: null }).eq('couple_id', coupleId)
   const { error } = await admin.from('couples').delete().eq('id', coupleId)
   if (error) return { error: error.message }
+  await admin.rpc('renumeroter_couples')
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
   return { success: true }
@@ -288,4 +292,34 @@ export async function adminResetAndSendPassword(userId: string) {
   })
 
   return { success: true, password: newPassword, emailed: true }
+}
+
+export async function adminRenvoyerCodeCouple(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data: profile } = await admin.from('profiles').select('email, prenom, couple_id').eq('id', userId).single()
+  if (!profile?.email) return { error: 'Utilisateur introuvable' }
+  if (!profile.couple_id) return { error: 'Cet utilisateur n\'a pas de couple' }
+
+  const { data: couple } = await admin.from('couples').select('pairing_code').eq('id', profile.couple_id).single()
+  if (!couple?.pairing_code) return { error: 'Code couple introuvable' }
+
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
+
+  await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
+  return { success: true }
+}
+
+export async function adminDeleteUser(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { error } = await admin.auth.admin.deleteUser(userId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/utilisateurs')
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/securite')
+  return { success: true }
 }

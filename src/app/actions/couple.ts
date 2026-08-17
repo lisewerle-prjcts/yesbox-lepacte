@@ -33,6 +33,7 @@ export async function creerCouple(formData: FormData) {
   if (profileError) return { error: profileError.message }
 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await admin.rpc('renumeroter_couples')
 
   revalidatePath('/tableau-de-bord')
   return { success: true, couple, inviteToken: couple.invite_token }
@@ -57,6 +58,7 @@ export async function creerCoupleSolo(userId: string) {
   if (profileError) return { error: profileError.message }
 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await admin.rpc('renumeroter_couples')
 
   return { success: true, couple }
 }
