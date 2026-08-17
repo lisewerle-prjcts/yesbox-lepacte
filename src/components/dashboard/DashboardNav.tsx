@@ -6,13 +6,14 @@ import { usePathname } from 'next/navigation'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import EditableText from '@/components/edit-mode/EditableText'
 import { deconnexion } from '@/app/actions/auth'
-import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, UserPlus, ShieldCheck, UserCircle } from 'lucide-react'
 
 interface DashboardNavProps {
   profile: { prenom: string | null; email: string; couple_id: string | null; is_admin?: boolean | null } | null
+  paired?: boolean
 }
 
-export default function DashboardNav({ profile }: DashboardNavProps) {
+export default function DashboardNav({ profile, paired }: DashboardNavProps) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
@@ -20,7 +21,8 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
     { href: '/tableau-de-bord', key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: '/pacte', key: 'pacte', label: 'Notre Pacte', icon: <ScrollText className="w-4 h-4" /> },
     { href: '/journal', key: 'journal', label: 'Journal', icon: <BookOpen className="w-4 h-4" /> },
-    ...(!profile?.couple_id ? [{ href: '/inviter-partenaire', key: 'inviter', label: 'Inviter', icon: <UserPlus className="w-4 h-4" /> }] : []),
+    { href: '/mon-compte', key: 'moncompte', label: 'Mon compte', icon: <UserCircle className="w-4 h-4" /> },
+    ...(!paired ? [{ href: '/inviter-partenaire', key: 'inviter', label: 'Inviter', icon: <UserPlus className="w-4 h-4" /> }] : []),
     ...(profile?.is_admin ? [{ href: '/admin', key: 'admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
   ]
 

@@ -62,7 +62,7 @@ create table public.couples (
   invite_token uuid unique default uuid_generate_v4(),
   invite_token_expires_at timestamptz default (now() + interval '7 days'),
   invite_used boolean default false,
-  pairing_code text unique default public.generate_pairing_code(), -- code à 6 caractères pour pairer le/la partenaire
+  pairing_code text unique default public.generate_pairing_code(), -- code à 5 caractères pour pairer le/la partenaire
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -380,3 +380,35 @@ create table if not exists public.mfa_recovery_codes (
 );
 alter table public.mfa_recovery_codes enable row level security;
 create index if not exists mfa_recovery_codes_user_id_idx on public.mfa_recovery_codes(user_id);
+
+-- ============================================================
+-- COMPTE UTILISATEUR & PACTE PARTAGÉ (v5)
+-- Nom de famille, document de pacte partagé, code de pairage à 5
+-- caractères (créé dès l'inscription). À exécuter une fois.
+-- ============================================================
+
+alter table public.profiles add column if not exists nom text;
+
+alter table public.couples add column if not exists pacte_texte text;
+alter table public.couples add column if not exists pacte_modifie_par uuid references public.profiles(id);
+alter table public.couples add column if not exists pacte_modifie_le timestamptz;
+
+-- Le code de pairage passe de 6 à 5 caractères (le couple est désormais
+-- créé dès l'inscription, avant même que le/la partenaire n'ait de nom
+-- de couple ou de date à renseigner).
+create or replace function public.generate_pairing_code()
+returns text language plpgsql as $$
+declare
+  chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; -- sans I/O pour éviter la confusion avec 1/0
+  code text;
+begin
+  loop
+    code := '';
+    for i in 1..5 loop
+      code := code || substr(chars, floor(random() * length(chars))::int + 1, 1);
+    end loop;
+    exit when not exists (select 1 from public.couples where pairing_code = code);
+  end loop;
+  return code;
+end;
+$$;
