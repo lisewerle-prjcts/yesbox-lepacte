@@ -12,13 +12,17 @@ const NOCES: Record<number, string> = {
 
 const ANNEES_CONNUES = Object.keys(NOCES).map(Number).sort((a, b) => a - b)
 
-export interface ProchainAnniversaire {
+function findMatiere(years: number): string {
+  return NOCES[years] || NOCES[[...ANNEES_CONNUES].reverse().find(y => y <= years) ?? 1]
+}
+
+export interface AnniversaireCouple {
   years: number
   matiere: string
   date: Date
 }
 
-export function getProchainAnniversaire(dateAnniversaire: string): ProchainAnniversaire | null {
+export function getProchainAnniversaire(dateAnniversaire: string): AnniversaireCouple | null {
   const start = new Date(dateAnniversaire)
   if (isNaN(start.getTime())) return null
 
@@ -32,7 +36,23 @@ export function getProchainAnniversaire(dateAnniversaire: string): ProchainAnniv
   const years = next.getFullYear() - start.getFullYear()
   if (years <= 0) return null
 
-  const matiere = NOCES[years] || NOCES[[...ANNEES_CONNUES].reverse().find(y => y <= years) ?? 1]
+  return { years, matiere: findMatiere(years), date: next }
+}
 
-  return { years, matiere, date: next }
+// Le dernier anniversaire déjà passé (ou aujourd'hui) — « l'anniversaire en cours ».
+export function getAnniversaireActuel(dateAnniversaire: string): AnniversaireCouple | null {
+  const start = new Date(dateAnniversaire)
+  if (isNaN(start.getTime())) return null
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  let current = new Date(now.getFullYear(), start.getMonth(), start.getDate())
+  if (current > today) {
+    current = new Date(now.getFullYear() - 1, start.getMonth(), start.getDate())
+  }
+
+  const years = current.getFullYear() - start.getFullYear()
+  if (years <= 0) return null
+
+  return { years, matiere: findMatiere(years), date: current }
 }

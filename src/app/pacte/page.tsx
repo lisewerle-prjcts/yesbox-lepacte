@@ -2,8 +2,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { getAnniversaireActuel, getProchainAnniversaire } from '@/lib/anniversaires'
 import EditableText from '@/components/edit-mode/EditableText'
-import { CheckCircle, Lock, Heart, ScrollText } from 'lucide-react'
+import PacteDocument from './PacteDocument'
+import { CheckCircle, Lock, Heart, ScrollText, Gift } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
@@ -43,6 +45,11 @@ export default async function PactePage() {
   const modulesTermines = modules?.filter((m: Module) => m.statut === 'complete') || []
   const tousTermines = modulesTermines.length === 7
 
+  const couple = profile.couples as unknown as { date_anniversaire: string | null; pacte_texte: string | null; pacte_modifie_le: string | null; pacte_modifie_par: string | null } | null
+  const anniversaireActuel = couple?.date_anniversaire ? getAnniversaireActuel(couple.date_anniversaire) : null
+  const prochainAnniversaire = couple?.date_anniversaire ? getProchainAnniversaire(couple.date_anniversaire) : null
+  const modifiePartPrenom = couple?.pacte_modifie_par === user.id ? (profile.prenom || 'Toi') : (couple?.pacte_modifie_par ? (partner?.prenom || 'Ton/ta partenaire') : null)
+
   function getReponsesModule(moduleId: string, userId: string): Reponse[] {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
   }
@@ -62,6 +69,51 @@ export default async function PactePage() {
             : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur 7`}
         </p>
       </div>
+
+      {partner && (anniversaireActuel || prochainAnniversaire) && (
+        <div className="card mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Gift className="w-5 h-5 text-magenta" />
+            <h2 className="font-fraunces text-lg font-bold text-gray-900">
+              <EditableText id="pacte.anniversaire.titre">Votre anniversaire de couple</EditableText>
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {anniversaireActuel && (
+              <div className="bg-magenta-50 rounded-xl p-4">
+                <p className="text-xs text-magenta font-semibold uppercase tracking-wide mb-1">
+                  <EditableText id="pacte.anniversaire.encours">En cours</EditableText>
+                </p>
+                <p className="text-sm text-gray-700">
+                  <strong>{anniversaireActuel.years}</strong> an{anniversaireActuel.years > 1 ? 's' : ''} ensemble depuis le{' '}
+                  {anniversaireActuel.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {' '}— les <span className="font-semibold">noces de {anniversaireActuel.matiere}</span>.
+                </p>
+              </div>
+            )}
+            {prochainAnniversaire && (
+              <div className="bg-cream-100 rounded-xl p-4">
+                <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">
+                  <EditableText id="pacte.anniversaire.avenir">À venir</EditableText>
+                </p>
+                <p className="text-sm text-gray-700">
+                  Le <strong>{prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+                  {' '}— vos <strong>{prochainAnniversaire.years}</strong> an{prochainAnniversaire.years > 1 ? 's' : ''}, les{' '}
+                  <span className="font-semibold">noces de {prochainAnniversaire.matiere}</span>.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {partner && (
+        <PacteDocument
+          initialTexte={couple?.pacte_texte ?? ''}
+          modifiePar={modifiePartPrenom}
+          modifieLe={couple?.pacte_modifie_le ?? null}
+        />
+      )}
 
       {tousTermines ? (
         <div className="card bg-gradient-to-r from-magenta to-magenta-600 text-white mb-8">

@@ -3,17 +3,22 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { rejoindreCoupleParCode } from '@/app/actions/couple'
+import { rejoindreCoupleParCode, creerCoupleSolo } from '@/app/actions/couple'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
 import { notifySecurityEvent } from '@/lib/admin-mail'
+import { sendWelcomeEmail } from '@/lib/welcome-email'
 import { z } from 'zod'
 
 const inscriptionSchema = z.object({
   prenom: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide'),
   password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  passwordConfirm: z.string(),
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: 'Les deux mots de passe ne correspondent pas',
+  path: ['passwordConfirm'],
 })
 
 const connexionSchema = z.object({
@@ -28,6 +33,7 @@ export async function inscription(formData: FormData) {
     prenom: formData.get('prenom'),
     email: formData.get('email'),
     password: formData.get('password'),
+    passwordConfirm: formData.get('password_confirm'),
   })
 
   if (!parsed.success) {
@@ -65,6 +71,11 @@ export async function inscription(formData: FormData) {
       revalidatePath('/', 'layout')
       if (result.success) redirect('/tableau-de-bord')
       redirect(`/inviter-partenaire?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
+    }
+
+    const coupleResult = await creerCoupleSolo(data.user.id)
+    if (coupleResult.success && coupleResult.couple) {
+      await sendWelcomeEmail(email, prenom, coupleResult.couple.pairing_code)
     }
   }
 

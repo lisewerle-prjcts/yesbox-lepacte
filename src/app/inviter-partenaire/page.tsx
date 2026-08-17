@@ -277,8 +277,8 @@ function InviterPartenaireContent() {
                 <input
                   name="code"
                   type="text"
-                  placeholder="Ex : A3F9K2"
-                  maxLength={6}
+                  placeholder="Ex : A3F9K"
+                  maxLength={5}
                   autoCapitalize="characters"
                   required
                   className="input-field uppercase flex-1"
