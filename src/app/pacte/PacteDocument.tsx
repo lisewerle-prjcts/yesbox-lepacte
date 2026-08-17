@@ -24,12 +24,12 @@ export default function PacteDocument({
   }
 
   return (
-    <div className="card mb-8">
+    <div className="card p-5 mb-6">
       <div className="flex items-center gap-2 mb-2">
-        <PenLine className="w-5 h-5 text-magenta" />
-        <h2 className="font-fraunces text-lg font-bold text-gray-900">Complétez votre pacte</h2>
+        <PenLine className="w-4 h-4" style={{ color: 'var(--brand)' }} />
+        <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>Complétez votre pacte</h2>
       </div>
-      <p className="text-gray-500 text-sm mb-4">
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Un espace libre pour écrire ensemble vos engagements, vos règles de couple, ou tout ce que vous voulez vous promettre. Vous pouvez tous les deux le modifier.
       </p>
       <textarea
@@ -40,12 +40,12 @@ export default function PacteDocument({
         onChange={e => setTexte(e.target.value)}
       />
       <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-        <p className="text-xs text-gray-400">
+        <p style={{ fontSize: 12, color: 'var(--muted-2)' }}>
           {modifiePar && modifieLe
             ? `Dernière modification par ${modifiePar} le ${new Date(modifieLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
             : 'Pas encore modifié'}
         </p>
-        <button onClick={save} disabled={status === 'saving'} className="btn-primary text-sm py-2 px-4 flex items-center gap-2">
+        <button onClick={save} disabled={status === 'saving'} className="btn-brand text-sm py-2 px-4 flex items-center gap-2">
           {status === 'saving' ? 'Sauvegarde…' : status === 'saved' ? <><Check className="w-4 h-4" /> Sauvegardé</> : status === 'error' ? 'Erreur — réessaie' : 'Sauvegarder'}
         </button>
       </div>

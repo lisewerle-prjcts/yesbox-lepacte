@@ -17,11 +17,9 @@ export default async function PacteLayout({ children }: { children: React.ReactN
   const paired = await isCouplePaired(supabase, profile?.couple_id)
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div style={{ minHeight: '100vh' }}>
       <DashboardNav profile={profile} paired={paired} />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        {children}
-      </main>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 24px' }}>{children}</main>
     </div>
   )
 }
