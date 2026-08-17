@@ -467,3 +467,14 @@ select public.renumeroter_couples();
 -- ============================================================
 alter table public.profiles
   add constraint profiles_couple_id_fkey foreign key (couple_id) references public.couples(id) on delete set null;
+
+-- ============================================================
+-- CORRECTIF (v8)
+-- Le v6 a retiré l'auto-génération de couples.numero (drop identity)
+-- mais la colonne est restée NOT NULL sans valeur par défaut : toute
+-- création de couple échouait donc à l'insertion (avant même que
+-- renumeroter_couples() puisse s'exécuter). C'était la vraie cause du
+-- comptage incohérent et de "Ajouter un couple" qui ne faisait rien.
+-- À exécuter une fois.
+-- ============================================================
+alter table public.couples alter column numero drop not null;
