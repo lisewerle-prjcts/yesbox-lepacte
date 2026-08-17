@@ -39,19 +39,25 @@ export default function CouplesClient({
 }) {
   const router = useRouter()
   const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   async function addCouple() {
     setAdding(true)
-    await adminCreateEmptyCouple()
+    setAddError(null)
+    const res = await adminCreateEmptyCouple()
     setAdding(false)
+    if (res.error) { setAddError(res.error); return }
     router.refresh()
   }
 
   return (
     <div className="space-y-4">
-      <button onClick={addCouple} disabled={adding} className="btn-brand text-sm py-2 px-4 flex items-center gap-2" style={{ opacity: adding ? 0.6 : 1 }}>
-        <Plus className="w-4 h-4" /> {adding ? 'Création…' : 'Ajouter un couple'}
-      </button>
+      <div>
+        <button onClick={addCouple} disabled={adding} className="btn-brand text-sm py-2 px-4 flex items-center gap-2" style={{ opacity: adding ? 0.6 : 1 }}>
+          <Plus className="w-4 h-4" /> {adding ? 'Création…' : 'Ajouter un couple'}
+        </button>
+        {addError && <p style={{ fontSize: 12, color: '#dc2626', marginTop: 6 }}>{addError}</p>}
+      </div>
 
       {couples.length === 0 ? (
         <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple pour l&apos;instant.</div>

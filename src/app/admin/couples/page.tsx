@@ -7,7 +7,7 @@ const SLUGS = ['moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const [{ data: couples }, { data: profiles }, effectiveModules] = await Promise.all([
+  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules] = await Promise.all([
     supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at').order('numero', { ascending: true }),
     supabase.from('profiles').select('id, prenom, email, couple_id, role').order('email'),
     getEffectiveModules(),
@@ -64,6 +64,11 @@ export default async function AdminCouples() {
         <h1 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
         <span className="tag-muted">{couplesData.length} couple{couplesData.length > 1 ? 's' : ''}</span>
       </div>
+      {couplesError && (
+        <div className="card p-4 mb-4" style={{ borderColor: '#dc2626', fontSize: 13, color: '#dc2626' }}>
+          Erreur lors du chargement des couples : {couplesError.message}
+        </div>
+      )}
       <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} />
     </div>
   )
