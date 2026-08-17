@@ -2,10 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
-import { getAnniversaireActuel, getProchainAnniversaire } from '@/lib/anniversaires'
 import EditableText from '@/components/edit-mode/EditableText'
-import PacteDocument from './PacteDocument'
-import { CheckCircle, Lock, Heart, ScrollText, Gift } from 'lucide-react'
+import { CheckCircle, Lock, Heart, ScrollText, ChevronRight } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
@@ -22,13 +20,12 @@ export default async function PactePage() {
     .single()
 
   if (!profile?.couple_id) {
-    redirect('/inviter-partenaire')
+    redirect('/tableau-de-bord')
   }
 
-  const [{ data: modules }, { data: partner }, { data: couple }] = await Promise.all([
+  const [{ data: modules }, { data: partner }] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
     supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
-    supabase.from('couples').select('date_anniversaire, pacte_texte, pacte_modifie_le, pacte_modifie_par').eq('id', profile.couple_id).single(),
   ])
 
   const { data: allReponses } = await supabase
@@ -37,14 +34,24 @@ export default async function PactePage() {
     .in('module_id', modules?.map((m: Module) => m.id) || [])
 
   const modulesTermines = modules?.filter((m: Module) => m.statut === 'complete') || []
-  const tousTermines = modulesTermines.length === 7
-
-  const anniversaireActuel = couple?.date_anniversaire ? getAnniversaireActuel(couple.date_anniversaire) : null
-  const prochainAnniversaire = couple?.date_anniversaire ? getProchainAnniversaire(couple.date_anniversaire) : null
-  const modifiePartPrenom = couple?.pacte_modifie_par === user.id ? (profile.prenom || 'Toi') : (couple?.pacte_modifie_par ? (partner?.prenom || 'Ton/ta partenaire') : null)
+  const tousTermines = modulesTermines.length === MODULES.length
 
   function getReponsesModule(moduleId: string, userId: string): Reponse[] {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
+  }
+
+  function getPersonalizedTitle(slug: string, defaultTitre: string): string {
+    if (slug === 'moi') return profile?.role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
+    if (slug === 'toi') return profile?.role === 'partenaire' ? 'Moi et toi' : 'Toi et moi'
+    return defaultTitre
+  }
+
+  function getModStatus(slug: string): 'done' | 'active' | 'locked' {
+    const mod = modules?.find((m: Module) => m.slug === slug)
+    if (!mod) return 'locked'
+    if (mod.revealed || mod.statut === 'complete') return 'done'
+    if (mod.statut === 'en_cours') return 'active'
+    return 'locked'
   }
 
   return (
@@ -53,60 +60,62 @@ export default async function PactePage() {
         <div className="flex items-center gap-3" style={{ marginBottom: 6 }}>
           <ScrollText className="w-6 h-6" style={{ color: 'var(--brand)' }} />
           <h1 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--ink)' }}>
-            <EditableText id="pacte.titre">Notre Pacte</EditableText>
+            <EditableText id="pacte.titre">Progression</EditableText>
           </h1>
         </div>
         <p style={{ color: 'var(--muted)', fontSize: 14 }}>
           {tousTermines
             ? <EditableText id="pacte.souscritre.complet" multiline>Votre pacte est complet — découvrez vos réponses et alignements.</EditableText>
-            : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur 7`}
+            : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur ${MODULES.length}`}
         </p>
       </div>
 
-      {partner && (anniversaireActuel || prochainAnniversaire) && (
-        <div className="card p-5 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Gift className="w-4 h-4" style={{ color: 'var(--brand)' }} />
-            <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
-              <EditableText id="pacte.anniversaire.titre">Votre anniversaire de couple</EditableText>
-            </h2>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {anniversaireActuel && (
-              <div className="surface p-4">
-                <p className="font-mono" style={{ fontSize: 11, color: 'var(--brand)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-                  <EditableText id="pacte.anniversaire.encours">En cours</EditableText>
-                </p>
-                <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
-                  <strong>{anniversaireActuel.years}</strong> an{anniversaireActuel.years > 1 ? 's' : ''} ensemble depuis le{' '}
-                  {anniversaireActuel.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  {' '}— les <strong>noces de {anniversaireActuel.matiere}</strong>.
-                </p>
-              </div>
-            )}
-            {prochainAnniversaire && (
-              <div className="surface p-4">
-                <p className="font-mono" style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-                  <EditableText id="pacte.anniversaire.avenir">À venir</EditableText>
-                </p>
-                <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
-                  Le <strong>{prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-                  {' '}— vos <strong>{prochainAnniversaire.years}</strong> an{prochainAnniversaire.years > 1 ? 's' : ''}, les{' '}
-                  <strong>noces de {prochainAnniversaire.matiere}</strong>.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Grille des modules */}
+      <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>
+        <EditableText id="pacte.grille.titre">Suivi de progression des modules</EditableText>
+      </h2>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {MODULES.map((m, i) => {
+          const st = getModStatus(m.slug)
+          const modData = modules?.find((mod: Module) => mod.slug === m.slug)
+          const isLocked = st === 'locked'
+          const isDone = st === 'done'
+          const isActive = st === 'active'
 
-      {partner && (
-        <PacteDocument
-          initialTexte={couple?.pacte_texte ?? ''}
-          modifiePar={modifiePartPrenom}
-          modifieLe={couple?.pacte_modifie_le ?? null}
-        />
-      )}
+          const card = (
+            <div className="card p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-150"
+              style={{ opacity: isLocked ? .55 : 1, cursor: isLocked ? 'default' : 'pointer' }}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE 0{i + 1}</span>
+                {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" /><EditableText id="pacte.statut.revele">Révélé</EditableText></span>}
+                {isActive && <span className="tag-brand"><EditableText id="pacte.statut.encours">En cours</EditableText></span>}
+                {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText id="pacte.statut.verrouille">Verrouillé</EditableText></span>}
+              </div>
+
+              <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{getPersonalizedTitle(m.slug, m.titre)}</p>
+
+              {isDone && modData?.connivence_score && (
+                <div className="flex items-center gap-1.5" style={{ fontSize: 13 }}>
+                  <span style={{ color: 'var(--brand)' }}>{'★'.repeat(modData.connivence_score)}{'☆'.repeat(5 - modData.connivence_score)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}><EditableText id="pacte.connivence.label">connivence</EditableText> {modData.connivence_score}/5</span>
+                </div>
+              )}
+              {isActive && !isDone && (
+                <div className="flex items-center justify-between text-xs" style={{ color: 'var(--brand)' }}>
+                  <span><EditableText id="pacte.statut.continuer">Continuer</EditableText></span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              )}
+
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: isDone ? 'var(--sage)' : isActive ? 'var(--brand)' : 'transparent' }} />
+            </div>
+          )
+
+          if (isLocked) return <div key={m.slug}>{card}</div>
+          if (isDone) return <Link key={m.slug} href={`/module/${m.slug}/revelation`}>{card}</Link>
+          return <Link key={m.slug} href={`/module/${m.slug}`}>{card}</Link>
+        })}
+      </div>
 
       {tousTermines ? (
         <div className="card p-5 mb-6" style={{ background: 'linear-gradient(120deg, var(--brand), var(--brand-deep))', color: 'white' }}>
@@ -117,7 +126,7 @@ export default async function PactePage() {
             </h2>
           </div>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,.85)' }}>
-            <EditableText id="pacte.pret.texte" multiline>Vous avez répondu à toutes les questions. Explorez vos alignements ci-dessous et signez votre pacte ensemble.</EditableText>
+            <EditableText id="pacte.pret.texte" multiline>Vous avez répondu à toutes les questions. Explorez vos alignements ci-dessous, puis rendez-vous sur Notre Pacte pour le signer ensemble.</EditableText>
           </p>
         </div>
       ) : (
@@ -207,22 +216,6 @@ export default async function PactePage() {
           )
         })}
       </div>
-
-      {tousTermines && (
-        <div className="card p-5 text-center" style={{ marginTop: 24, paddingTop: 40, paddingBottom: 40 }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>💍</div>
-          <h2 className="font-serif font-bold" style={{ fontSize: 24, color: 'var(--ink)', marginBottom: 12 }}>
-            <EditableText id="pacte.signature.titre">Signez votre Pacte</EditableText>
-          </h2>
-          <p style={{ color: 'var(--muted)', maxWidth: 380, margin: '0 auto 24px' }}>
-            <EditableText id="pacte.signature.texte" multiline>En signant, vous vous engagez à honorer les valeurs et accords explorés ensemble.</EditableText>
-          </p>
-          <button className="btn-brand" style={{ padding: '16px 32px', fontSize: 16, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Heart className="w-5 h-5" />
-            <EditableText id="pacte.signature.cta">Signer notre Pacte</EditableText>
-          </button>
-        </div>
-      )}
     </div>
   )
 }
