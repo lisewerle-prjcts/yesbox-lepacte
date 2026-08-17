@@ -1,4 +1,4 @@
-export type ModuleSlug = 'moi' | 'toi' | 'nous' | 'communication' | 'conflits' | 'engagement' | 'renouvellement'
+export type ModuleSlug = string
 export type ModuleStatut = 'locked' | 'en_cours' | 'complete'
 export type QuestionType = 'text' | 'choix' | 'choix_multiple' | 'echelle'
 

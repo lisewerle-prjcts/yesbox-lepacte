@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MODULES } from '@/lib/modules-data'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
@@ -17,11 +17,12 @@ export default async function JournalPage() {
   const { data: profile } = await supabase.from('profiles').select('couple_id, prenom').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')
 
-  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }] = await Promise.all([
+  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }, MODULES] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
     supabase.from('journal_entries').select('*').eq('couple_id', profile.couple_id),
     supabase.from('profiles').select('prenom, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
     supabase.from('couples').select('pacte_texte, pacte_modifie_le, pacte_modifie_par').eq('id', profile.couple_id).single(),
+    getEffectiveModules(),
   ])
 
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)

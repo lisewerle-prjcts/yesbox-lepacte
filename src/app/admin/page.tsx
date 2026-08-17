@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import Link from 'next/link'
 
 export default async function AdminHome() {
@@ -9,25 +10,24 @@ export default async function AdminHome() {
     { data: allCouples },
     { data: completeModules },
     { data: modulesStats },
+    effectiveModules,
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('couples').select('id'),
     supabase.from('modules').select('couple_id').eq('statut', 'complete'),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
+    getEffectiveModules(),
   ])
 
   const completeCountByCouple: Record<string, number> = {}
   completeModules?.forEach(m => { completeCountByCouple[m.couple_id] = (completeCountByCouple[m.couple_id] ?? 0) + 1 })
   const totalCouples = allCouples?.length ?? 0
-  const couplesParcoursBac = (allCouples ?? []).filter(c => (completeCountByCouple[c.id] ?? 0) === 7).length
+  const totalModuleCount = effectiveModules.length
+  const couplesParcoursBac = (allCouples ?? []).filter(c => (completeCountByCouple[c.id] ?? 0) === totalModuleCount).length
   const couplesParcoursInitial = totalCouples - couplesParcoursBac
 
-  const moduleSlugs = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
-  const moduleNames: Record<string, string> = {
-    moi: 'Moi et toi', toi: 'Toi et moi', nous: 'Nous',
-    communication: 'Parlons-nous', conflits: 'Les conflits',
-    engagement: 'Le Pacte', renouvellement: 'Le Renouvellement',
-  }
+  const moduleSlugs = effectiveModules.map(m => m.slug)
+  const moduleNames: Record<string, string> = Object.fromEntries(effectiveModules.map(m => [m.slug, m.titre]))
 
   const statsBySlug = moduleSlugs.map(slug => {
     const rows = (modulesStats || []).filter(m => m.slug === slug)

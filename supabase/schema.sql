@@ -478,3 +478,67 @@ alter table public.profiles
 -- À exécuter une fois.
 -- ============================================================
 alter table public.couples alter column numero drop not null;
+
+-- ============================================================
+-- MODULES PERSONNALISÉS (v9)
+-- Permet à l'admin de créer de nouveaux modules (en plus des 7
+-- fixes) depuis Admin > Contenu. Les questions d'un module
+-- personnalisé passent par le même mécanisme de "questions
+-- ajoutées" déjà utilisé pour les modules existants
+-- (module_questions_override::<slug> dans settings) — pas besoin
+-- de stocker les questions ici, seulement les métadonnées du module.
+-- À exécuter une fois.
+-- ============================================================
+create table public.module_definitions (
+  id uuid primary key default uuid_generate_v4(),
+  slug text unique not null,
+  ordre numeric not null,
+  titre text not null,
+  sous_titre text,
+  description text,
+  emoji text default '✦',
+  gratuit boolean not null default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table public.module_definitions enable row level security;
+-- Aucune policy : accessible uniquement via le service role côté serveur
+-- (lecture faite dans getEffectiveModules() avec le client admin, comme
+-- pour les overrides de questions dans settings).
+
+-- Le slug n'est plus limité aux 7 valeurs fixes.
+alter table public.modules drop constraint if exists modules_slug_check;
+
+-- initialiser_modules_couple boucle désormais aussi sur les modules
+-- personnalisés pour semer une ligne verrouillée par couple.
+create or replace function public.initialiser_modules_couple(p_couple_id uuid)
+returns void language plpgsql security definer as $$
+declare
+  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
+  s text;
+  r record;
+begin
+  foreach s in array slugs loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, s, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+
+  for r in select slug from public.module_definitions loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, r.slug, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+end;
+$$;
+
+-- Ajoute rétroactivement une ligne verrouillée pour un nouveau module
+-- personnalisé, chez tous les couples déjà inscrits.
+create or replace function public.backfill_module_pour_tous_les_couples(p_slug text)
+returns void language plpgsql security definer as $$
+begin
+  insert into public.modules (couple_id, slug, statut)
+  select id, p_slug, 'locked' from public.couples
+  on conflict (couple_id, slug) do nothing;
+end;
+$$;

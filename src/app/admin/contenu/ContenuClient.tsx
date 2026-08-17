@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Save, RotateCcw, Check, Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, RotateCcw, Check, Trash2, Plus, ChevronDown, ChevronUp, PlusCircle } from 'lucide-react'
 import {
   adminSaveQuestionOverride, adminResetQuestionOverride,
   adminRemoveQuestion, adminRestoreQuestion,
   adminAddQuestion, adminUpdateCustomQuestion, adminRemoveCustomQuestion,
+  adminCreateModule, adminUpdateModule, adminDeleteModule,
 } from '@/app/actions/admin'
 import type { ModuleInfo, Question, QuestionType } from '@/types'
 
@@ -23,6 +24,17 @@ interface ModuleContentOverrides {
   custom: Question[]
 }
 
+interface CustomModuleDefinition {
+  id: string
+  slug: string
+  ordre: number
+  titre: string
+  sousTitre: string | null
+  description: string | null
+  emoji: string | null
+  gratuit: boolean
+}
+
 const TYPE_LABELS: Record<QuestionType, string> = {
   text: 'Réponse libre',
   choix: 'Choix unique',
@@ -33,15 +45,20 @@ const TYPE_LABELS: Record<QuestionType, string> = {
 export default function ContenuClient({
   modules,
   overrides,
+  customDefinitions,
 }: {
   modules: ModuleInfo[]
   overrides: Record<string, ModuleContentOverrides>
+  customDefinitions: CustomModuleDefinition[]
 }) {
   const [selectedSlug, setSelectedSlug] = useState<string>(modules[0]?.slug || '')
   const moduleInfo = modules.find(m => m.slug === selectedSlug)
   const moduleOverrides: ModuleContentOverrides = overrides[selectedSlug] || { overrides: {}, hidden: [], custom: [] }
   const [showAddForm, setShowAddForm] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
+  const [showCreateModule, setShowCreateModule] = useState(false)
+
+  const customDef = customDefinitions.find(d => d.slug === selectedSlug)
 
   if (!moduleInfo) return null
 
@@ -56,10 +73,25 @@ export default function ContenuClient({
         <h2 className="font-semibold mb-3" style={{ fontSize: 15 }}>Module</h2>
         <select className="field" value={selectedSlug} onChange={e => { setSelectedSlug(e.target.value); setShowAddForm(false); setShowHidden(false) }}>
           {modules.map(m => (
-            <option key={m.slug} value={m.slug}>Module {m.n} — {m.titre}</option>
+            <option key={m.slug} value={m.slug}>Module {m.n} — {m.titre}{customDefinitions.some(d => d.slug === m.slug) ? ' (personnalisé)' : ''}</option>
           ))}
         </select>
       </div>
+
+      <div className="card p-5">
+        <button onClick={() => setShowCreateModule(s => !s)} className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: 'var(--brand)' }}>
+          <PlusCircle className="w-4 h-4" /> Créer un nouveau module
+        </button>
+        {showCreateModule && (
+          <div className="mt-4">
+            <CreateModuleForm onCreated={slug => { setSelectedSlug(slug); setShowCreateModule(false) }} />
+          </div>
+        )}
+      </div>
+
+      {customDef && (
+        <ModuleMetaEditor definition={customDef} onDeleted={() => setSelectedSlug(modules[0]?.slug || '')} />
+      )}
 
       <div className="space-y-4">
         {activeBaseQuestions.map(question => (
@@ -359,6 +391,172 @@ function AddQuestionForm({ moduleSlug, onDone }: { moduleSlug: string; onDone: (
       >
         <Plus className="w-4 h-4" /> {saving ? 'Ajout…' : 'Ajouter la question'}
       </button>
+    </div>
+  )
+}
+
+function CreateModuleForm({ onCreated }: { onCreated: (slug: string) => void }) {
+  const [slug, setSlug] = useState('')
+  const [titre, setTitre] = useState('')
+  const [sousTitre, setSousTitre] = useState('')
+  const [description, setDescription] = useState('')
+  const [emoji, setEmoji] = useState('✦')
+  const [gratuit, setGratuit] = useState(false)
+  const [ordre, setOrdre] = useState('8')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function create() {
+    setSaving(true)
+    setError(null)
+    const result = await adminCreateModule({
+      slug, titre, sousTitre, description, emoji, gratuit,
+      ordre: parseFloat(ordre) || 0,
+    })
+    setSaving(false)
+    if (result.error) { setError(result.error); return }
+    setSlug(''); setTitre(''); setSousTitre(''); setDescription(''); setEmoji('✦'); setGratuit(false); setOrdre('8')
+    if (result.slug) onCreated(result.slug)
+  }
+
+  return (
+    <div className="space-y-3">
+      {error && <div className="alert-error" style={{ fontSize: 13 }}>{error}</div>}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="flabel">Titre</label>
+          <input type="text" className="field" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex : Nos finances" />
+        </div>
+        <div>
+          <label className="flabel">Identifiant (slug) <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(sans espaces/accents)</span></label>
+          <input type="text" className="field" value={slug} onChange={e => setSlug(e.target.value)} placeholder="Ex : finances" />
+        </div>
+      </div>
+      <div>
+        <label className="flabel">Sous-titre <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
+        <input type="text" className="field" value={sousTitre} onChange={e => setSousTitre(e.target.value)} />
+      </div>
+      <div>
+        <label className="flabel">Description <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
+        <textarea className="field" rows={2} value={description} onChange={e => setDescription(e.target.value)} />
+      </div>
+      <div className="grid sm:grid-cols-3 gap-3">
+        <div>
+          <label className="flabel">Emoji</label>
+          <input type="text" className="field" value={emoji} onChange={e => setEmoji(e.target.value)} />
+        </div>
+        <div>
+          <label className="flabel">Position <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(ex : 2.5 pour entre M2 et M3)</span></label>
+          <input type="text" inputMode="decimal" className="field" value={ordre} onChange={e => setOrdre(e.target.value)} />
+        </div>
+        <div className="flex items-end pb-2">
+          <label className="flex items-center gap-2" style={{ fontSize: 13 }}>
+            <input type="checkbox" checked={gratuit} onChange={e => setGratuit(e.target.checked)} /> Gratuit
+          </label>
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: 'var(--muted)' }}>Une ligne verrouillée sera ajoutée pour ce module chez tous les couples déjà inscrits. Tu pourras ajouter ses questions une fois créé.</p>
+      <button
+        onClick={create}
+        disabled={saving || !titre.trim() || !slug.trim()}
+        className="btn-brand text-sm py-2 px-4 flex items-center gap-2"
+        style={{ opacity: (saving || !titre.trim() || !slug.trim()) ? 0.5 : 1 }}
+      >
+        <PlusCircle className="w-4 h-4" /> {saving ? 'Création…' : 'Créer le module'}
+      </button>
+    </div>
+  )
+}
+
+function ModuleMetaEditor({ definition, onDeleted }: { definition: CustomModuleDefinition; onDeleted: () => void }) {
+  const [titre, setTitre] = useState(definition.titre)
+  const [sousTitre, setSousTitre] = useState(definition.sousTitre ?? '')
+  const [description, setDescription] = useState(definition.description ?? '')
+  const [emoji, setEmoji] = useState(definition.emoji ?? '✦')
+  const [gratuit, setGratuit] = useState(definition.gratuit)
+  const [ordre, setOrdre] = useState(String(definition.ordre))
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    await adminUpdateModule(definition.id, { titre, sousTitre, description, emoji, gratuit, ordre: parseFloat(ordre) || definition.ordre })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function remove() {
+    setDeleting(true)
+    await adminDeleteModule(definition.id, definition.slug)
+    setDeleting(false)
+    onDeleted()
+  }
+
+  return (
+    <div className="card p-5" style={{ borderColor: 'var(--brand-soft)' }}>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold" style={{ fontSize: 15 }}>Infos du module personnalisé</h2>
+        <span className="tag-brand" style={{ fontSize: 11 }}>{definition.slug}</span>
+      </div>
+      <div className="space-y-3">
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label className="flabel">Titre</label>
+            <input type="text" className="field" value={titre} onChange={e => setTitre(e.target.value)} />
+          </div>
+          <div>
+            <label className="flabel">Sous-titre</label>
+            <input type="text" className="field" value={sousTitre} onChange={e => setSousTitre(e.target.value)} />
+          </div>
+        </div>
+        <div>
+          <label className="flabel">Description</label>
+          <textarea className="field" rows={2} value={description} onChange={e => setDescription(e.target.value)} />
+        </div>
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div>
+            <label className="flabel">Emoji</label>
+            <input type="text" className="field" value={emoji} onChange={e => setEmoji(e.target.value)} />
+          </div>
+          <div>
+            <label className="flabel">Position</label>
+            <input type="text" inputMode="decimal" className="field" value={ordre} onChange={e => setOrdre(e.target.value)} />
+          </div>
+          <div className="flex items-end pb-2">
+            <label className="flex items-center gap-2" style={{ fontSize: 13 }}>
+              <input type="checkbox" checked={gratuit} onChange={e => setGratuit(e.target.checked)} /> Gratuit
+            </label>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2 mt-4">
+        <button onClick={save} disabled={saving} className="btn-brand text-xs py-2 px-3 flex items-center gap-1.5" style={{ opacity: saving ? 0.5 : 1 }}>
+          {saved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+          {saved ? 'Enregistré' : 'Enregistrer'}
+        </button>
+        {!confirmDelete ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium ml-auto"
+            style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: '#dc2626' }}
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Supprimer ce module
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 ml-auto">
+            <span style={{ fontSize: 12, color: '#dc2626' }}>Supprime aussi la progression de tous les couples sur ce module.</span>
+            <button onClick={remove} disabled={deleting} className="px-3 py-2 rounded-lg text-xs font-medium" style={{ background: '#dc2626', color: 'white' }}>
+              {deleting ? 'Suppression…' : 'Confirmer'}
+            </button>
+            <button onClick={() => setConfirmDelete(false)} className="px-3 py-2 rounded-lg text-xs font-medium" style={{ background: 'var(--paper)', border: '1px solid var(--line)' }}>
+              Annuler
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
