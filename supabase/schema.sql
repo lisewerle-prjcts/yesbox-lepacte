@@ -456,3 +456,14 @@ end;
 $$;
 
 select public.renumeroter_couples();
+
+-- ============================================================
+-- CORRECTIF (v7)
+-- profiles.couple_id n'avait jamais de vraie clé étrangère vers
+-- couples : PostgREST ne peut pas résoudre les jointures imbriquées
+-- `couples(...)` utilisées sur Mon compte, Notre Pacte et la page
+-- Utilisateurs (elles échouent silencieusement et renvoient vide).
+-- À exécuter une fois.
+-- ============================================================
+alter table public.profiles
+  add constraint profiles_couple_id_fkey foreign key (couple_id) references public.couples(id) on delete set null;
