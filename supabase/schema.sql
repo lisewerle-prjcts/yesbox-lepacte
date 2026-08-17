@@ -412,3 +412,47 @@ begin
   return code;
 end;
 $$;
+
+-- ============================================================
+-- CORRECTIONS ADMIN (v6)
+-- Modules verrouillés par défaut, numéros de couple réaffectés
+-- après suppression. À exécuter une fois.
+-- ============================================================
+
+-- Tous les modules démarrent verrouillés — l'admin les débloque
+-- manuellement depuis Actions manuelles (avant le 1er septembre, plus
+-- aucun module ne se débloque automatiquement à la création du couple).
+create or replace function public.initialiser_modules_couple(p_couple_id uuid)
+returns void language plpgsql security definer as $$
+declare
+  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
+  s text;
+begin
+  foreach s in array slugs loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, s, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+end;
+$$;
+
+-- Le numéro de couple n'est plus une identity auto-incrémentée (qui ne
+-- réutilise jamais les numéros supprimés) : c'est désormais une colonne
+-- normale, réaffectée par renumeroter_couples() à chaque création ou
+-- suppression, pour que la numérotation reste toujours 1..N sans trou.
+alter table public.couples alter column numero drop identity if exists;
+
+create or replace function public.renumeroter_couples()
+returns void language plpgsql security definer as $$
+begin
+  with ordered as (
+    select id, row_number() over (order by created_at) as rn
+    from public.couples
+  )
+  update public.couples c set numero = o.rn
+  from ordered o
+  where c.id = o.id;
+end;
+$$;
+
+select public.renumeroter_couples();

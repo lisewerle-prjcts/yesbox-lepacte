@@ -6,17 +6,25 @@ export default async function AdminHome() {
 
   const [
     { count: totalPrecommandes },
-    { count: totalCouples },
     { count: totalUsers },
+    { data: allCouples },
+    { data: completeModules },
     { data: recentPrecommandes },
     { data: modulesStats },
   ] = await Promise.all([
     supabase.from('precommandes').select('*', { count: 'exact', head: true }),
-    supabase.from('couples').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('couples').select('id'),
+    supabase.from('modules').select('couple_id').eq('statut', 'complete'),
     supabase.from('precommandes').select('prenom,nom,email,partner_prenom,adresse,message,created_at').order('created_at', { ascending: false }).limit(10),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
   ])
+
+  const completeCountByCouple: Record<string, number> = {}
+  completeModules?.forEach(m => { completeCountByCouple[m.couple_id] = (completeCountByCouple[m.couple_id] ?? 0) + 1 })
+  const totalCouples = allCouples?.length ?? 0
+  const couplesParcoursBac = (allCouples ?? []).filter(c => (completeCountByCouple[c.id] ?? 0) === 7).length
+  const couplesParcoursInitial = totalCouples - couplesParcoursBac
 
   const moduleSlugs = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
   const moduleNames: Record<string, string> = {
@@ -37,9 +45,9 @@ export default async function AdminHome() {
   })
 
   const STATS = [
-    { label: 'Pré-commandes', value: totalPrecommandes ?? 0, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Couples inscrits', value: totalCouples ?? 0, color: 'var(--sage)', href: '/admin/couples' },
-    { label: 'Utilisateurs', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/couples' },
+    { label: 'Utilisateurs', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/utilisateurs' },
+    { label: 'Couples — parcours initial', value: couplesParcoursInitial, color: 'var(--brand)', href: '/admin/couples' },
+    { label: 'Couples — parcours BAC', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
   ]
 
   return (

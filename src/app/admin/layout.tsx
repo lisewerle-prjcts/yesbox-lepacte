@@ -34,6 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const NAV = [
     { href: '/admin', label: 'Vue d\'ensemble' },
+    { href: '/admin/utilisateurs', label: 'Utilisateurs' },
     { href: '/admin/couples', label: 'Couples & progression' },
     { href: '/admin/messages', label: 'Messages & emails' },
     { href: '/admin/actions', label: 'Actions manuelles' },
