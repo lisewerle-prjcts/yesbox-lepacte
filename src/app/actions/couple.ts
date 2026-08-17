@@ -98,7 +98,6 @@ export async function rejoindreCoupleParCode(userId: string, code: string) {
   if (!data.success) return { error: data.error }
 
   revalidatePath('/tableau-de-bord')
-  revalidatePath('/inviter-partenaire')
   return { success: true, coupleId: data.couple_id }
 }
 

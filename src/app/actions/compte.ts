@@ -42,7 +42,7 @@ export async function updatePrenomPartenaire(prenom: string) {
   return { success: true }
 }
 
-export async function updateInfosCouple(nomCouple: string, dateAnniversaire: string) {
+export async function updateNomCouple(nomCouple: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
@@ -52,7 +52,26 @@ export async function updateInfosCouple(nomCouple: string, dateAnniversaire: str
 
   const { error } = await supabase
     .from('couples')
-    .update({ nom_couple: nomCouple.trim() || null, date_anniversaire: dateAnniversaire || null })
+    .update({ nom_couple: nomCouple.trim() || null })
+    .eq('id', myProfile.couple_id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/mon-compte')
+  revalidatePath('/tableau-de-bord')
+  return { success: true }
+}
+
+export async function updateDateAnniversaire(dateAnniversaire: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: myProfile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
+  if (!myProfile?.couple_id) return { error: 'Aucun couple trouvé' }
+
+  const { error } = await supabase
+    .from('couples')
+    .update({ date_anniversaire: dateAnniversaire || null })
     .eq('id', myProfile.couple_id)
 
   if (error) return { error: error.message }

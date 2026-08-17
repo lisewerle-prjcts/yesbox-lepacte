@@ -70,7 +70,7 @@ export async function inscription(formData: FormData) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
       revalidatePath('/', 'layout')
       if (result.success) redirect('/tableau-de-bord')
-      redirect(`/inviter-partenaire?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
+      redirect(`/tableau-de-bord?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
     }
 
     const coupleResult = await creerCoupleSolo(data.user.id)
@@ -80,7 +80,7 @@ export async function inscription(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/inviter-partenaire')
+  redirect('/tableau-de-bord')
 }
 
 export async function connexion(formData: FormData) {

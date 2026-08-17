@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isCouplePaired } from '@/lib/couple-status'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 
-export const metadata = { title: 'Tableau de bord' }
+export const metadata = { title: 'Accueil' }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()

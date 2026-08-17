@@ -2,11 +2,18 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { MODULES } from '@/lib/modules-data'
+import { getInviteLink } from '@/app/actions/couple'
 import EditableText from '@/components/edit-mode/EditableText'
+import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { Module } from '@/types'
-import { Lock, CheckCircle, ChevronRight, UserPlus, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
-export default async function TableauDeBordPage() {
+export default async function TableauDeBordPage({
+  searchParams,
+}: {
+  searchParams: { code_error?: string }
+}) {
+  const { code_error } = searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
@@ -15,18 +22,20 @@ export default async function TableauDeBordPage() {
 
   let modules: Module[] = []
   let partner: { prenom: string | null; email: string } | null = null
-  let couple: { nom_couple: string | null } | null = null
+  let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
 
   if (profile?.couple_id) {
     const [{ data: mods }, { data: part }, { data: coup }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
       supabase.from('profiles').select('prenom, email').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
-      supabase.from('couples').select('nom_couple').eq('id', profile.couple_id).single(),
+      supabase.from('couples').select('nom_couple, date_anniversaire').eq('id', profile.couple_id).single(),
     ])
     modules = mods || []
     partner = part
     couple = coup
   }
+
+  const inviteData = await getInviteLink()
 
   const done = modules.filter(m => m.revealed).length
   const pct = Math.round((done / 7) * 100)
@@ -46,8 +55,6 @@ export default async function TableauDeBordPage() {
     return 'locked'
   }
 
-  function getModData(slug: string) { return modules.find(m => m.slug === slug) }
-
   return (
     <div className="fade" style={{ maxWidth: 1000, margin: '0 auto' }}>
       {/* Header */}
@@ -64,20 +71,15 @@ export default async function TableauDeBordPage() {
         </p>
       </div>
 
-      {/* Bannière invitation */}
-      {!profile?.couple_id && (
-        <div className="card flex items-center justify-between flex-wrap gap-4 p-5 mb-6" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'var(--brand-soft)' }}>
-              <UserPlus className="w-4 h-4" style={{ color: 'var(--brand)' }} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm" style={{ color: 'var(--ink)' }}><EditableText id="dashboard.banniere.titre">Invite ton/ta partenaire</EditableText></p>
-              <p className="text-xs" style={{ color: 'var(--muted)' }}><EditableText id="dashboard.banniere.sous">Le parcours est bien plus riche à deux</EditableText></p>
-            </div>
-          </div>
-          <Link href="/inviter-partenaire" className="btn-brand text-sm py-2"><EditableText id="dashboard.banniere.cta">Envoyer l&apos;invitation</EditableText></Link>
-        </div>
+      {profile?.couple_id && (
+        <VotreCoupleCard
+          hasPartner={!!partner}
+          partnerPrenom={partner?.prenom ?? ''}
+          dateAnniversaire={couple?.date_anniversaire ?? ''}
+          pairingCode={inviteData.success ? inviteData.pairingCode ?? null : null}
+          inviteLink={inviteData.success ? inviteData.link ?? null : null}
+          initialCodeError={code_error}
+        />
       )}
 
       {/* Progression */}
@@ -91,12 +93,14 @@ export default async function TableauDeBordPage() {
             <span className="font-serif font-bold" style={{ fontSize: 28, color: pct === 100 ? 'var(--sage)' : 'var(--brand)' }}>{pct}%</span>
           </div>
           <div className="bar sage"><i style={{ width: `${pct}%` }} /></div>
-          {pct === 100 && (
-            <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-              <span className="text-sm font-semibold" style={{ color: 'var(--sage)' }}><EditableText id="dashboard.progression.complete">🎉 Votre pacte est prêt à être signé !</EditableText></span>
-              <Link href="/pacte" className="btn-sage text-sm py-2"><EditableText id="dashboard.progression.voirpacte">Voir notre Pacte</EditableText></Link>
-            </div>
-          )}
+          <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
+            <span className="text-sm font-semibold" style={{ color: pct === 100 ? 'var(--sage)' : 'var(--muted)' }}>
+              {pct === 100
+                ? <EditableText id="dashboard.progression.complete">🎉 Votre pacte est prêt à être signé !</EditableText>
+                : <EditableText id="dashboard.progression.encours">Voir le détail de votre progression</EditableText>}
+            </span>
+            <Link href="/pacte" className={pct === 100 ? 'btn-sage text-sm py-2' : 'btn-secondary text-sm py-2'}><EditableText id="dashboard.progression.voirpacte">Voir la progression</EditableText></Link>
+          </div>
         </div>
       )}
 
@@ -118,62 +122,6 @@ export default async function TableauDeBordPage() {
           </div>
         )
       })()}
-
-      {/* Grille 7 modules */}
-      <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}><EditableText id="dashboard.grille.titre">Les 7 piliers de votre Pacte</EditableText></h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {MODULES.map((m, i) => {
-          const st = profile?.couple_id ? getModStatus(m.slug) : (i === 0 ? 'active' : 'locked')
-          const modData = getModData(m.slug)
-          const isLocked = st === 'locked' || st === 'paywall'
-          const isDone = st === 'done'
-          const isActive = st === 'active'
-
-          const card = (
-            <div className="card p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-150"
-              style={{ opacity: isLocked ? .55 : 1, cursor: isLocked ? 'default' : 'pointer' }}>
-
-              {/* Badge statut */}
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE 0{m.n}</span>
-                {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" /><EditableText id="dashboard.statut.revele">Révélé</EditableText></span>}
-                {isActive && <span className="tag-brand"><EditableText id="dashboard.statut.encours">En cours</EditableText></span>}
-                {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText id="dashboard.statut.verrouille">Verrouillé</EditableText></span>}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{getPersonalizedTitle(m.slug, m.titre, profile?.role)}</p>
-                  <p style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id={`module.${m.slug}.sousTitre`}>{m.sousTitre}</EditableText></p>
-                </div>
-              </div>
-
-              <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.55 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
-
-              {/* Pied de carte */}
-              {isDone && modData?.connivence_score && (
-                <div className="flex items-center gap-1.5" style={{ fontSize: 13 }}>
-                  <span style={{ color: 'var(--brand)' }}>{'★'.repeat(modData.connivence_score)}{'☆'.repeat(5 - modData.connivence_score)}</span>
-                  <span style={{ fontSize: 11, color: 'var(--muted)' }}><EditableText id="dashboard.connivence.label">connivence</EditableText> {modData.connivence_score}/5</span>
-                </div>
-              )}
-              {isActive && !isDone && (
-                <div className="flex items-center justify-between text-xs" style={{ color: 'var(--brand)' }}>
-                  <span><EditableText id="dashboard.statut.continuer">Continuer</EditableText></span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
-              )}
-
-              {/* Barre couleur bottom */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: isDone ? 'var(--sage)' : isActive ? 'var(--brand)' : 'transparent' }} />
-            </div>
-          )
-
-          if (isLocked) return <div key={m.slug}>{card}</div>
-          if (isDone) return <Link key={m.slug} href={`/module/${m.slug}/revelation`}>{card}</Link>
-          return <Link key={m.slug} href={`/module/${m.slug}`}>{card}</Link>
-        })}
-      </div>
     </div>
   )
 }

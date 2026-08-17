@@ -21,13 +21,14 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | Route | Description |
 |-------|-------------|
 | `/` | Landing page |
-| `/inscription` | Création de compte |
+| `/inscription` | Création de compte (couple + code de pairage créés immédiatement) |
 | `/connexion` | Connexion |
-| `/inviter-partenaire` | Créer un espace couple + lien d'invitation |
 | `/rejoindre?token=...` | Rejoindre un couple via token |
-| `/tableau-de-bord` | Dashboard — les 7 modules |
+| `/tableau-de-bord` | Accueil — carte couple (code, invitation, anniversaire) |
 | `/module/[slug]` | Parcours questions d'un module |
-| `/pacte` | Visualisation et signature du Pacte |
+| `/pacte` | Progression — suivi des 7 modules |
+| `/journal` | Notre Pacte — document partagé et signature |
+| `/mon-compte` | Infos personnelles, mot de passe |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |
 
 ## Les 7 modules
