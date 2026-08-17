@@ -2,8 +2,6 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import CouplesClient from './CouplesClient'
 
-const SLUGS = ['moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement']
-
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
@@ -15,6 +13,7 @@ export default async function AdminCouples() {
 
   const questionCountBySlug: Record<string, number> = {}
   for (const m of effectiveModules) questionCountBySlug[m.slug] = m.questions.length
+  const SLUGS = effectiveModules.map(m => m.slug)
 
   const coupleIds = (couples || []).map(c => c.id)
 
@@ -69,7 +68,7 @@ export default async function AdminCouples() {
           Erreur lors du chargement des couples : {couplesError.message}
         </div>
       )}
-      <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} />
+      <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} moduleSlugs={SLUGS} />
     </div>
   )
 }

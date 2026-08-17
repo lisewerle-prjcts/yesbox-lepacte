@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import AdminActionsClient from './AdminActionsClient'
 
 export default async function AdminActionsPage({
@@ -12,6 +13,8 @@ export default async function AdminActionsPage({
   const { data: couples } = await supabase.from('couples').select('id,created_at').order('created_at', { ascending: false })
   const { data: profiles } = await supabase.from('profiles').select('id,prenom,email,couple_id')
   const { data: precommandes } = await supabase.from('precommandes').select('id,prenom,email').order('created_at', { ascending: false })
+  const effectiveModules = await getEffectiveModules()
+  const modules = effectiveModules.map((m, i) => ({ slug: m.slug, name: `M${i + 1} — ${m.titre}` }))
 
   const couplesWithMembers = (couples || []).map(c => ({
     ...c,
@@ -28,6 +31,7 @@ export default async function AdminActionsPage({
         couples={couplesWithMembers}
         precommandes={precommandes || []}
         defaultCoupleId={couple_id}
+        modules={modules}
       />
     </div>
   )

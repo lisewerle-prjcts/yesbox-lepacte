@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { MODULES } from '@/lib/modules-data'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import { getInviteLink } from '@/app/actions/couple'
 import EditableText from '@/components/edit-mode/EditableText'
 import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
@@ -36,9 +36,11 @@ export default async function TableauDeBordPage({
   }
 
   const inviteData = await getInviteLink()
+  const effectiveModules = await getEffectiveModules()
+  const totalModuleCount = effectiveModules.length
 
   const done = modules.filter(m => m.revealed).length
-  const pct = Math.round((done / 7) * 100)
+  const pct = totalModuleCount ? Math.round((done / totalModuleCount) * 100) : 0
 
   function getPersonalizedTitle(slug: string, defaultTitre: string, role?: string | null): string {
     if (slug === 'moi') return role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
@@ -88,7 +90,7 @@ export default async function TableauDeBordPage({
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}><EditableText id="dashboard.progression.titre">Votre progression</EditableText></h2>
-              <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{done} module{done > 1 ? 's' : ''} révélé{done > 1 ? 's' : ''} sur 7</p>
+              <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{done} module{done > 1 ? 's' : ''} révélé{done > 1 ? 's' : ''} sur {totalModuleCount}</p>
             </div>
             <span className="font-serif font-bold" style={{ fontSize: 28, color: pct === 100 ? 'var(--sage)' : 'var(--brand)' }}>{pct}%</span>
           </div>
@@ -106,13 +108,14 @@ export default async function TableauDeBordPage({
 
       {/* Prochaine étape */}
       {profile?.couple_id && (() => {
-        const next = MODULES.find(m => getModStatus(m.slug) === 'active')
-        if (!next) return null
+        const nextIdx = effectiveModules.findIndex(m => getModStatus(m.slug) === 'active')
+        if (nextIdx === -1) return null
+        const next = effectiveModules[nextIdx]
         const titre = getPersonalizedTitle(next.slug, next.titre, profile?.role)
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.prochaineetape.label">PROCHAINE ÉTAPE</EditableText> · MODULE 0{next.n}</p>
+              <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.prochaineetape.label">PROCHAINE ÉTAPE</EditableText> · MODULE 0{nextIdx + 1}</p>
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
             </div>

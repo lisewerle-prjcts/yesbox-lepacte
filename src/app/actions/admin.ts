@@ -5,11 +5,19 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { createClient } from '@/lib/supabase/server'
 import { randomInt } from 'crypto'
 import nodemailer from 'nodemailer'
-import { normalizeOverrides, emptyOverrides, type ModuleContentOverrides, type QuestionOverride } from '@/lib/modules-effective'
+import { normalizeOverrides, emptyOverrides, getEffectiveModules, type ModuleContentOverrides, type QuestionOverride } from '@/lib/modules-effective'
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { MODULES } from '@/lib/modules-data'
 import type { QuestionType } from '@/types'
+
+function revalidateModuleLists() {
+  revalidatePath('/admin/contenu')
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/actions')
+  revalidatePath('/', 'layout')
+}
 
 function generateTempPassword() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -17,8 +25,6 @@ function generateTempPassword() {
   for (let i = 0; i < 12; i++) pwd += chars[randomInt(chars.length)]
   return pwd
 }
-
-const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
 
 export async function adminUnlockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
@@ -39,9 +45,10 @@ export async function adminRevealModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
   await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
   // Déverrouille le suivant
-  const idx = SLUGS.indexOf(slug)
-  if (idx >= 0 && idx < SLUGS.length - 1) {
-    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', SLUGS[idx + 1])
+  const ordre = (await getEffectiveModules()).map(m => m.slug)
+  const idx = ordre.indexOf(slug)
+  if (idx >= 0 && idx < ordre.length - 1) {
+    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idx + 1])
   }
   revalidatePath('/admin/couples')
   return { success: true }
@@ -321,5 +328,77 @@ export async function adminDeleteUser(userId: string) {
   revalidatePath('/admin/utilisateurs')
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
+  return { success: true }
+}
+
+interface NewModuleInput {
+  slug: string
+  ordre: number
+  titre: string
+  sousTitre?: string
+  description?: string
+  emoji?: string
+  gratuit: boolean
+}
+
+export async function adminCreateModule(input: NewModuleInput) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const slug = input.slug.trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '')
+  if (!slug) return { error: 'Slug invalide' }
+  if (!input.titre.trim()) return { error: 'Le titre est requis' }
+  if (MODULES.some(m => m.slug === slug)) return { error: 'Ce slug est déjà utilisé par un module existant' }
+
+  const { error } = await admin.from('module_definitions').insert({
+    slug,
+    ordre: input.ordre,
+    titre: input.titre.trim(),
+    sous_titre: input.sousTitre?.trim() || null,
+    description: input.description?.trim() || null,
+    emoji: input.emoji?.trim() || '✦',
+    gratuit: input.gratuit,
+  })
+  if (error) return { error: error.message.includes('duplicate') ? 'Ce slug est déjà utilisé' : error.message }
+
+  await admin.rpc('backfill_module_pour_tous_les_couples', { p_slug: slug })
+
+  revalidateModuleLists()
+  return { success: true, slug }
+}
+
+export async function adminUpdateModule(id: string, fields: {
+  titre?: string; sousTitre?: string; description?: string; emoji?: string; gratuit?: boolean; ordre?: number
+}) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const patch: Record<string, string | number | boolean | null> = { updated_at: new Date().toISOString() }
+  if (fields.titre !== undefined) patch.titre = fields.titre.trim()
+  if (fields.sousTitre !== undefined) patch.sous_titre = fields.sousTitre.trim() || null
+  if (fields.description !== undefined) patch.description = fields.description.trim() || null
+  if (fields.emoji !== undefined) patch.emoji = fields.emoji.trim() || '✦'
+  if (fields.gratuit !== undefined) patch.gratuit = fields.gratuit
+  if (fields.ordre !== undefined) patch.ordre = fields.ordre
+
+  const { error } = await admin.from('module_definitions').update(patch).eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidateModuleLists()
+  return { success: true }
+}
+
+export async function adminDeleteModule(id: string, slug: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  await admin.from('modules').delete().eq('slug', slug)
+  await admin.from('journal_entries').delete().eq('module_slug', slug)
+  await admin.from('settings').delete().eq('key', `module_questions_override::${slug}`)
+
+  const { error } = await admin.from('module_definitions').delete().eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidateModuleLists()
   return { success: true }
 }

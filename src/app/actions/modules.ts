@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getEffectiveModules } from '@/lib/modules-effective'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
@@ -46,7 +47,8 @@ export async function scellerModule(moduleId: string, moduleSlug: string, conniv
   }).eq('id', moduleId)
 
   // Déverrouiller le module suivant
-  const ordre = ['moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement']
+  const modules = await getEffectiveModules()
+  const ordre = modules.map(m => m.slug)
   const idx = ordre.indexOf(moduleSlug)
   if (idx >= 0 && idx < ordre.length - 1) {
     await supabase.from('modules').update({ statut: 'en_cours' })
