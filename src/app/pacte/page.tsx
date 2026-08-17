@@ -17,7 +17,7 @@ export default async function PactePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, couples(*)')
+    .select('*')
     .eq('id', user.id)
     .single()
 
@@ -25,27 +25,20 @@ export default async function PactePage() {
     redirect('/inviter-partenaire')
   }
 
-  const { data: modules } = await supabase
-    .from('modules')
-    .select('*')
-    .eq('couple_id', profile.couple_id)
+  const [{ data: modules }, { data: partner }, { data: couple }] = await Promise.all([
+    supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
+    supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
+    supabase.from('couples').select('date_anniversaire, pacte_texte, pacte_modifie_le, pacte_modifie_par').eq('id', profile.couple_id).single(),
+  ])
 
   const { data: allReponses } = await supabase
     .from('reponses')
     .select('*')
     .in('module_id', modules?.map((m: Module) => m.id) || [])
 
-  const { data: partner } = await supabase
-    .from('profiles')
-    .select('prenom, email, id')
-    .eq('couple_id', profile.couple_id)
-    .neq('id', user.id)
-    .single()
-
   const modulesTermines = modules?.filter((m: Module) => m.statut === 'complete') || []
   const tousTermines = modulesTermines.length === 7
 
-  const couple = profile.couples as unknown as { date_anniversaire: string | null; pacte_texte: string | null; pacte_modifie_le: string | null; pacte_modifie_par: string | null } | null
   const anniversaireActuel = couple?.date_anniversaire ? getAnniversaireActuel(couple.date_anniversaire) : null
   const prochainAnniversaire = couple?.date_anniversaire ? getProchainAnniversaire(couple.date_anniversaire) : null
   const modifiePartPrenom = couple?.pacte_modifie_par === user.id ? (profile.prenom || 'Toi') : (couple?.pacte_modifie_par ? (partner?.prenom || 'Ton/ta partenaire') : null)
