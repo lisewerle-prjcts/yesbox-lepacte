@@ -7,7 +7,7 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
-import { connexion, verifierCodeMfa, verifierCodeRecuperationMfa } from '@/app/actions/auth'
+import { connexion, renvoyerConfirmation, verifierCodeMfa, verifierCodeRecuperationMfa } from '@/app/actions/auth'
 import { Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton({ label, pendingLabel }: { label: React.ReactNode; pendingLabel: string }) {
@@ -23,6 +23,8 @@ function SubmitButton({ label, pendingLabel }: { label: React.ReactNode; pending
 export default function ConnexionPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState<string | null>(null)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [mfaRequired, setMfaRequired] = useState(false)
   const [useRecoveryCode, setUseRecoveryCode] = useState(false)
   const [mfaResetNotice, setMfaResetNotice] = useState(false)
@@ -33,9 +35,27 @@ export default function ConnexionPage() {
 
   async function handleAction(formData: FormData) {
     setError(null)
+    setEmailNotConfirmed(null)
+    setResendState('idle')
     const result = await connexion(formData)
-    if (result?.error) setError(result.error)
-    else if (result?.mfaRequired) setMfaRequired(true)
+    if (result?.error) {
+      setError(result.error)
+      if (result.emailNotConfirmed && result.email) setEmailNotConfirmed(result.email)
+    } else if (result?.mfaRequired) {
+      setMfaRequired(true)
+    }
+  }
+
+  async function handleResend() {
+    if (!emailNotConfirmed) return
+    setResendState('sending')
+    const result = await renvoyerConfirmation(emailNotConfirmed)
+    if (result?.error) {
+      setResendState('idle')
+      setError(result.error)
+    } else {
+      setResendState('sent')
+    }
   }
 
   async function handleMfaAction(formData: FormData) {
@@ -130,7 +150,25 @@ export default function ConnexionPage() {
 
         <div className="card">
           {mfaResetNotice && <Alert type="info" message="Ta double authentification a été désactivée avec un code de secours. Reconnecte-toi, puis réactive-la depuis l'onglet Sécurité." className="mb-5" />}
-          {error && <Alert type="error" message={error} className="mb-5" />}
+          {error && (
+            <div className="mb-5 space-y-2">
+              <Alert type="error" message={error} />
+              {emailNotConfirmed && (
+                resendState === 'sent' ? (
+                  <Alert type="success" message="Email de confirmation renvoyé ! Vérifie ta boîte mail (et tes spams)." />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendState === 'sending'}
+                    className="text-sm text-magenta font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {resendState === 'sending' ? 'Envoi...' : "Renvoyer l'email de confirmation"}
+                  </button>
+                )
+              )}
+            </div>
+          )}
 
           <form action={handleAction} className="space-y-5">
             <div>

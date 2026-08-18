@@ -59,6 +59,7 @@ export async function inscription(formData: FormData) {
   }
 
   const partnerCode = (formData.get('partner_code') as string | null)?.trim()
+  let partnerCodeError: string | null = null
 
   if (data.user) {
     await supabase
@@ -68,18 +69,25 @@ export async function inscription(formData: FormData) {
 
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
-      revalidatePath('/', 'layout')
-      if (result.success) redirect('/tableau-de-bord')
-      redirect(`/tableau-de-bord?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
-    }
-
-    const coupleResult = await creerCoupleSolo(data.user.id)
-    if (coupleResult.success && coupleResult.couple) {
-      await sendWelcomeEmail(email, prenom, coupleResult.couple.pairing_code)
+      if (!result.success) partnerCodeError = result.error || 'Code invalide'
+    } else {
+      const coupleResult = await creerCoupleSolo(data.user.id)
+      if (coupleResult.success && coupleResult.couple) {
+        await sendWelcomeEmail(email, prenom, coupleResult.couple.pairing_code)
+      }
     }
   }
 
   revalidatePath('/', 'layout')
+
+  // Confirmation d'email requise : pas de session, on ne peut pas encore entrer dans l'espace.
+  if (!data.session) {
+    return { needsConfirmation: true, email }
+  }
+
+  if (partnerCodeError) {
+    redirect(`/tableau-de-bord?code_error=${encodeURIComponent(partnerCodeError)}`)
+  }
   redirect('/tableau-de-bord')
 }
 
@@ -109,6 +117,13 @@ export async function connexion(formData: FormData) {
       await registerFailedLogin(email)
       return { error: 'Email ou mot de passe incorrect' }
     }
+    if (error.message.includes('Email not confirmed')) {
+      return {
+        error: "Ton email n'est pas encore confirmé. Vérifie ta boîte mail (et tes spams), ou renvoie l'email ci-dessous.",
+        emailNotConfirmed: true,
+        email,
+      }
+    }
     return { error: error.message }
   }
 
@@ -121,6 +136,29 @@ export async function connexion(formData: FormData) {
 
   revalidatePath('/', 'layout')
   redirect('/tableau-de-bord')
+}
+
+export async function renvoyerConfirmation(email: string) {
+  const parsed = z.string().email().safeParse(email)
+  if (!parsed.success) {
+    return { error: 'Email invalide' }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: parsed.data,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true }
 }
 
 export async function verifierCodeMfa(code: string) {

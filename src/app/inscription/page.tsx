@@ -7,8 +7,8 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
-import { inscription } from '@/app/actions/auth'
-import { Eye, EyeOff } from 'lucide-react'
+import { inscription, renvoyerConfirmation } from '@/app/actions/auth'
+import { Eye, EyeOff, MailCheck } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -23,6 +23,8 @@ function SubmitButton() {
 export default function InscriptionPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
 
   async function handleAction(formData: FormData) {
     setError(null)
@@ -34,6 +36,49 @@ export default function InscriptionPage() {
     }
     const result = await inscription(formData)
     if (result?.error) setError(result.error)
+    else if (result?.needsConfirmation) setConfirmationEmail(result.email)
+  }
+
+  async function handleResend() {
+    if (!confirmationEmail) return
+    setResendState('sending')
+    const result = await renvoyerConfirmation(confirmationEmail)
+    setResendState(result?.error ? 'idle' : 'sent')
+  }
+
+  if (confirmationEmail) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md text-center">
+          <Logo size="md" className="inline-block mb-6" />
+          <div className="card">
+            <MailCheck className="w-10 h-10 text-magenta mx-auto mb-3" />
+            <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">Vérifie ta boîte mail</h1>
+            <p className="text-gray-500 mb-1">
+              On a envoyé un lien de confirmation à <span className="font-semibold text-gray-700">{confirmationEmail}</span>.
+            </p>
+            <p className="text-gray-500 mb-6">
+              Clique sur ce lien pour activer ton compte et accéder à ton espace couple. Pense à vérifier tes spams.
+            </p>
+            {resendState === 'sent' ? (
+              <Alert type="success" message="Email renvoyé ! Vérifie ta boîte mail (et tes spams)." />
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendState === 'sending'}
+                className="text-sm text-magenta font-semibold hover:underline disabled:opacity-50"
+              >
+                {resendState === 'sending' ? 'Envoi...' : "Je n'ai rien reçu, renvoyer l'email"}
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-6">
+            <Link href="/connexion" className="text-magenta font-semibold hover:underline">Retour à la connexion</Link>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

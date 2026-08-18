@@ -318,6 +318,8 @@ alter table public.couples alter column pairing_code set default public.generate
 alter table public.precommandes add column if not exists nom text;
 alter table public.precommandes add column if not exists partner_prenom text;
 
+alter table public.profiles add column if not exists nom text;
+
 do $$
 declare
   c record;
