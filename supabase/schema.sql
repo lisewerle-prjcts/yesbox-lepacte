@@ -576,6 +576,15 @@ begin
 end;
 $$;
 
+-- Rattrapage pour les couples déjà créés avant ce correctif : la v9
+-- les avait tous fait démarrer avec "moi" verrouillé (module vitrine
+-- inaccessible). On débloque "moi"/"toi" pour tout couple qui ne les
+-- a pas encore commencés ou terminés, sans toucher à ceux déjà en
+-- cours, complétés ou révélés.
+update public.modules
+set statut = 'en_cours'
+where slug in ('moi', 'toi') and statut = 'locked';
+
 -- Abonnement du couple, activé manuellement par l'admin depuis
 -- /admin/couples. La paire "moi"/"toi" reste gratuite et accessible
 -- sans abonnement ; à partir du module suivant, l'accès est bloqué
