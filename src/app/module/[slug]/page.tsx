@@ -17,6 +17,11 @@ export default async function ModulePage({ params }: PageProps) {
   const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')
 
+  if (!moduleInfo.free) {
+    const { data: couple } = await supabase.from('couples').select('abonnement_actif').eq('id', profile.couple_id).single()
+    if (!couple?.abonnement_actif) redirect('/abonnement-requis')
+  }
+
   const { data: moduleData } = await supabase.from('modules').select('*').eq('couple_id', profile.couple_id).eq('slug', slug).single()
   if (!moduleData || moduleData.statut === 'locked') redirect('/tableau-de-bord')
 
