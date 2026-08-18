@@ -10,10 +10,11 @@ export interface ModuleContentOverrides {
   overrides: Record<string, QuestionOverride> // question_slug -> édition d'une question existante
   hidden: string[]                             // question_slug de questions de base retirées
   custom: Question[]                           // questions ajoutées de toutes pièces
+  order: string[]                              // question_slug dans l'ordre d'affichage voulu
 }
 
 export function emptyOverrides(): ModuleContentOverrides {
-  return { overrides: {}, hidden: [], custom: [] }
+  return { overrides: {}, hidden: [], custom: [], order: [] }
 }
 
 // Accepte aussi l'ancien format à plat { [questionSlug]: QuestionOverride }
@@ -25,9 +26,10 @@ export function normalizeOverrides(raw: unknown): ModuleContentOverrides {
       overrides: (r.overrides as Record<string, QuestionOverride>) || {},
       hidden: (r.hidden as string[]) || [],
       custom: (r.custom as Question[]) || [],
+      order: (r.order as string[]) || [],
     }
   }
-  return { overrides: r as Record<string, QuestionOverride>, hidden: [], custom: [] }
+  return { overrides: r as Record<string, QuestionOverride>, hidden: [], custom: [], order: [] }
 }
 
 export async function getAllOverrides(): Promise<Record<string, ModuleContentOverrides>> {
@@ -55,7 +57,54 @@ function applyOverrides(moduleInfo: ModuleInfo, moduleOverrides: ModuleContentOv
   const questions = moduleInfo.questions
     .filter(q => !hidden.has(q.slug))
     .map(q => ({ ...q, ...(moduleOverrides.overrides[q.slug] || {}) }))
-  return { ...moduleInfo, questions: [...questions, ...moduleOverrides.custom] }
+  const combined = [...questions, ...moduleOverrides.custom]
+
+  const order = moduleOverrides.order
+  if (order && order.length) {
+    const orderIndex = new Map(order.map((slug, i) => [slug, i]))
+    combined.sort((a, b) => {
+      const ia = orderIndex.has(a.slug) ? orderIndex.get(a.slug)! : Number.MAX_SAFE_INTEGER
+      const ib = orderIndex.has(b.slug) ? orderIndex.get(b.slug)! : Number.MAX_SAFE_INTEGER
+      return ia - ib
+    })
+  }
+
+  return { ...moduleInfo, questions: combined }
+}
+
+export const META_OVERRIDE_KEY_PREFIX = 'module_meta_override::'
+
+export type ModuleMetaOverride = Partial<Pick<ModuleInfo, 'titre' | 'sousTitre' | 'description' | 'emoji' | 'n'>>
+
+export async function getAllModuleMetaOverrides(): Promise<Record<string, ModuleMetaOverride>> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('settings')
+    .select('key, value')
+    .like('key', `${META_OVERRIDE_KEY_PREFIX}%`)
+
+  const result: Record<string, ModuleMetaOverride> = {}
+  for (const row of data || []) {
+    const slug = row.key.slice(META_OVERRIDE_KEY_PREFIX.length)
+    try {
+      result[slug] = JSON.parse(row.value)
+    } catch {
+      result[slug] = {}
+    }
+  }
+  return result
+}
+
+function applyMeta(moduleInfo: ModuleInfo, meta: ModuleMetaOverride | undefined): ModuleInfo {
+  if (!meta) return moduleInfo
+  return {
+    ...moduleInfo,
+    titre: meta.titre ?? moduleInfo.titre,
+    sousTitre: meta.sousTitre ?? moduleInfo.sousTitre,
+    description: meta.description ?? moduleInfo.description,
+    emoji: meta.emoji ?? moduleInfo.emoji,
+    n: meta.n ?? moduleInfo.n,
+  }
 }
 
 export interface CustomModuleDefinition {
@@ -89,9 +138,13 @@ export async function getCustomModuleDefinitions(): Promise<CustomModuleDefiniti
 }
 
 export async function getEffectiveModules(): Promise<ModuleInfo[]> {
-  const [overrides, customDefs] = await Promise.all([getAllOverrides(), getCustomModuleDefinitions()])
+  const [overrides, customDefs, metaOverrides] = await Promise.all([
+    getAllOverrides(),
+    getCustomModuleDefinitions(),
+    getAllModuleMetaOverrides(),
+  ])
 
-  const staticModules = MODULES.map(m => applyOverrides(m, overrides[m.slug]))
+  const staticModules = MODULES.map(m => applyMeta(applyOverrides(m, overrides[m.slug]), metaOverrides[m.slug]))
   const customModules = customDefs.map(def => applyOverrides(
     {
       slug: def.slug,

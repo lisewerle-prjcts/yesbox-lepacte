@@ -150,7 +150,6 @@ export default async function PactePage() {
             return (
               <div key={moduleInfo.slug} className="card p-5" style={{ opacity: .6 }}>
                 <div className="flex items-center gap-3">
-                  <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
                   <div>
                     <h3 className="font-serif font-bold" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></h3>
                     <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
@@ -172,7 +171,6 @@ export default async function PactePage() {
           return (
             <div key={moduleInfo.slug} className="card p-5">
               <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid var(--line)' }}>
-                <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
                 <h3 className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></h3>
                 <span className="tag-sage" style={{ marginLeft: 'auto' }}>
                   <CheckCircle className="w-3 h-3" />

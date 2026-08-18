@@ -118,12 +118,9 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
       {/* Question card */}
       <div className="card p-7 mb-5 slide-up" key={q.slug}>
         <div className="eyebrow mb-4">Question {String(idx + 1).padStart(2, '0')}</div>
-        <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: q.hint ? 8 : 24 }}>
+        <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 24 }}>
           {q.texte}
         </h2>
-        {q.hint && (
-          <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 20 }}>{q.hint}</p>
-        )}
         <QuestionInput q={q} value={reponses[q.slug] ?? ''} onChange={v => setReponses(prev => ({ ...prev, [q.slug]: v }))} />
       </div>
 
