@@ -100,9 +100,6 @@ export default function MentionsLegales() {
                 <strong style={{ color: 'var(--ink-2)' }}>BAC annuel (Bilan Annuel de Couple) — 19 €/an :</strong> abonnement annuel qui déclenche votre rappel et votre fiche avenant à la date anniversaire de votre couple, et vous permet de refaire l&apos;intégralité des modules si vous souhaitez recommencer le programme. Annulable à tout moment ; le renouvellement n&apos;est jamais automatique sans information préalable.
               </li>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>Garantie :</strong> si après avoir terminé les 7 modules vous n&apos;êtes pas satisfait·s, nous vous remboursons intégralement dans les 30 jours suivant la fin du programme, sans justification.
-              </li>
-              <li>
                 Les tarifs sont indiqués par couple (un seul abonnement pour les deux membres) et peuvent évoluer ; toute modification vous sera communiquée avant d&apos;être appliquée à votre abonnement en cours.
               </li>
             </ul>

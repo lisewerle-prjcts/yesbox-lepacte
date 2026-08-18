@@ -24,6 +24,8 @@ export default async function TableauDeBordPage({
   let partner: { prenom: string | null; email: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
 
+  let mesReponses: { module_id: string; question_slug: string }[] = []
+
   if (profile?.couple_id) {
     const [{ data: mods }, { data: part }, { data: coup }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
@@ -33,6 +35,12 @@ export default async function TableauDeBordPage({
     modules = mods || []
     partner = part
     couple = coup
+
+    const moduleIds = modules.map(m => m.id)
+    if (moduleIds.length) {
+      const { data: reponses } = await supabase.from('reponses').select('module_id, question_slug').eq('user_id', user.id).in('module_id', moduleIds)
+      mesReponses = reponses || []
+    }
   }
 
   const inviteData = await getInviteLink()
@@ -41,12 +49,6 @@ export default async function TableauDeBordPage({
 
   const done = modules.filter(m => m.revealed).length
   const pct = totalModuleCount ? Math.round((done / totalModuleCount) * 100) : 0
-
-  function getPersonalizedTitle(slug: string, defaultTitre: string, role?: string | null): string {
-    if (slug === 'moi') return role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
-    if (slug === 'toi') return role === 'partenaire' ? 'Moi et toi' : 'Toi et moi'
-    return defaultTitre
-  }
 
   function getModStatus(slug: string): 'done' | 'active' | 'paywall' | 'locked' {
     const mod = modules.find(m => m.slug === slug)
@@ -57,14 +59,24 @@ export default async function TableauDeBordPage({
     return 'locked'
   }
 
+  // Ai-je personnellement fini de répondre à ce module ? (moi/toi sont
+  // tous les deux "en_cours" dès le départ pour le couple, mais chaque
+  // membre y répond à son propre rythme — le statut couple ne suffit
+  // pas à savoir où EN suis, MOI.)
+  function iAmDoneWith(slug: string): boolean {
+    const mod = modules.find(m => m.slug === slug)
+    const moduleInfo = effectiveModules.find(m => m.slug === slug)
+    if (!mod || !moduleInfo) return false
+    const answered = new Set(mesReponses.filter(r => r.module_id === mod.id).map(r => r.question_slug))
+    return moduleInfo.questions.every(q => answered.has(q.slug))
+  }
+
   return (
     <div className="fade" style={{ maxWidth: 1000, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
-          {couple?.nom_couple
-            ? <><EditableText id="dashboard.bonjour.avecnom">Bonjour,</EditableText> <span style={{ color: 'var(--brand)' }}>{couple.nom_couple}</span></>
-            : <><EditableText id="dashboard.bonjour.sansnom">Bonjour</EditableText>{profile?.prenom ? `, ${profile.prenom}` : ''}</>}
+          <EditableText id="dashboard.bonjour.sansnom">Bonjour</EditableText>{profile?.prenom ? <>, <span style={{ color: 'var(--brand)' }}>{profile.prenom}</span></> : ''}
         </h1>
         <p style={{ color: 'var(--muted)', fontSize: 14 }}>
           {partner
@@ -108,15 +120,23 @@ export default async function TableauDeBordPage({
 
       {/* Prochaine étape */}
       {profile?.couple_id && (() => {
-        const nextIdx = effectiveModules.findIndex(m => getModStatus(m.slug) === 'active')
+        // "moi"/"toi" sont ouverts en parallèle dès le départ — chacun y
+        // répond à son propre rythme, donc l'étape à proposer ici dépend
+        // de MA propre progression, pas juste du statut couple. Mon ordre
+        // naturel : mon module en premier (gratuit), puis l'autre (payant).
+        const myPairOrder = profile?.role === 'partenaire' ? ['toi', 'moi'] : ['moi', 'toi']
+        const myPairSlug = myPairOrder.find(slug => getModStatus(slug) !== 'locked' && getModStatus(slug) !== 'done' && !iAmDoneWith(slug))
+
+        const nextIdx = myPairSlug
+          ? effectiveModules.findIndex(m => m.slug === myPairSlug)
+          : effectiveModules.findIndex((m, i) => i >= 2 && getModStatus(m.slug) === 'active')
         if (nextIdx === -1) return null
         const next = effectiveModules[nextIdx]
-        const titre = getPersonalizedTitle(next.slug, next.titre, profile?.role)
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.prochaineetape.label">PROCHAINE ÉTAPE</EditableText> · MODULE 0{nextIdx + 1}</p>
-              <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
+              <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{next.titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
             </div>
             <Link href={`/module/${next.slug}`} className="btn-brand">

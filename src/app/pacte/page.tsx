@@ -40,12 +40,6 @@ export default async function PactePage() {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
   }
 
-  function getPersonalizedTitle(slug: string, defaultTitre: string): string {
-    if (slug === 'moi') return profile?.role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
-    if (slug === 'toi') return profile?.role === 'partenaire' ? 'Moi et toi' : 'Toi et moi'
-    return defaultTitre
-  }
-
   function getModStatus(slug: string): 'done' | 'active' | 'locked' {
     const mod = modules?.find((m: Module) => m.slug === slug)
     if (!mod) return 'locked'
@@ -92,7 +86,7 @@ export default async function PactePage() {
                 {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText id="pacte.statut.verrouille">Verrouillé</EditableText></span>}
               </div>
 
-              <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{getPersonalizedTitle(m.slug, m.titre)}</p>
+              <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{m.titre}</p>
 
               {isDone && modData?.connivence_score && (
                 <div className="flex items-center gap-1.5" style={{ fontSize: 13 }}>

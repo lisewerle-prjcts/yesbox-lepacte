@@ -13,6 +13,7 @@ export default async function AdminActionsPage({
   const { data: couples } = await supabase.from('couples').select('id,created_at').order('created_at', { ascending: false })
   const { data: profiles } = await supabase.from('profiles').select('id,prenom,email,couple_id')
   const { data: precommandes } = await supabase.from('precommandes').select('id,prenom,email').order('created_at', { ascending: false })
+  const { data: allModuleStatuses } = await supabase.from('modules').select('couple_id, slug, statut, revealed')
   const effectiveModules = await getEffectiveModules()
   const modules = effectiveModules.map((m, i) => ({ slug: m.slug, name: `M${i + 1} — ${m.titre}` }))
 
@@ -32,6 +33,7 @@ export default async function AdminActionsPage({
         precommandes={precommandes || []}
         defaultCoupleId={couple_id}
         modules={modules}
+        moduleStatuses={allModuleStatuses || []}
       />
     </div>
   )
