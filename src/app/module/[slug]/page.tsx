@@ -17,6 +17,26 @@ export default async function ModulePage({ params }: PageProps) {
   const { data: profile } = await supabase.from('profiles').select('couple_id, role').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')
 
+  // "moi"/"toi" sont une paire jouée en miroir, mais dans un ORDRE
+  // PERSONNEL par rôle : chacun commence par son propre module (gratuit,
+  // auto-décrit) et ne débloque le second (payant, sur le/la partenaire)
+  // qu'une fois le sien terminé. Le statut couple-level "locked" ne
+  // suffit pas ici — les deux modules restent "en_cours" pour le couple
+  // en même temps, seul l'ordre PERSONNEL de chacun verrouille le second.
+  if (slug === 'moi' || slug === 'toi') {
+    const myOrder: [string, string] = profile.role === 'partenaire' ? ['toi', 'moi'] : ['moi', 'toi']
+    if (slug === myOrder[1]) {
+      const firstSlug = myOrder[0]
+      const firstModuleInfo = await getEffectiveModuleBySlug(firstSlug)
+      const { data: firstModuleRow } = await supabase.from('modules').select('id').eq('couple_id', profile.couple_id).eq('slug', firstSlug).single()
+      const { count } = firstModuleRow
+        ? await supabase.from('reponses').select('id', { count: 'exact', head: true }).eq('module_id', firstModuleRow.id).eq('user_id', user.id)
+        : { count: 0 }
+      const iFinishedFirst = !!firstModuleInfo && (count ?? 0) >= firstModuleInfo.questions.length
+      if (!iFinishedFirst) redirect(`/module/${firstSlug}`)
+    }
+  }
+
   // "moi"/"toi" sont une paire jouée en miroir : seul le module 1 est
   // gratuit, mais côté réponses ça se traduit par rôle, pas par slug —
   // le reveal gratuit (à propos de l'initiateur) a besoin des réponses
