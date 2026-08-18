@@ -15,7 +15,7 @@ export default function AbonnementRequisPage() {
         </h1>
         <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28, lineHeight: 1.7 }}>
           <EditableText id="abonnement.texte" multiline>
-            « Moi et toi » — le module gratuit et son reveal croisé — sont terminés. Pour débloquer les modules suivants (Nous, Communication, Conflits, Le Pacte, Le Renouvellement), il vous faut un abonnement actif.
+            Le module 1 gratuit et son reveal sont terminés. Pour découvrir le reveal miroir (à quel point vous connaissez vraiment votre partenaire) et débloquer les modules suivants (Nous, Communication, Conflits, Le Pacte, Le Renouvellement), il vous faut un abonnement actif.
           </EditableText>
         </p>
         <Link href="/tarifs" className="btn-brand lg">

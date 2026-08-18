@@ -25,7 +25,7 @@ export const MODULES: ModuleInfo[] = [
     titre: 'Toi et moi',
     sousTitre: "Ce que je connais de l'autre",
     description: "On croit connaître l'autre par cœur. Cette séance révèle les angles morts, avec tendresse — tes réponses seront comparées à ce que ton/ta partenaire dit de lui/elle-même.",
-    emoji: '👁️', free: true,
+    emoji: '👁️', free: false,
     questions: [
       { slug: 'caractere', type: 'text', texte: "Si on demandait à ses ami·es de décrire le caractère de ton/ta partenaire, que diraient-ils selon toi ?", hint: 'Mets-toi à leur place — trois mots, ou trois phrases.' },
       { slug: 'passion', type: 'text', texte: "Qu'est-ce qui passionne vraiment ton/ta partenaire, en ce moment ?", hint: 'Ce qui lui fait perdre la notion du temps.' },
