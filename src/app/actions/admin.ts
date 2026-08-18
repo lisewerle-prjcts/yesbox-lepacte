@@ -26,18 +26,30 @@ function generateTempPassword() {
   return pwd
 }
 
+// Les actions manuelles admin (débloquer/verrouiller/réinitialiser un
+// module) doivent se refléter immédiatement côté membre — sinon
+// l'admin voit le changement en base mais le tableau de bord / la page
+// du module du membre continue d'afficher l'ancien état en cache.
+function revalidateMemberModulePages(slug: string) {
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/actions')
+  revalidatePath('/tableau-de-bord')
+  revalidatePath('/pacte')
+  revalidatePath(`/module/${slug}`)
+  revalidatePath(`/module/${slug}/revelation`)
+}
+
 export async function adminUnlockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
   await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug)
-  revalidatePath('/admin/couples')
-  revalidatePath('/admin/actions')
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
 export async function adminLockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
   await supabase.from('modules').update({ statut: 'locked', revealed: false, connivence_score: null, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
-  revalidatePath('/admin/couples')
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
@@ -65,7 +77,7 @@ export async function adminRevealModule(coupleId: string, slug: string) {
     }
   }
 
-  revalidatePath('/admin/couples')
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
@@ -76,7 +88,7 @@ export async function adminResetModule(coupleId: string, slug: string) {
     await supabase.from('reponses').delete().eq('module_id', mod.id)
     await supabase.from('modules').update({ statut: 'en_cours', revealed: false, connivence_score: null, revealed_at: null, completed_at: null }).eq('id', mod.id)
   }
-  revalidatePath('/admin/couples')
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
