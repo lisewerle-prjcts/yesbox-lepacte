@@ -32,7 +32,10 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
     return init
   })
   const [saving, setSaving] = useState(false)
-  const [done, setDone] = useState(moduleData.statut === 'complete')
+  const [done, setDone] = useState(() => moduleInfo.questions.every(qq => {
+    const r = mesReponses.find(r => r.question_slug === qq.slug)
+    return r?.valeur !== undefined && r.valeur !== ''
+  }))
 
   const q = moduleInfo.questions[idx]
   const total = moduleInfo.questions.length

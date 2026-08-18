@@ -544,3 +544,71 @@ begin
   on conflict (couple_id, slug) do nothing;
 end;
 $$;
+
+-- ============================================================
+-- REVEAL CROISÉ MOI/TOI + ABONNEMENT (v10)
+-- "moi" et "toi" forment désormais une paire gratuite jouée en
+-- parallèle : chacun répond aux deux (questions reformulées en
+-- miroir "sur moi" / "sur l'autre", mêmes slugs de thème dans les
+-- deux modules) et le reveal croise "mes réponses sur moi" avec
+-- "les réponses de mon/ma partenaire sur moi". Les deux doivent donc
+-- être déverrouillés dès l'inscription, plus seulement "moi".
+-- La v9 avait perdu ce déverrouillage initial (tout partait "locked").
+-- ============================================================
+create or replace function public.initialiser_modules_couple(p_couple_id uuid)
+returns void language plpgsql security definer as $$
+declare
+  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
+  s text;
+  r record;
+begin
+  foreach s in array slugs loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, s, case when s in ('moi', 'toi') then 'en_cours' else 'locked' end)
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+
+  for r in select slug from public.module_definitions loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, r.slug, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+end;
+$$;
+
+-- Rattrapage pour les couples déjà créés avant ce correctif : la v9
+-- les avait tous fait démarrer avec "moi" verrouillé (module vitrine
+-- inaccessible). On débloque "moi"/"toi" pour tout couple qui ne les
+-- a pas encore commencés ou terminés, sans toucher à ceux déjà en
+-- cours, complétés ou révélés.
+update public.modules
+set statut = 'en_cours'
+where slug in ('moi', 'toi') and statut = 'locked';
+
+-- Abonnement du couple, activé manuellement par l'admin depuis
+-- /admin/couples. La paire "moi"/"toi" reste gratuite et accessible
+-- sans abonnement ; à partir du module suivant, l'accès est bloqué
+-- tant que ce champ n'est pas activé.
+alter table public.couples add column if not exists abonnement_actif boolean not null default false;
+
+-- La policy "couple_member_update" laisse les membres d'un couple
+-- modifier leur propre ligne (nom du couple, anniversaire, pacte…).
+-- Sans garde-fou, un membre pourrait s'auto-activer un abonnement en
+-- appelant directement l'API Supabase avec sa propre session. Ce
+-- trigger annule silencieusement toute modification de
+-- abonnement_actif qui ne vient pas du service role (donc pas de
+-- l'admin, qui passe par createAdminClient()).
+create or replace function public.protect_abonnement_actif()
+returns trigger language plpgsql as $$
+begin
+  if auth.role() in ('authenticated', 'anon') then
+    new.abonnement_actif := old.abonnement_actif;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_protect_abonnement_actif on public.couples;
+create trigger trg_protect_abonnement_actif
+before update on public.couples
+for each row execute function public.protect_abonnement_actif();

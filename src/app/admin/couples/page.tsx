@@ -6,7 +6,7 @@ export default async function AdminCouples() {
   const supabase = createAdminClient()
 
   const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules] = await Promise.all([
-    supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at').order('numero', { ascending: true }),
+    supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, abonnement_actif, created_at').order('numero', { ascending: true }),
     supabase.from('profiles').select('id, prenom, nom, email, couple_id, role').order('email'),
     getEffectiveModules(),
   ])
@@ -51,6 +51,7 @@ export default async function AdminCouples() {
       pairing_code: couple.pairing_code,
       nom_couple: couple.nom_couple,
       date_anniversaire: couple.date_anniversaire,
+      abonnement_actif: couple.abonnement_actif,
       created_at: couple.created_at,
       members: membersWithProgress,
       modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, connivence_score: m.connivence_score })),

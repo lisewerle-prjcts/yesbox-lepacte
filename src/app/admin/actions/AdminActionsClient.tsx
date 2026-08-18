@@ -10,17 +10,22 @@ import {
 interface Couple { id: string; created_at: string; members: { prenom?: string; email: string }[] }
 interface Precommande { id: string; prenom: string; email: string }
 interface ModuleInfo { slug: string; name: string }
+interface ModuleStatus { couple_id: string; slug: string; statut: string; revealed: boolean }
+
+const STATUS_LABEL: Record<string, string> = { locked: '🔒 Verrouillé', en_cours: '✏️ En cours', complete: '✓ Terminé' }
 
 export default function AdminActionsClient({
   couples,
   precommandes,
   defaultCoupleId,
   modules,
+  moduleStatuses,
 }: {
   couples: Couple[]
   precommandes: Precommande[]
   defaultCoupleId?: string
   modules: ModuleInfo[]
+  moduleStatuses: ModuleStatus[]
 }) {
   const [selectedCouple, setSelectedCouple] = useState(defaultCoupleId || couples[0]?.id || '')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
@@ -77,9 +82,19 @@ export default function AdminActionsClient({
           <div className="space-y-3">
             {modules.map(({ slug, name }) => {
               const base = `${selectedCouple}-${slug}`
+              const status = moduleStatuses.find(m => m.couple_id === selectedCouple && m.slug === slug)
+              const statusLabel = status?.revealed ? '★ Révélé' : STATUS_LABEL[status?.statut || 'locked']
               return (
                 <div key={slug} className="surface p-3 flex items-center justify-between gap-3 flex-wrap">
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>{name}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>{name}</span>
+                    <span
+                      className="px-2 py-0.5 rounded-full font-mono"
+                      style={{ fontSize: 11, background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--muted)' }}
+                    >
+                      {statusLabel}
+                    </span>
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {[
                       { key: `unlock-${base}`, icon: <Unlock className="w-3.5 h-3.5" />, label: 'Débloquer', fn: () => adminUnlockModule(selectedCouple, slug), color: 'var(--sage)' },

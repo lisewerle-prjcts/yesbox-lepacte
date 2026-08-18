@@ -18,6 +18,7 @@ interface Props {
   partnerName: string | null
   coupleId: string
   journalContenu: string | null
+  crossNote?: string
 }
 
 const CONNIVENCE_VERDICTS: Record<number, [string, string]> = {
@@ -50,7 +51,7 @@ function answersMatch(q: Question, a: string | undefined, b: string | undefined)
   return false
 }
 
-export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, myName, partnerName, coupleId, journalContenu }: Props) {
+export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, myName, partnerName, coupleId, journalContenu, crossNote }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [connivence, setConnivence] = useState<number>(moduleData.connivence_score ?? 0)
@@ -107,6 +108,9 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
           <p style={{ color: 'var(--dark-muted)', fontSize: 15, maxWidth: 480, margin: '0 auto' }}>
             <EditableText id="revelation.souscritre" multiline>Prenez le temps de lire ce que l&apos;autre a écrit. Sans juger. C&apos;est ça, se choisir.</EditableText>
           </p>
+          {crossNote && (
+            <p style={{ color: 'var(--brand-soft)', fontSize: 13, maxWidth: 480, margin: '10px auto 0' }}>{crossNote}</p>
+          )}
         </div>
 
         {/* Questions */}

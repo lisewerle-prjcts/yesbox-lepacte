@@ -26,42 +26,73 @@ function generateTempPassword() {
   return pwd
 }
 
-export async function adminUnlockModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
-  await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug)
+// Les actions manuelles admin (débloquer/verrouiller/réinitialiser un
+// module) doivent se refléter immédiatement côté membre — sinon
+// l'admin voit le changement en base mais le tableau de bord / la page
+// du module du membre continue d'afficher l'ancien état en cache.
+function revalidateMemberModulePages(slug: string) {
   revalidatePath('/admin/couples')
   revalidatePath('/admin/actions')
+  revalidatePath('/tableau-de-bord')
+  revalidatePath('/pacte')
+  revalidatePath(`/module/${slug}`)
+  revalidatePath(`/module/${slug}/revelation`)
+}
+
+export async function adminUnlockModule(coupleId: string, slug: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  await admin.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug)
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
 export async function adminLockModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
-  await supabase.from('modules').update({ statut: 'locked', revealed: false, connivence_score: null, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
-  revalidatePath('/admin/couples')
+  await assertAdmin()
+  const admin = createAdminClient()
+  await admin.from('modules').update({ statut: 'locked', revealed: false, connivence_score: null, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
 export async function adminRevealModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
-  await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
-  // Déverrouille le suivant
+  await assertAdmin()
+  const admin = createAdminClient()
+  await admin.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
+
   const ordre = (await getEffectiveModules()).map(m => m.slug)
-  const idx = ordre.indexOf(slug)
-  if (idx >= 0 && idx < ordre.length - 1) {
-    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idx + 1])
+
+  // "moi" et "toi" forment une paire jouée en parallèle : ne déverrouille
+  // le module suivant que lorsque les deux sont révélés.
+  if (slug === 'moi' || slug === 'toi') {
+    const pairSlug = slug === 'moi' ? 'toi' : 'moi'
+    const { data: pairModule } = await admin.from('modules').select('revealed').eq('couple_id', coupleId).eq('slug', pairSlug).single()
+    if (pairModule?.revealed) {
+      const idxToi = ordre.indexOf('toi')
+      if (idxToi >= 0 && idxToi < ordre.length - 1) {
+        await admin.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idxToi + 1])
+      }
+    }
+  } else {
+    const idx = ordre.indexOf(slug)
+    if (idx >= 0 && idx < ordre.length - 1) {
+      await admin.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idx + 1])
+    }
   }
-  revalidatePath('/admin/couples')
+
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
 export async function adminResetModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
-  const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).single()
+  await assertAdmin()
+  const admin = createAdminClient()
+  const { data: mod } = await admin.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).single()
   if (mod) {
-    await supabase.from('reponses').delete().eq('module_id', mod.id)
-    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, connivence_score: null, revealed_at: null, completed_at: null }).eq('id', mod.id)
+    await admin.from('reponses').delete().eq('module_id', mod.id)
+    await admin.from('modules').update({ statut: 'en_cours', revealed: false, connivence_score: null, revealed_at: null, completed_at: null }).eq('id', mod.id)
   }
-  revalidatePath('/admin/couples')
+  revalidateMemberModulePages(slug)
   return { success: true }
 }
 
@@ -316,7 +347,7 @@ export async function adminCreateEmptyCouple() {
   return { success: true, coupleId: data.id, numero: refreshed?.numero }
 }
 
-export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null; pairing_code?: string | null }) {
+export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null; pairing_code?: string | null; abonnement_actif?: boolean }) {
   await assertAdmin()
   const admin = createAdminClient()
   const { error } = await admin.from('couples').update(fields).eq('id', coupleId)

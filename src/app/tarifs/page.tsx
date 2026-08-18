@@ -8,7 +8,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { Check, ArrowRight } from 'lucide-react'
 
 const FREE_FEATURES = ['Module "Moi et toi" pour chaque membre du couple', '5 questions introspectives', 'Espace couple privé', 'Aucune carte bancaire requise']
-const PRO_FEATURES = ['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé']
+const PRO_FEATURES = ['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple personnalisé']
 const BAC_FEATURES = ['Rappel annuel à votre date anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous voulez recommencer', 'Nouvelles questions chaque année', 'Annulable à tout moment']
 
 export default function TarifsPage() {
@@ -89,15 +89,6 @@ export default function TarifsPage() {
             ))}
             <Link href="/inscription" className="btn-ghost justify-center mt-auto"><EditableText id="tarifs.bac.cta">Plus tard, dans l&apos;app</EditableText></Link>
           </div>
-        </div>
-
-        {/* Garantie */}
-        <div className="card p-6 text-center" style={{ maxWidth: 520, margin: '0 auto' }}>
-          <div className="text-3xl mb-3">🛡️</div>
-          <h3 className="font-serif font-bold mb-2" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="tarifs.garantie.titre">Garantie 30 jours</EditableText></h3>
-          <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7 }}>
-            <EditableText id="tarifs.garantie.texte" multiline>Si après avoir terminé les 7 modules vous n&apos;êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu&apos;on croit vraiment à ce programme.</EditableText>
-          </p>
         </div>
 
         <p className="text-center mt-8" style={{ fontSize: 12, color: 'var(--muted)' }}>

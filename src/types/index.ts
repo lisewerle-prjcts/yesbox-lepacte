@@ -23,6 +23,7 @@ export interface Couple {
   invite_token_expires_at: string | null
   invite_used: boolean
   pairing_code: string | null
+  abonnement_actif: boolean
   created_at: string
   updated_at: string
 }

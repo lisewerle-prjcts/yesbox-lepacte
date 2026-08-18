@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Download } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Download, CreditCard } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
   adminUpdateCouple, adminDeleteCouple, adminUpdateProfile, adminGetCoupleArchive,
@@ -18,6 +18,7 @@ interface Couple {
   pairing_code: string | null
   nom_couple: string | null
   date_anniversaire: string | null
+  abonnement_actif: boolean
   created_at: string
   members: MemberProgress[]
   modules: ModuleStatus[]
@@ -133,6 +134,17 @@ function CoupleCard({
     router.refresh()
   }
 
+  async function toggleAbonnement() {
+    setBusy(true)
+    const res = await adminUpdateCouple(couple.id, { abonnement_actif: !couple.abonnement_actif })
+    setBusy(false)
+    if (res?.error) {
+      alert(res.error)
+      return
+    }
+    router.refresh()
+  }
+
   async function unassign(memberId: string) {
     setBusy(true)
     await adminUnassignMember(memberId)
@@ -163,6 +175,19 @@ function CoupleCard({
             </span>
           )}
           {couple.nom_couple && <span style={{ fontSize: 13, fontWeight: 600 }}>{couple.nom_couple}</span>}
+          <button
+            onClick={toggleAbonnement}
+            disabled={busy}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+            style={{
+              background: couple.abonnement_actif ? 'var(--sage-soft, #e2ece4)' : 'var(--paper)',
+              border: `1px solid ${couple.abonnement_actif ? 'var(--sage)' : 'var(--line)'}`,
+              color: couple.abonnement_actif ? 'var(--sage)' : 'var(--muted)',
+            }}
+            title="Activer/désactiver l'abonnement de ce couple"
+          >
+            <CreditCard className="w-3 h-3" /> {couple.abonnement_actif ? 'Abonné' : 'Non abonné'}
+          </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>

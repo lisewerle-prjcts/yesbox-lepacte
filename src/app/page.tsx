@@ -52,7 +52,7 @@ const CDD_ROWS = [
 ]
 
 const FREE_FEATURES = ['Module "Moi et toi" pour chaque membre', 'Questions personnelles', 'Espace couple privé']
-const PRO_FEATURES = ['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'Garantie 30 jours']
+const PRO_FEATURES = ['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple']
 const BAC_FEATURES = ['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous le souhaitez', 'Annulable à tout moment']
 
 export default function LandingPage() {
