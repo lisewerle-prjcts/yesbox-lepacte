@@ -28,6 +28,12 @@ export default function InscriptionPage() {
 
   async function handleAction(formData: FormData) {
     setError(null)
+    const password = formData.get('password') as string
+    const passwordConfirm = formData.get('password_confirm') as string
+    if (password !== passwordConfirm) {
+      setError('Les deux mots de passe ne correspondent pas')
+      return
+    }
     const result = await inscription(formData)
     if (result?.error) setError(result.error)
     else if (result?.needsConfirmation) setConfirmationEmail(result.email)
@@ -147,6 +153,21 @@ export default function InscriptionPage() {
             </div>
 
             <div>
+              <label htmlFor="password_confirm" className="label">
+                <EditableText id="inscription.field.passwordconfirm">Confirme ton mot de passe</EditableText>
+              </label>
+              <input
+                id="password_confirm"
+                name="password_confirm"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Retape ton mot de passe"
+                autoComplete="new-password"
+                required
+                className="input-field"
+              />
+            </div>
+
+            <div>
               <label htmlFor="partner_code" className="label">
                 <EditableText id="inscription.field.code">Code de ton/ta partenaire</EditableText> <span className="text-gray-400 font-normal">(optionnel)</span>
               </label>
@@ -154,13 +175,13 @@ export default function InscriptionPage() {
                 id="partner_code"
                 name="partner_code"
                 type="text"
-                placeholder="Ex : A3F9K2"
-                maxLength={6}
+                placeholder="Ex : A3F9K"
+                maxLength={5}
                 autoCapitalize="characters"
                 className="input-field uppercase"
               />
               <p className="text-xs text-gray-400 mt-1">
-                <EditableText id="inscription.field.code.aide" multiline>Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 6 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.</EditableText>
+                <EditableText id="inscription.field.code.aide" multiline>Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 5 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.</EditableText>
               </p>
             </div>
 

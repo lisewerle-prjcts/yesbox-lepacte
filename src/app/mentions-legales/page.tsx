@@ -115,7 +115,7 @@ export default function MentionsLegales() {
             </p>
             <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>Pairage du couple :</strong> le premier membre qui crée son profil obtient un code unique de 6 lettres/chiffres. Le second membre saisit ce code lors de son inscription (ou plus tard, depuis son espace) pour rejoindre le même couple. Un couple ne peut compter que deux membres.
+                <strong style={{ color: 'var(--ink-2)' }}>Pairage du couple :</strong> le premier membre qui crée son profil obtient un code unique de 5 lettres/chiffres. Le second membre saisit ce code lors de son inscription (ou plus tard, depuis son espace) pour rejoindre le même couple. Un couple ne peut compter que deux membres.
               </li>
               <li>
                 <strong style={{ color: 'var(--ink-2)' }}>Réponses individuelles :</strong> chaque membre répond seul aux questions de chaque module. Aucun des deux ne peut voir les réponses de l&apos;autre avant que le module ne soit marqué « révélé ».

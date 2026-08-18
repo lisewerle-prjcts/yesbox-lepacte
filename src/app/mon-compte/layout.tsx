@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { isCouplePaired } from '@/lib/couple-status'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 
-export const metadata = { title: 'Accueil' }
-
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function MonCompteLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')

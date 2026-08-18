@@ -33,9 +33,34 @@ export async function creerCouple(formData: FormData) {
   if (profileError) return { error: profileError.message }
 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await admin.rpc('renumeroter_couples')
 
   revalidatePath('/tableau-de-bord')
   return { success: true, couple, inviteToken: couple.invite_token }
+}
+
+export async function creerCoupleSolo(userId: string) {
+  const admin = createAdminClient()
+
+  const { data: couple, error: coupleError } = await admin
+    .from('couples')
+    .insert({})
+    .select()
+    .single()
+
+  if (coupleError) return { error: coupleError.message }
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .update({ couple_id: couple.id, role: 'initiateur' })
+    .eq('id', userId)
+
+  if (profileError) return { error: profileError.message }
+
+  await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await admin.rpc('renumeroter_couples')
+
+  return { success: true, couple }
 }
 
 export async function rejoindreCouple(token: string) {
@@ -60,8 +85,8 @@ export async function rejoindreCoupleParCode(userId: string, code: string) {
   const supabase = await createClient()
 
   const cleanCode = code.trim().toUpperCase()
-  if (!/^[A-Z0-9]{6}$/.test(cleanCode)) {
-    return { error: 'Le code doit contenir 6 lettres/chiffres' }
+  if (!/^[A-Z0-9]{5}$/.test(cleanCode)) {
+    return { error: 'Le code doit contenir 5 lettres/chiffres' }
   }
 
   const { data, error } = await supabase.rpc('rejoindre_couple_via_code', {
@@ -73,7 +98,6 @@ export async function rejoindreCoupleParCode(userId: string, code: string) {
   if (!data.success) return { error: data.error }
 
   revalidatePath('/tableau-de-bord')
-  revalidatePath('/inviter-partenaire')
   return { success: true, coupleId: data.couple_id }
 }
 
@@ -85,6 +109,24 @@ export async function rejoindrePartenaireParCode(formData: FormData) {
 
   const code = formData.get('code') as string
   return rejoindreCoupleParCode(user.id, code)
+}
+
+export async function enregistrerPacteTexte(texte: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
+  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
+
+  const { error } = await supabase
+    .from('couples')
+    .update({ pacte_texte: texte, pacte_modifie_par: user.id, pacte_modifie_le: new Date().toISOString() })
+    .eq('id', profile.couple_id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/pacte')
+  return { success: true }
 }
 
 export async function getInviteLink() {

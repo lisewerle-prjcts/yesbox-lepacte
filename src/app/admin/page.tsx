@@ -1,29 +1,33 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import Link from 'next/link'
 
 export default async function AdminHome() {
   const supabase = createAdminClient()
 
   const [
-    { count: totalPrecommandes },
-    { count: totalCouples },
     { count: totalUsers },
-    { data: recentPrecommandes },
+    { data: allCouples },
+    { data: completeModules },
     { data: modulesStats },
+    effectiveModules,
   ] = await Promise.all([
-    supabase.from('precommandes').select('*', { count: 'exact', head: true }),
-    supabase.from('couples').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('precommandes').select('prenom,nom,email,partner_prenom,adresse,message,created_at').order('created_at', { ascending: false }).limit(10),
+    supabase.from('couples').select('id'),
+    supabase.from('modules').select('couple_id').eq('statut', 'complete'),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
+    getEffectiveModules(),
   ])
 
-  const moduleSlugs = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
-  const moduleNames: Record<string, string> = {
-    moi: 'Moi et toi', toi: 'Toi et moi', nous: 'Nous',
-    communication: 'Parlons-nous', conflits: 'Les conflits',
-    engagement: 'Le Pacte', renouvellement: 'Le Renouvellement',
-  }
+  const completeCountByCouple: Record<string, number> = {}
+  completeModules?.forEach(m => { completeCountByCouple[m.couple_id] = (completeCountByCouple[m.couple_id] ?? 0) + 1 })
+  const totalCouples = allCouples?.length ?? 0
+  const totalModuleCount = effectiveModules.length
+  const couplesParcoursBac = (allCouples ?? []).filter(c => (completeCountByCouple[c.id] ?? 0) === totalModuleCount).length
+  const couplesParcoursInitial = totalCouples - couplesParcoursBac
+
+  const moduleSlugs = effectiveModules.map(m => m.slug)
+  const moduleNames: Record<string, string> = Object.fromEntries(effectiveModules.map(m => [m.slug, m.titre]))
 
   const statsBySlug = moduleSlugs.map(slug => {
     const rows = (modulesStats || []).filter(m => m.slug === slug)
@@ -37,9 +41,9 @@ export default async function AdminHome() {
   })
 
   const STATS = [
-    { label: 'Pré-commandes', value: totalPrecommandes ?? 0, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Couples inscrits', value: totalCouples ?? 0, color: 'var(--sage)', href: '/admin/couples' },
-    { label: 'Utilisateurs', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/couples' },
+    { label: 'Utilisateurs', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/utilisateurs' },
+    { label: 'Couples — parcours initial', value: couplesParcoursInitial, color: 'var(--brand)', href: '/admin/couples' },
+    { label: 'Couples — parcours BAC', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
   ]
 
   return (
@@ -59,48 +63,21 @@ export default async function AdminHome() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Dernières pré-commandes */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold" style={{ fontSize: 15 }}>Dernières pré-commandes</h2>
-            <span className="tag-brand">{totalPrecommandes ?? 0} total</span>
-          </div>
-          {recentPrecommandes?.length === 0 && <p style={{ fontSize: 13, color: 'var(--muted)' }}>Aucune pré-commande pour l&apos;instant.</p>}
-          <div className="space-y-3">
-            {recentPrecommandes?.map((p, i) => (
-              <div key={i} className="flex items-start justify-between gap-3 py-2" style={{ borderBottom: '1px solid var(--line)', fontSize: 13 }}>
-                <div>
-                  <div className="font-medium">{p.prenom} {p.nom}</div>
-                  <div style={{ color: 'var(--brand)' }}>{p.email}</div>
-                  {p.partner_prenom && <div style={{ color: 'var(--muted)' }}>Partenaire : {p.partner_prenom}</div>}
-                  {p.adresse && <div style={{ color: 'var(--muted)' }}>{p.adresse}</div>}
-                  {p.message && <div style={{ color: 'var(--muted)', fontStyle: 'italic', marginTop: 2 }}>&ldquo;{p.message}&rdquo;</div>}
-                </div>
-                <div className="font-mono flex-shrink-0" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                  {new Date(p.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                </div>
+      {/* Stats modules */}
+      <div className="card p-6">
+        <h2 className="font-semibold mb-4" style={{ fontSize: 15 }}>Avancement par module</h2>
+        <div className="space-y-3">
+          {statsBySlug.map(m => (
+            <div key={m.slug}>
+              <div className="flex justify-between mb-1" style={{ fontSize: 12 }}>
+                <span style={{ color: 'var(--ink-2)' }}>{m.name}</span>
+                <span style={{ color: 'var(--muted)' }}>{m.complete} terminés · {m.revealed} révélés / {m.total}</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats modules */}
-        <div className="card p-6">
-          <h2 className="font-semibold mb-4" style={{ fontSize: 15 }}>Avancement par module</h2>
-          <div className="space-y-3">
-            {statsBySlug.map(m => (
-              <div key={m.slug}>
-                <div className="flex justify-between mb-1" style={{ fontSize: 12 }}>
-                  <span style={{ color: 'var(--ink-2)' }}>{m.name}</span>
-                  <span style={{ color: 'var(--muted)' }}>{m.complete} terminés · {m.revealed} révélés / {m.total}</span>
-                </div>
-                <div className="progress-bar">
-                  <span className="progress-bar-fill" style={{ width: m.total ? `${Math.round(m.complete / m.total * 100)}%` : '0%' }} />
-                </div>
+              <div className="progress-bar">
+                <span className="progress-bar-fill" style={{ width: m.total ? `${Math.round(m.complete / m.total * 100)}%` : '0%' }} />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -62,7 +62,7 @@ create table public.couples (
   invite_token uuid unique default uuid_generate_v4(),
   invite_token_expires_at timestamptz default (now() + interval '7 days'),
   invite_used boolean default false,
-  pairing_code text unique default public.generate_pairing_code(), -- code à 6 caractères pour pairer le/la partenaire
+  pairing_code text unique default public.generate_pairing_code(), -- code à 5 caractères pour pairer le/la partenaire
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -334,3 +334,213 @@ $$;
 -- (les nouvelles inscriptions avec ces adresses deviennent admin automatiquement, cf. handle_new_user)
 update public.profiles set is_admin = true
 where lower(email) in ('lise.werle@gmail.com', 'lise.yesbox@gmail.com');
+
+-- ============================================================
+-- SÉCURITÉ ADMIN (v4) : historique des connexions, rate limiting,
+-- codes de secours 2FA. À exécuter une fois sur un projet existant.
+-- ============================================================
+
+-- Historique des sessions actives du compte connecté (lecture seule, colonnes non sensibles).
+-- security definer : nécessaire pour lire auth.sessions, mais restreint à auth.uid() du côté where.
+create or replace function public.admin_list_own_sessions()
+returns table (
+  id uuid,
+  created_at timestamptz,
+  updated_at timestamptz,
+  user_agent text,
+  ip text,
+  is_current boolean
+)
+language sql security definer set search_path = public, auth as $$
+  select s.id, s.created_at, s.updated_at, s.user_agent, s.ip::text,
+         s.id = (nullif(auth.jwt() ->> 'session_id', ''))::uuid as is_current
+  from auth.sessions s
+  where s.user_id = auth.uid()
+  order by s.updated_at desc;
+$$;
+grant execute on function public.admin_list_own_sessions() to authenticated;
+
+-- Rate limiting sur la page de connexion. Verrouillé aux clients (RLS activée,
+-- aucune policy) : uniquement lisible/modifiable via le service role côté serveur.
+create table if not exists public.login_attempts (
+  email text primary key,
+  attempts integer not null default 0,
+  locked_until timestamptz,
+  updated_at timestamptz not null default now()
+);
+alter table public.login_attempts enable row level security;
+
+-- Codes de secours 2FA à usage unique. Seuls les hashs sont stockés ; jamais
+-- exposés au client sauf au moment de la génération. Verrouillé aux clients
+-- (RLS activée, aucune policy) : uniquement accessible via le service role.
+create table if not exists public.mfa_recovery_codes (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  code_hash text not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+alter table public.mfa_recovery_codes enable row level security;
+create index if not exists mfa_recovery_codes_user_id_idx on public.mfa_recovery_codes(user_id);
+
+-- ============================================================
+-- COMPTE UTILISATEUR & PACTE PARTAGÉ (v5)
+-- Nom de famille, document de pacte partagé, code de pairage à 5
+-- caractères (créé dès l'inscription). À exécuter une fois.
+-- ============================================================
+
+alter table public.profiles add column if not exists nom text;
+
+alter table public.couples add column if not exists pacte_texte text;
+alter table public.couples add column if not exists pacte_modifie_par uuid references public.profiles(id);
+alter table public.couples add column if not exists pacte_modifie_le timestamptz;
+
+-- Le code de pairage passe de 6 à 5 caractères (le couple est désormais
+-- créé dès l'inscription, avant même que le/la partenaire n'ait de nom
+-- de couple ou de date à renseigner).
+create or replace function public.generate_pairing_code()
+returns text language plpgsql as $$
+declare
+  chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; -- sans I/O pour éviter la confusion avec 1/0
+  code text;
+begin
+  loop
+    code := '';
+    for i in 1..5 loop
+      code := code || substr(chars, floor(random() * length(chars))::int + 1, 1);
+    end loop;
+    exit when not exists (select 1 from public.couples where pairing_code = code);
+  end loop;
+  return code;
+end;
+$$;
+
+-- ============================================================
+-- CORRECTIONS ADMIN (v6)
+-- Modules verrouillés par défaut, numéros de couple réaffectés
+-- après suppression. À exécuter une fois.
+-- ============================================================
+
+-- Tous les modules démarrent verrouillés — l'admin les débloque
+-- manuellement depuis Actions manuelles (avant le 1er septembre, plus
+-- aucun module ne se débloque automatiquement à la création du couple).
+create or replace function public.initialiser_modules_couple(p_couple_id uuid)
+returns void language plpgsql security definer as $$
+declare
+  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
+  s text;
+begin
+  foreach s in array slugs loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, s, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+end;
+$$;
+
+-- Le numéro de couple n'est plus une identity auto-incrémentée (qui ne
+-- réutilise jamais les numéros supprimés) : c'est désormais une colonne
+-- normale, réaffectée par renumeroter_couples() à chaque création ou
+-- suppression, pour que la numérotation reste toujours 1..N sans trou.
+alter table public.couples alter column numero drop identity if exists;
+
+create or replace function public.renumeroter_couples()
+returns void language plpgsql security definer as $$
+begin
+  with ordered as (
+    select id, row_number() over (order by created_at) as rn
+    from public.couples
+  )
+  update public.couples c set numero = o.rn
+  from ordered o
+  where c.id = o.id;
+end;
+$$;
+
+select public.renumeroter_couples();
+
+-- ============================================================
+-- CORRECTIF (v7)
+-- profiles.couple_id n'avait jamais de vraie clé étrangère vers
+-- couples : PostgREST ne peut pas résoudre les jointures imbriquées
+-- `couples(...)` utilisées sur Mon compte, Notre Pacte et la page
+-- Utilisateurs (elles échouent silencieusement et renvoient vide).
+-- À exécuter une fois.
+-- ============================================================
+alter table public.profiles
+  add constraint profiles_couple_id_fkey foreign key (couple_id) references public.couples(id) on delete set null;
+
+-- ============================================================
+-- CORRECTIF (v8)
+-- Le v6 a retiré l'auto-génération de couples.numero (drop identity)
+-- mais la colonne est restée NOT NULL sans valeur par défaut : toute
+-- création de couple échouait donc à l'insertion (avant même que
+-- renumeroter_couples() puisse s'exécuter). C'était la vraie cause du
+-- comptage incohérent et de "Ajouter un couple" qui ne faisait rien.
+-- À exécuter une fois.
+-- ============================================================
+alter table public.couples alter column numero drop not null;
+
+-- ============================================================
+-- MODULES PERSONNALISÉS (v9)
+-- Permet à l'admin de créer de nouveaux modules (en plus des 7
+-- fixes) depuis Admin > Contenu. Les questions d'un module
+-- personnalisé passent par le même mécanisme de "questions
+-- ajoutées" déjà utilisé pour les modules existants
+-- (module_questions_override::<slug> dans settings) — pas besoin
+-- de stocker les questions ici, seulement les métadonnées du module.
+-- À exécuter une fois.
+-- ============================================================
+create table public.module_definitions (
+  id uuid primary key default uuid_generate_v4(),
+  slug text unique not null,
+  ordre numeric not null,
+  titre text not null,
+  sous_titre text,
+  description text,
+  emoji text default '✦',
+  gratuit boolean not null default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table public.module_definitions enable row level security;
+-- Aucune policy : accessible uniquement via le service role côté serveur
+-- (lecture faite dans getEffectiveModules() avec le client admin, comme
+-- pour les overrides de questions dans settings).
+
+-- Le slug n'est plus limité aux 7 valeurs fixes.
+alter table public.modules drop constraint if exists modules_slug_check;
+
+-- initialiser_modules_couple boucle désormais aussi sur les modules
+-- personnalisés pour semer une ligne verrouillée par couple.
+create or replace function public.initialiser_modules_couple(p_couple_id uuid)
+returns void language plpgsql security definer as $$
+declare
+  slugs text[] := array['moi','toi','nous','communication','conflits','engagement','renouvellement'];
+  s text;
+  r record;
+begin
+  foreach s in array slugs loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, s, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+
+  for r in select slug from public.module_definitions loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, r.slug, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+end;
+$$;
+
+-- Ajoute rétroactivement une ligne verrouillée pour un nouveau module
+-- personnalisé, chez tous les couples déjà inscrits.
+create or replace function public.backfill_module_pour_tous_les_couples(p_slug text)
+returns void language plpgsql security definer as $$
+begin
+  insert into public.modules (couple_id, slug, statut)
+  select id, p_slug, 'locked' from public.couples
+  on conflict (couple_id, slug) do nothing;
+end;
+$$;

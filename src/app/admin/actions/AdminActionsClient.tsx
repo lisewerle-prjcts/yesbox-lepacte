@@ -7,24 +7,20 @@ import {
   adminResetModule, adminSendEmail,
 } from '@/app/actions/admin'
 
-const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
-const NAMES: Record<string,string> = {
-  moi:'M1 — Moi et toi',toi:'M2 — Toi et moi',nous:'M3 — Nous',
-  communication:'M4 — Parlons-nous',conflits:'M5 — Les conflits',
-  engagement:'M6 — Le Pacte',renouvellement:'M7 — Renouvellement',
-}
-
 interface Couple { id: string; created_at: string; members: { prenom?: string; email: string }[] }
 interface Precommande { id: string; prenom: string; email: string }
+interface ModuleInfo { slug: string; name: string }
 
 export default function AdminActionsClient({
   couples,
   precommandes,
   defaultCoupleId,
+  modules,
 }: {
   couples: Couple[]
   precommandes: Precommande[]
   defaultCoupleId?: string
+  modules: ModuleInfo[]
 }) {
   const [selectedCouple, setSelectedCouple] = useState(defaultCoupleId || couples[0]?.id || '')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
@@ -79,11 +75,11 @@ export default function AdminActionsClient({
           <h2 className="font-semibold mb-1" style={{ fontSize: 15 }}>Modules — <em style={{ color: 'var(--brand)', fontStyle: 'normal' }}>{coupleLabel}</em></h2>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Déclenche manuellement les transitions de chaque module.</p>
           <div className="space-y-3">
-            {SLUGS.map(slug => {
+            {modules.map(({ slug, name }) => {
               const base = `${selectedCouple}-${slug}`
               return (
                 <div key={slug} className="surface p-3 flex items-center justify-between gap-3 flex-wrap">
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>{NAMES[slug]}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{name}</span>
                   <div className="flex gap-2 flex-wrap">
                     {[
                       { key: `unlock-${base}`, icon: <Unlock className="w-3.5 h-3.5" />, label: 'Débloquer', fn: () => adminUnlockModule(selectedCouple, slug), color: 'var(--sage)' },

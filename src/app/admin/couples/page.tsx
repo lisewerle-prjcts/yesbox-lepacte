@@ -2,12 +2,10 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import CouplesClient from './CouplesClient'
 
-const SLUGS = ['moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement']
-
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const [{ data: couples }, { data: profiles }, effectiveModules] = await Promise.all([
+  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules] = await Promise.all([
     supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at').order('numero', { ascending: true }),
     supabase.from('profiles').select('id, prenom, nom, email, couple_id, role').order('email'),
     getEffectiveModules(),
@@ -15,6 +13,7 @@ export default async function AdminCouples() {
 
   const questionCountBySlug: Record<string, number> = {}
   for (const m of effectiveModules) questionCountBySlug[m.slug] = m.questions.length
+  const SLUGS = effectiveModules.map(m => m.slug)
 
   const coupleIds = (couples || []).map(c => c.id)
 
@@ -64,7 +63,12 @@ export default async function AdminCouples() {
         <h1 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>Couples & progression</h1>
         <span className="tag-muted">{couplesData.length} couple{couplesData.length > 1 ? 's' : ''}</span>
       </div>
-      <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} />
+      {couplesError && (
+        <div className="card p-4 mb-4" style={{ borderColor: '#dc2626', fontSize: 13, color: '#dc2626' }}>
+          Erreur lors du chargement des couples : {couplesError.message}
+        </div>
+      )}
+      <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} moduleSlugs={SLUGS} />
     </div>
   )
 }

@@ -1,35 +1,22 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import type { createClient } from '@/lib/supabase/server'
 import { randomInt } from 'crypto'
 import nodemailer from 'nodemailer'
 import { normalizeOverrides, emptyOverrides, getEffectiveModules, type ModuleContentOverrides, type QuestionOverride } from '@/lib/modules-effective'
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
+import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
+import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { MODULES } from '@/lib/modules-data'
 import type { QuestionType, Question } from '@/types'
 
-async function assertAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
-  if (!profile?.is_admin) throw new Error('Accès refusé')
-  return supabase
-}
-
-function getMailTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
-  })
-}
-
-function mailHtml(body: string) {
-  return `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fbf8f3;border-radius:16px;overflow:hidden;">
-    <div style="background:#c5256e;padding:24px 32px;"><p style="color:white;font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">YES BOX — Le Pacte</p></div>
-    <div style="padding:32px;color:#1a1816;font-size:15px;line-height:1.7;">${body}</div>
-    <div style="background:#1a1816;padding:16px 32px;text-align:center;"><p style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin:0;">YES BOX · yesbox-lepacte.fr</p></div>
-  </div>`
+function revalidateModuleLists() {
+  revalidatePath('/admin/contenu')
+  revalidatePath('/admin/couples')
+  revalidatePath('/admin/actions')
+  revalidatePath('/', 'layout')
 }
 
 function generateTempPassword() {
@@ -38,8 +25,6 @@ function generateTempPassword() {
   for (let i = 0; i < 12; i++) pwd += chars[randomInt(chars.length)]
   return pwd
 }
-
-const SLUGS = ['moi','toi','nous','communication','conflits','engagement','renouvellement']
 
 export async function adminUnlockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
@@ -60,9 +45,10 @@ export async function adminRevealModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
   await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
   // Déverrouille le suivant
-  const idx = SLUGS.indexOf(slug)
-  if (idx >= 0 && idx < SLUGS.length - 1) {
-    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', SLUGS[idx + 1])
+  const ordre = (await getEffectiveModules()).map(m => m.slug)
+  const idx = ordre.indexOf(slug)
+  if (idx >= 0 && idx < ordre.length - 1) {
+    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idx + 1])
   }
   revalidatePath('/admin/couples')
   return { success: true }
@@ -88,7 +74,7 @@ export async function adminSendEmail(to: string, subject: string, body: string) 
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
   })
   await transporter.sendMail({
-    from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+    from: '"YES BOX" <lise.yesbox@gmail.com>',
     to,
     subject,
     html: `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fbf8f3;border-radius:16px;overflow:hidden;">
@@ -253,11 +239,13 @@ export async function adminUnassignMember(userId: string) {
 export async function adminCreateEmptyCouple() {
   await assertAdmin()
   const admin = createAdminClient()
-  const { data, error } = await admin.from('couples').insert({}).select('id, numero').single()
+  const { data, error } = await admin.from('couples').insert({}).select('id').single()
   if (error) return { error: error.message }
+  await admin.rpc('renumeroter_couples')
+  const { data: refreshed } = await admin.from('couples').select('numero').eq('id', data.id).single()
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
-  return { success: true, coupleId: data.id, numero: data.numero }
+  return { success: true, coupleId: data.id, numero: refreshed?.numero }
 }
 
 export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null; pairing_code?: string | null }) {
@@ -288,6 +276,7 @@ export async function adminDeleteCouple(coupleId: string) {
   await admin.from('profiles').update({ couple_id: null, role: null }).eq('couple_id', coupleId)
   const { error } = await admin.from('couples').delete().eq('id', coupleId)
   if (error) return { error: error.message }
+  await admin.rpc('renumeroter_couples')
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
   return { success: true }
@@ -311,7 +300,7 @@ export async function adminResetAndSendPassword(userId: string) {
 
   const transporter = getMailTransporter()
   await transporter.sendMail({
-    from: `"YES BOX" <${process.env.GMAIL_USER}>`,
+    from: '"YES BOX" <lise.yesbox@gmail.com>',
     to: email,
     subject: 'Ton nouveau mot de passe YES BOX',
     html: mailHtml(`
@@ -323,6 +312,23 @@ export async function adminResetAndSendPassword(userId: string) {
   })
 
   return { success: true, password: newPassword, emailed: true }
+}
+
+export async function adminRenvoyerCodeCouple(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data: profile } = await admin.from('profiles').select('email, prenom, couple_id').eq('id', userId).single()
+  if (!profile?.email) return { error: 'Utilisateur introuvable' }
+  if (!profile.couple_id) return { error: 'Cet utilisateur n\'a pas de couple' }
+
+  const { data: couple } = await admin.from('couples').select('pairing_code').eq('id', profile.couple_id).single()
+  if (!couple?.pairing_code) return { error: 'Code couple introuvable' }
+
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
+
+  await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
+  return { success: true }
 }
 
 export async function adminDeleteUser(userId: string) {
@@ -340,6 +346,7 @@ export async function adminDeleteUser(userId: string) {
     if (!count) await admin.from('couples').delete().eq('id', coupleId)
   }
 
+  revalidatePath('/admin/utilisateurs')
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
   return { success: true }
@@ -424,4 +431,76 @@ export async function adminGetCoupleArchive(coupleId: string) {
     filename: `yesbox-couple-${couple.numero}-archive.txt`,
     content: lines.join('\n'),
   }
+}
+
+interface NewModuleInput {
+  slug: string
+  ordre: number
+  titre: string
+  sousTitre?: string
+  description?: string
+  emoji?: string
+  gratuit: boolean
+}
+
+export async function adminCreateModule(input: NewModuleInput) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const slug = input.slug.trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '')
+  if (!slug) return { error: 'Slug invalide' }
+  if (!input.titre.trim()) return { error: 'Le titre est requis' }
+  if (MODULES.some(m => m.slug === slug)) return { error: 'Ce slug est déjà utilisé par un module existant' }
+
+  const { error } = await admin.from('module_definitions').insert({
+    slug,
+    ordre: input.ordre,
+    titre: input.titre.trim(),
+    sous_titre: input.sousTitre?.trim() || null,
+    description: input.description?.trim() || null,
+    emoji: input.emoji?.trim() || '✦',
+    gratuit: input.gratuit,
+  })
+  if (error) return { error: error.message.includes('duplicate') ? 'Ce slug est déjà utilisé' : error.message }
+
+  await admin.rpc('backfill_module_pour_tous_les_couples', { p_slug: slug })
+
+  revalidateModuleLists()
+  return { success: true, slug }
+}
+
+export async function adminUpdateModule(id: string, fields: {
+  titre?: string; sousTitre?: string; description?: string; emoji?: string; gratuit?: boolean; ordre?: number
+}) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const patch: Record<string, string | number | boolean | null> = { updated_at: new Date().toISOString() }
+  if (fields.titre !== undefined) patch.titre = fields.titre.trim()
+  if (fields.sousTitre !== undefined) patch.sous_titre = fields.sousTitre.trim() || null
+  if (fields.description !== undefined) patch.description = fields.description.trim() || null
+  if (fields.emoji !== undefined) patch.emoji = fields.emoji.trim() || '✦'
+  if (fields.gratuit !== undefined) patch.gratuit = fields.gratuit
+  if (fields.ordre !== undefined) patch.ordre = fields.ordre
+
+  const { error } = await admin.from('module_definitions').update(patch).eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidateModuleLists()
+  return { success: true }
+}
+
+export async function adminDeleteModule(id: string, slug: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  await admin.from('modules').delete().eq('slug', slug)
+  await admin.from('journal_entries').delete().eq('module_slug', slug)
+  await admin.from('settings').delete().eq('key', `module_questions_override::${slug}`)
+
+  const { error } = await admin.from('module_definitions').delete().eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidateModuleLists()
+  return { success: true }
 }

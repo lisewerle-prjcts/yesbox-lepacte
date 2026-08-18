@@ -58,14 +58,58 @@ function applyOverrides(moduleInfo: ModuleInfo, moduleOverrides: ModuleContentOv
   return { ...moduleInfo, questions: [...questions, ...moduleOverrides.custom] }
 }
 
+export interface CustomModuleDefinition {
+  id: string
+  slug: string
+  ordre: number
+  titre: string
+  sousTitre: string | null
+  description: string | null
+  emoji: string | null
+  gratuit: boolean
+}
+
+export async function getCustomModuleDefinitions(): Promise<CustomModuleDefinition[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('module_definitions')
+    .select('id, slug, ordre, titre, sous_titre, description, emoji, gratuit')
+    .order('ordre')
+
+  return (data || []).map(d => ({
+    id: d.id,
+    slug: d.slug,
+    ordre: d.ordre,
+    titre: d.titre,
+    sousTitre: d.sous_titre,
+    description: d.description,
+    emoji: d.emoji,
+    gratuit: d.gratuit,
+  }))
+}
+
 export async function getEffectiveModules(): Promise<ModuleInfo[]> {
-  const overrides = await getAllOverrides()
-  return MODULES.map(m => applyOverrides(m, overrides[m.slug]))
+  const [overrides, customDefs] = await Promise.all([getAllOverrides(), getCustomModuleDefinitions()])
+
+  const staticModules = MODULES.map(m => applyOverrides(m, overrides[m.slug]))
+  const customModules = customDefs.map(def => applyOverrides(
+    {
+      slug: def.slug,
+      n: def.ordre,
+      titre: def.titre,
+      sousTitre: def.sousTitre ?? '',
+      description: def.description ?? '',
+      emoji: def.emoji ?? '✦',
+      free: def.gratuit,
+      questions: [],
+    },
+    overrides[def.slug]
+  ))
+
+  return [...staticModules, ...customModules].sort((a, b) => a.n - b.n)
 }
 
 export async function getEffectiveModuleBySlug(slug: string): Promise<ModuleInfo | undefined> {
-  const base = MODULES.find(m => m.slug === slug)
-  if (!base) return undefined
-  const overrides = await getAllOverrides()
-  return applyOverrides(base, overrides[slug])
+  const modules = await getEffectiveModules()
+  return modules.find(m => m.slug === slug)
 }

@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/tableau-de-bord', '/module/', '/pacte', '/journal', '/inviter-partenaire'],
+      disallow: ['/tableau-de-bord', '/module/', '/pacte', '/journal', '/mon-compte'],
     },
     sitemap: 'https://yesbox-lepacte.fr/sitemap.xml',
   }

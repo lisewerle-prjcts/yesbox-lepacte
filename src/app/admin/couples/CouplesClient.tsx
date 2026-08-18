@@ -23,8 +23,6 @@ interface Couple {
   modules: ModuleStatus[]
 }
 
-const SLUGS = ['moi', 'toi', 'nous', 'communication', 'conflits', 'engagement', 'renouvellement']
-const LABELS: Record<string, string> = { moi: 'M1', toi: 'M2', nous: 'M3', communication: 'M4', conflits: 'M5', engagement: 'M6', renouvellement: 'M7' }
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
@@ -32,32 +30,40 @@ export default function CouplesClient({
   couples,
   unassigned,
   totalModules,
+  moduleSlugs,
 }: {
   couples: Couple[]
   unassigned: UnassignedMember[]
   totalModules: number
+  moduleSlugs: string[]
 }) {
   const router = useRouter()
   const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   async function addCouple() {
     setAdding(true)
-    await adminCreateEmptyCouple()
+    setAddError(null)
+    const res = await adminCreateEmptyCouple()
     setAdding(false)
+    if (res.error) { setAddError(res.error); return }
     router.refresh()
   }
 
   return (
     <div className="space-y-4">
-      <button onClick={addCouple} disabled={adding} className="btn-brand text-sm py-2 px-4 flex items-center gap-2" style={{ opacity: adding ? 0.6 : 1 }}>
-        <Plus className="w-4 h-4" /> {adding ? 'Création…' : 'Ajouter un couple'}
-      </button>
+      <div>
+        <button onClick={addCouple} disabled={adding} className="btn-brand text-sm py-2 px-4 flex items-center gap-2" style={{ opacity: adding ? 0.6 : 1 }}>
+          <Plus className="w-4 h-4" /> {adding ? 'Création…' : 'Ajouter un couple'}
+        </button>
+        {addError && <p style={{ fontSize: 12, color: '#dc2626', marginTop: 6 }}>{addError}</p>}
+      </div>
 
       {couples.length === 0 ? (
         <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple pour l&apos;instant.</div>
       ) : (
         couples.map(couple => (
-          <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} />
+          <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} moduleSlugs={moduleSlugs} />
         ))
       )}
     </div>
@@ -68,10 +74,12 @@ function CoupleCard({
   couple,
   unassigned,
   totalModules,
+  moduleSlugs,
 }: {
   couple: Couple
   unassigned: UnassignedMember[]
   totalModules: number
+  moduleSlugs: string[]
 }) {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
@@ -226,14 +234,14 @@ function CoupleCard({
       </div>
 
       {/* Grille modules */}
-      <div className="grid grid-cols-7 gap-2 mb-3">
-        {SLUGS.map(slug => {
+      <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${moduleSlugs.length}, minmax(0, 1fr))` }}>
+        {moduleSlugs.map((slug, i) => {
           const mod = couple.modules.find(m => m.slug === slug)
           const st = mod?.statut || 'locked'
           const bg = mod?.revealed ? STATUS_COLOR.revealed : STATUS_COLOR[st] || STATUS_COLOR.locked
           return (
             <div key={slug} className="rounded-lg p-2 text-center" style={{ background: bg, border: '1px solid rgba(0,0,0,.06)' }}>
-              <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{LABELS[slug]}</div>
+              <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>M{i + 1}</div>
               <div style={{ fontSize: 16 }}>{STATUS_TEXT[mod?.revealed ? 'revealed' : st]}</div>
               {mod?.connivence_score && (
                 <div style={{ fontSize: 9, color: 'var(--sage)', marginTop: 2 }}>{'★'.repeat(mod.connivence_score)}</div>

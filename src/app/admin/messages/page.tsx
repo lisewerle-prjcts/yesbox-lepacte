@@ -1,7 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
+import { WELCOME_EMAIL_DEFAULTS } from '@/lib/welcome-email'
 import MessagesEditor from './MessagesEditor'
 
 const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multiline?: boolean }> = {
+  email_bienvenue_subject: {
+    label: 'Objet de l\'email de bienvenue (envoyé à chaque inscription)',
+    default: WELCOME_EMAIL_DEFAULTS.email_bienvenue_subject,
+  },
+  email_bienvenue_body: {
+    label: 'Corps de l\'email de bienvenue — variables {prenom} et {code} (code couple)',
+    default: WELCOME_EMAIL_DEFAULTS.email_bienvenue_body,
+    multiline: true,
+  },
   precommande_success: {
     label: 'Message après pré-commande (affiché dans le modal)',
     default: 'Ta place est réservée ! Tu recevras un email dès l\'ouverture le 1er septembre 2026. À très vite.',
