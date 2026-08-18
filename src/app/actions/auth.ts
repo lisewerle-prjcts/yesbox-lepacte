@@ -49,6 +49,7 @@ export async function inscription(formData: FormData) {
   }
 
   const partnerCode = (formData.get('partner_code') as string | null)?.trim()
+  let partnerCodeError: string | null = null
 
   if (data.user) {
     await supabase
@@ -58,13 +59,23 @@ export async function inscription(formData: FormData) {
 
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
-      revalidatePath('/', 'layout')
-      if (result.success) redirect('/tableau-de-bord')
-      redirect(`/inviter-partenaire?code_error=${encodeURIComponent(result.error || 'Code invalide')}`)
+      if (!result.success) partnerCodeError = result.error || 'Code invalide'
     }
   }
 
   revalidatePath('/', 'layout')
+
+  // Confirmation d'email requise : pas de session, on ne peut pas encore entrer dans l'espace.
+  if (!data.session) {
+    return { needsConfirmation: true, email }
+  }
+
+  if (partnerCodeError) {
+    redirect(`/inviter-partenaire?code_error=${encodeURIComponent(partnerCodeError)}`)
+  }
+  if (partnerCode) {
+    redirect('/tableau-de-bord')
+  }
   redirect('/inviter-partenaire')
 }
 
