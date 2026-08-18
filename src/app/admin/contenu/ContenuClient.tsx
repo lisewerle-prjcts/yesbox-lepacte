@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Save, RotateCcw, Check, Trash2, Plus, ChevronDown, ChevronUp, PlusCircle } from 'lucide-react'
+import { Save, RotateCcw, Check, Trash2, Plus, ChevronDown, ChevronUp, ArrowUp, ArrowDown, PlusCircle } from 'lucide-react'
 import {
   adminSaveQuestionOverride, adminResetQuestionOverride,
   adminRemoveQuestion, adminRestoreQuestion,
   adminAddQuestion, adminUpdateCustomQuestion, adminRemoveCustomQuestion,
+  adminMoveQuestion,
   adminCreateModule, adminUpdateModule, adminDeleteModule,
+  adminSaveModuleMeta, adminResetModuleMeta,
 } from '@/app/actions/admin'
 import type { ModuleInfo, Question, QuestionType } from '@/types'
 
@@ -22,6 +24,7 @@ interface ModuleContentOverrides {
   overrides: Record<string, QuestionOverride>
   hidden: string[]
   custom: Question[]
+  order: string[]
 }
 
 interface CustomModuleDefinition {
@@ -35,6 +38,14 @@ interface CustomModuleDefinition {
   gratuit: boolean
 }
 
+interface ModuleMetaOverride {
+  titre?: string
+  sousTitre?: string
+  description?: string
+  emoji?: string
+  n?: number
+}
+
 const TYPE_LABELS: Record<QuestionType, string> = {
   text: 'Réponse libre',
   choix: 'Choix unique',
@@ -46,14 +57,16 @@ export default function ContenuClient({
   modules,
   overrides,
   customDefinitions,
+  moduleMetaOverrides,
 }: {
   modules: ModuleInfo[]
   overrides: Record<string, ModuleContentOverrides>
   customDefinitions: CustomModuleDefinition[]
+  moduleMetaOverrides: Record<string, ModuleMetaOverride>
 }) {
   const [selectedSlug, setSelectedSlug] = useState<string>(modules[0]?.slug || '')
   const moduleInfo = modules.find(m => m.slug === selectedSlug)
-  const moduleOverrides: ModuleContentOverrides = overrides[selectedSlug] || { overrides: {}, hidden: [], custom: [] }
+  const moduleOverrides: ModuleContentOverrides = overrides[selectedSlug] || { overrides: {}, hidden: [], custom: [], order: [] }
   const [showAddForm, setShowAddForm] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   const [showCreateModule, setShowCreateModule] = useState(false)
@@ -66,6 +79,15 @@ export default function ContenuClient({
   const activeBaseQuestions = moduleInfo.questions.filter(q => !hiddenSlugs.has(q.slug))
   const hiddenQuestions = moduleInfo.questions.filter(q => hiddenSlugs.has(q.slug))
   const customQuestions = moduleOverrides.custom
+  const customSlugs = new Set(customQuestions.map(q => q.slug))
+
+  const activeQuestions = [...activeBaseQuestions, ...customQuestions]
+  const activeSlugs = activeQuestions.map(q => q.slug)
+  const order = moduleOverrides.order.length
+    ? [...moduleOverrides.order.filter(s => activeSlugs.includes(s)), ...activeSlugs.filter(s => !moduleOverrides.order.includes(s))]
+    : activeSlugs
+  const questionsBySlug = new Map(activeQuestions.map(q => [q.slug, q]))
+  const orderedQuestions = order.map(slug => questionsBySlug.get(slug)).filter((q): q is Question => !!q)
 
   return (
     <div className="space-y-6">
@@ -89,26 +111,44 @@ export default function ContenuClient({
         )}
       </div>
 
-      {customDef && (
-        <ModuleMetaEditor definition={customDef} onDeleted={() => setSelectedSlug(modules[0]?.slug || '')} />
+      {customDef ? (
+        <ModuleMetaEditor
+          key={selectedSlug}
+          kind="custom"
+          slug={customDef.slug}
+          moduleId={customDef.id}
+          titre={customDef.titre}
+          sousTitre={customDef.sousTitre ?? ''}
+          description={customDef.description ?? ''}
+          emoji={customDef.emoji ?? '✦'}
+          gratuit={customDef.gratuit}
+          ordre={customDef.ordre}
+          onDeleted={() => setSelectedSlug(modules[0]?.slug || '')}
+        />
+      ) : (
+        <ModuleMetaEditor
+          key={selectedSlug}
+          kind="base"
+          slug={moduleInfo.slug}
+          titre={moduleInfo.titre}
+          sousTitre={moduleInfo.sousTitre}
+          description={moduleInfo.description}
+          emoji={moduleInfo.emoji}
+          ordre={moduleInfo.n}
+          overridden={!!moduleMetaOverrides[moduleInfo.slug]}
+        />
       )}
 
       <div className="space-y-4">
-        {activeBaseQuestions.map(question => (
+        {orderedQuestions.map((question, i) => (
           <QuestionEditor
             key={question.slug}
             moduleSlug={moduleInfo.slug}
             baseQuestion={question}
             override={moduleOverrides.overrides[question.slug]}
-            kind="base"
-          />
-        ))}
-        {customQuestions.map(question => (
-          <QuestionEditor
-            key={question.slug}
-            moduleSlug={moduleInfo.slug}
-            baseQuestion={question}
-            kind="custom"
+            kind={customSlugs.has(question.slug) ? 'custom' : 'base'}
+            canMoveUp={i > 0}
+            canMoveDown={i < orderedQuestions.length - 1}
           />
         ))}
       </div>
@@ -170,11 +210,15 @@ function QuestionEditor({
   baseQuestion,
   override,
   kind,
+  canMoveUp,
+  canMoveDown,
 }: {
   moduleSlug: string
   baseQuestion: Question
   override?: QuestionOverride
   kind: 'base' | 'custom'
+  canMoveUp: boolean
+  canMoveDown: boolean
 }) {
   const [texte, setTexte] = useState(override?.texte ?? baseQuestion.texte)
   const [hint, setHint] = useState(override?.hint ?? baseQuestion.hint ?? '')
@@ -186,8 +230,15 @@ function QuestionEditor({
   const [saved, setSaved] = useState(false)
   const [overridden, setOverridden] = useState(!!override)
   const [removed, setRemoved] = useState(false)
+  const [moving, setMoving] = useState(false)
 
   if (removed) return null
+
+  async function move(direction: 'up' | 'down') {
+    setMoving(true)
+    await adminMoveQuestion(moduleSlug, baseQuestion.slug, direction)
+    setMoving(false)
+  }
 
   async function save() {
     setSaving(true)
@@ -245,7 +296,29 @@ function QuestionEditor({
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>{baseQuestion.slug} · {TYPE_LABELS[baseQuestion.type]}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => move('up')}
+              disabled={!canMoveUp || moving}
+              title="Monter"
+              className="flex items-center justify-center rounded"
+              style={{ width: 22, height: 22, background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--muted)', opacity: (!canMoveUp || moving) ? 0.35 : 1 }}
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => move('down')}
+              disabled={!canMoveDown || moving}
+              title="Descendre"
+              className="flex items-center justify-center rounded"
+              style={{ width: 22, height: 22, background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--muted)', opacity: (!canMoveDown || moving) ? 0.35 : 1 }}
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>{baseQuestion.slug} · {TYPE_LABELS[baseQuestion.type]}</span>
+        </div>
         <div className="flex items-center gap-2">
           {kind === 'custom' && <span className="tag-sage" style={{ fontSize: 11 }}>Ajoutée</span>}
           {overridden && <span className="tag-brand" style={{ fontSize: 11 }}>Modifiée</span>}
@@ -468,38 +541,72 @@ function CreateModuleForm({ onCreated }: { onCreated: (slug: string) => void }) 
   )
 }
 
-function ModuleMetaEditor({ definition, onDeleted }: { definition: CustomModuleDefinition; onDeleted: () => void }) {
-  const [titre, setTitre] = useState(definition.titre)
-  const [sousTitre, setSousTitre] = useState(definition.sousTitre ?? '')
-  const [description, setDescription] = useState(definition.description ?? '')
-  const [emoji, setEmoji] = useState(definition.emoji ?? '✦')
-  const [gratuit, setGratuit] = useState(definition.gratuit)
-  const [ordre, setOrdre] = useState(String(definition.ordre))
+function ModuleMetaEditor({
+  kind, slug, moduleId, titre: initialTitre, sousTitre: initialSousTitre, description: initialDescription,
+  emoji: initialEmoji, gratuit: initialGratuit, ordre: initialOrdre, overridden: initialOverridden, onDeleted,
+}: {
+  kind: 'base' | 'custom'
+  slug: string
+  moduleId?: string
+  titre: string
+  sousTitre: string
+  description: string
+  emoji: string
+  gratuit?: boolean
+  ordre: number
+  overridden?: boolean
+  onDeleted?: () => void
+}) {
+  const [titre, setTitre] = useState(initialTitre)
+  const [sousTitre, setSousTitre] = useState(initialSousTitre)
+  const [description, setDescription] = useState(initialDescription)
+  const [emoji, setEmoji] = useState(initialEmoji)
+  const [gratuit, setGratuit] = useState(initialGratuit ?? false)
+  const [ordre, setOrdre] = useState(String(initialOrdre))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [overridden, setOverridden] = useState(!!initialOverridden)
 
   async function save() {
     setSaving(true)
-    await adminUpdateModule(definition.id, { titre, sousTitre, description, emoji, gratuit, ordre: parseFloat(ordre) || definition.ordre })
+    if (kind === 'custom' && moduleId) {
+      await adminUpdateModule(moduleId, { titre, sousTitre, description, emoji, gratuit, ordre: parseFloat(ordre) || initialOrdre })
+    } else {
+      await adminSaveModuleMeta(slug, { titre, sousTitre, description, emoji, ordre: parseFloat(ordre) || initialOrdre })
+      setOverridden(true)
+    }
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
+  async function reset() {
+    setSaving(true)
+    await adminResetModuleMeta(slug)
+    setTitre(initialTitre); setSousTitre(initialSousTitre); setDescription(initialDescription)
+    setEmoji(initialEmoji); setOrdre(String(initialOrdre))
+    setSaving(false)
+    setOverridden(false)
+  }
+
   async function remove() {
+    if (!moduleId) return
     setDeleting(true)
-    await adminDeleteModule(definition.id, definition.slug)
+    await adminDeleteModule(moduleId, slug)
     setDeleting(false)
-    onDeleted()
+    onDeleted?.()
   }
 
   return (
     <div className="card p-5" style={{ borderColor: 'var(--brand-soft)' }}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold" style={{ fontSize: 15 }}>Infos du module personnalisé</h2>
-        <span className="tag-brand" style={{ fontSize: 11 }}>{definition.slug}</span>
+        <h2 className="font-semibold" style={{ fontSize: 15 }}>{kind === 'custom' ? 'Infos du module personnalisé' : 'Nom et position du module'}</h2>
+        <div className="flex items-center gap-2">
+          {kind === 'base' && overridden && <span className="tag-brand" style={{ fontSize: 11 }}>Modifié</span>}
+          <span className="tag-sage" style={{ fontSize: 11 }}>{slug}</span>
+        </div>
       </div>
       <div className="space-y-3">
         <div className="grid sm:grid-cols-2 gap-3">
@@ -522,14 +629,16 @@ function ModuleMetaEditor({ definition, onDeleted }: { definition: CustomModuleD
             <input type="text" className="field" value={emoji} onChange={e => setEmoji(e.target.value)} />
           </div>
           <div>
-            <label className="flabel">Position</label>
+            <label className="flabel">Position <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(ex : 2.5 pour entre M2 et M3)</span></label>
             <input type="text" inputMode="decimal" className="field" value={ordre} onChange={e => setOrdre(e.target.value)} />
           </div>
-          <div className="flex items-end pb-2">
-            <label className="flex items-center gap-2" style={{ fontSize: 13 }}>
-              <input type="checkbox" checked={gratuit} onChange={e => setGratuit(e.target.checked)} /> Gratuit
-            </label>
-          </div>
+          {kind === 'custom' && (
+            <div className="flex items-end pb-2">
+              <label className="flex items-center gap-2" style={{ fontSize: 13 }}>
+                <input type="checkbox" checked={gratuit} onChange={e => setGratuit(e.target.checked)} /> Gratuit
+              </label>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex gap-2 mt-4">
@@ -537,7 +646,17 @@ function ModuleMetaEditor({ definition, onDeleted }: { definition: CustomModuleD
           {saved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
           {saved ? 'Enregistré' : 'Enregistrer'}
         </button>
-        {!confirmDelete ? (
+        {kind === 'base' && overridden && (
+          <button
+            onClick={reset}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium"
+            style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--muted)', opacity: saving ? 0.5 : 1 }}
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Réinitialiser
+          </button>
+        )}
+        {kind === 'custom' && (!confirmDelete ? (
           <button
             onClick={() => setConfirmDelete(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium ml-auto"
@@ -555,7 +674,7 @@ function ModuleMetaEditor({ definition, onDeleted }: { definition: CustomModuleD
               Annuler
             </button>
           </div>
-        )}
+        ))}
       </div>
     </div>
   )

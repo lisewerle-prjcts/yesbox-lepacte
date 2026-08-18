@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { createClient } from '@/lib/supabase/server'
 import { randomInt } from 'crypto'
 import nodemailer from 'nodemailer'
-import { normalizeOverrides, emptyOverrides, getEffectiveModules, type ModuleContentOverrides, type QuestionOverride } from '@/lib/modules-effective'
+import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_KEY_PREFIX, type ModuleContentOverrides, type QuestionOverride, type ModuleMetaOverride } from '@/lib/modules-effective'
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
@@ -202,6 +202,74 @@ export async function adminRemoveCustomQuestion(moduleSlug: string, questionSlug
   const current = await readModuleOverrides(supabase, moduleSlug)
   current.custom = current.custom.filter(q => q.slug !== questionSlug)
   await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+export async function adminMoveQuestion(moduleSlug: string, questionSlug: string, direction: 'up' | 'down') {
+  const supabase = await assertAdmin()
+  const base = MODULES.find(m => m.slug === moduleSlug)
+  if (!base) return { error: 'Module introuvable' }
+
+  const current = await readModuleOverrides(supabase, moduleSlug)
+  const hidden = new Set(current.hidden)
+  const activeSlugs = [
+    ...base.questions.filter(q => !hidden.has(q.slug)).map(q => q.slug),
+    ...current.custom.map(q => q.slug),
+  ]
+
+  const ordered = current.order.length
+    ? [...current.order.filter(s => activeSlugs.includes(s)), ...activeSlugs.filter(s => !current.order.includes(s))]
+    : activeSlugs
+
+  const idx = ordered.indexOf(questionSlug)
+  if (idx === -1) return { error: 'Question introuvable' }
+  const swapWith = direction === 'up' ? idx - 1 : idx + 1
+  if (swapWith < 0 || swapWith >= ordered.length) return { success: true }
+
+  ;[ordered[idx], ordered[swapWith]] = [ordered[swapWith], ordered[idx]]
+  current.order = ordered
+  await writeModuleOverrides(supabase, moduleSlug, current)
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+async function readModuleMeta(supabase: Awaited<ReturnType<typeof createClient>>, moduleSlug: string): Promise<ModuleMetaOverride> {
+  const key = `${META_OVERRIDE_KEY_PREFIX}${moduleSlug}`
+  const { data } = await supabase.from('settings').select('value').eq('key', key).single()
+  if (!data?.value) return {}
+  try {
+    return JSON.parse(data.value)
+  } catch {
+    return {}
+  }
+}
+
+export async function adminSaveModuleMeta(moduleSlug: string, fields: {
+  titre?: string; sousTitre?: string; description?: string; emoji?: string; ordre?: number
+}) {
+  const supabase = await assertAdmin()
+  if (!MODULES.some(m => m.slug === moduleSlug)) return { error: 'Module introuvable' }
+
+  const current = await readModuleMeta(supabase, moduleSlug)
+  const next: ModuleMetaOverride = { ...current }
+  if (fields.titre !== undefined) next.titre = fields.titre.trim() || undefined
+  if (fields.sousTitre !== undefined) next.sousTitre = fields.sousTitre.trim() || undefined
+  if (fields.description !== undefined) next.description = fields.description.trim() || undefined
+  if (fields.emoji !== undefined) next.emoji = fields.emoji.trim() || undefined
+  if (fields.ordre !== undefined) next.n = fields.ordre
+
+  const key = `${META_OVERRIDE_KEY_PREFIX}${moduleSlug}`
+  await supabase.from('settings').upsert({ key, value: JSON.stringify(next) }, { onConflict: 'key' })
+  revalidateModuleLists()
+  revalidateModuleContent(moduleSlug)
+  return { success: true }
+}
+
+export async function adminResetModuleMeta(moduleSlug: string) {
+  const supabase = await assertAdmin()
+  await supabase.from('settings').delete().eq('key', `${META_OVERRIDE_KEY_PREFIX}${moduleSlug}`)
+  revalidateModuleLists()
   revalidateModuleContent(moduleSlug)
   return { success: true }
 }
