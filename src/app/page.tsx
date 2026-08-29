@@ -197,7 +197,7 @@ export default function LandingPage() {
               const Icon = MODULE_ICONS[i] || User
               return (
               <div key={m.slug} className="card flex items-center gap-5 p-5">
-                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>0{m.n}</span>
+                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
                 <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 38, height: 38, background: 'var(--cream)', borderRadius: 10, border: '1px solid var(--line)' }}>
                   <Icon className="w-4 h-4" style={{ color: 'var(--ink-2)' }} />
                 </span>

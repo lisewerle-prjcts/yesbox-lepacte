@@ -79,7 +79,7 @@ export default async function PactePage() {
             <div className="card p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-150"
               style={{ opacity: isLocked ? .55 : 1, cursor: isLocked ? 'default' : 'pointer' }}>
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE 0{i + 1}</span>
+                <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE {String(i + 1).padStart(2, '0')}</span>
                 {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" /><EditableText id="pacte.statut.revele">Révélé</EditableText></span>}
                 {isActive && <span className="tag-brand"><EditableText id="pacte.statut.encours">En cours</EditableText></span>}
                 {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText id="pacte.statut.verrouille">Verrouillé</EditableText></span>}
