@@ -27,8 +27,14 @@ export default async function RevelationPage({ params }: PageProps) {
     partner ? supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', partner.id) : { data: [] },
   ])
 
-  const { data: journalEntry } = await supabase
-    .from('journal_entries').select('contenu').eq('couple_id', profile.couple_id).eq('module_slug', slug).single()
+  const [{ data: maConclusion }, { data: conclusionPartenaire }] = await Promise.all([
+    supabase.from('journal_entries').select('question_slug, valeur')
+      .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', user.id),
+    partner
+      ? supabase.from('journal_entries').select('question_slug, valeur')
+          .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', partner.id)
+      : Promise.resolve({ data: [] }),
+  ])
 
   return (
     <RevelationClient
@@ -39,7 +45,8 @@ export default async function RevelationPage({ params }: PageProps) {
       myName={profile.prenom}
       partnerName={partner?.prenom || null}
       coupleId={profile.couple_id}
-      journalContenu={journalEntry?.contenu || null}
+      maConclusion={maConclusion || []}
+      conclusionPartenaire={conclusionPartenaire || []}
     />
   )
 }

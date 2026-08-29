@@ -42,12 +42,6 @@ export default async function TableauDeBordPage({
   const done = modules.filter(m => m.revealed).length
   const pct = totalModuleCount ? Math.round((done / totalModuleCount) * 100) : 0
 
-  function getPersonalizedTitle(slug: string, defaultTitre: string, role?: string | null): string {
-    if (slug === 'moi') return role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
-    if (slug === 'toi') return role === 'partenaire' ? 'Moi et toi' : 'Toi et moi'
-    return defaultTitre
-  }
-
   function getModStatus(slug: string): 'done' | 'active' | 'paywall' | 'locked' {
     const mod = modules.find(m => m.slug === slug)
     if (!mod) return 'locked'
@@ -111,11 +105,11 @@ export default async function TableauDeBordPage({
         const nextIdx = effectiveModules.findIndex(m => getModStatus(m.slug) === 'active')
         if (nextIdx === -1) return null
         const next = effectiveModules[nextIdx]
-        const titre = getPersonalizedTitle(next.slug, next.titre, profile?.role)
+        const titre = next.titre
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.prochaineetape.label">PROCHAINE ÉTAPE</EditableText> · MODULE 0{nextIdx + 1}</p>
+              <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.prochaineetape.label">PROCHAINE ÉTAPE</EditableText> · MODULE {String(nextIdx + 1).padStart(2, '0')}</p>
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
             </div>

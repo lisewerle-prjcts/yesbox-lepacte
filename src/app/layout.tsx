@@ -12,7 +12,7 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-newsre
 
 export const metadata: Metadata = {
   title: { default: 'YES BOX — Le Pacte des couples qui tiennent', template: '%s | YES BOX' },
-  description: 'Un programme en 7 modules pour poser les bases de votre couple, signer votre CDD de couple et vous retrouver chaque année. Module 1 gratuit.',
+  description: 'Un programme en 10 modules pour poser les bases de votre couple, signer votre CDD de couple et vous retrouver chaque année. Module 1 gratuit.',
   keywords: ['couple', 'mariage', 'préparation mariage', 'programme couple', 'CDD de couple', 'communication couple'],
   authors: [{ name: 'YES BOX' }],
   creator: 'YES BOX',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     url: 'https://yesbox-lepacte.fr',
     siteName: 'YES BOX — Le Pacte',
     title: 'YES BOX — Le pacte des couples qui tiennent',
-    description: 'Un programme en 7 modules pour se choisir en conscience. Module 1 gratuit.',
+    description: 'Un programme en 10 modules pour se choisir en conscience. Module 1 gratuit.',
   },
   twitter: { card: 'summary_large_image', title: 'YES BOX — Le Pacte', description: 'Le programme pour les couples qui tiennent.' },
   robots: { index: true, follow: true },

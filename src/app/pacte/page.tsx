@@ -40,12 +40,6 @@ export default async function PactePage() {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
   }
 
-  function getPersonalizedTitle(slug: string, defaultTitre: string): string {
-    if (slug === 'moi') return profile?.role === 'partenaire' ? 'Toi et moi' : 'Moi et toi'
-    if (slug === 'toi') return profile?.role === 'partenaire' ? 'Moi et toi' : 'Toi et moi'
-    return defaultTitre
-  }
-
   function getModStatus(slug: string): 'done' | 'active' | 'locked' {
     const mod = modules?.find((m: Module) => m.slug === slug)
     if (!mod) return 'locked'
@@ -77,7 +71,6 @@ export default async function PactePage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {MODULES.map((m, i) => {
           const st = getModStatus(m.slug)
-          const modData = modules?.find((mod: Module) => mod.slug === m.slug)
           const isLocked = st === 'locked'
           const isDone = st === 'done'
           const isActive = st === 'active'
@@ -86,20 +79,14 @@ export default async function PactePage() {
             <div className="card p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-150"
               style={{ opacity: isLocked ? .55 : 1, cursor: isLocked ? 'default' : 'pointer' }}>
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE 0{i + 1}</span>
+                <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE {String(i + 1).padStart(2, '0')}</span>
                 {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" /><EditableText id="pacte.statut.revele">Révélé</EditableText></span>}
                 {isActive && <span className="tag-brand"><EditableText id="pacte.statut.encours">En cours</EditableText></span>}
                 {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText id="pacte.statut.verrouille">Verrouillé</EditableText></span>}
               </div>
 
-              <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{getPersonalizedTitle(m.slug, m.titre)}</p>
+              <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.2 }}>{m.titre}</p>
 
-              {isDone && modData?.connivence_score && (
-                <div className="flex items-center gap-1.5" style={{ fontSize: 13 }}>
-                  <span style={{ color: 'var(--brand)' }}>{'★'.repeat(modData.connivence_score)}{'☆'.repeat(5 - modData.connivence_score)}</span>
-                  <span style={{ fontSize: 11, color: 'var(--muted)' }}><EditableText id="pacte.connivence.label">connivence</EditableText> {modData.connivence_score}/5</span>
-                </div>
-              )}
               {isActive && !isDone && (
                 <div className="flex items-center justify-between text-xs" style={{ color: 'var(--brand)' }}>
                   <span><EditableText id="pacte.statut.continuer">Continuer</EditableText></span>

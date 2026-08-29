@@ -11,7 +11,7 @@ import {
 
 interface UnassignedMember { id: string; prenom: string | null; nom: string | null; email: string; role: string | null }
 interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number }
-interface ModuleStatus { slug: string; statut: string; revealed: boolean; connivence_score: number | null }
+interface ModuleStatus { slug: string; statut: string; revealed: boolean }
 interface Couple {
   id: string
   numero: number
@@ -243,9 +243,6 @@ function CoupleCard({
             <div key={slug} className="rounded-lg p-2 text-center" style={{ background: bg, border: '1px solid rgba(0,0,0,.06)' }}>
               <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>M{i + 1}</div>
               <div style={{ fontSize: 16 }}>{STATUS_TEXT[mod?.revealed ? 'revealed' : st]}</div>
-              {mod?.connivence_score && (
-                <div style={{ fontSize: 9, color: 'var(--sage)', marginTop: 2 }}>{'★'.repeat(mod.connivence_score)}</div>
-              )}
             </div>
           )
         })}

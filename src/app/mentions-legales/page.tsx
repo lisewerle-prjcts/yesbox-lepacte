@@ -94,13 +94,13 @@ export default function MentionsLegales() {
                 <strong style={{ color: 'var(--ink-2)' }}>Module 1 gratuit :</strong> le premier module (« Moi et toi ») est accessible gratuitement aux deux membres du couple, sans carte bancaire, jusqu&apos;à la révélation de vos réponses respectives. Vous découvrez ainsi le fonctionnement du programme avant tout engagement — sans mauvaise surprise.
               </li>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>Abonnement mensuel — 29 €/mois :</strong> donne accès aux 7 modules complets, aux sessions de révélation à deux, au score de connivence, au journal et au CDD de couple. Sans engagement de durée, résiliable à tout moment depuis votre espace ; l&apos;accès reste actif jusqu&apos;à la fin de la période déjà payée.
+                <strong style={{ color: 'var(--ink-2)' }}>Abonnement mensuel — 29 €/mois :</strong> donne accès aux 10 modules complets, aux sessions de révélation à deux, au journal de couple et au CDD de couple. Sans engagement de durée, résiliable à tout moment depuis votre espace ; l&apos;accès reste actif jusqu&apos;à la fin de la période déjà payée.
               </li>
               <li>
                 <strong style={{ color: 'var(--ink-2)' }}>BAC annuel (Bilan Annuel de Couple) — 19 €/an :</strong> abonnement annuel qui déclenche votre rappel et votre fiche avenant à la date anniversaire de votre couple, et vous permet de refaire l&apos;intégralité des modules si vous souhaitez recommencer le programme. Annulable à tout moment ; le renouvellement n&apos;est jamais automatique sans information préalable.
               </li>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>Garantie :</strong> si après avoir terminé les 7 modules vous n&apos;êtes pas satisfait·s, nous vous remboursons intégralement dans les 30 jours suivant la fin du programme, sans justification.
+                <strong style={{ color: 'var(--ink-2)' }}>Garantie :</strong> si après avoir terminé les 10 modules vous n&apos;êtes pas satisfait·s, nous vous remboursons intégralement dans les 30 jours suivant la fin du programme, sans justification.
               </li>
               <li>
                 Les tarifs sont indiqués par couple (un seul abonnement pour les deux membres) et peuvent évoluer ; toute modification vous sera communiquée avant d&apos;être appliquée à votre abonnement en cours.

@@ -8,7 +8,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { Check, ArrowRight } from 'lucide-react'
 
 const FREE_FEATURES = ['Module "Moi et toi" pour chaque membre du couple', '5 questions introspectives', 'Espace couple privé', 'Aucune carte bancaire requise']
-const PRO_FEATURES = ['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé']
+const PRO_FEATURES = ['Les 10 modules complets', 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé']
 const BAC_FEATURES = ['Rappel annuel à votre date anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous voulez recommencer', 'Nouvelles questions chaque année', 'Annulable à tout moment']
 
 export default function TarifsPage() {
@@ -96,7 +96,7 @@ export default function TarifsPage() {
           <div className="text-3xl mb-3">🛡️</div>
           <h3 className="font-serif font-bold mb-2" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="tarifs.garantie.titre">Garantie 30 jours</EditableText></h3>
           <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7 }}>
-            <EditableText id="tarifs.garantie.texte" multiline>Si après avoir terminé les 7 modules vous n&apos;êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu&apos;on croit vraiment à ce programme.</EditableText>
+            <EditableText id="tarifs.garantie.texte" multiline>Si après avoir terminé les 10 modules vous n&apos;êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu&apos;on croit vraiment à ce programme.</EditableText>
           </p>
         </div>
 

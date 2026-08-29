@@ -106,7 +106,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
         <div className="flex items-center gap-3 mb-3">
           <span style={{ fontSize: 24 }}>{moduleInfo.emoji}</span>
           <div>
-            <p className="font-mono text-xs font-bold" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>MODULE 0{moduleInfo.n}</p>
+            <p className="font-mono text-xs font-bold" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}>MODULE {String(moduleInfo.n).padStart(2, '0')}</p>
             <p className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
           </div>
         </div>

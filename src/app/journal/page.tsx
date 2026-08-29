@@ -29,6 +29,10 @@ export default async function JournalPage() {
   const modulesTermines = (modules || []).filter((m: Module) => m.statut === 'complete')
   const tousTermines = modulesTermines.length === MODULES.length
 
+  function getConclusion(moduleSlug: string, userId: string, questionSlug: 'apprentissage' | 'surprise'): string {
+    return entries?.find(e => e.module_slug === moduleSlug && e.user_id === userId && e.question_slug === questionSlug)?.valeur || ''
+  }
+
   const modifiePartPrenom = couple?.pacte_modifie_par === user.id
     ? (profile.prenom || 'Toi')
     : (couple?.pacte_modifie_par ? (partner?.prenom || 'Ton/ta partenaire') : null)
@@ -65,35 +69,39 @@ export default async function JournalPage() {
           {MODULES.map(moduleInfo => {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
             if (!modData) return null
-            const entry = entries?.find(e => e.module_slug === moduleInfo.slug)
+
+            const monApprentissage = getConclusion(moduleInfo.slug, user.id, 'apprentissage')
+            const maSurprise = getConclusion(moduleInfo.slug, user.id, 'surprise')
+            const sonApprentissage = partner ? getConclusion(moduleInfo.slug, partner.id, 'apprentissage') : ''
+            const saSurprise = partner ? getConclusion(moduleInfo.slug, partner.id, 'surprise') : ''
+
             return (
               <div key={moduleInfo.slug} className="card p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <span style={{ fontSize: 22 }}>{moduleInfo.emoji}</span>
-                    <div>
-                      <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
-                      <p style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id={`module.${moduleInfo.slug}.sousTitre`}>{moduleInfo.sousTitre}</EditableText></p>
-                    </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <span style={{ fontSize: 22 }}>{moduleInfo.emoji}</span>
+                  <div>
+                    <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
+                    <p style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id={`module.${moduleInfo.slug}.sousTitre`}>{moduleInfo.sousTitre}</EditableText></p>
                   </div>
-                  {modData.connivence_score && (
-                    <div className="flex items-center gap-1" style={{ fontSize: 13 }}>
-                      <span style={{ color: 'var(--brand)' }}>{'★'.repeat(modData.connivence_score)}{'☆'.repeat(5 - modData.connivence_score)}</span>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
+                    <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 8 }}>{profile.prenom || 'Toi'}</p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.appris">Ce qu&apos;iel a appris</EditableText></p>
+                    <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {monApprentissage} »</p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.surpris">Ce qui l&apos;a surpris</EditableText></p>
+                    <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {maSurprise} »</p>
+                  </div>
+                  {partner && (
+                    <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px' }}>
+                      <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{partner.prenom || 'Partenaire'}</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.appris">Ce qu&apos;iel a appris</EditableText></p>
+                      <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {sonApprentissage} »</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.surpris">Ce qui l&apos;a surpris</EditableText></p>
+                      <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {saSurprise} »</p>
                     </div>
                   )}
                 </div>
-                {entry?.contenu ? (
-                  <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
-                    <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.7, fontStyle: 'italic' }}>« {entry.contenu} »</p>
-                  </div>
-                ) : (
-                  <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px' }}>
-                    <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}><EditableText id="journal.aucuneconclusion">Aucune conclusion rédigée pour ce module.</EditableText></p>
-                    <Link href={`/module/${moduleInfo.slug}/revelation`} style={{ fontSize: 13, color: 'var(--brand)', fontWeight: 600, marginTop: 6, display: 'inline-block' }}>
-                      <EditableText id="journal.ajouterconclusion">Ajouter une conclusion →</EditableText>
-                    </Link>
-                  </div>
-                )}
               </div>
             )
           })}

@@ -544,3 +544,70 @@ begin
   on conflict (couple_id, slug) do nothing;
 end;
 $$;
+
+-- ============================================================
+-- REFONTE DES MODULES & CONCLUSIONS INDIVIDUELLES (v10)
+-- Les 7 modules à questions à choix/échelle deviennent 10 modules à
+-- questions ouvertes (moi/toi -> toi ; nouveaux : quotidien, projets,
+-- famille, intimite). Le score de connivence (étoiles) disparaît :
+-- chaque module se termine par une conclusion en 2 questions
+-- ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?") que chacun
+-- écrit de son côté ; le module se scelle et débloque le suivant une
+-- fois que les DEUX partenaires ont écrit la leur.
+-- journal_entries passe d'un document partagé unique par module à une
+-- ligne par personne et par question de conclusion (même forme que
+-- reponses). À exécuter une fois.
+-- ============================================================
+
+alter table public.modules drop column if exists connivence_score;
+
+alter table public.modules drop constraint if exists modules_slug_check;
+
+alter table public.journal_entries drop constraint if exists journal_entries_couple_id_module_slug_key;
+alter table public.journal_entries add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.journal_entries add column if not exists question_slug text not null default 'apprentissage';
+alter table public.journal_entries rename column contenu to valeur;
+alter table public.journal_entries alter column valeur drop not null;
+alter table public.journal_entries alter column valeur drop default;
+
+-- Toute entrée partagée créée sous l'ancien système n'a pas d'auteur
+-- identifiable : elle est supprimée plutôt que rattachée à tort à
+-- l'un des deux partenaires.
+delete from public.journal_entries where user_id is null;
+alter table public.journal_entries alter column user_id set not null;
+
+alter table public.journal_entries add constraint journal_entries_couple_module_user_question_key
+  unique (couple_id, module_slug, user_id, question_slug);
+
+drop policy if exists "journal_insert" on public.journal_entries;
+drop policy if exists "journal_update" on public.journal_entries;
+create policy "journal_insert" on public.journal_entries for insert with check (
+  auth.uid() = user_id
+  and couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+create policy "journal_update" on public.journal_entries for update using (
+  auth.uid() = user_id
+  and couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
+
+-- Les 10 modules fixes actuels (remplace l'ancienne liste à 7).
+create or replace function public.initialiser_modules_couple(p_couple_id uuid)
+returns void language plpgsql security definer as $$
+declare
+  slugs text[] := array['toi','nous','quotidien','projets','famille','communication','intimite','conflits','engagement','renouvellement'];
+  s text;
+  r record;
+begin
+  foreach s in array slugs loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, s, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+
+  for r in select slug from public.module_definitions loop
+    insert into public.modules (couple_id, slug, statut)
+    values (p_couple_id, r.slug, 'locked')
+    on conflict (couple_id, slug) do nothing;
+  end loop;
+end;
+$$;
