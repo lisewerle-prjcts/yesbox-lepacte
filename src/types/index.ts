@@ -33,7 +33,6 @@ export interface Module {
   slug: ModuleSlug
   statut: ModuleStatut
   revealed: boolean
-  connivence_score: number | null
   revealed_at: string | null
   completed_at: string | null
   created_at: string
@@ -49,11 +48,15 @@ export interface Reponse {
   updated_at: string
 }
 
+export type ConclusionSlug = 'apprentissage' | 'surprise'
+
 export interface JournalEntry {
   id: string
   couple_id: string
   module_slug: string
-  contenu: string
+  user_id: string
+  question_slug: ConclusionSlug
+  valeur: string
   created_at: string
   updated_at: string
 }

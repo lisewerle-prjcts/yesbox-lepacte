@@ -32,27 +32,23 @@ export async function terminerModule(moduleId: string, moduleSlug: string) {
   return { success: true }
 }
 
-export async function scellerModule(moduleId: string, moduleSlug: string, connivenceScore: number) {
+// Scelle le module (marque la révélation comme faite) et déverrouille le
+// suivant. Appelé une fois que les deux partenaires ont écrit leur
+// conclusion — voir sauvegarderConclusion() dans actions/journal.ts.
+export async function scellerModule(coupleId: string, moduleId: string, moduleSlug: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
-
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
 
   await supabase.from('modules').update({
     revealed: true,
-    connivence_score: connivenceScore,
     revealed_at: new Date().toISOString(),
   }).eq('id', moduleId)
 
-  // Déverrouiller le module suivant
   const modules = await getEffectiveModules()
   const ordre = modules.map(m => m.slug)
   const idx = ordre.indexOf(moduleSlug)
   if (idx >= 0 && idx < ordre.length - 1) {
     await supabase.from('modules').update({ statut: 'en_cours' })
-      .eq('couple_id', profile.couple_id)
+      .eq('couple_id', coupleId)
       .eq('slug', ordre[idx + 1])
   }
 

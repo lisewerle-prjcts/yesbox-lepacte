@@ -18,7 +18,7 @@ export default async function AdminCouples() {
   const coupleIds = (couples || []).map(c => c.id)
 
   const { data: modules } = coupleIds.length
-    ? await supabase.from('modules').select('id, couple_id, slug, statut, revealed, connivence_score').in('couple_id', coupleIds)
+    ? await supabase.from('modules').select('id, couple_id, slug, statut, revealed').in('couple_id', coupleIds)
     : { data: [] }
 
   const moduleIds = (modules || []).map(m => m.id)
@@ -53,7 +53,7 @@ export default async function AdminCouples() {
       date_anniversaire: couple.date_anniversaire,
       created_at: couple.created_at,
       members: membersWithProgress,
-      modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, connivence_score: m.connivence_score })),
+      modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed })),
     }
   })
 

@@ -4,9 +4,9 @@ import MemberPicker from './MemberPicker'
 import { CheckCircle, Lock, Clock } from 'lucide-react'
 
 interface Profile { id: string; prenom: string | null; email: string; couple_id: string | null; role: string | null }
-interface ModuleRow { id: string; couple_id: string; slug: string; statut: string; revealed: boolean; connivence_score: number | null }
+interface ModuleRow { id: string; couple_id: string; slug: string; statut: string; revealed: boolean }
 interface ReponseRow { id: string; module_id: string; user_id: string; question_slug: string; valeur: string | null }
-interface JournalRow { module_slug: string; contenu: string }
+interface JournalRow { module_slug: string; user_id: string; question_slug: string; valeur: string | null }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   revealed: { label: 'Révélé', color: 'var(--sage)' },
@@ -63,7 +63,7 @@ export default async function VoirEnTantQuePage({
     : { data: null }
 
   const { data: modulesData } = member.couple_id
-    ? await supabase.from('modules').select('id, couple_id, slug, statut, revealed, connivence_score').eq('couple_id', member.couple_id)
+    ? await supabase.from('modules').select('id, couple_id, slug, statut, revealed').eq('couple_id', member.couple_id)
     : { data: [] as ModuleRow[] }
   const modules = (modulesData || []) as ModuleRow[]
 
@@ -74,7 +74,7 @@ export default async function VoirEnTantQuePage({
   const reponses = (reponsesData || []) as ReponseRow[]
 
   const { data: journalData } = member.couple_id
-    ? await supabase.from('journal_entries').select('module_slug, contenu').eq('couple_id', member.couple_id)
+    ? await supabase.from('journal_entries').select('module_slug, user_id, question_slug, valeur').eq('couple_id', member.couple_id)
     : { data: [] as JournalRow[] }
   const journalEntries = (journalData || []) as JournalRow[]
 
@@ -100,7 +100,7 @@ export default async function VoirEnTantQuePage({
           {member.email}
           {couple && <> · Couple {couple.numero}</>}
           {partner && <> · avec {partner.prenom || partner.email}</>}
-          {member.couple_id && <> · {done}/7 modules révélés</>}
+          {member.couple_id && <> · {done}/{effectiveModules.length} modules révélés</>}
         </p>
       </div>
 
@@ -116,7 +116,8 @@ export default async function VoirEnTantQuePage({
             const status = STATUS_LABEL[statutKey] || STATUS_LABEL.locked
             const mesReponses = modData ? reponsesFor(modData.id, member.id) : []
             const reponsesPartner = modData && partner && modData.revealed ? reponsesFor(modData.id, partner.id) : []
-            const entry = journalEntries.find(e => e.module_slug === moduleInfo.slug)
+            const monApprentissage = journalEntries.find(e => e.module_slug === moduleInfo.slug && e.user_id === member.id && e.question_slug === 'apprentissage')?.valeur
+            const maSurprise = journalEntries.find(e => e.module_slug === moduleInfo.slug && e.user_id === member.id && e.question_slug === 'surprise')?.valeur
 
             return (
               <div key={moduleInfo.slug} className="card p-6">
@@ -132,9 +133,6 @@ export default async function VoirEnTantQuePage({
                     {statutKey === 'locked' && <Lock className="w-3 h-3" />}
                     {status.label}
                   </span>
-                  {modData?.connivence_score && (
-                    <span style={{ color: 'var(--brand)', fontSize: 13 }}>{'★'.repeat(modData.connivence_score)}{'☆'.repeat(5 - modData.connivence_score)}</span>
-                  )}
                 </div>
 
                 {mesReponses.length === 0 ? (
@@ -172,10 +170,11 @@ export default async function VoirEnTantQuePage({
                   </div>
                 )}
 
-                {entry?.contenu && (
+                {(monApprentissage || maSurprise) && (
                   <div className="mt-4" style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
-                    <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>Journal</p>
-                    <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {entry.contenu} »</p>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>Conclusion</p>
+                    {monApprentissage && <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {monApprentissage} »</p>}
+                    {maSurprise && <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic', marginTop: 6 }}>« {maSurprise} »</p>}
                   </div>
                 )}
               </div>

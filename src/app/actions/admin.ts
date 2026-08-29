@@ -36,7 +36,7 @@ export async function adminUnlockModule(coupleId: string, slug: string) {
 
 export async function adminLockModule(coupleId: string, slug: string) {
   const supabase = await assertAdmin()
-  await supabase.from('modules').update({ statut: 'locked', revealed: false, connivence_score: null, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
+  await supabase.from('modules').update({ statut: 'locked', revealed: false, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
   revalidatePath('/admin/couples')
   return { success: true }
 }
@@ -59,7 +59,8 @@ export async function adminResetModule(coupleId: string, slug: string) {
   const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).single()
   if (mod) {
     await supabase.from('reponses').delete().eq('module_id', mod.id)
-    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, connivence_score: null, revealed_at: null, completed_at: null }).eq('id', mod.id)
+    await supabase.from('journal_entries').delete().eq('couple_id', coupleId).eq('module_slug', slug)
+    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null }).eq('id', mod.id)
   }
   revalidatePath('/admin/couples')
   return { success: true }
@@ -444,7 +445,7 @@ export async function adminGetCoupleArchive(coupleId: string) {
   const [{ data: members }, { data: modules }, { data: journal }, effectiveModules] = await Promise.all([
     admin.from('profiles').select('id, prenom, nom, email, role').eq('couple_id', coupleId),
     admin.from('modules').select('id, slug').eq('couple_id', coupleId),
-    admin.from('journal_entries').select('module_slug, contenu').eq('couple_id', coupleId),
+    admin.from('journal_entries').select('module_slug, user_id, question_slug, valeur').eq('couple_id', coupleId),
     getEffectiveModules(),
   ])
 
@@ -486,10 +487,17 @@ export async function adminGetCoupleArchive(coupleId: string) {
       lines.push('')
     }
 
-    const j = (journal || []).find(j => j.module_slug === modInfo.slug)
-    if (j?.contenu?.trim()) {
-      lines.push('Journal du couple :')
-      lines.push(j.contenu.trim())
+    const conclusionsCeModule = (journal || []).filter(j => j.module_slug === modInfo.slug)
+    if (conclusionsCeModule.length) {
+      lines.push('Conclusions :')
+      for (const member of membersList) {
+        const appris = conclusionsCeModule.find(j => j.user_id === member.id && j.question_slug === 'apprentissage')?.valeur
+        const surpris = conclusionsCeModule.find(j => j.user_id === member.id && j.question_slug === 'surprise')?.valeur
+        if (appris?.trim() || surpris?.trim()) {
+          lines.push(`  ${member.prenom || member.email} — appris : ${appris?.trim() || '—'}`)
+          lines.push(`  ${member.prenom || member.email} — surpris : ${surpris?.trim() || '—'}`)
+        }
+      }
       lines.push('')
     }
   }

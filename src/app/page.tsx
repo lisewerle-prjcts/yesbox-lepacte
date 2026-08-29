@@ -8,7 +8,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { MODULES } from '@/lib/modules-data'
 import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw } from 'lucide-react'
 
-const MODULE_ICONS = [User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw]
+const MODULE_ICONS = [User, Users, Heart, FileText, Users, MessageCircle, Heart, Zap, FileText, RefreshCw]
 
 const TEMOIGNAGES = [
   { texte: "On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", prenom: 'Marie & Tom', lieu: 'Paris' },
@@ -51,8 +51,8 @@ const CDD_ROWS = [
   { k: 'Renouvellement', v: 'À re-signer chaque année' },
 ]
 
-const FREE_FEATURES = ['Module "Moi et toi" pour chaque membre', 'Questions personnelles', 'Espace couple privé']
-const PRO_FEATURES = ['Les 7 modules complets', 'Sessions de révélation à deux', 'Score de connivence & journal', 'Votre CDD de couple', 'Garantie 30 jours']
+const FREE_FEATURES = ['Module "Toi et Moi" pour vous deux', 'Questions personnelles', 'Espace couple privé']
+const PRO_FEATURES = ['Les 10 modules complets', 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple', 'Garantie 30 jours']
 const BAC_FEATURES = ['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous le souhaitez', 'Annulable à tout moment']
 
 export default function LandingPage() {
@@ -113,7 +113,7 @@ export default function LandingPage() {
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted)' }}>
-          <EditableText id="home.hero.subtitle" multiline>Un programme en 7 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.</EditableText>
+          <EditableText id="home.hero.subtitle" multiline>Un programme en 10 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.</EditableText>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <Link href="/inscription" className="btn-brand lg">
@@ -182,14 +182,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* LES 7 MODULES */}
+      {/* LES 10 MODULES */}
       <section id="modules" className="py-20" style={{ background: 'var(--cream-2)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3"><EditableText id="home.modules.eyebrow">Le programme</EditableText></div>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-              <EditableText id="home.modules.title.line1">Six modules pour poser les bases.</EditableText><br />
-              <EditableText id="home.modules.title.line2">Un septième pour les faire durer.</EditableText>
+              <EditableText id="home.modules.title.line1">Neuf modules pour poser les bases.</EditableText><br />
+              <EditableText id="home.modules.title.line2">Un dixième pour les faire durer.</EditableText>
             </h2>
           </div>
           <div className="flex flex-col gap-3">
@@ -209,7 +209,7 @@ export default function LandingPage() {
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
                 </div>
                 {m.free && <span className="tag-sage flex-shrink-0">Gratuit</span>}
-                {m.n === 7 && <span className="tag-muted flex-shrink-0">Annuel</span>}
+                {m.n === 10 && <span className="tag-muted flex-shrink-0">Annuel</span>}
               </div>
             )})}
           </div>
