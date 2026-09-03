@@ -315,9 +315,9 @@ export default function LandingPage() {
                   <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}><EditableText id={`home.tarifs.free.features.${i}`}>{f}</EditableText></span>
                 </div>
               ))}
-              <Link href="/inscription" className="btn-ghost text-center justify-center mt-auto">
+              <button onClick={() => setModalOpen(true)} className="btn-ghost text-center justify-center mt-auto">
                 <EditableText id="home.tarifs.free.cta">Commencer gratuitement</EditableText>
-              </Link>
+              </button>
             </div>
             <div className="card p-6 flex flex-col gap-4" style={{ background: 'var(--brand)', border: 'none' }}>
               <div className="self-start px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(255,255,255,.2)', color: 'white' }}>
@@ -334,9 +334,6 @@ export default function LandingPage() {
                   <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.9)' }}><EditableText id={`home.tarifs.pro.features.${i}`}>{f}</EditableText></span>
                 </div>
               ))}
-              <button onClick={() => setModalOpen(true)} className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
-                <EditableText id="home.tarifs.pro.cta">Pré-commander</EditableText> <ArrowRight className="w-4 h-4" />
-              </button>
             </div>
             <div className="card p-6 flex flex-col gap-4">
               <div className="tag-brand self-start"><EditableText id="home.tarifs.bac.tag">BAC annuel</EditableText></div>
@@ -351,9 +348,6 @@ export default function LandingPage() {
                   <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}><EditableText id={`home.tarifs.bac.features.${i}`}>{f}</EditableText></span>
                 </div>
               ))}
-              <Link href="/inscription" className="btn-ghost text-center justify-center mt-auto">
-                <EditableText id="home.tarifs.bac.cta">Plus tard, dans l&apos;app</EditableText>
-              </Link>
             </div>
           </div>
         </div>
