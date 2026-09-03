@@ -35,9 +35,9 @@ export default function PrecommandeModal({ onClose }: Props) {
       <div className="modal-box slide-up">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="eyebrow mb-2"><EditableText id="modal.precommande.eyebrow">Lancement · 1er septembre 2026</EditableText></p>
+            <p className="eyebrow mb-2"><EditableText id="modal.precommande.eyebrow">Module découverte 100% gratuit</EditableText></p>
             <h2 className="font-serif text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-              <EditableText id="modal.precommande.titre">Pré-commander YES BOX</EditableText>
+              <EditableText id="modal.precommande.titre">Essayer YES BOX</EditableText>
             </h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream transition-colors flex-shrink-0">
@@ -61,7 +61,7 @@ export default function PrecommandeModal({ onClose }: Props) {
             <div className="p-4 rounded-lg mb-6 flex items-center gap-3" style={{ background: 'var(--brand-tint)', border: '1px solid var(--brand-soft)' }}>
               <Heart className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--brand)' }} />
               <p className="text-sm" style={{ color: 'var(--brand)' }}>
-                <EditableText id="modal.precommande.pitch" multiline>1er module gratuit, puis 29 €/mois · résiliable à tout moment — paiement sécurisé au lancement. Tu ne paies rien maintenant.</EditableText>
+                <EditableText id="modal.precommande.pitch" multiline>1er module gratuit, puis si cela vous plait, 29 €/mois · résiliable à tout moment. Tu ne paies rien maintenant.</EditableText>
               </p>
             </div>
 
