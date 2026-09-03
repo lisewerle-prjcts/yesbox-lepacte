@@ -196,7 +196,7 @@ export const MODULES: ModuleInfo[] = [
     slug: 'engagement', n: 9,
     titre: 'Notre pacte de couple',
     sousTitre: 'Vœux et engagements',
-    description: "L'aboutissement : ce à quoi vous vous engagez, ce que représente pour vous le mariage, vos vœux.",
+    description: "L'aboutissement : ce à quoi vous vous engagez, ce que représente pour vous le mariage, vos vœux. Ce module se conclut par la rédaction de votre CDD de couple, le contrat qui formalise vos engagements mutuels.",
     emoji: '📜', free: false,
     questions: [
       { slug: 'important_couple', type: 'text', texte: "Qu'est-ce qui est important pour vous et pour votre couple ? À quoi vous engagez-vous ? À quoi renoncez-vous ?" },
