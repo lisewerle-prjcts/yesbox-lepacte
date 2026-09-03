@@ -52,7 +52,7 @@ const CDD_ROWS = [
 ]
 
 const FREE_FEATURES = ['Module "Toi et Moi" pour vous deux', 'Questions personnelles', 'Espace couple privé']
-const PRO_FEATURES = ['Les 10 modules complets', 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple', 'Garantie 30 jours']
+const PRO_FEATURES = ['Les 10 modules complets', 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple']
 const BAC_FEATURES = ['Rappel annuel à votre anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous le souhaitez', 'Annulable à tout moment']
 
 export default function LandingPage() {
@@ -368,7 +368,7 @@ export default function LandingPage() {
         <p className="text-lg mb-8" style={{ color: 'var(--muted)' }}><EditableText id="home.ctafinal.subtitle" multiline>Le module 1 est gratuit pour vous deux. Commencez à deux, ce soir.</EditableText></p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            <EditableText id="home.ctafinal.cta.primary">Pré-commander — 29€/mois</EditableText> <ArrowRight className="w-4 h-4" />
+            <EditableText id="home.ctafinal.cta.primary">Commencez maintenant</EditableText> <ArrowRight className="w-4 h-4" />
           </button>
           <Link href="/inscription" className="btn-ghost lg">
             <EditableText id="home.ctafinal.cta.secondary">Essayer gratuitement</EditableText>
