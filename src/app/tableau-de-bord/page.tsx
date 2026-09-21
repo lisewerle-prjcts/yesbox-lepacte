@@ -46,8 +46,9 @@ export default async function TableauDeBordPage({
     const mod = modules.find(m => m.slug === slug)
     if (!mod) return 'locked'
     if (mod.revealed) return 'done'
-    if (mod.statut === 'complete') return 'done'
-    if (mod.statut === 'en_cours') return 'active'
+    // statut === 'complete' veut seulement dire que l'un·e des deux a fini de
+    // répondre : tant que la révélation n'a pas eu lieu, ce n'est pas "done".
+    if (mod.statut === 'complete' || mod.statut === 'en_cours') return 'active'
     return 'locked'
   }
 
