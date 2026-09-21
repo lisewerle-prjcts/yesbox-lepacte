@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import EditableText from '@/components/edit-mode/EditableText'
-import { CheckCircle, Lock, Heart, ScrollText, ChevronRight } from 'lucide-react'
+import { CheckCircle, Lock, Heart, ScrollText, ChevronRight, UserPlus } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
@@ -63,6 +63,16 @@ export default async function PactePage() {
             : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur ${MODULES.length}`}
         </p>
       </div>
+
+      {!partner && (
+        <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
+          <UserPlus className="w-5 h-5" style={{ color: 'var(--brand)', flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', flex: 1, minWidth: 200 }}>
+            <EditableText id="pacte.nonpaire.texte" multiline>Ta progression et celle de ton/ta partenaire se débloquent une fois vos deux comptes pairés.</EditableText>
+          </p>
+          <Link href="/tableau-de-bord" className="btn-brand text-sm py-2"><EditableText id="pacte.nonpaire.cta">Retrouver mon code couple</EditableText></Link>
+        </div>
+      )}
 
       {/* Grille des modules */}
       <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>
