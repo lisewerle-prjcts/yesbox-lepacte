@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { t } from '@/lib/i18n/locale'
 import nodemailer from 'nodemailer'
 
 function getTransporter() {
@@ -15,6 +17,7 @@ function getTransporter() {
 
 export async function soumettrePrecommande(formData: FormData) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
   const prenom = (formData.get('prenom') as string)?.trim()
   const nom = (formData.get('nom') as string)?.trim() || null
@@ -23,8 +26,8 @@ export async function soumettrePrecommande(formData: FormData) {
   const adresse = (formData.get('adresse') as string)?.trim() || null
   const message = (formData.get('message') as string)?.trim() || null
 
-  if (!prenom || !email) return { error: 'Prénom et email requis' }
-  if (!email.includes('@')) return { error: 'Email invalide' }
+  if (!prenom || !email) return { error: t(locale, 'Prénom et email requis', 'First name and email are required') }
+  if (!email.includes('@')) return { error: t(locale, 'Email invalide', 'Invalid email') }
 
   const { error } = await supabase
     .from('precommandes')
@@ -32,9 +35,9 @@ export async function soumettrePrecommande(formData: FormData) {
 
   if (error) {
     if (error.message.includes('duplicate') || error.code === '23505') {
-      return { error: 'Cet email est déjà inscrit sur la liste !' }
+      return { error: t(locale, 'Cet email est déjà inscrit sur la liste !', 'This email is already on the list!') }
     }
-    return { error: `Erreur: ${error.message} (code: ${error.code})` }
+    return { error: t(locale, `Erreur: ${error.message} (code: ${error.code})`, `Error: ${error.message} (code: ${error.code})`) }
   }
 
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {

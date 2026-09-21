@@ -80,6 +80,12 @@ export interface Question {
   max?: number
   labelMin?: string
   labelMax?: string
+  /** Traduction anglaise US par défaut de `texte` (contenu statique des modules). */
+  texte_en?: string
+  hint_en?: string
+  options_en?: string[]
+  labelMin_en?: string
+  labelMax_en?: string
 }
 
 export interface ModuleInfo {
@@ -91,4 +97,8 @@ export interface ModuleInfo {
   emoji: string
   free: boolean
   questions: Question[]
+  /** Traductions anglaises US par défaut (contenu statique des modules). */
+  titre_en?: string
+  sousTitre_en?: string
+  description_en?: string
 }

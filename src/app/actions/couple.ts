@@ -2,13 +2,16 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { t } from '@/lib/i18n/locale'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
   const admin = createAdminClient()
+  const locale = await getLocale()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const nomCouple = formData.get('nom_couple') as string
   const dateAnniversaire = formData.get('date_anniversaire') as string | null
@@ -65,9 +68,10 @@ export async function creerCoupleSolo(userId: string) {
 
 export async function rejoindreCouple(token: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const { data, error } = await supabase.rpc('rejoindre_couple_via_token', {
     p_token: token,
@@ -83,10 +87,11 @@ export async function rejoindreCouple(token: string) {
 
 export async function rejoindreCoupleParCode(userId: string, code: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
   const cleanCode = code.trim().toUpperCase()
   if (!/^[A-Z0-9]{5}$/.test(cleanCode)) {
-    return { error: 'Le code doit contenir 5 lettres/chiffres' }
+    return { error: t(locale, 'Le code doit contenir 5 lettres/chiffres', 'The code must contain 5 letters/digits') }
   }
 
   const { data, error } = await supabase.rpc('rejoindre_couple_via_code', {
@@ -103,9 +108,10 @@ export async function rejoindreCoupleParCode(userId: string, code: string) {
 
 export async function rejoindrePartenaireParCode(formData: FormData) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const code = formData.get('code') as string
   return rejoindreCoupleParCode(user.id, code)
@@ -113,11 +119,12 @@ export async function rejoindrePartenaireParCode(formData: FormData) {
 
 export async function enregistrerPacteTexte(texte: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
+  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
 
   const { error } = await supabase
     .from('couples')
@@ -131,9 +138,10 @@ export async function enregistrerPacteTexte(texte: string) {
 
 export async function getInviteLink() {
   const supabase = await createClient()
+  const locale = await getLocale()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -141,7 +149,7 @@ export async function getInviteLink() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
+  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
 
   const { data: couple } = await supabase
     .from('couples')
@@ -149,7 +157,7 @@ export async function getInviteLink() {
     .eq('id', profile.couple_id)
     .single()
 
-  if (!couple) return { error: 'Couple introuvable' }
+  if (!couple) return { error: t(locale, 'Couple introuvable', 'Couple not found') }
 
   const { count: memberCount } = await supabase
     .from('profiles')

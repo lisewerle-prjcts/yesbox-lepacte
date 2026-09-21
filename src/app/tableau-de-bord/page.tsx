@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getInviteLink } from '@/app/actions/couple'
+import { getLocale, getT } from '@/lib/i18n/server'
+import { localizeModules } from '@/lib/i18n/module-text'
 import EditableText from '@/components/edit-mode/EditableText'
 import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { Module } from '@/types'
@@ -42,8 +44,10 @@ export default async function TableauDeBordPage({
     reponses = reps || []
   }
 
+  const locale = await getLocale()
+  const t = getT(locale)
   const inviteData = await getInviteLink()
-  const effectiveModules = await getEffectiveModules()
+  const effectiveModules = localizeModules(await getEffectiveModules(), locale)
   const totalModuleCount = effectiveModules.length
 
   const done = modules.filter(m => m.revealed).length
@@ -92,7 +96,7 @@ export default async function TableauDeBordPage({
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}><EditableText id="dashboard.progression.titre">Votre progression</EditableText></h2>
-              <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{done} module{done > 1 ? 's' : ''} révélé{done > 1 ? 's' : ''} sur {totalModuleCount}</p>
+              <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{t(`${done} module${done > 1 ? 's' : ''} révélé${done > 1 ? 's' : ''} sur ${totalModuleCount}`, `${done} module${done > 1 ? 's' : ''} revealed out of ${totalModuleCount}`)}</p>
             </div>
             <span className="font-serif font-bold" style={{ fontSize: 28, color: pct === 100 ? 'var(--sage)' : 'var(--brand)' }}>{pct}%</span>
           </div>

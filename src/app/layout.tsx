@@ -3,8 +3,11 @@ import { DM_Sans, Playfair_Display, DM_Mono } from 'next/font/google'
 import './globals.css'
 import { createClient } from '@/lib/supabase/server'
 import { getSiteContentMap } from '@/lib/site-content'
+import { getLocale } from '@/lib/i18n/server'
 import { EditModeProvider } from '@/components/edit-mode/EditModeContext'
 import EditModeToggle from '@/components/edit-mode/EditModeToggle'
+import { LocaleProvider } from '@/components/i18n/LocaleContext'
+import GlobalLocaleSwitcher from '@/components/i18n/GlobalLocaleSwitcher'
 
 const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
 const dmMono = DM_Mono({ subsets: ['latin'], variable: '--font-geist-mono', weight: ['400', '500'], display: 'swap' })
@@ -40,14 +43,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const content = await getSiteContentMap()
+  const locale = await getLocale()
 
   return (
-    <html lang="fr" className={`${dmSans.variable} ${dmMono.variable} ${playfair.variable}`}>
+    <html lang={locale} className={`${dmSans.variable} ${dmMono.variable} ${playfair.variable}`}>
       <body>
-        <EditModeProvider isAdmin={isAdmin} initialContent={content}>
-          {children}
-          <EditModeToggle />
-        </EditModeProvider>
+        <LocaleProvider initialLocale={locale}>
+          <EditModeProvider isAdmin={isAdmin} initialContent={content}>
+            {children}
+            <EditModeToggle />
+            <GlobalLocaleSwitcher />
+          </EditModeProvider>
+        </LocaleProvider>
       </body>
     </html>
   )

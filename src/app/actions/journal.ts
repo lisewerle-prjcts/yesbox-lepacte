@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { scellerModule } from '@/app/actions/modules'
+import { getLocale } from '@/lib/i18n/server'
+import { t } from '@/lib/i18n/locale'
 import type { ConclusionSlug } from '@/types'
 
 const CONCLUSION_SLUGS: ConclusionSlug[] = ['apprentissage', 'surprise']
@@ -19,8 +21,9 @@ export async function sauvegarderConclusion(
   surprise: string
 ) {
   const supabase = await createClient()
+  const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const rows = [
     { couple_id: coupleId, module_slug: moduleSlug, user_id: user.id, question_slug: 'apprentissage', valeur: apprentissage },

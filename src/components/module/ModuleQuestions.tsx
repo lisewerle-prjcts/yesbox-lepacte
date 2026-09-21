@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
 import EditableText from '@/components/edit-mode/EditableText'
+import { useT } from '@/components/i18n/LocaleContext'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
@@ -19,6 +20,7 @@ interface Props {
 
 export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, reponsesPartenaire, partnerName }: Props) {
   const router = useRouter()
+  const t = useT()
   const [isPending, startTransition] = useTransition()
   const [idx, setIdx] = useState(() => {
     const saved: Record<string, string> = {}
@@ -98,7 +100,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
               <EditableText id="module.termine.titre">Tes réponses sont sauvegardées !</EditableText>
             </h2>
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
-              <EditableText id="module.termine.attente.prefix">En attente de</EditableText> {partnerName || 'ton/ta partenaire'}<EditableText id="module.termine.attente.suffix" multiline>… La révélation s&apos;ouvrira quand vous aurez tous les deux terminé.</EditableText>
+              <EditableText id="module.termine.attente.prefix">En attente de</EditableText> {partnerName || t('ton/ta partenaire', 'your partner')}<EditableText id="module.termine.attente.suffix" multiline>… La révélation s&apos;ouvrira quand vous aurez tous les deux terminé.</EditableText>
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-brand"><EditableText id="module.voir.cta">Voir mes réponses</EditableText></Link>
@@ -132,7 +134,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
 
       {/* Question card */}
       <div className="card p-7 mb-5 slide-up" key={q.slug}>
-        <div className="eyebrow mb-4">Question {String(idx + 1).padStart(2, '0')}</div>
+        <div className="eyebrow mb-4">{t('Question', 'Question')} {String(idx + 1).padStart(2, '0')}</div>
         <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 24 }}>
           {q.texte}
         </h2>
@@ -162,20 +164,21 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
       {/* Partner status */}
       <p className="font-mono text-center mt-5" style={{ fontSize: 11, color: 'var(--muted)' }}>
         {partnerDone
-          ? <>✓ {partnerName || 'Ton/ta partenaire'} <EditableText id="module.partenaire.termine">a déjà terminé ce module</EditableText></>
+          ? <>✓ {partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="module.partenaire.termine">a déjà terminé ce module</EditableText></>
           : reponsesPartenaire.length > 0
-          ? <>⏳ {partnerName || 'Ton/ta partenaire'} <EditableText id="module.partenaire.encours">répond de son côté…</EditableText></>
-          : <>{partnerName || 'Ton/ta partenaire'} <EditableText id="module.partenaire.pascommence">n&apos;a pas encore commencé</EditableText></>}
+          ? <>⏳ {partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="module.partenaire.encours">répond de son côté…</EditableText></>
+          : <>{partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="module.partenaire.pascommence">n&apos;a pas encore commencé</EditableText></>}
       </p>
     </div>
   )
 }
 
 function QuestionInput({ q, value, onChange }: { q: Question; value: string; onChange: (v: string) => void }) {
+  const t = useT()
   if (q.type === 'text') {
     return (
       <textarea value={value} onChange={e => onChange(e.target.value)}
-        placeholder="Écris ce qui te vient…" rows={4} className="field" />
+        placeholder={t('Écris ce qui te vient…', 'Write down what comes to mind…')} rows={4} className="field" />
     )
   }
 

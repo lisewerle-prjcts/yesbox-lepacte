@@ -4,13 +4,15 @@ import { useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { soumettrePrecommande } from '@/app/actions/precommande'
 import EditableText from '@/components/edit-mode/EditableText'
+import { useT } from '@/components/i18n/LocaleContext'
 import { X, Heart, CheckCircle } from 'lucide-react'
 
 function SubmitBtn() {
   const { pending } = useFormStatus()
+  const t = useT()
   return (
     <button type="submit" disabled={pending} className="btn-brand lg w-full justify-center">
-      {pending ? 'Envoi en cours…' : <EditableText id="modal.precommande.submit">Réserver ma place</EditableText>}
+      {pending ? t('Envoi en cours…', 'Sending…') : <EditableText id="modal.precommande.submit">Réserver ma place</EditableText>}
     </button>
   )
 }
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export default function PrecommandeModal({ onClose }: Props) {
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
@@ -70,27 +73,27 @@ export default function PrecommandeModal({ onClose }: Props) {
             <form action={handleSubmit} className="space-y-4">
               <div>
                 <label className="flabel"><EditableText id="modal.precommande.field.prenom">Ton prénom *</EditableText></label>
-                <input name="prenom" type="text" placeholder="Marie" required className="field" autoComplete="given-name" />
+                <input name="prenom" type="text" placeholder={t('Marie', 'Mary')} required className="field" autoComplete="given-name" />
               </div>
               <div>
                 <label className="flabel"><EditableText id="modal.precommande.field.nom">Ton nom de famille</EditableText></label>
-                <input name="nom" type="text" placeholder="Dupont" className="field" autoComplete="family-name" />
+                <input name="nom" type="text" placeholder={t('Dupont', 'Smith')} className="field" autoComplete="family-name" />
               </div>
               <div>
                 <label className="flabel"><EditableText id="modal.precommande.field.email">Ton email *</EditableText></label>
-                <input name="email" type="email" placeholder="marie@exemple.fr" required className="field" autoComplete="email" />
+                <input name="email" type="email" placeholder={t('marie@exemple.fr', 'mary@example.com')} required className="field" autoComplete="email" />
               </div>
               <div>
-                <label className="flabel"><EditableText id="modal.precommande.field.partner_prenom">Le prénom de ton/ta partenaire</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
-                <input name="partner_prenom" type="text" placeholder="Tom" className="field" />
+                <label className="flabel"><EditableText id="modal.precommande.field.partner_prenom">Le prénom de ton/ta partenaire</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('(optionnel)', '(optional)')}</span></label>
+                <input name="partner_prenom" type="text" placeholder={t('Tom', 'Alex')} className="field" />
               </div>
               <div>
-                <label className="flabel"><EditableText id="modal.precommande.field.adresse">Ville / Pays</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
-                <input name="adresse" type="text" placeholder="Paris, France" className="field" />
+                <label className="flabel"><EditableText id="modal.precommande.field.adresse">Ville / Pays</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('(optionnel)', '(optional)')}</span></label>
+                <input name="adresse" type="text" placeholder={t('Paris, France', 'New York, USA')} className="field" />
               </div>
               <div>
-                <label className="flabel"><EditableText id="modal.precommande.field.message">Un mot ?</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optionnel)</span></label>
-                <textarea name="message" placeholder="Pourquoi YES BOX vous parle…" rows={3} className="field" />
+                <label className="flabel"><EditableText id="modal.precommande.field.message">Un mot ?</EditableText> <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('(optionnel)', '(optional)')}</span></label>
+                <textarea name="message" placeholder={t('Pourquoi YES BOX vous parle…', 'Why YES BOX speaks to you…')} rows={3} className="field" />
               </div>
               <SubmitBtn />
               <p className="text-center text-xs" style={{ color: 'var(--muted)' }}>

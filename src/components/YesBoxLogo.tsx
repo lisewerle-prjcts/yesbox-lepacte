@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useT } from '@/components/i18n/LocaleContext'
 
 interface LogoProps {
   href?: string
@@ -8,6 +11,7 @@ interface LogoProps {
 }
 
 export default function YesBoxLogo({ href = '/', size = 'md', dark = false }: LogoProps) {
+  const t = useT()
   const iconSize = size === 'sm' ? 32 : size === 'lg' ? 48 : 40
   const nameSize = size === 'sm' ? 15 : size === 'lg' ? 22 : 18
   const tagSize = size === 'sm' ? 8 : size === 'lg' ? 10 : 9
@@ -28,7 +32,7 @@ export default function YesBoxLogo({ href = '/', size = 'md', dark = false }: Lo
           YES BOX
         </span>
         <span className="font-mono uppercase" style={{ fontSize: tagSize, color: mutedColor, letterSpacing: '.09em', lineHeight: 1 }}>
-          Le pacte des couples qui tiennent
+          {t('Le pacte des couples qui tiennent', 'The pact for couples who last')}
         </span>
       </div>
     </div>

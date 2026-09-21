@@ -3,11 +3,14 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { getLocale } from '@/lib/i18n/server'
+import { t } from '@/lib/i18n/locale'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const { error } = await supabase.from('reponses').upsert(
     { module_id: moduleId, user_id: user.id, question_slug: questionSlug, valeur },
@@ -19,11 +22,12 @@ export async function sauvegarderReponse(moduleId: string, questionSlug: string,
 
 export async function terminerModule(moduleId: string, moduleSlug: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié' }
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: 'Aucun couple trouvé' }
+  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
 
   await supabase.from('modules').update({ statut: 'complete', completed_at: new Date().toISOString() }).eq('id', moduleId)
 

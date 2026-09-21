@@ -2,6 +2,8 @@
 
 import { useState, type CSSProperties, type ElementType, type KeyboardEvent, type MouseEvent } from 'react'
 import { useEditMode } from './EditModeContext'
+import { useLocale } from '@/components/i18n/LocaleContext'
+import { EN_CONTENT } from '@/lib/i18n/en-content'
 
 interface EditableTextProps {
   /** Clé unique et stable identifiant ce texte (ex: "home.hero.title"). */
@@ -16,11 +18,18 @@ interface EditableTextProps {
 
 export default function EditableText({ id, children, as, className, style, multiline = false }: EditableTextProps) {
   const { content, isAdmin, editMode, saveContent } = useEditMode()
+  const { locale } = useLocale()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
 
   const Tag = (as || 'span') as ElementType
-  const value = content[id] ?? children
+  // En anglais, on stocke/lit les personnalisations admin sous une clé distincte
+  // ("id::en"), et on retombe sur la traduction statique par défaut (EN_CONTENT)
+  // si l'admin n'a rien personnalisé pour cette langue.
+  const isEn = locale === 'en'
+  const key = isEn ? `${id}::en` : id
+  const defaultText = isEn ? (EN_CONTENT[id] ?? children) : children
+  const value = content[key] ?? defaultText
 
   if (!isAdmin || !editMode) {
     return <Tag className={className} style={style}>{value}</Tag>
@@ -35,7 +44,7 @@ export default function EditableText({ id, children, as, className, style, multi
 
   function commit() {
     setEditing(false)
-    if (draft.trim() && draft !== value) saveContent(id, draft)
+    if (draft.trim() && draft !== value) saveContent(key, draft)
   }
 
   if (editing) {

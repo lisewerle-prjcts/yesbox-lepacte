@@ -36,7 +36,13 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
-              {l.icon}<EditableText id={`dashboard.nav.${l.key}`}>{l.label}</EditableText>
+              {l.icon}
+              {l.key === 'dashboard' && <EditableText id="dashboard.nav.dashboard">Accueil</EditableText>}
+              {l.key === 'pacte' && <EditableText id="dashboard.nav.pacte">Progression</EditableText>}
+              {l.key === 'journal' && <EditableText id="dashboard.nav.journal">Notre Pacte</EditableText>}
+              {l.key === 'moncompte' && <EditableText id="dashboard.nav.moncompte">Mon compte</EditableText>}
+              {l.key === 'regles' && <EditableText id="dashboard.nav.regles">Règles du jeu</EditableText>}
+              {l.key === 'admin' && <EditableText id="dashboard.nav.admin">Admin</EditableText>}
             </Link>
           ))}
         </nav>
@@ -63,7 +69,13 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
             <Link key={l.href} href={l.href} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--ink)' }}
               onClick={() => setOpen(false)}>
-              {l.icon}<EditableText id={`dashboard.nav.${l.key}`}>{l.label}</EditableText>
+              {l.icon}
+              {l.key === 'dashboard' && <EditableText id="dashboard.nav.dashboard">Accueil</EditableText>}
+              {l.key === 'pacte' && <EditableText id="dashboard.nav.pacte">Progression</EditableText>}
+              {l.key === 'journal' && <EditableText id="dashboard.nav.journal">Notre Pacte</EditableText>}
+              {l.key === 'moncompte' && <EditableText id="dashboard.nav.moncompte">Mon compte</EditableText>}
+              {l.key === 'regles' && <EditableText id="dashboard.nav.regles">Règles du jeu</EditableText>}
+              {l.key === 'admin' && <EditableText id="dashboard.nav.admin">Admin</EditableText>}
             </Link>
           ))}
           <div style={{ borderTop: '1px solid var(--line)', marginTop: 8, paddingTop: 8 }}>

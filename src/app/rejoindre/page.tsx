@@ -7,11 +7,13 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
+import { useT } from '@/components/i18n/LocaleContext'
 import { rejoindreCouple } from '@/app/actions/couple'
 import { createClient } from '@/lib/supabase/client'
 import { Heart } from 'lucide-react'
 
 function RejoindreContent() {
+  const t = useT()
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token')
@@ -29,7 +31,7 @@ function RejoindreContent() {
 
   async function handleRejoindre() {
     if (!token) {
-      setError('Lien d\'invitation invalide')
+      setError(t('Lien d\'invitation invalide', 'Invalid invitation link'))
       setStatus('error')
       return
     }
@@ -53,7 +55,7 @@ function RejoindreContent() {
 
   if (!token) {
     return (
-      <Alert type="error" message="Lien d'invitation invalide ou manquant." />
+      <Alert type="error" message={t("Lien d'invitation invalide ou manquant.", 'Invalid or missing invitation link.')} />
     )
   }
 
@@ -93,7 +95,7 @@ function RejoindreContent() {
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {status === 'loading' ? <Spinner size="sm" /> : <Heart className="w-4 h-4" />}
-              {status === 'loading' ? 'Connexion...' : <EditableText id="rejoindre.cta">Rejoindre le pacte</EditableText>}
+              {status === 'loading' ? t('Connexion...', 'Signing in...') : <EditableText id="rejoindre.cta">Rejoindre le pacte</EditableText>}
             </button>
           ) : (
             <div className="space-y-3">

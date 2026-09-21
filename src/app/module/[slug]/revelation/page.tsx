@@ -1,6 +1,8 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeModule } from '@/lib/i18n/module-text'
 import RevelationClient from '@/components/module/RevelationClient'
 
 interface PageProps { params: Promise<{ slug: string }> }
@@ -11,8 +13,10 @@ export default async function RevelationPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const moduleInfo = await getEffectiveModuleBySlug(slug)
-  if (!moduleInfo) notFound()
+  const locale = await getLocale()
+  const moduleInfoRaw = await getEffectiveModuleBySlug(slug)
+  if (!moduleInfoRaw) notFound()
+  const moduleInfo = localizeModule(moduleInfoRaw, locale)
 
   const { data: profile } = await supabase.from('profiles').select('couple_id, prenom').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')

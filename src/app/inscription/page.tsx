@@ -7,20 +7,23 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
+import { useT } from '@/components/i18n/LocaleContext'
 import { inscription, renvoyerConfirmation } from '@/app/actions/auth'
 import { Eye, EyeOff, MailCheck } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
+  const t = useT()
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full flex items-center justify-center gap-2">
       {pending ? <Spinner size="sm" /> : null}
-      {pending ? 'Création en cours...' : <EditableText id="inscription.submit">Créer mon compte</EditableText>}
+      {pending ? t('Création en cours...', 'Creating account...') : <EditableText id="inscription.submit">Créer mon compte</EditableText>}
     </button>
   )
 }
 
 export default function InscriptionPage() {
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null)
@@ -31,7 +34,7 @@ export default function InscriptionPage() {
     const password = formData.get('password') as string
     const passwordConfirm = formData.get('password_confirm') as string
     if (password !== passwordConfirm) {
-      setError('Les deux mots de passe ne correspondent pas')
+      setError(t('Les deux mots de passe ne correspondent pas', 'The two passwords do not match'))
       return
     }
     const result = await inscription(formData)
@@ -53,15 +56,15 @@ export default function InscriptionPage() {
           <Logo size="md" className="inline-block mb-6" />
           <div className="card">
             <MailCheck className="w-10 h-10 text-magenta mx-auto mb-3" />
-            <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">Vérifie ta boîte mail</h1>
+            <h1 className="font-fraunces text-2xl font-bold text-gray-900 mb-2">{t('Vérifie ta boîte mail', 'Check your inbox')}</h1>
             <p className="text-gray-500 mb-1">
-              On a envoyé un lien de confirmation à <span className="font-semibold text-gray-700">{confirmationEmail}</span>.
+              {t('On a envoyé un lien de confirmation à', 'We sent a confirmation link to')} <span className="font-semibold text-gray-700">{confirmationEmail}</span>.
             </p>
             <p className="text-gray-500 mb-6">
-              Clique sur ce lien pour activer ton compte et accéder à ton espace couple. Pense à vérifier tes spams.
+              {t('Clique sur ce lien pour activer ton compte et accéder à ton espace couple. Pense à vérifier tes spams.', 'Click the link to activate your account and access your couple space. Be sure to check your spam folder.')}
             </p>
             {resendState === 'sent' ? (
-              <Alert type="success" message="Email renvoyé ! Vérifie ta boîte mail (et tes spams)." />
+              <Alert type="success" message={t('Email renvoyé ! Vérifie ta boîte mail (et tes spams).', 'Email resent! Check your inbox (and your spam folder).')} />
             ) : (
               <button
                 type="button"
@@ -69,12 +72,12 @@ export default function InscriptionPage() {
                 disabled={resendState === 'sending'}
                 className="text-sm text-magenta font-semibold hover:underline disabled:opacity-50"
               >
-                {resendState === 'sending' ? 'Envoi...' : "Je n'ai rien reçu, renvoyer l'email"}
+                {resendState === 'sending' ? t('Envoi...', 'Sending...') : t("Je n'ai rien reçu, renvoyer l'email", "I didn't receive anything, resend the email")}
               </button>
             )}
           </div>
           <p className="text-sm text-gray-500 mt-6">
-            <Link href="/connexion" className="text-magenta font-semibold hover:underline">Retour à la connexion</Link>
+            <Link href="/connexion" className="text-magenta font-semibold hover:underline">{t('Retour à la connexion', 'Back to login')}</Link>
           </p>
         </div>
       </div>
@@ -106,7 +109,7 @@ export default function InscriptionPage() {
                 id="prenom"
                 name="prenom"
                 type="text"
-                placeholder="Marie"
+                placeholder={t('Marie', 'Mary')}
                 autoComplete="given-name"
                 required
                 className="input-field"
@@ -121,7 +124,7 @@ export default function InscriptionPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="marie@exemple.fr"
+                placeholder={t('marie@exemple.fr', 'mary@example.com')}
                 autoComplete="email"
                 required
                 className="input-field"
@@ -137,7 +140,7 @@ export default function InscriptionPage() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="8 caractères minimum"
+                  placeholder={t('8 caractères minimum', '8 characters minimum')}
                   autoComplete="new-password"
                   required
                   className="input-field pr-12"
@@ -160,7 +163,7 @@ export default function InscriptionPage() {
                 id="password_confirm"
                 name="password_confirm"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Retape ton mot de passe"
+                placeholder={t('Retape ton mot de passe', 'Retype your password')}
                 autoComplete="new-password"
                 required
                 className="input-field"
@@ -169,13 +172,13 @@ export default function InscriptionPage() {
 
             <div>
               <label htmlFor="partner_code" className="label">
-                <EditableText id="inscription.field.code">Code de ton/ta partenaire</EditableText> <span className="text-gray-400 font-normal">(optionnel)</span>
+                <EditableText id="inscription.field.code">Code de ton/ta partenaire</EditableText> <span className="text-gray-400 font-normal">{t('(optionnel)', '(optional)')}</span>
               </label>
               <input
                 id="partner_code"
                 name="partner_code"
                 type="text"
-                placeholder="Ex : A3F9K"
+                placeholder={t('Ex : A3F9K', 'e.g. A3F9K')}
                 maxLength={5}
                 autoCapitalize="characters"
                 className="input-field uppercase"
