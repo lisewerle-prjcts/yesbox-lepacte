@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy } from 'lucide-react'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse,
 } from '@/app/actions/compte'
@@ -9,12 +9,14 @@ import {
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  nom, prenom, email, nomCouple,
+  nom, prenom, email, nomCouple, pairingCode, paired,
 }: {
   nom: string
   prenom: string
   email: string
   nomCouple: string
+  pairingCode: string | null
+  paired: boolean
 }) {
   return (
     <div className="fade" style={{ maxWidth: 700, margin: '0 auto' }}>
@@ -25,7 +27,7 @@ export default function MonCompteClient({
 
       <div className="space-y-5">
         <MesInfosCard nom={nom} prenom={prenom} email={email} />
-        <CoupleCard nomCouple={nomCouple} />
+        <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <PasswordCard />
       </div>
     </div>
@@ -68,15 +70,30 @@ function MesInfosCard({ nom: initialNom, prenom: initialPrenom, email }: { nom: 
   )
 }
 
-function CoupleCard({ nomCouple: initialNom }: { nomCouple: string }) {
+function CoupleCard({ nomCouple: initialNom, pairingCode, paired }: { nomCouple: string; pairingCode: string | null; paired: boolean }) {
   const [nomCouple, setNomCouple] = useState(initialNom)
   const [status, setStatus] = useState<SaveStatus>('idle')
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   async function save() {
+    setError('')
     setStatus('saving')
     const res = await updateNomCouple(nomCouple)
-    setStatus(res.error ? 'error' : 'saved')
+    if (res.error) {
+      setError(res.error)
+      setStatus('error')
+    } else {
+      setStatus('saved')
+    }
     setTimeout(() => setStatus('idle'), 2500)
+  }
+
+  async function copyCode() {
+    if (!pairingCode) return
+    await navigator.clipboard.writeText(pairingCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
   }
 
   return (
@@ -85,10 +102,25 @@ function CoupleCard({ nomCouple: initialNom }: { nomCouple: string }) {
         <Users className="w-4 h-4 text-magenta" />
         <h2 className="font-fraunces text-lg font-bold text-gray-900">Notre couple</h2>
       </div>
+
+      {pairingCode && (
+        <div className="mb-4 max-w-xs">
+          <label className="label">Code couple {paired ? <span className="text-gray-400 font-normal">(déjà pairé·es)</span> : <span className="text-gray-400 font-normal">(à partager avec ton/ta partenaire)</span>}</label>
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-bold" style={{ fontSize: 20, letterSpacing: '.2em' }}>{pairingCode}</span>
+            <button onClick={copyCode} className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1.5">
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? 'Copié' : 'Copier'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-4 max-w-xs">
         <label className="label">Nom du couple <span className="text-gray-400 font-normal">(optionnel)</span></label>
         <input type="text" className="input-field" placeholder="Ex : Marie & Pierre" value={nomCouple} onChange={e => setNomCouple(e.target.value)} />
       </div>
+      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
       <button onClick={save} disabled={status === 'saving'} className="btn-primary text-sm py-2 px-4 flex items-center gap-2">
         {status === 'saving' ? 'Sauvegarde…' : status === 'saved' ? <><Check className="w-4 h-4" /> Sauvegardé</> : status === 'error' ? 'Erreur — réessaie' : 'Sauvegarder'}
       </button>

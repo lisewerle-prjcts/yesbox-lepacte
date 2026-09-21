@@ -132,7 +132,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <EditableText id="revelation.conclusion.titre">Ta conclusion, de ton côté</EditableText>
           </h2>
           <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 28, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
-            <EditableText id="revelation.conclusion.souscritre" multiline>Chacun·e écrit la sienne, sans regarder celle de l&apos;autre. Le module suivant se débloque quand vous avez toustes les deux terminé.</EditableText>
+            <EditableText id="revelation.conclusion.souscritre" multiline>Chacun·e écrit la sienne, sans regarder celle de l&apos;autre. Le module suivant se débloque quand vous deux avez inscrit un élément dans votre journal.</EditableText>
           </p>
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 20, textAlign: 'left', border: '1px solid var(--dark-line)' }}>

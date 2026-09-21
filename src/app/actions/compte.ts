@@ -50,7 +50,10 @@ export async function updateNomCouple(nomCouple: string) {
   const { data: myProfile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
   if (!myProfile?.couple_id) return { error: 'Aucun couple trouvé' }
 
-  const { error } = await supabase
+  // Client admin : la même mise à jour via le client authentifié échoue
+  // silencieusement sous RLS (cf. creerCouple dans couple.ts).
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('couples')
     .update({ nom_couple: nomCouple.trim() || null })
     .eq('id', myProfile.couple_id)

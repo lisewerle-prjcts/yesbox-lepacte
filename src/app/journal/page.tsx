@@ -4,7 +4,7 @@ import { getEffectiveModules } from '@/lib/modules-effective'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
-import { BookOpen, Heart } from 'lucide-react'
+import { BookOpen, Heart, UserPlus } from 'lucide-react'
 import type { Module } from '@/types'
 
 export const metadata = { title: 'Notre Pacte' }
@@ -48,6 +48,16 @@ export default async function JournalPage() {
           <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre">Vos conclusions après chaque révélation</EditableText></p>
         </div>
       </div>
+
+      {!partner && (
+        <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
+          <UserPlus className="w-5 h-5" style={{ color: 'var(--brand)', flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', flex: 1, minWidth: 200 }}>
+            <EditableText id="journal.nonpaire.texte" multiline>Votre journal et votre Pacte se remplissent une fois vos deux comptes pairés.</EditableText>
+          </p>
+          <Link href="/tableau-de-bord" className="btn-brand text-sm py-2"><EditableText id="journal.nonpaire.cta">Retrouver mon code couple</EditableText></Link>
+        </div>
+      )}
 
       {partner && (
         <PacteDocument

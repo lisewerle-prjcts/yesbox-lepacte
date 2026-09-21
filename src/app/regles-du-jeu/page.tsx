@@ -39,7 +39,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.revelation.titre">La révélation</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.revelation.texte" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que le module suivant se débloque.</EditableText>
+              <EditableText id="regles.revelation.texte" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, vous êtes invités à ajouter un élément dans votre journal : ce que vous avez appris avec le module, ce qui vous a ému·e et ce qui vous a étonné·e. Une fois le journal rempli, et si vous êtes à jour de votre abonnement, le module suivant se débloque.</EditableText>
             </p>
           </li>
           <li>
@@ -55,7 +55,16 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.cdd.titre">Le CDD de couple</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.cdd.texte" multiline>Rédigé à la fin du programme, il est réexaminé chaque année via le BAC annuel, avec la possibilité de le faire évoluer par avenant.</EditableText>
+              <EditableText id="regles.cdd.texte" multiline>Rédigé à la fin du programme, il reprend les éléments importants vus au travers des différents modules. Il sera réexaminé chaque année via le Bilan annuel de couple, avec la possibilité de le faire évoluer par avenant. Comme un CDD :)</EditableText>
+            </p>
+          </li>
+          <li>
+            <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              <EditableText id="regles.questions.titre">Questions</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)' }}>
+              <EditableText id="regles.questions.texte" multiline>Pour toute question, vous pouvez écrire à </EditableText>
+              <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a>
             </p>
           </li>
         </ul>
