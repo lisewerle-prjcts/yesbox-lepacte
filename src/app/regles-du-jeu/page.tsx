@@ -44,6 +44,14 @@ export default function ReglesDuJeuPage() {
           </li>
           <li>
             <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              <EditableText id="regles.duree.titre">Durée des modules</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)' }}>
+              <EditableText id="regles.duree.texte" multiline>Chaque module contient une quinzaine de questions. Il faut compter 45 à 60 minutes pour répondre chacun·e de son côté, révéler les réponses et les découvrir à deux, puis noter ses remarques dans le journal.</EditableText>
+            </p>
+          </li>
+          <li>
+            <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
               <EditableText id="regles.confidentialite.titre">Confidentialité</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>

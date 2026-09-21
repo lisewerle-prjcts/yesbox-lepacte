@@ -33,18 +33,21 @@ export default async function PactePage() {
     .select('*')
     .in('module_id', modules?.map((m: Module) => m.id) || [])
 
-  const modulesTermines = modules?.filter((m: Module) => m.statut === 'complete') || []
+  const modulesTermines = modules?.filter((m: Module) => m.revealed) || []
   const tousTermines = modulesTermines.length === MODULES.length
 
   function getReponsesModule(moduleId: string, userId: string): Reponse[] {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
   }
 
+  // "complete" ne veut dire que le/la premier·ère des deux a fini de répondre
+  // (statut partagé) — seul `revealed` (après la session de révélation) signifie
+  // que les deux réponses peuvent être affichées.
   function getModStatus(slug: string): 'done' | 'active' | 'locked' {
     const mod = modules?.find((m: Module) => m.slug === slug)
     if (!mod) return 'locked'
-    if (mod.revealed || mod.statut === 'complete') return 'done'
-    if (mod.statut === 'en_cours') return 'active'
+    if (mod.revealed) return 'done'
+    if (mod.statut === 'complete' || mod.statut === 'en_cours') return 'active'
     return 'locked'
   }
 
@@ -141,9 +144,20 @@ export default async function PactePage() {
       <div className="space-y-4">
         {MODULES.map((moduleInfo) => {
           const moduleData = modules?.find((m: Module) => m.slug === moduleInfo.slug)
-          const isComplete = moduleData?.statut === 'complete'
+          const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
+          const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
+          const total = moduleInfo.questions.length
 
-          if (!isComplete) {
+          // `statut === 'complete'` est un champ partagé par le couple qui bascule
+          // dès que l'un·e des deux a fini de répondre — pas un indicateur fiable
+          // que les deux ont terminé. On se base sur le nombre réel de réponses de
+          // chacun·e. Seul `revealed` (après la session de révélation) autorise à
+          // afficher les réponses côte à côte.
+          const isRevealed = moduleData?.revealed === true
+          const jaiFini = mesReponses.length >= total
+          const partenaireFini = reponsesPartner.length >= total
+
+          if (!isRevealed) {
             return (
               <div key={moduleInfo.slug} className="card p-5" style={{ opacity: .6 }}>
                 <div className="flex items-center gap-3">
@@ -151,19 +165,22 @@ export default async function PactePage() {
                     <h3 className="font-serif font-bold" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></h3>
                     <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                       <Lock className="w-3 h-3" />
-                      <span><EditableText id="pacte.nonterminee">Module non terminé</EditableText></span>
+                      <span>{jaiFini
+                        ? <EditableText id="pacte.enattenterevelation">En attente de révélation</EditableText>
+                        : <EditableText id="pacte.nonterminee">Module non terminé</EditableText>}</span>
                     </div>
                   </div>
-                  <Link href={`/module/${moduleInfo.slug}`} className="btn-brand text-sm py-1.5" style={{ marginLeft: 'auto' }}>
-                    <EditableText id="pacte.commencer">Commencer</EditableText>
+                  <Link href={jaiFini ? `/module/${moduleInfo.slug}/revelation` : `/module/${moduleInfo.slug}`} className="btn-brand text-sm py-1.5" style={{ marginLeft: 'auto' }}>
+                    {partenaireFini
+                      ? <EditableText id="pacte.ouvrirrevelation">Ouvrir la révélation</EditableText>
+                      : jaiFini
+                      ? <EditableText id="pacte.voir">Voir</EditableText>
+                      : <EditableText id="pacte.commencer">Commencer</EditableText>}
                   </Link>
                 </div>
               </div>
             )
           }
-
-          const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
-          const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
 
           return (
             <div key={moduleInfo.slug} className="card p-5">

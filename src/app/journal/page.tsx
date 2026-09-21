@@ -59,7 +59,7 @@ export default async function JournalPage() {
         </div>
       )}
 
-      {partner && (
+      {partner && revealedModules.length > 0 && (
         <PacteDocument
           initialTexte={couple?.pacte_texte ?? ''}
           modifiePar={modifiePartPrenom}

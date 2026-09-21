@@ -32,7 +32,13 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
     return init
   })
   const [saving, setSaving] = useState(false)
-  const [done, setDone] = useState(moduleData.statut === 'complete')
+  // `moduleData.statut` est partagé par le couple : il passe à "complete" dès
+  // que l'un·e des deux a fini, pas seulement la personne qui consulte cette
+  // page. On se base sur SES propres réponses pour savoir si ELLE a terminé.
+  const [done, setDone] = useState(() => {
+    const mesReponsesValides = mesReponses.filter(r => r.valeur !== undefined && r.valeur !== '').length
+    return mesReponsesValides >= moduleInfo.questions.length
+  })
 
   const q = moduleInfo.questions[idx]
   const total = moduleInfo.questions.length
@@ -58,6 +64,11 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
         setDone(true)
       })
     }
+  }
+
+  function reviewAnswers() {
+    setIdx(0)
+    setDone(false)
   }
 
   if (done) {
@@ -89,7 +100,11 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
               <EditableText id="module.termine.attente.prefix">En attente de</EditableText> {partnerName || 'ton/ta partenaire'}<EditableText id="module.termine.attente.suffix" multiline>… La révélation s&apos;ouvrira quand vous aurez tous les deux terminé.</EditableText>
             </p>
-            <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-brand"><EditableText id="module.voir.cta">Voir mes réponses</EditableText></Link>
+              <button onClick={reviewAnswers} className="btn-secondary"><EditableText id="module.revoir.cta">Modifier mes réponses</EditableText></button>
+              <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
+            </div>
           </>
         )}
       </div>
