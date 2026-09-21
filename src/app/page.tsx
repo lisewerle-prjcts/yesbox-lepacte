@@ -5,8 +5,9 @@ import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import PrecommandeModal from '@/components/PrecommandeModal'
 import EditableText from '@/components/edit-mode/EditableText'
-import { useT } from '@/components/i18n/LocaleContext'
+import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import { MODULES } from '@/lib/modules-data'
+import { localizeModules } from '@/lib/i18n/module-text'
 import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw } from 'lucide-react'
 
 const MODULE_ICONS = [User, Users, Heart, FileText, Users, MessageCircle, Heart, Zap, FileText, RefreshCw]
@@ -58,9 +59,11 @@ const BAC_FEATURES = (t: (fr: string, en: string) => string) => [t('Rappel annue
 
 export default function LandingPage() {
   const t = useT()
+  const { locale } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const modules = localizeModules(MODULES, locale)
   const navLinks = NAV_LINKS(t)
   const pourQuiList = POUR_QUI(t)
   const statsList = STATS(t)
@@ -205,7 +208,7 @@ export default function LandingPage() {
             </h2>
           </div>
           <div className="flex flex-col gap-3">
-            {MODULES.map((m, i) => {
+            {modules.map((m, i) => {
               const Icon = MODULE_ICONS[i] || User
               return (
               <div key={m.slug} className="card flex items-center gap-5 p-5">
@@ -336,7 +339,7 @@ export default function LandingPage() {
                 <EditableText id="home.tarifs.pro.tag">Accès complet</EditableText>
               </div>
               <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>29 <small style={{ fontSize: 18 }}>€/mois</small></div>
+                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>29 <small style={{ fontSize: 18 }}>{t('€/mois', '€/month')}</small></div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}><EditableText id="home.tarifs.pro.desc">abonnement · résiliable à tout moment</EditableText></div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
@@ -350,7 +353,7 @@ export default function LandingPage() {
             <div className="card p-6 flex flex-col gap-4">
               <div className="tag-brand self-start"><EditableText id="home.tarifs.bac.tag">BAC annuel</EditableText></div>
               <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>19 <small style={{ fontSize: 18 }}>€/an</small></div>
+                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>19 <small style={{ fontSize: 18 }}>{t('€/an', '€/year')}</small></div>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="home.tarifs.bac.desc">Bilan Annuel de Couple · à activer plus tard</EditableText></div>
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
