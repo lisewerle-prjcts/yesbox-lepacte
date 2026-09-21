@@ -32,7 +32,13 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
     return init
   })
   const [saving, setSaving] = useState(false)
-  const [done, setDone] = useState(moduleData.statut === 'complete')
+  // `moduleData.statut` est partagé par le couple : il passe à "complete" dès
+  // que l'un·e des deux a fini, pas seulement la personne qui consulte cette
+  // page. On se base sur SES propres réponses pour savoir si ELLE a terminé.
+  const [done, setDone] = useState(() => {
+    const mesReponsesValides = mesReponses.filter(r => r.valeur !== undefined && r.valeur !== '').length
+    return mesReponsesValides >= moduleInfo.questions.length
+  })
 
   const q = moduleInfo.questions[idx]
   const total = moduleInfo.questions.length
@@ -60,6 +66,11 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
     }
   }
 
+  function reviewAnswers() {
+    setIdx(0)
+    setDone(false)
+  }
+
   if (done) {
     return (
       <div className="card p-10 text-center fade" style={{ maxWidth: 520, margin: '0 auto' }}>
@@ -78,6 +89,9 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
               <EditableText id="module.attente.cta">Ouvrir la session de révélation</EditableText> <ArrowRight className="w-4 h-4" />
             </Link>
+            <div style={{ marginTop: 16 }}>
+              <button onClick={reviewAnswers} className="btn-ghost text-sm"><EditableText id="module.revoir.cta">Revoir / modifier mes réponses</EditableText></button>
+            </div>
           </>
         ) : (
           <>
@@ -89,7 +103,10 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
               <EditableText id="module.termine.attente.prefix">En attente de</EditableText> {partnerName || 'ton/ta partenaire'}<EditableText id="module.termine.attente.suffix" multiline>… La révélation s&apos;ouvrira quand vous aurez tous les deux terminé.</EditableText>
             </p>
-            <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <button onClick={reviewAnswers} className="btn-secondary"><EditableText id="module.revoir.cta">Revoir / modifier mes réponses</EditableText></button>
+              <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
+            </div>
           </>
         )}
       </div>

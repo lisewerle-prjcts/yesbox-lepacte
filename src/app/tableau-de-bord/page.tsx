@@ -21,18 +21,25 @@ export default async function TableauDeBordPage({
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
   let modules: Module[] = []
-  let partner: { prenom: string | null; email: string } | null = null
+  let partner: { prenom: string | null; email: string; id: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
+  let reponses: { module_id: string; user_id: string }[] = []
 
   if (profile?.couple_id) {
     const [{ data: mods }, { data: part }, { data: coup }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
-      supabase.from('profiles').select('prenom, email').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
+      supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
       supabase.from('couples').select('nom_couple, date_anniversaire').eq('id', profile.couple_id).single(),
     ])
     modules = mods || []
     partner = part
     couple = coup
+
+    const { data: reps } = await supabase
+      .from('reponses')
+      .select('module_id, user_id')
+      .in('module_id', modules.map(m => m.id))
+    reponses = reps || []
   }
 
   const inviteData = await getInviteLink()
@@ -107,6 +114,17 @@ export default async function TableauDeBordPage({
         if (nextIdx === -1) return null
         const next = effectiveModules[nextIdx]
         const titre = next.titre
+
+        const nextModData = modules.find(m => m.slug === next.slug)
+        const total = next.questions.length
+        const monCompte = nextModData ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === user.id).length : 0
+        const sonCompte = nextModData && partner ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === partner!.id).length : 0
+        const jaiFini = monCompte >= total
+        const partenaireFini = sonCompte >= total
+        const enAttentePartenaire = jaiFini && !partenaireFini
+
+        const href = jaiFini && partenaireFini ? `/module/${next.slug}/revelation` : `/module/${next.slug}`
+
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
             <div style={{ flex: 1, minWidth: 200 }}>
@@ -114,8 +132,15 @@ export default async function TableauDeBordPage({
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
             </div>
-            <Link href={`/module/${next.slug}`} className="btn-brand">
-              <EditableText id="dashboard.prochaineetape.commencer">Commencer</EditableText> <ArrowRight className="w-4 h-4" />
+            <Link href={href} className={enAttentePartenaire ? 'btn-secondary' : 'btn-brand'}>
+              {jaiFini && partenaireFini
+                ? <EditableText id="dashboard.prochaineetape.ouvrirrevelation">Ouvrir la révélation</EditableText>
+                : enAttentePartenaire
+                ? <EditableText id="dashboard.prochaineetape.enattente">En attente des réponses de l&apos;autre</EditableText>
+                : monCompte > 0
+                ? <EditableText id="dashboard.prochaineetape.continuer">Continuer</EditableText>
+                : <EditableText id="dashboard.prochaineetape.commencer">Commencer</EditableText>}
+              {!enAttentePartenaire && <ArrowRight className="w-4 h-4" style={{ display: 'inline' }} />}
             </Link>
           </div>
         )
