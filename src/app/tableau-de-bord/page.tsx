@@ -123,7 +123,10 @@ export default async function TableauDeBordPage({
         const partenaireFini = sonCompte >= total
         const enAttentePartenaire = jaiFini && !partenaireFini
 
-        const href = jaiFini && partenaireFini ? `/module/${next.slug}/revelation` : `/module/${next.slug}`
+        // Dès que j'ai fini, "voir"/"ouvrir la révélation" pointent vers la page de
+        // révélation (aperçu de mes réponses tant que l'autre n'a pas terminé ; les
+        // deux réponses une fois que c'est le cas).
+        const href = jaiFini ? `/module/${next.slug}/revelation` : `/module/${next.slug}`
 
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
@@ -132,15 +135,15 @@ export default async function TableauDeBordPage({
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
             </div>
-            <Link href={href} className={enAttentePartenaire ? 'btn-secondary' : 'btn-brand'}>
-              {jaiFini && partenaireFini
+            <Link href={href} className="btn-brand">
+              {partenaireFini
                 ? <EditableText id="dashboard.prochaineetape.ouvrirrevelation">Ouvrir la révélation</EditableText>
                 : enAttentePartenaire
-                ? <EditableText id="dashboard.prochaineetape.enattente">En attente des réponses de l&apos;autre</EditableText>
+                ? <EditableText id="dashboard.prochaineetape.voir">Voir</EditableText>
                 : monCompte > 0
                 ? <EditableText id="dashboard.prochaineetape.continuer">Continuer</EditableText>
                 : <EditableText id="dashboard.prochaineetape.commencer">Commencer</EditableText>}
-              {!enAttentePartenaire && <ArrowRight className="w-4 h-4" style={{ display: 'inline' }} />}
+              {' '}<ArrowRight className="w-4 h-4" style={{ display: 'inline' }} />
             </Link>
           </div>
         )

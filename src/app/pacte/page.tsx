@@ -144,11 +144,18 @@ export default async function PactePage() {
       <div className="space-y-4">
         {MODULES.map((moduleInfo) => {
           const moduleData = modules?.find((m: Module) => m.slug === moduleInfo.slug)
-          // Seul `revealed` (une fois la session de révélation faite à deux) autorise
-          // à afficher les réponses côte à côte — `statut === 'complete'` ne veut dire
-          // que l'un·e des deux a fini de répondre, pas que la révélation a eu lieu.
+          const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
+          const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
+          const total = moduleInfo.questions.length
+
+          // `statut === 'complete'` est un champ partagé par le couple qui bascule
+          // dès que l'un·e des deux a fini de répondre — pas un indicateur fiable
+          // que les deux ont terminé. On se base sur le nombre réel de réponses de
+          // chacun·e. Seul `revealed` (après la session de révélation) autorise à
+          // afficher les réponses côte à côte.
           const isRevealed = moduleData?.revealed === true
-          const awaitingReveal = !isRevealed && moduleData?.statut === 'complete'
+          const jaiFini = mesReponses.length >= total
+          const partenaireFini = reponsesPartner.length >= total
 
           if (!isRevealed) {
             return (
@@ -158,23 +165,22 @@ export default async function PactePage() {
                     <h3 className="font-serif font-bold" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></h3>
                     <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                       <Lock className="w-3 h-3" />
-                      <span>{awaitingReveal
+                      <span>{jaiFini
                         ? <EditableText id="pacte.enattenterevelation">En attente de révélation</EditableText>
                         : <EditableText id="pacte.nonterminee">Module non terminé</EditableText>}</span>
                     </div>
                   </div>
-                  <Link href={awaitingReveal ? `/module/${moduleInfo.slug}/revelation` : `/module/${moduleInfo.slug}`} className="btn-brand text-sm py-1.5" style={{ marginLeft: 'auto' }}>
-                    {awaitingReveal
+                  <Link href={jaiFini ? `/module/${moduleInfo.slug}/revelation` : `/module/${moduleInfo.slug}`} className="btn-brand text-sm py-1.5" style={{ marginLeft: 'auto' }}>
+                    {partenaireFini
                       ? <EditableText id="pacte.ouvrirrevelation">Ouvrir la révélation</EditableText>
+                      : jaiFini
+                      ? <EditableText id="pacte.voir">Voir</EditableText>
                       : <EditableText id="pacte.commencer">Commencer</EditableText>}
                   </Link>
                 </div>
               </div>
             )
           }
-
-          const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
-          const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
 
           return (
             <div key={moduleInfo.slug} className="card p-5">

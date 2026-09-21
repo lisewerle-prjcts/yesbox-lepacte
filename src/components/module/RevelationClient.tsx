@@ -49,6 +49,11 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   const partnerMap: Record<string, string> = {}
   reponsesPartner.forEach(r => { if (r.valeur) partnerMap[r.question_slug] = r.valeur })
 
+  // Tant que l'autre n'a pas terminé ses réponses, cette page sert d'aperçu :
+  // on peut encore modifier les siennes, et la conclusion (qui peut sceller le
+  // module) n'est pas encore proposée.
+  const partnerDone = reponsesPartner.length >= moduleInfo.questions.length
+
   const partnerApprentissage = getConclusion(conclusionPartenaire, 'apprentissage')
   const partnerSurprise = getConclusion(conclusionPartenaire, 'surprise')
   const partnerConclusionDone = !!(partnerApprentissage && partnerSurprise)
@@ -87,7 +92,9 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <EditableText id="revelation.titre">Moment de vérité ✦</EditableText>
           </h1>
           <p style={{ color: 'var(--dark-muted)', fontSize: 15, maxWidth: 480, margin: '0 auto' }}>
-            <EditableText id="revelation.souscritre" multiline>Prenez le temps de lire ce que l&apos;autre a écrit. Sans juger. C&apos;est ça, se choisir.</EditableText>
+            {partnerDone
+              ? <EditableText id="revelation.souscritre" multiline>Prenez le temps de lire ce que l&apos;autre a écrit. Sans juger. C&apos;est ça, se choisir.</EditableText>
+              : <EditableText id="revelation.souscritre.enattente" multiline>Tant que l&apos;autre n&apos;a pas répondu, tu peux encore modifier. Ensuite, prenez le temps de lire ce que l&apos;autre a écrit. Sans juger.</EditableText>}
           </p>
         </div>
 
@@ -126,6 +133,23 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
         </div>
 
         {/* Conclusion */}
+        {!partnerDone ? (
+          <div className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
+            <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}><EditableText id="revelation.attente.eyebrow">Pas encore</EditableText></div>
+            <h2 className="font-serif mb-2" style={{ fontSize: 26, fontWeight: 700, color: 'var(--dark-paper)' }}>
+              <EditableText id="revelation.attente.titre">Il manque les réponses de</EditableText> {partnerName || 'ton/ta partenaire'}
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 28, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
+              <EditableText id="revelation.attente.texte" multiline>Tu pourras rédiger ta conclusion une fois que vous aurez tous les deux répondu. En attendant, tu peux encore revoir ou modifier tes réponses.</EditableText>
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href={`/module/${moduleInfo.slug}`} className="btn-brand"><EditableText id="revelation.attente.modifier">Modifier mes réponses</EditableText></Link>
+              <Link href="/tableau-de-bord" className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
+                <EditableText id="revelation.retour.dashboard">Retour au tableau de bord</EditableText>
+              </Link>
+            </div>
+          </div>
+        ) : (
         <div className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
           <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}><EditableText id="revelation.conclusion.eyebrow">Pour clore ce module</EditableText></div>
           <h2 className="font-serif mb-2" style={{ fontSize: 28, fontWeight: 700, color: 'var(--dark-paper)' }}>
@@ -199,6 +223,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   )

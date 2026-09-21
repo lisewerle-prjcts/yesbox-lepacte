@@ -89,9 +89,6 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-sage lg">
               <EditableText id="module.attente.cta">Ouvrir la session de révélation</EditableText> <ArrowRight className="w-4 h-4" />
             </Link>
-            <div style={{ marginTop: 16 }}>
-              <button onClick={reviewAnswers} className="btn-ghost text-sm"><EditableText id="module.revoir.cta">Revoir / modifier mes réponses</EditableText></button>
-            </div>
           </>
         ) : (
           <>
@@ -104,7 +101,8 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
               <EditableText id="module.termine.attente.prefix">En attente de</EditableText> {partnerName || 'ton/ta partenaire'}<EditableText id="module.termine.attente.suffix" multiline>… La révélation s&apos;ouvrira quand vous aurez tous les deux terminé.</EditableText>
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <button onClick={reviewAnswers} className="btn-secondary"><EditableText id="module.revoir.cta">Revoir / modifier mes réponses</EditableText></button>
+              <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-brand"><EditableText id="module.voir.cta">Voir mes réponses</EditableText></Link>
+              <button onClick={reviewAnswers} className="btn-secondary"><EditableText id="module.revoir.cta">Modifier mes réponses</EditableText></button>
               <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
             </div>
           </>
