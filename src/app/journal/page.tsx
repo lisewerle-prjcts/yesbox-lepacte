@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { getLocale, getT } from '@/lib/i18n/server'
+import { localizeModules } from '@/lib/i18n/module-text'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
@@ -17,13 +19,16 @@ export default async function JournalPage() {
   const { data: profile } = await supabase.from('profiles').select('couple_id, prenom').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')
 
-  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }, MODULES] = await Promise.all([
+  const locale = await getLocale()
+  const t = getT(locale)
+  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }, effectiveModules] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
     supabase.from('journal_entries').select('*').eq('couple_id', profile.couple_id),
     supabase.from('profiles').select('prenom, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
     supabase.from('couples').select('pacte_texte, pacte_modifie_le, pacte_modifie_par').eq('id', profile.couple_id).single(),
     getEffectiveModules(),
   ])
+  const MODULES = localizeModules(effectiveModules, locale)
 
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)
   const modulesTermines = (modules || []).filter((m: Module) => m.statut === 'complete')
@@ -34,8 +39,8 @@ export default async function JournalPage() {
   }
 
   const modifiePartPrenom = couple?.pacte_modifie_par === user.id
-    ? (profile.prenom || 'Toi')
-    : (couple?.pacte_modifie_par ? (partner?.prenom || 'Ton/ta partenaire') : null)
+    ? (profile.prenom || t('Toi', 'You'))
+    : (couple?.pacte_modifie_par ? (partner?.prenom || t('Ton/ta partenaire', 'Your partner')) : null)
 
   return (
     <div className="fade" style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -96,7 +101,7 @@ export default async function JournalPage() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
-                    <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 8 }}>{profile.prenom || 'Toi'}</p>
+                    <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 8 }}>{profile.prenom || t('Toi', 'You')}</p>
                     <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.appris">Ce qu&apos;iel a appris</EditableText></p>
                     <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {monApprentissage} »</p>
                     <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.surpris">Ce qui l&apos;a surpris</EditableText></p>
@@ -104,7 +109,7 @@ export default async function JournalPage() {
                   </div>
                   {partner && (
                     <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px' }}>
-                      <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{partner.prenom || 'Partenaire'}</p>
+                      <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{partner.prenom || t('Partenaire', 'Partner')}</p>
                       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.appris">Ce qu&apos;iel a appris</EditableText></p>
                       <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {sonApprentissage} »</p>
                       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.surpris">Ce qui l&apos;a surpris</EditableText></p>

@@ -65,14 +65,14 @@ export default function MotDePasseOubliePage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ton@email.fr"
+                    placeholder="you@email.com"
                     required
                     className="input-field"
                   />
                 </div>
                 <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
                   {loading && <Spinner size="sm" />}
-                  {loading ? 'Envoi...' : <EditableText id="mdpoublie.submit">Envoyer le lien</EditableText>}
+                  {loading ? 'Sending...' : <EditableText id="mdpoublie.submit">Envoyer le lien</EditableText>}
                 </button>
               </form>
               <div className="mt-4 text-center">

@@ -9,27 +9,35 @@ import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
 import { notifySecurityEvent } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { getLocale } from '@/lib/i18n/server'
+import { t } from '@/lib/i18n/locale'
 import { z } from 'zod'
+import type { Locale } from '@/lib/i18n/locale'
 
-const inscriptionSchema = z.object({
-  prenom: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
-  email: z.string().email('Email invalide'),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
-  passwordConfirm: z.string(),
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: 'Les deux mots de passe ne correspondent pas',
-  path: ['passwordConfirm'],
-})
+function inscriptionSchema(locale: Locale) {
+  return z.object({
+    prenom: z.string().min(2, t(locale, 'Le prénom doit contenir au moins 2 caractères', 'First name must be at least 2 characters')),
+    email: z.string().email(t(locale, 'Email invalide', 'Invalid email')),
+    password: z.string().min(8, t(locale, 'Le mot de passe doit contenir au moins 8 caractères', 'Password must be at least 8 characters')),
+    passwordConfirm: z.string(),
+  }).refine((data) => data.password === data.passwordConfirm, {
+    message: t(locale, 'Les deux mots de passe ne correspondent pas', "The two passwords don't match"),
+    path: ['passwordConfirm'],
+  })
+}
 
-const connexionSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(1, 'Le mot de passe est requis'),
-})
+function connexionSchema(locale: Locale) {
+  return z.object({
+    email: z.string().email(t(locale, 'Email invalide', 'Invalid email')),
+    password: z.string().min(1, t(locale, 'Le mot de passe est requis', 'Password is required')),
+  })
+}
 
 export async function inscription(formData: FormData) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
-  const parsed = inscriptionSchema.safeParse({
+  const parsed = inscriptionSchema(locale).safeParse({
     prenom: formData.get('prenom'),
     email: formData.get('email'),
     password: formData.get('password'),
@@ -53,7 +61,7 @@ export async function inscription(formData: FormData) {
 
   if (error) {
     if (error.message.includes('already registered')) {
-      return { error: 'Cet email est déjà utilisé. Connecte-toi !' }
+      return { error: t(locale, 'Cet email est déjà utilisé. Connecte-toi !', 'This email is already in use. Log in instead!') }
     }
     return { error: error.message }
   }
@@ -69,7 +77,7 @@ export async function inscription(formData: FormData) {
 
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
-      if (!result.success) partnerCodeError = result.error || 'Code invalide'
+      if (!result.success) partnerCodeError = result.error || t(locale, 'Code invalide', 'Invalid code')
     } else {
       const coupleResult = await creerCoupleSolo(data.user.id)
       if (coupleResult.success && coupleResult.couple) {
@@ -93,8 +101,9 @@ export async function inscription(formData: FormData) {
 
 export async function connexion(formData: FormData) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
-  const parsed = connexionSchema.safeParse({
+  const parsed = connexionSchema(locale).safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
   })
@@ -107,7 +116,13 @@ export async function connexion(formData: FormData) {
 
   const lock = await checkLoginLock(email)
   if (lock.locked) {
-    return { error: `Trop de tentatives. Réessaie dans ${lock.minutesLeft} minute${lock.minutesLeft > 1 ? 's' : ''}.` }
+    return {
+      error: t(
+        locale,
+        `Trop de tentatives. Réessaie dans ${lock.minutesLeft} minute${lock.minutesLeft > 1 ? 's' : ''}.`,
+        `Too many attempts. Try again in ${lock.minutesLeft} minute${lock.minutesLeft > 1 ? 's' : ''}.`
+      ),
+    }
   }
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -115,11 +130,15 @@ export async function connexion(formData: FormData) {
   if (error) {
     if (error.message.includes('Invalid login credentials')) {
       await registerFailedLogin(email)
-      return { error: 'Email ou mot de passe incorrect' }
+      return { error: t(locale, 'Email ou mot de passe incorrect', 'Incorrect email or password') }
     }
     if (error.message.includes('Email not confirmed')) {
       return {
-        error: "Ton email n'est pas encore confirmé. Vérifie ta boîte mail (et tes spams), ou renvoie l'email ci-dessous.",
+        error: t(
+          locale,
+          "Ton email n'est pas encore confirmé. Vérifie ta boîte mail (et tes spams), ou renvoie l'email ci-dessous.",
+          "Your email isn't confirmed yet. Check your inbox (and spam folder), or resend the confirmation email below."
+        ),
         emailNotConfirmed: true,
         email,
       }
@@ -139,9 +158,10 @@ export async function connexion(formData: FormData) {
 }
 
 export async function renvoyerConfirmation(email: string) {
+  const locale = await getLocale()
   const parsed = z.string().email().safeParse(email)
   if (!parsed.success) {
-    return { error: 'Email invalide' }
+    return { error: t(locale, 'Email invalide', 'Invalid email') }
   }
 
   const supabase = await createClient()
@@ -163,12 +183,13 @@ export async function renvoyerConfirmation(email: string) {
 
 export async function verifierCodeMfa(code: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
 
   const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
   if (factorsError) return { error: factorsError.message }
 
   const factor = factors?.totp?.find(f => f.status === 'verified')
-  if (!factor) return { error: 'Aucun facteur de double authentification actif trouvé' }
+  if (!factor) return { error: t(locale, 'Aucun facteur de double authentification actif trouvé', 'No active two-factor authentication method found') }
 
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.trim() })
   if (error) return { error: error.message }
@@ -179,8 +200,9 @@ export async function verifierCodeMfa(code: string) {
 
 export async function verifierCodeRecuperationMfa(code: string) {
   const supabase = await createClient()
+  const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Session expirée, reconnecte-toi.' }
+  if (!user) return { error: t(locale, 'Session expirée, reconnecte-toi.', 'Session expired, please log in again.') }
 
   const admin = createAdminClient()
   const codeHash = hashRecoveryCode(code)
@@ -192,7 +214,7 @@ export async function verifierCodeRecuperationMfa(code: string) {
     .is('used_at', null)
     .maybeSingle()
 
-  if (!match) return { error: 'Code de secours invalide ou déjà utilisé' }
+  if (!match) return { error: t(locale, 'Code de secours invalide ou déjà utilisé', 'Invalid or already used recovery code') }
 
   await admin.from('mfa_recovery_codes').update({ used_at: new Date().toISOString() }).eq('id', match.id)
 

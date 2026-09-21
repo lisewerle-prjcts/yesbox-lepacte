@@ -57,7 +57,7 @@ export default function TarifsPage() {
               ⭐ <EditableText id="tarifs.pro.tag">Recommandé</EditableText>
             </div>
             <div>
-              <div className="font-serif font-bold" style={{ fontSize: 40, color: 'white' }}>29 <small style={{ fontSize: 20 }}>€/mois</small></div>
+              <div className="font-serif font-bold" style={{ fontSize: 40, color: 'white' }}>29 <small style={{ fontSize: 20 }}>€/month</small></div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}><EditableText id="tarifs.pro.desc">abonnement · résiliable à tout moment</EditableText></div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
@@ -77,7 +77,7 @@ export default function TarifsPage() {
           <div className="card p-6 flex flex-col gap-4">
             <div className="tag-brand self-start"><EditableText id="tarifs.bac.tag">BAC annuel</EditableText></div>
             <div>
-              <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>€/an</small></div>
+              <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>€/year</small></div>
               <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="tarifs.bac.desc">Bilan Annuel de Couple · à activer plus tard</EditableText></div>
             </div>
             <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />

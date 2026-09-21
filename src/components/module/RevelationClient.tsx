@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import { sauvegarderConclusion } from '@/app/actions/journal'
 import EditableText from '@/components/edit-mode/EditableText'
+import { useT } from '@/components/i18n/LocaleContext'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
 interface ConclusionRow { question_slug: string; valeur: string | null }
@@ -38,6 +39,7 @@ function getConclusion(rows: ConclusionRow[], slug: 'apprentissage' | 'surprise'
 
 export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, myName, partnerName, coupleId, maConclusion, conclusionPartenaire }: Props) {
   const router = useRouter()
+  const t = useT()
   const [isPending, startTransition] = useTransition()
   const [apprentissage, setApprentissage] = useState(() => getConclusion(maConclusion, 'apprentissage'))
   const [surprise, setSurprise] = useState(() => getConclusion(maConclusion, 'surprise'))
@@ -110,20 +112,20 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: '1px solid var(--dark-line)' }}>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="av av-c" style={{ width: 26, height: 26, fontSize: 11 }}>{(myName || 'M')[0]}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{myName || 'Toi'}</span>
+                      <span className="av av-c" style={{ width: 26, height: 26, fontSize: 11 }}>{(myName || t('M', 'Y'))[0]}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{myName || t('Toi', 'You')}</span>
                     </div>
                     <p style={{ fontSize: 14, color: myFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: myFmt ? 'normal' : 'italic', lineHeight: 1.6 }}>
-                      {myFmt || '— pas de réponse —'}
+                      {myFmt || t('— pas de réponse —', '— no answer yet —')}
                     </p>
                   </div>
                   <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: '1px solid var(--dark-line)' }}>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="av av-a" style={{ width: 26, height: 26, fontSize: 11 }}>{(partnerName || 'P')[0]}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{partnerName || 'Partenaire'}</span>
+                      <span className="av av-a" style={{ width: 26, height: 26, fontSize: 11 }}>{(partnerName || t('P', 'P'))[0]}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{partnerName || t('Partenaire', 'Partner')}</span>
                     </div>
                     <p style={{ fontSize: 14, color: partnerFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: partnerFmt ? 'normal' : 'italic', lineHeight: 1.6 }}>
-                      {partnerFmt || '— pas de réponse —'}
+                      {partnerFmt || t('— pas de réponse —', '— no answer yet —')}
                     </p>
                   </div>
                 </div>
@@ -137,7 +139,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
           <div className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
             <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}><EditableText id="revelation.attente.eyebrow">Pas encore</EditableText></div>
             <h2 className="font-serif mb-2" style={{ fontSize: 26, fontWeight: 700, color: 'var(--dark-paper)' }}>
-              <EditableText id="revelation.attente.titre">Il manque les réponses de</EditableText> {partnerName || 'ton/ta partenaire'}
+              <EditableText id="revelation.attente.titre">Il manque les réponses de</EditableText> {partnerName || t('ton/ta partenaire', 'your partner')}
             </h2>
             <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 28, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
               <EditableText id="revelation.attente.texte" multiline>Tu pourras rédiger ta conclusion une fois que vous aurez tous les deux répondu. En attendant, tu peux encore revoir ou modifier tes réponses.</EditableText>
@@ -167,7 +169,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
               value={apprentissage}
               onChange={e => { setApprentissage(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder="Ce que tu retiens…"
+              placeholder={t('Ce que tu retiens…', 'What you take away…')}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />
@@ -181,7 +183,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
               value={surprise}
               onChange={e => { setSurprise(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder="Ce que tu ne t'attendais pas à lire ou à ressentir…"
+              placeholder={t("Ce que tu ne t'attendais pas à lire ou à ressentir…", "What you didn't expect to read or feel…")}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />
@@ -217,7 +219,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 <p className="font-mono mt-5" style={{ fontSize: 11, color: 'var(--dark-muted)' }}>
                   {partnerConclusionDone
                     ? <EditableText id="revelation.conclusion.attente.presque">En attente de la synchronisation…</EditableText>
-                    : <>⏳ {partnerName || 'Ton/ta partenaire'} <EditableText id="revelation.conclusion.attente">n&apos;a pas encore écrit la sienne</EditableText></>}
+                    : <>⏳ {partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="revelation.conclusion.attente">n&apos;a pas encore écrit la sienne</EditableText></>}
                 </p>
               )}
             </>

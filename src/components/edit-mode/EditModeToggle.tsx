@@ -3,10 +3,12 @@
 import { usePathname } from 'next/navigation'
 import { Pencil, Eye } from 'lucide-react'
 import { useEditMode } from './EditModeContext'
+import { useT } from '@/components/i18n/LocaleContext'
 
 export default function EditModeToggle() {
   const { isAdmin, editMode, setEditMode } = useEditMode()
   const pathname = usePathname()
+  const t = useT()
 
   if (!isAdmin || pathname?.startsWith('/admin')) return null
 
@@ -32,8 +34,8 @@ export default function EditModeToggle() {
       }}
     >
       {editMode
-        ? <><Pencil className="w-4 h-4" /> Mode édition activé</>
-        : <><Eye className="w-4 h-4" /> Activer le mode édition</>}
+        ? <><Pencil className="w-4 h-4" /> {t('Mode édition activé', 'Edit mode on')}</>
+        : <><Eye className="w-4 h-4" /> {t('Activer le mode édition', 'Turn on edit mode')}</>}
     </button>
   )
 }

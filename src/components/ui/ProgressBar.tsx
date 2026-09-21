@@ -1,4 +1,7 @@
+'use client'
+
 import { clsx } from 'clsx'
+import { useT } from '@/components/i18n/LocaleContext'
 
 interface ProgressBarProps {
   value: number
@@ -14,12 +17,13 @@ export default function ProgressBar({
   showLabel = false,
 }: ProgressBarProps) {
   const percentage = Math.round((value / max) * 100)
+  const t = useT()
 
   return (
     <div className={clsx('w-full', className)}>
       {showLabel && (
         <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <span>Progression</span>
+          <span>{t('Progression', 'Progress')}</span>
           <span>{percentage}%</span>
         </div>
       )}

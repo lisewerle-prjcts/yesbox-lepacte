@@ -7,6 +7,7 @@ import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
+import { useT } from '@/components/i18n/LocaleContext'
 import { connexion, renvoyerConfirmation, verifierCodeMfa, verifierCodeRecuperationMfa } from '@/app/actions/auth'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -21,6 +22,7 @@ function SubmitButton({ label, pendingLabel }: { label: React.ReactNode; pending
 }
 
 export default function ConnexionPage() {
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [emailNotConfirmed, setEmailNotConfirmed] = useState<string | null>(null)
@@ -78,9 +80,9 @@ export default function ConnexionPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Logo size="md" className="inline-block mb-4" />
-            <h1 className="font-fraunces text-2xl font-bold text-gray-900">Vérification en deux étapes</h1>
+            <h1 className="font-fraunces text-2xl font-bold text-gray-900">{t('Vérification en deux étapes', 'Two-factor verification')}</h1>
             <p className="text-gray-500 mt-2">
-              {useRecoveryCode ? 'Saisis un de tes codes de secours' : 'Saisis le code à 6 chiffres de ton application d\'authentification'}
+              {useRecoveryCode ? t('Saisis un de tes codes de secours', 'Enter one of your backup codes') : t('Saisis le code à 6 chiffres de ton application d\'authentification', 'Enter the 6-digit code from your authenticator app')}
             </p>
           </div>
           <div className="card">
@@ -88,7 +90,7 @@ export default function ConnexionPage() {
             {useRecoveryCode ? (
               <form action={handleRecoveryAction} className="space-y-5">
                 <div>
-                  <label htmlFor="recovery_code" className="label">Code de secours</label>
+                  <label htmlFor="recovery_code" className="label">{t('Code de secours', 'Backup code')}</label>
                   <input
                     id="recovery_code"
                     name="recovery_code"
@@ -98,14 +100,14 @@ export default function ConnexionPage() {
                     required
                     className="input-field"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Utiliser un code de secours désactive la 2FA sur ce compte. Tu pourras la réactiver une fois connecté·e.</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('Utiliser un code de secours désactive la 2FA sur ce compte. Tu pourras la réactiver une fois connecté·e.', 'Using a backup code disables 2FA on this account. You can turn it back on once signed in.')}</p>
                 </div>
-                <SubmitButton label="Vérifier" pendingLabel="Vérification..." />
+                <SubmitButton label={t('Vérifier', 'Verify')} pendingLabel={t('Vérification...', 'Verifying...')} />
               </form>
             ) : (
               <form action={handleMfaAction} className="space-y-5">
                 <div>
-                  <label htmlFor="code" className="label">Code</label>
+                  <label htmlFor="code" className="label">{t('Code', 'Code')}</label>
                   <input
                     id="code"
                     name="code"
@@ -117,7 +119,7 @@ export default function ConnexionPage() {
                     className="input-field"
                   />
                 </div>
-                <SubmitButton label="Vérifier" pendingLabel="Vérification..." />
+                <SubmitButton label={t('Vérifier', 'Verify')} pendingLabel={t('Vérification...', 'Verifying...')} />
               </form>
             )}
             <div className="mt-4 text-center">
@@ -126,7 +128,7 @@ export default function ConnexionPage() {
                 onClick={() => { setUseRecoveryCode(v => !v); setError(null) }}
                 className="text-sm text-gray-400 hover:text-magenta"
               >
-                {useRecoveryCode ? 'Utiliser mon application d\'authentification' : 'J\'ai perdu mon accès — utiliser un code de secours'}
+                {useRecoveryCode ? t('Utiliser mon application d\'authentification', 'Use my authenticator app') : t('J\'ai perdu mon accès — utiliser un code de secours', "I've lost access — use a backup code")}
               </button>
             </div>
           </div>
@@ -149,13 +151,13 @@ export default function ConnexionPage() {
         </div>
 
         <div className="card">
-          {mfaResetNotice && <Alert type="info" message="Ta double authentification a été désactivée avec un code de secours. Reconnecte-toi, puis réactive-la depuis l'onglet Sécurité." className="mb-5" />}
+          {mfaResetNotice && <Alert type="info" message={t("Ta double authentification a été désactivée avec un code de secours. Reconnecte-toi, puis réactive-la depuis l'onglet Sécurité.", 'Your two-factor authentication was turned off using a backup code. Sign back in, then re-enable it from the Security tab.')} className="mb-5" />}
           {error && (
             <div className="mb-5 space-y-2">
               <Alert type="error" message={error} />
               {emailNotConfirmed && (
                 resendState === 'sent' ? (
-                  <Alert type="success" message="Email de confirmation renvoyé ! Vérifie ta boîte mail (et tes spams)." />
+                  <Alert type="success" message={t('Email de confirmation renvoyé ! Vérifie ta boîte mail (et tes spams).', 'Confirmation email resent! Check your inbox (and your spam folder).')} />
                 ) : (
                   <button
                     type="button"
@@ -163,7 +165,7 @@ export default function ConnexionPage() {
                     disabled={resendState === 'sending'}
                     className="text-sm text-magenta font-semibold hover:underline disabled:opacity-50"
                   >
-                    {resendState === 'sending' ? 'Envoi...' : "Renvoyer l'email de confirmation"}
+                    {resendState === 'sending' ? t('Envoi...', 'Sending...') : t("Renvoyer l'email de confirmation", 'Resend confirmation email')}
                   </button>
                 )
               )}
@@ -179,7 +181,7 @@ export default function ConnexionPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="marie@exemple.fr"
+                placeholder={t('marie@exemple.fr', 'alex@example.com')}
                 autoComplete="email"
                 required
                 className="input-field"
@@ -195,7 +197,7 @@ export default function ConnexionPage() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Ton mot de passe"
+                  placeholder={t('Ton mot de passe', 'Your password')}
                   autoComplete="current-password"
                   required
                   className="input-field pr-12"
@@ -210,7 +212,7 @@ export default function ConnexionPage() {
               </div>
             </div>
 
-            <SubmitButton label={<EditableText id="connexion.submit">Se connecter</EditableText>} pendingLabel="Connexion..." />
+            <SubmitButton label={<EditableText id="connexion.submit">Se connecter</EditableText>} pendingLabel={t('Connexion...', 'Signing in...')} />
           </form>
 
           <div className="mt-6 text-center space-y-2">

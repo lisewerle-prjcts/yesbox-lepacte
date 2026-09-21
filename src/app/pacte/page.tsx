@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { getLocale, getT } from '@/lib/i18n/server'
+import { localizeModules } from '@/lib/i18n/module-text'
 import EditableText from '@/components/edit-mode/EditableText'
 import { CheckCircle, Lock, Heart, ScrollText, ChevronRight, UserPlus } from 'lucide-react'
 import type { Module, Reponse } from '@/types'
@@ -11,7 +13,9 @@ export default async function PactePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const MODULES = await getEffectiveModules()
+  const locale = await getLocale()
+  const t = getT(locale)
+  const MODULES = localizeModules(await getEffectiveModules(), locale)
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -63,7 +67,7 @@ export default async function PactePage() {
         <p style={{ color: 'var(--muted)', fontSize: 14 }}>
           {tousTermines
             ? <EditableText id="pacte.souscritre.complet" multiline>Votre pacte est complet — découvrez vos réponses et alignements.</EditableText>
-            : `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur ${MODULES.length}`}
+            : t(`${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur ${MODULES.length}`, `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} completed out of ${MODULES.length}`)}
         </p>
       </div>
 
@@ -203,19 +207,19 @@ export default async function PactePage() {
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="surface p-3" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
                           <p className="font-semibold" style={{ fontSize: 11, color: 'var(--brand)', marginBottom: 4 }}>
-                            {profile.prenom || 'Toi'}
+                            {profile.prenom || t('Toi', 'You')}
                           </p>
                           <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                            {maReponse?.valeur || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>Sans réponse</span>}
+                            {maReponse?.valeur || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>{t('Sans réponse', 'No answer')}</span>}
                           </p>
                         </div>
                         {partner && (
                           <div className="surface p-3">
                             <p className="font-semibold" style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4 }}>
-                              {partner.prenom || 'Partenaire'}
+                              {partner.prenom || t('Partenaire', 'Partner')}
                             </p>
                             <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                              {reponsePartner?.valeur || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>En attente</span>}
+                              {reponsePartner?.valeur || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>{t('En attente', 'Waiting')}</span>}
                             </p>
                           </div>
                         )}
