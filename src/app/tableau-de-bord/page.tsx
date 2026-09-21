@@ -7,7 +7,9 @@ import { getLocale, getT } from '@/lib/i18n/server'
 import { localizeModules } from '@/lib/i18n/module-text'
 import EditableText from '@/components/edit-mode/EditableText'
 import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
-import type { Module } from '@/types'
+import type { CoupleAbonnement, Module } from '@/types'
+import { ABONNEMENT_COLONNES } from '@/types'
+import { peutAccederModule } from '@/lib/abonnement'
 import { ArrowRight } from 'lucide-react'
 
 export default async function TableauDeBordPage({
@@ -25,17 +27,20 @@ export default async function TableauDeBordPage({
   let modules: Module[] = []
   let partner: { prenom: string | null; email: string; id: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
+  let coupleAbonnement: CoupleAbonnement | null = null
   let reponses: { module_id: string; user_id: string }[] = []
 
   if (profile?.couple_id) {
-    const [{ data: mods }, { data: part }, { data: coup }] = await Promise.all([
+    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
       supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
       supabase.from('couples').select('nom_couple, date_anniversaire').eq('id', profile.couple_id).single(),
+      supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
     ])
     modules = mods || []
     partner = part
     couple = coup
+    coupleAbonnement = coupAbo
 
     const { data: reps } = await supabase
       .from('reponses')
@@ -132,6 +137,10 @@ export default async function TableauDeBordPage({
         // deux réponses une fois que c'est le cas).
         const href = jaiFini ? `/module/${next.slug}/revelation` : `/module/${next.slug}`
 
+        // Module payant sans abonnement actif (ex. juste après le module 1
+        // gratuit) : on propose l'abonnement plutôt que d'ouvrir le module.
+        const abonnementRequis = !peutAccederModule(next, nextModData, coupleAbonnement)
+
         return (
           <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
             <div style={{ flex: 1, minWidth: 200 }}>
@@ -139,8 +148,10 @@ export default async function TableauDeBordPage({
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
             </div>
-            <Link href={href} className="btn-brand">
-              {partenaireFini
+            <Link href={abonnementRequis ? '/abonnement' : href} className="btn-brand">
+              {abonnementRequis
+                ? <EditableText id="dashboard.prochaineetape.abonnement">S&apos;abonner pour continuer</EditableText>
+                : partenaireFini
                 ? <EditableText id="dashboard.prochaineetape.ouvrirrevelation">Ouvrir la révélation</EditableText>
                 : enAttentePartenaire
                 ? <EditableText id="dashboard.prochaineetape.voir">Voir</EditableText>

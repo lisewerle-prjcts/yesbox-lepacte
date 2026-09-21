@@ -534,6 +534,59 @@ begin
 end;
 $$;
 
+-- ============================================================
+-- ABONNEMENT STRIPE (v11)
+-- Abonnement mensuel géré via Stripe (checkout + webhooks). Le
+-- statut du couple conditionne l'accès aux modules payants
+-- au-delà du module 1 (gratuit) et est affiché/annulable depuis
+-- Mon compte. Source de vérité : Stripe, répliqué ici par le
+-- webhook (src/app/api/webhooks/stripe/route.ts) via le service
+-- role uniquement — d'où le retrait des droits de modification de
+-- ces colonnes aux utilisateurs authentifiés (colonnes à écriture
+-- serveur seule, même si la ligne leur est accessible en update
+-- pour nom_couple/date_anniversaire/pacte_texte).
+--
+-- Rétention : à la fin de l'accès payé (résiliation ou échéance
+-- non renouvelée), les données sont conservées 13 mois
+-- (data_retention_until). Passé ce délai, la tâche planifiée
+-- /api/cron/purger-comptes-expires clôture définitivement le
+-- compte (compte_resilie_le) et efface les réponses et le
+-- journal : l'abonnement ne peut plus être réactivé sur ce
+-- couple, il faut recommencer avec un nouveau compte.
+-- À exécuter une fois.
+-- ============================================================
+alter table public.couples add column if not exists stripe_customer_id text;
+alter table public.couples add column if not exists stripe_subscription_id text;
+alter table public.couples add column if not exists subscription_status text
+  check (subscription_status in ('aucun', 'actif', 'incomplet', 'expire', 'resilie'))
+  not null default 'aucun';
+alter table public.couples add column if not exists subscription_current_period_end timestamptz;
+alter table public.couples add column if not exists subscription_cancel_at_period_end boolean not null default false;
+alter table public.couples add column if not exists subscription_canceled_at timestamptz;
+alter table public.couples add column if not exists data_retention_until timestamptz;
+alter table public.couples add column if not exists compte_resilie_le timestamptz;
+
+create unique index if not exists couples_stripe_customer_id_idx on public.couples(stripe_customer_id) where stripe_customer_id is not null;
+create unique index if not exists couples_stripe_subscription_id_idx on public.couples(stripe_subscription_id) where stripe_subscription_id is not null;
+
+-- Un membre du couple peut modifier nom_couple/date_anniversaire/pacte_texte
+-- (cf. policy "couple_member_update") mais jamais les colonnes d'abonnement :
+-- seul le service role (webhook Stripe, actions serveur admin) le peut.
+revoke update (
+  stripe_customer_id, stripe_subscription_id, subscription_status,
+  subscription_current_period_end, subscription_cancel_at_period_end,
+  subscription_canceled_at, data_retention_until, compte_resilie_le
+) on public.couples from authenticated;
+
+-- Idempotence des webhooks Stripe : chaque event.id n'est traité qu'une fois.
+create table if not exists public.stripe_events (
+  id text primary key,
+  type text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.stripe_events enable row level security;
+-- Aucune policy : accessible uniquement via le service role côté serveur (webhook).
+
 -- Ajoute rétroactivement une ligne verrouillée pour un nouveau module
 -- personnalisé, chez tous les couples déjà inscrits.
 create or replace function public.backfill_module_pour_tous_les_couples(p_slug text)

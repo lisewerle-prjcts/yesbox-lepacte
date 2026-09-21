@@ -1,16 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy } from 'lucide-react'
-import { useT } from '@/components/i18n/LocaleContext'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle } from 'lucide-react'
+import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse,
 } from '@/app/actions/compte'
+import { annulerAbonnement, reprendreAbonnement } from '@/app/actions/abonnement'
+import type { CoupleAbonnement } from '@/types'
+import { estCompteResilie } from '@/lib/abonnement'
+import Link from 'next/link'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  nom, prenom, email, nomCouple, pairingCode, paired,
+  nom, prenom, email, nomCouple, pairingCode, paired, abonnement,
 }: {
   nom: string
   prenom: string
@@ -18,6 +22,7 @@ export default function MonCompteClient({
   nomCouple: string
   pairingCode: string | null
   paired: boolean
+  abonnement: CoupleAbonnement | null
 }) {
   const t = useT()
   return (
@@ -30,8 +35,91 @@ export default function MonCompteClient({
       <div className="space-y-5">
         <MesInfosCard nom={nom} prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
+        <AbonnementCard abonnement={abonnement} />
         <PasswordCard />
       </div>
+    </div>
+  )
+}
+
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function AbonnementCard({ abonnement }: { abonnement: CoupleAbonnement | null }) {
+  const t = useT()
+  const { locale } = useLocale()
+  const [status, setStatus] = useState<SaveStatus>('idle')
+  const [error, setError] = useState('')
+
+  const actif = abonnement?.subscription_status === 'actif'
+  const annuleAPeriodeFin = !!abonnement?.subscription_cancel_at_period_end
+  const compteResilie = estCompteResilie(abonnement)
+
+  async function stopper() {
+    setError('')
+    setStatus('saving')
+    const res = await annulerAbonnement()
+    if (res.error) { setError(res.error); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  async function reprendre() {
+    setError('')
+    setStatus('saving')
+    const res = await reprendreAbonnement()
+    if (res.error) { setError(res.error); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <CreditCard className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Abonnement', 'Subscription')}</h2>
+      </div>
+
+      {compteResilie ? (
+        <div className="flex items-start gap-3 p-3 rounded-lg" style={{ background: '#fdf2f2' }}>
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
+          <p className="text-sm" style={{ color: '#8a2c2c' }}>
+            {t(
+              "Ce compte a été résilié après 13 mois sans abonnement actif. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
+              'This account was closed after 13 months without an active subscription. It can no longer be reactivated here: you need to start over with a new account.'
+            )}
+          </p>
+        </div>
+      ) : actif ? (
+        <>
+          <p className="text-sm text-gray-600 mb-1">
+            {annuleAPeriodeFin
+              ? t('Résilié — accès actif jusqu’au', 'Canceled — access active until')
+              : t('Prochain renouvellement automatique le', 'Next automatic renewal on')}
+            {' '}
+            <strong>{abonnement?.subscription_current_period_end ? formatDate(abonnement.subscription_current_period_end, locale) : '—'}</strong>
+          </p>
+          <p className="text-xs text-gray-400 mb-4">
+            {annuleAPeriodeFin
+              ? t('Après cette date, seules les parties déjà réalisées restent consultables.', 'After this date, only the parts you already completed remain viewable.')
+              : t('29€/mois · résiliable à tout moment.', '€29/month · cancel anytime.')}
+          </p>
+          {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+          {annuleAPeriodeFin ? (
+            <button onClick={reprendre} disabled={status === 'saving'} className="btn-secondary text-sm py-2 px-4">
+              {status === 'saving' ? t('Reprise…', 'Resuming…') : t('Reprendre l’abonnement', 'Resume subscription')}
+            </button>
+          ) : (
+            <button onClick={stopper} disabled={status === 'saving'} className="btn-ghost text-sm py-2 px-4" style={{ color: '#c0392b' }}>
+              {status === 'saving' ? t('Arrêt en cours…', 'Stopping…') : t('Arrêter le renouvellement automatique', 'Stop automatic renewal')}
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-gray-600 mb-4">{t('Aucun abonnement actif pour le moment.', 'No active subscription at the moment.')}</p>
+          <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('S’abonner', 'Subscribe')}</Link>
+        </>
+      )}
     </div>
   )
 }

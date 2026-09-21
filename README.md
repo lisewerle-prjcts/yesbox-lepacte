@@ -63,4 +63,28 @@ NEXT_PUBLIC_SUPABASE_URL=https://...supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Abonnement mensuel (Stripe)
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID_ABONNEMENT_MENSUEL=price_...
+# Optionnel : sécurise la tâche planifiée de clôture des comptes après 13 mois
+CRON_SECRET=...
 ```
+
+## Abonnement Stripe
+
+- Offre : abonnement mensuel (29 €/mois), proposé aux couples à la fin du
+  module 1 gratuit (`/abonnement`), payé et géré via Stripe Checkout.
+- Webhook Stripe à configurer sur `POST /api/webhooks/stripe` (événements
+  `checkout.session.completed`, `customer.subscription.updated`,
+  `customer.subscription.deleted`).
+- Depuis `/mon-compte`, chaque couple voit sa date de renouvellement et peut
+  arrêter (ou reprendre) le renouvellement automatique ; l'accès reste actif
+  jusqu'à la fin de la période déjà payée.
+- Après résiliation ou fin d'accès non renouvelée, seules les parties déjà
+  réalisées restent consultables ; les données sont conservées 13 mois puis
+  le compte est définitivement clos par la tâche planifiée
+  `GET /api/cron/purger-comptes-expires` (configurée dans `vercel.json`) :
+  l'abonnement ne peut plus être réactivé sur ce couple, il faut recommencer
+  avec un nouveau compte.

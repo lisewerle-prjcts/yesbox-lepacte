@@ -4,6 +4,8 @@ import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeModule } from '@/lib/i18n/module-text'
 import RevelationClient from '@/components/module/RevelationClient'
+import { peutAccederModule } from '@/lib/abonnement'
+import { ABONNEMENT_COLONNES } from '@/types'
 
 interface PageProps { params: Promise<{ slug: string }> }
 
@@ -23,6 +25,11 @@ export default async function RevelationPage({ params }: PageProps) {
 
   const { data: moduleData } = await supabase.from('modules').select('*').eq('couple_id', profile.couple_id).eq('slug', slug).single()
   if (!moduleData || moduleData.statut === 'locked') redirect('/tableau-de-bord')
+
+  if (!moduleInfo.free) {
+    const { data: couple } = await supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single()
+    if (!peutAccederModule(moduleInfo, moduleData, couple)) redirect('/abonnement')
+  }
 
   const { data: partner } = await supabase.from('profiles').select('id, prenom').eq('couple_id', profile.couple_id).neq('id', user.id).single()
 
