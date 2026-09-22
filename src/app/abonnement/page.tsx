@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ABONNEMENT_COLONNES } from '@/types'
-import { estAbonnementActif, estCompteResilie } from '@/lib/abonnement'
+import { aAccesComplet, estCompteResilie } from '@/lib/abonnement'
 import AbonnementClient from './AbonnementClient'
 
 export default async function AbonnementPage() {
@@ -14,7 +14,7 @@ export default async function AbonnementPage() {
 
   const { data: couple } = await supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single()
 
-  if (estAbonnementActif(couple)) redirect('/tableau-de-bord')
+  if (aAccesComplet(couple)) redirect('/tableau-de-bord')
 
   return <AbonnementClient compteResilie={estCompteResilie(couple)} />
 }

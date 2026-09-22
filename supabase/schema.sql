@@ -534,59 +534,6 @@ begin
 end;
 $$;
 
--- ============================================================
--- ABONNEMENT STRIPE (v11)
--- Abonnement mensuel géré via Stripe (checkout + webhooks). Le
--- statut du couple conditionne l'accès aux modules payants
--- au-delà du module 1 (gratuit) et est affiché/annulable depuis
--- Mon compte. Source de vérité : Stripe, répliqué ici par le
--- webhook (src/app/api/webhooks/stripe/route.ts) via le service
--- role uniquement — d'où le retrait des droits de modification de
--- ces colonnes aux utilisateurs authentifiés (colonnes à écriture
--- serveur seule, même si la ligne leur est accessible en update
--- pour nom_couple/date_anniversaire/pacte_texte).
---
--- Rétention : à la fin de l'accès payé (résiliation ou échéance
--- non renouvelée), les données sont conservées 13 mois
--- (data_retention_until). Passé ce délai, la tâche planifiée
--- /api/cron/purger-comptes-expires clôture définitivement le
--- compte (compte_resilie_le) et efface les réponses et le
--- journal : l'abonnement ne peut plus être réactivé sur ce
--- couple, il faut recommencer avec un nouveau compte.
--- À exécuter une fois.
--- ============================================================
-alter table public.couples add column if not exists stripe_customer_id text;
-alter table public.couples add column if not exists stripe_subscription_id text;
-alter table public.couples add column if not exists subscription_status text
-  check (subscription_status in ('aucun', 'actif', 'incomplet', 'expire', 'resilie'))
-  not null default 'aucun';
-alter table public.couples add column if not exists subscription_current_period_end timestamptz;
-alter table public.couples add column if not exists subscription_cancel_at_period_end boolean not null default false;
-alter table public.couples add column if not exists subscription_canceled_at timestamptz;
-alter table public.couples add column if not exists data_retention_until timestamptz;
-alter table public.couples add column if not exists compte_resilie_le timestamptz;
-
-create unique index if not exists couples_stripe_customer_id_idx on public.couples(stripe_customer_id) where stripe_customer_id is not null;
-create unique index if not exists couples_stripe_subscription_id_idx on public.couples(stripe_subscription_id) where stripe_subscription_id is not null;
-
--- Un membre du couple peut modifier nom_couple/date_anniversaire/pacte_texte
--- (cf. policy "couple_member_update") mais jamais les colonnes d'abonnement :
--- seul le service role (webhook Stripe, actions serveur admin) le peut.
-revoke update (
-  stripe_customer_id, stripe_subscription_id, subscription_status,
-  subscription_current_period_end, subscription_cancel_at_period_end,
-  subscription_canceled_at, data_retention_until, compte_resilie_le
-) on public.couples from authenticated;
-
--- Idempotence des webhooks Stripe : chaque event.id n'est traité qu'une fois.
-create table if not exists public.stripe_events (
-  id text primary key,
-  type text not null,
-  created_at timestamptz not null default now()
-);
-alter table public.stripe_events enable row level security;
--- Aucune policy : accessible uniquement via le service role côté serveur (webhook).
-
 -- Ajoute rétroactivement une ligne verrouillée pour un nouveau module
 -- personnalisé, chez tous les couples déjà inscrits.
 create or replace function public.backfill_module_pour_tous_les_couples(p_slug text)
@@ -662,5 +609,209 @@ begin
     values (p_couple_id, r.slug, 'locked')
     on conflict (couple_id, slug) do nothing;
   end loop;
+end;
+$$;
+
+-- ============================================================
+-- ABONNEMENT STRIPE (v11)
+-- Abonnement mensuel géré via Stripe (checkout + webhooks). Le
+-- statut du couple conditionne l'accès aux modules payants
+-- au-delà du module 1 (gratuit) et est affiché/annulable depuis
+-- Mon compte. Source de vérité : Stripe, répliqué ici par le
+-- webhook (src/app/api/webhooks/stripe/route.ts) via le service
+-- role uniquement — d'où le retrait des droits de modification de
+-- ces colonnes aux utilisateurs authentifiés (colonnes à écriture
+-- serveur seule, même si la ligne leur est accessible en update
+-- pour nom_couple/date_anniversaire/pacte_texte).
+--
+-- Rétention : à la fin de l'accès payé (résiliation ou échéance
+-- non renouvelée), les données sont conservées 13 mois
+-- (data_retention_until). Passé ce délai, la tâche planifiée
+-- /api/cron/purger-comptes-expires clôture définitivement le
+-- compte (compte_resilie_le) et efface les réponses et le
+-- journal : l'abonnement ne peut plus être réactivé sur ce
+-- couple, il faut recommencer avec un nouveau compte.
+-- À exécuter une fois.
+-- ============================================================
+alter table public.couples add column if not exists stripe_customer_id text;
+alter table public.couples add column if not exists stripe_subscription_id text;
+alter table public.couples add column if not exists subscription_status text
+  check (subscription_status in ('aucun', 'actif', 'incomplet', 'expire', 'resilie'))
+  not null default 'aucun';
+alter table public.couples add column if not exists subscription_current_period_end timestamptz;
+alter table public.couples add column if not exists subscription_cancel_at_period_end boolean not null default false;
+alter table public.couples add column if not exists subscription_canceled_at timestamptz;
+alter table public.couples add column if not exists data_retention_until timestamptz;
+alter table public.couples add column if not exists compte_resilie_le timestamptz;
+
+create unique index if not exists couples_stripe_customer_id_idx on public.couples(stripe_customer_id) where stripe_customer_id is not null;
+create unique index if not exists couples_stripe_subscription_id_idx on public.couples(stripe_subscription_id) where stripe_subscription_id is not null;
+
+-- Un membre du couple peut modifier nom_couple/date_anniversaire/pacte_texte
+-- (cf. policy "couple_member_update") mais jamais les colonnes d'abonnement :
+-- seul le service role (webhook Stripe, actions serveur admin) le peut.
+revoke update (
+  stripe_customer_id, stripe_subscription_id, subscription_status,
+  subscription_current_period_end, subscription_cancel_at_period_end,
+  subscription_canceled_at, data_retention_until, compte_resilie_le
+) on public.couples from authenticated;
+
+-- Idempotence des webhooks Stripe : chaque event.id n'est traité qu'une fois.
+create table if not exists public.stripe_events (
+  id text primary key,
+  type text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.stripe_events enable row level security;
+-- Aucune policy : accessible uniquement via le service role côté serveur (webhook).
+
+-- ============================================================
+-- CODES GRATUITS & PARRAINAGE (v12)
+-- Deux façons d'obtenir un accès sans payer, indépendantes de Stripe :
+--   1. Un code gratuit distribué à la main (ex. aux testeurs) depuis
+--      Admin > Codes gratuits, saisi par le couple sur /abonnement.
+--   2. Le parrainage : chaque couple a un code à partager ; au 5e couple
+--      parrainé qui s'inscrit, 1 mois est offert automatiquement.
+-- Les deux se traduisent par une extension de couples.acces_gratuit_expire_le
+-- (ou, si le couple paie déjà activement, par un crédit sur son compte
+-- client Stripe — cf. src/lib/parrainage.ts) : accès considéré actif tant
+-- que cette date n'est pas dépassée (cf. estAbonnementActif). Comme pour
+-- les colonnes d'abonnement (v11), ces colonnes ne sont modifiables que
+-- par le service role. À exécuter une fois.
+-- ============================================================
+
+alter table public.couples add column if not exists acces_gratuit_expire_le timestamptz;
+revoke update (acces_gratuit_expire_le) on public.couples from authenticated;
+
+create table if not exists public.codes_gratuits (
+  id uuid primary key default uuid_generate_v4(),
+  code text unique not null,
+  duree_mois integer, -- null = accès illimité tant que le code n'est pas désactivé
+  usages_max integer not null default 1,
+  usages integer not null default 0,
+  actif boolean not null default true,
+  note text,
+  created_at timestamptz default now()
+);
+alter table public.codes_gratuits enable row level security;
+-- Aucune policy : gestion et lecture réservées au service role (admin + action de rédemption).
+
+create table if not exists public.codes_gratuits_utilisations (
+  id uuid primary key default uuid_generate_v4(),
+  code_id uuid not null references public.codes_gratuits(id) on delete cascade,
+  couple_id uuid not null references public.couples(id) on delete cascade unique, -- un seul code gratuit par couple
+  utilise_le timestamptz not null default now()
+);
+alter table public.codes_gratuits_utilisations enable row level security;
+
+-- Rédemption atomique (verrou sur la ligne du code pour éviter qu'un même
+-- code dépasse usages_max sous concurrence). Appelée avec le service role
+-- depuis src/app/actions/abonnement.ts (utiliserCodeGratuit).
+create or replace function public.utiliser_code_gratuit(p_code text, p_couple_id uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_code public.codes_gratuits;
+  v_expire timestamptz;
+begin
+  select * into v_code from public.codes_gratuits
+  where code = upper(trim(p_code)) and actif = true
+  for update;
+
+  if not found then
+    return json_build_object('success', false, 'error', 'invalide');
+  end if;
+  if v_code.usages >= v_code.usages_max then
+    return json_build_object('success', false, 'error', 'epuise');
+  end if;
+  if exists (select 1 from public.codes_gratuits_utilisations where couple_id = p_couple_id) then
+    return json_build_object('success', false, 'error', 'deja_utilise');
+  end if;
+
+  update public.codes_gratuits set usages = usages + 1 where id = v_code.id;
+  insert into public.codes_gratuits_utilisations (code_id, couple_id) values (v_code.id, p_couple_id);
+
+  v_expire := case
+    when v_code.duree_mois is null then timestamptz '2999-01-01'
+    else now() + (v_code.duree_mois || ' months')::interval
+  end;
+  update public.couples set acces_gratuit_expire_le = v_expire where id = p_couple_id;
+
+  return json_build_object('success', true, 'expire_le', v_expire);
+end;
+$$;
+
+alter table public.couples add column if not exists code_parrainage text unique;
+alter table public.couples add column if not exists parrain_couple_id uuid references public.couples(id) on delete set null;
+alter table public.couples add column if not exists parrainages_recompenses integer not null default 0;
+revoke update (code_parrainage, parrain_couple_id, parrainages_recompenses) on public.couples from authenticated;
+
+create or replace function public.generate_code_parrainage()
+returns text language plpgsql as $$
+declare
+  chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; -- sans I/O pour éviter la confusion avec 1/0
+  code text;
+begin
+  loop
+    code := '';
+    for i in 1..6 loop
+      code := code || substr(chars, floor(random() * length(chars))::int + 1, 1);
+    end loop;
+    exit when not exists (select 1 from public.couples where code_parrainage = code);
+  end loop;
+  return code;
+end;
+$$;
+
+alter table public.couples alter column code_parrainage set default public.generate_code_parrainage();
+
+do $$
+declare
+  c record;
+begin
+  for c in select id from public.couples where code_parrainage is null loop
+    update public.couples set code_parrainage = public.generate_code_parrainage() where id = c.id;
+  end loop;
+end;
+$$;
+
+-- Rattache un couple qui vient de s'inscrire à son parrain, et calcule
+-- atomiquement (verrou sur la ligne du parrain) le nombre de nouveaux
+-- mois à offrir dès qu'un palier de 5 filleuls est atteint. L'octroi
+-- effectif (crédit Stripe si le parrain paie déjà, sinon extension de
+-- acces_gratuit_expire_le) est fait côté application — cf.
+-- src/lib/parrainage.ts — car il peut nécessiter un appel à l'API Stripe.
+create or replace function public.parrainer_couple(p_code_parrainage text, p_nouveau_couple_id uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_parrain public.couples;
+  v_total integer;
+  v_nouveaux_blocs integer;
+begin
+  select * into v_parrain from public.couples
+  where code_parrainage = upper(trim(p_code_parrainage))
+  for update;
+
+  if not found then
+    return json_build_object('success', false, 'error', 'invalide');
+  end if;
+  if v_parrain.id = p_nouveau_couple_id then
+    return json_build_object('success', false, 'error', 'auto_parrainage');
+  end if;
+
+  update public.couples set parrain_couple_id = v_parrain.id where id = p_nouveau_couple_id;
+
+  select count(*) into v_total from public.couples where parrain_couple_id = v_parrain.id;
+  v_nouveaux_blocs := greatest((v_total / 5) - v_parrain.parrainages_recompenses, 0);
+
+  if v_nouveaux_blocs > 0 then
+    update public.couples set parrainages_recompenses = v_parrain.parrainages_recompenses + v_nouveaux_blocs where id = v_parrain.id;
+  end if;
+
+  return json_build_object(
+    'success', true,
+    'parrain_couple_id', v_parrain.id,
+    'total_parraines', v_total,
+    'nouveaux_mois_offerts', v_nouveaux_blocs
+  );
 end;
 $$;

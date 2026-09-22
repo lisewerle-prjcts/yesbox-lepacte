@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
+import { enregistrerParrainage } from '@/lib/parrainage'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -42,7 +43,7 @@ export async function creerCouple(formData: FormData) {
   return { success: true, couple, inviteToken: couple.invite_token }
 }
 
-export async function creerCoupleSolo(userId: string) {
+export async function creerCoupleSolo(userId: string, codeParrainage?: string | null) {
   const admin = createAdminClient()
 
   const { data: couple, error: coupleError } = await admin
@@ -62,6 +63,10 @@ export async function creerCoupleSolo(userId: string) {
 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
   await admin.rpc('renumeroter_couples')
+
+  if (codeParrainage) {
+    await enregistrerParrainage(admin, codeParrainage, couple.id)
+  }
 
   return { success: true, couple }
 }

@@ -2,14 +2,9 @@ import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { getStripe, RETENTION_MOIS } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
+import { ajouterMois } from '@/lib/dates'
 
 export const runtime = 'nodejs'
-
-function ajouterMois(date: Date, mois: number): string {
-  const d = new Date(date)
-  d.setMonth(d.getMonth() + mois)
-  return d.toISOString()
-}
 
 async function trouverCoupleId(admin: ReturnType<typeof createAdminClient>, sub: Stripe.Subscription): Promise<string | null> {
   if (sub.metadata?.couple_id) return sub.metadata.couple_id

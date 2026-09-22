@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Check, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useT } from '@/components/i18n/LocaleContext'
-import { demarrerAbonnement } from '@/app/actions/abonnement'
+import { demarrerAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
 
 const FEATURES = [
   'Les 10 modules complets',
@@ -86,6 +87,47 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte', 'Secure payment via Stripe · cancel anytime from My Account')}
         </p>
       </div>
+
+      {!compteResilie && <CodeGratuitForm />}
+    </div>
+  )
+}
+
+function CodeGratuitForm() {
+  const t = useT()
+  const router = useRouter()
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function valider() {
+    setError(null)
+    setLoading(true)
+    const res = await utiliserCodeGratuit(code)
+    if (res.error) {
+      setError(res.error)
+      setLoading(false)
+      return
+    }
+    router.push('/tableau-de-bord')
+  }
+
+  return (
+    <div className="card p-5 mt-5 text-center">
+      <p className="text-sm text-gray-600 mb-3">{t('Tu as un code d’accès gratuit (testeur, parrainage) ?', 'Do you have a free access code (tester, referral)?')}</p>
+      <div className="flex items-center gap-2 justify-center max-w-xs mx-auto">
+        <input
+          type="text"
+          className="input-field uppercase"
+          placeholder={t('Ton code', 'Your code')}
+          value={code}
+          onChange={e => setCode(e.target.value)}
+        />
+        <button onClick={valider} disabled={loading || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
+          {loading ? '…' : t('Valider', 'Apply')}
+        </button>
+      </div>
+      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
     </div>
   )
 }

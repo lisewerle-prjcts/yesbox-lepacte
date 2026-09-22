@@ -1,13 +1,30 @@
 import type { CoupleAbonnement, Module, ModuleInfo } from '@/types'
 
-// Accès payant actif : la période en cours n'est pas terminée, même si une
-// résiliation a été demandée (cancel_at_period_end) — l'accès reste ouvert
-// jusqu'à la fin de la période déjà payée, comme annoncé dans les CGV.
+// Accès payant (Stripe) actif : la période en cours n'est pas terminée,
+// même si une résiliation a été demandée (cancel_at_period_end) — l'accès
+// reste ouvert jusqu'à la fin de la période déjà payée, comme annoncé dans
+// les CGV. Utilisé spécifiquement pour les décisions liées à la
+// facturation (ex. bloquer un second abonnement Stripe, choisir comment
+// créditer une récompense de parrainage).
 export function estAbonnementActif(couple: CoupleAbonnement | null | undefined): boolean {
   if (!couple) return false
   if (couple.subscription_status !== 'actif') return false
   if (!couple.subscription_current_period_end) return true
   return new Date(couple.subscription_current_period_end).getTime() > Date.now()
+}
+
+// Accès gratuit actif (code testeur ou récompense de parrainage), sans lien
+// avec Stripe.
+export function aAccesGratuitActif(couple: CoupleAbonnement | null | undefined): boolean {
+  if (!couple?.acces_gratuit_expire_le) return false
+  return new Date(couple.acces_gratuit_expire_le).getTime() > Date.now()
+}
+
+// Accès complet à l'app : abonnement Stripe actif OU accès gratuit en
+// cours (code testeur, mois offert par le parrainage). C'est ce qu'il faut
+// utiliser pour toute décision d'accès (gating des modules, page /abonnement).
+export function aAccesComplet(couple: CoupleAbonnement | null | undefined): boolean {
+  return estAbonnementActif(couple) || aAccesGratuitActif(couple)
 }
 
 // Le compte est définitivement clos (13 mois sans accès payé écoulés) :
@@ -32,5 +49,5 @@ export function peutAccederModule(
 ): boolean {
   if (moduleInfo.free) return true
   if (moduleData?.revealed) return true
-  return estAbonnementActif(couple)
+  return aAccesComplet(couple)
 }

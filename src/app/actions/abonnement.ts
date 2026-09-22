@@ -89,6 +89,39 @@ export async function annulerAbonnement() {
   return { success: true }
 }
 
+export async function utiliserCodeGratuit(code: string) {
+  const locale = await getLocale()
+  const ctx = await getMonCoupleId()
+  if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+
+  const cleanCode = code.trim()
+  if (!cleanCode) return { error: t(locale, 'Code requis', 'Code required') }
+
+  const admin = createAdminClient()
+  const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', ctx.coupleId).single()
+  if (estCompteResilie(couple)) {
+    return { error: t(locale, "Ce compte a été résilié : impossible d'utiliser un code sur cet espace.", 'This account was closed: a code cannot be redeemed on this space.') }
+  }
+
+  const { data, error } = await admin.rpc('utiliser_code_gratuit', { p_code: cleanCode, p_couple_id: ctx.coupleId })
+  if (error) return { error: error.message }
+
+  const messages: Record<string, { fr: string; en: string }> = {
+    invalide: { fr: 'Code invalide', en: 'Invalid code' },
+    epuise: { fr: 'Ce code a atteint son nombre maximum d’utilisations', en: 'This code has reached its usage limit' },
+    deja_utilise: { fr: 'Ton couple a déjà utilisé un code gratuit', en: 'Your couple already redeemed a free code' },
+  }
+  if (!data?.success) {
+    const msg = messages[data?.error] ?? { fr: 'Code invalide', en: 'Invalid code' }
+    return { error: t(locale, msg.fr, msg.en) }
+  }
+
+  revalidatePath('/mon-compte')
+  revalidatePath('/tableau-de-bord')
+  revalidatePath('/abonnement')
+  return { success: true }
+}
+
 export async function reprendreAbonnement() {
   const locale = await getLocale()
   const ctx = await getMonCoupleId()
