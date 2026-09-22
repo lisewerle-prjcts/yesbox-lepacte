@@ -7,6 +7,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Les routes /api/* (webhook Stripe, tâche planifiée) se protègent elles-mêmes
+    // (signature Stripe, secret de cron) et ne doivent jamais être redirigées vers
+    // /connexion faute de cookie de session — elles n'en ont jamais.
+    '/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
