@@ -36,7 +36,6 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'moments_forts', type: 'text', texte: 'Quels sont les 3 ou 4 moments forts du début de votre couple ?', texte_en: 'What are the 3 or 4 milestones from the beginning of your relationship?' },
       { slug: 'craquer_moi', type: 'text', texte: "Qu'est-ce qui t'a séduit chez l'autre, la toute première fois ?", texte_en: 'What attracted you to your partner, the very first time?' },
       { slug: 'plait_aujourdhui', type: 'text', texte: "Et qu'est-ce qui te plaît aujourd'hui ?", texte_en: 'And what do you like about your partner today?' },
-      { slug: 'plait_aujourdhui_autre', type: 'text', texte: "À ton avis, qu'est-ce qui plaît le plus à l'autre chez toi, aujourd'hui ?", texte_en: 'In your opinion, what does your partner like most about you today?' },
       { slug: 'serieux', type: 'text', texte: 'Quel est le moment où tu as su que « c\'était du sérieux » ?', texte_en: 'When did you know it was "serious"?' },
       { slug: 'decision_folle', type: 'text', texte: 'Quelle est la décision la plus « folle » que vous ayez prise ensemble ?', texte_en: 'What is the "craziest" decision you have made together?' },
       { slug: 'toujours_ensemble', type: 'text', texte: "Qu'est-ce qui fait que vous êtes toujours ensemble, selon toi ?", texte_en: 'In your opinion, what keeps you together?' },
