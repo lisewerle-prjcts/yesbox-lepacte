@@ -95,7 +95,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
           </h1>
           <p style={{ color: 'var(--dark-muted)', fontSize: 15, maxWidth: 480, margin: '0 auto' }}>
             {partnerDone
-              ? <EditableText id="revelation.souscritre" multiline>Prenez le temps de lire ce que l&apos;autre a écrit. Sans juger. C&apos;est ça, se choisir.</EditableText>
+              ? <EditableText id="revelation.souscritre" multiline>Prenez le temps de lire ce que l&apos;autre a écrit. Sans juger.</EditableText>
               : <EditableText id="revelation.souscritre.enattente" multiline>Tant que l&apos;autre n&apos;a pas répondu, tu peux encore modifier. Ensuite, prenez le temps de lire ce que l&apos;autre a écrit. Sans juger.</EditableText>}
           </p>
         </div>
@@ -163,13 +163,13 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 20, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              <EditableText id="revelation.conclusion.apprentissage.label">Qu&apos;est-ce que tu as appris avec ce module ?</EditableText>
+              <EditableText id="revelation.conclusion.apprentissage.label">Qu&apos;est-ce qui t&apos;a marqué lors de ce module ? Qu&apos;est-ce qui t&apos;a fait plaisir ?</EditableText>
             </label>
             <textarea
               value={apprentissage}
               onChange={e => { setApprentissage(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder={t('Ce que tu retiens…', 'What you take away…')}
+              placeholder={t("Ce qui t'a marqué, ce qui t'a fait plaisir…", 'What struck you, what made you happy…')}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />
@@ -177,13 +177,13 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 28, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              <EditableText id="revelation.conclusion.surprise.label">Qu&apos;est-ce qui t&apos;a surpris ?</EditableText>
+              <EditableText id="revelation.conclusion.surprise.label">Est-ce que tu as été ému·e par une question ou une réponse donnée par l&apos;autre ?</EditableText>
             </label>
             <textarea
               value={surprise}
               onChange={e => { setSurprise(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder={t("Ce que tu ne t'attendais pas à lire ou à ressentir…", "What you didn't expect to read or feel…")}
+              placeholder={t("Ce qui t'a ému·e…", 'What moved you…')}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />

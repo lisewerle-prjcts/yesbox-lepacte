@@ -92,13 +92,21 @@ export default async function PactePage() {
           const isDone = st === 'done'
           const isActive = st === 'active'
 
+          const moduleData = modules?.find((mod: Module) => mod.slug === m.slug)
+          const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
+          const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
+          const jaiFini = mesReponses.length >= m.questions.length
+          const partenaireFini = reponsesPartner.length >= m.questions.length
+          const isToReveal = isActive && jaiFini && partenaireFini
+
           const card = (
             <div className="card p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-150"
               style={{ opacity: isLocked ? .55 : 1, cursor: isLocked ? 'default' : 'pointer' }}>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs font-bold" style={{ color: 'var(--muted)' }}>MODULE {String(i + 1).padStart(2, '0')}</span>
                 {isDone && <span className="tag-sage"><CheckCircle className="w-3 h-3" /><EditableText id="pacte.statut.revele">Révélé</EditableText></span>}
-                {isActive && <span className="tag-brand"><EditableText id="pacte.statut.encours">En cours</EditableText></span>}
+                {isToReveal && <span className="tag-brand"><EditableText id="pacte.statut.areveler">RÉVÉLER LES RÉPONSES</EditableText></span>}
+                {isActive && !isToReveal && <span className="tag-brand"><EditableText id="pacte.statut.encours">En cours</EditableText></span>}
                 {isLocked && <span className="tag-muted"><Lock className="w-3 h-3" /><EditableText id="pacte.statut.verrouille">Verrouillé</EditableText></span>}
               </div>
 
@@ -106,7 +114,9 @@ export default async function PactePage() {
 
               {isActive && !isDone && (
                 <div className="flex items-center justify-between text-xs" style={{ color: 'var(--brand)' }}>
-                  <span><EditableText id="pacte.statut.continuer">Continuer</EditableText></span>
+                  <span>{isToReveal
+                    ? <EditableText id="pacte.statut.reveler.cta">Révéler les réponses</EditableText>
+                    : <EditableText id="pacte.statut.continuer">Continuer</EditableText>}</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
               )}
@@ -117,6 +127,7 @@ export default async function PactePage() {
 
           if (isLocked) return <div key={m.slug}>{card}</div>
           if (isDone) return <Link key={m.slug} href={`/module/${m.slug}/revelation`}>{card}</Link>
+          if (isToReveal) return <Link key={m.slug} href={`/module/${m.slug}/revelation`}>{card}</Link>
           return <Link key={m.slug} href={`/module/${m.slug}`}>{card}</Link>
         })}
       </div>
