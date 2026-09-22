@@ -1,3 +1,6 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    { "path": "/api/cron/purger-comptes-expires", "schedule": "0 3 * * *" }
+  ]
 }

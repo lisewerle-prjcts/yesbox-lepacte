@@ -79,7 +79,8 @@ export async function inscription(formData: FormData) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
       if (!result.success) partnerCodeError = result.error || t(locale, 'Code invalide', 'Invalid code')
     } else {
-      const coupleResult = await creerCoupleSolo(data.user.id)
+      const codeParrainage = (formData.get('code_parrainage') as string | null)?.trim()
+      const coupleResult = await creerCoupleSolo(data.user.id, codeParrainage)
       if (coupleResult.success && coupleResult.couple) {
         await sendWelcomeEmail(email, prenom, coupleResult.couple.pairing_code)
       }

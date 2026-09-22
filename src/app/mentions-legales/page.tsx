@@ -43,6 +43,7 @@ export default async function MentionsLegales() {
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>Vercel Inc. — 340 Pine Street, Suite 700, San Francisco, CA 94104, USA</li>
               <li>Supabase Inc. ({t('base de données', 'database')}) — 970 Toa Payoh North, {t('Singapour', 'Singapore')}</li>
+              <li>Stripe Payments Europe, Ltd. ({t('paiement de l’abonnement', 'subscription payment')}) — {t('Irlande', 'Ireland')}</li>
             </ul>
           </section>
 
@@ -56,6 +57,7 @@ export default async function MentionsLegales() {
               <li>{t('Prénom (personnalisation)', 'First name (personalization)')}</li>
               <li>{t('Réponses aux modules (stockées de façon privée, accessibles au couple uniquement)', 'Module answers (stored privately, accessible only to the couple)')}</li>
               <li>{t('Informations de pré-commande (nom, e-mail, adresse optionnelle)', 'Pre-order information (name, email, optional address)')}</li>
+              <li>{t('Données d’abonnement (statut, date de renouvellement) — le paiement lui-même est traité par Stripe, qui ne nous transmet jamais votre numéro de carte', 'Subscription data (status, renewal date) — payment itself is processed by Stripe, which never shares your card number with us')}</li>
             </ul>
             <p className="mt-4">
               <EditableText id="mentions.donnees.stockage" multiline>Ces données sont stockées sur des serveurs sécurisés (Supabase). Elles ne sont ni vendues, ni transmises à des tiers. Chaque couple dispose d&apos;un espace isolé et privé, protégé par des règles d&apos;accès strictes (Row Level Security).</EditableText>
@@ -96,7 +98,16 @@ export default async function MentionsLegales() {
                 <strong style={{ color: 'var(--ink-2)' }}>{t('Module 1 gratuit :', 'Free Module 1:')}</strong> {t('le premier module (« Moi et toi ») est accessible gratuitement aux deux membres du couple, sans carte bancaire, jusqu\'à la révélation de vos réponses respectives. Vous découvrez ainsi le fonctionnement du programme avant tout engagement — sans mauvaise surprise.', 'the first module ("Me and You") is free for both members of the couple, no credit card required, until you reveal your answers to each other. This lets you see how the program works before making any commitment — no surprises.')}
               </li>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Abonnement mensuel — 29 €/mois :', 'Monthly subscription — €29/month:')}</strong> {t('donne accès aux 10 modules complets, aux sessions de révélation à deux, au journal de couple et au CDD de couple. Sans engagement de durée, résiliable à tout moment depuis votre espace ; l\'accès reste actif jusqu\'à la fin de la période déjà payée.', 'gives you access to all 10 full modules, joint reveal sessions, your couple\'s journal, and your couple\'s CDD (fixed-term agreement). No long-term commitment — cancel anytime from your account; access stays active until the end of the period you\'ve already paid for.')}
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Abonnement mensuel — 29 €/mois :', 'Monthly subscription — €29/month:')}</strong> {t('proposé à votre couple dès la fin du module 1 gratuit, il donne accès aux 10 modules complets, aux sessions de révélation à deux, au journal de couple et au CDD de couple. Le paiement et le renouvellement automatique sont gérés de façon sécurisée par notre prestataire Stripe ; nous ne stockons jamais votre numéro de carte bancaire.', 'offered to your couple as soon as you finish the free module 1, it gives you access to all 10 full modules, joint reveal sessions, your couple\'s journal, and your couple\'s CDD. Payment and automatic renewal are securely handled by our provider, Stripe; we never store your card number.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Renouvellement automatique et résiliation :', 'Automatic renewal and cancellation:')}</strong> {t('sans engagement de durée : l\'abonnement se renouvelle automatiquement chaque mois tant qu\'il n\'a pas été arrêté. Depuis « Mon compte », vous voyez à tout moment la date du prochain renouvellement et pouvez arrêter le renouvellement automatique en un clic ; l\'accès complet reste actif jusqu\'à la fin de la période déjà payée.', 'no long-term commitment: the subscription renews automatically every month until it is stopped. From "My Account", you can see the next renewal date at any time and stop automatic renewal in one click; full access stays active until the end of the period you\'ve already paid for.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Après l\'arrêt de l\'abonnement :', 'After stopping the subscription:')}</strong> {t('une fois la période déjà payée terminée, seules les parties déjà réalisées (modules révélés, journal, CDD déjà rédigé) restent consultables dans votre espace ; les modules non commencés ou non terminés ne sont plus accessibles tant que l\'abonnement n\'est pas repris.', 'once the period you\'ve already paid for ends, only the parts you\'ve already completed (revealed modules, journal, an already-written CDD) remain viewable in your account; modules not started or not finished are no longer accessible until the subscription is resumed.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Conservation des données et clôture du compte :', 'Data retention and account closure:')}</strong> {t('à compter de la fin de votre accès payé (arrêt du renouvellement ou échéance non reconduite), vos données sont conservées 13 mois. Passé ce délai, votre compte est définitivement clos : l\'abonnement ne peut plus être réactivé sur cet espace et vos réponses sont effacées. Pour continuer l\'aventure au-delà de ce délai, il faut recommencer le programme avec un nouveau compte.', 'starting from the end of your paid access (stopped renewal or a period that was not renewed), your data is kept for 13 months. After that period, your account is permanently closed: the subscription can no longer be reactivated on that account and your answers are deleted. To continue past this point, you need to start the program over with a new account.')}
               </li>
               <li>
                 <strong style={{ color: 'var(--ink-2)' }}>{t('BAC annuel (Bilan Annuel de Couple) — 19 €/an :', 'Annual BAC (Bilan Annuel de Couple, or Yearly Couple Check-in) — €19/year:')}</strong> {t('abonnement annuel qui déclenche votre rappel et votre fiche avenant à la date anniversaire de votre couple, et vous permet de refaire l\'intégralité des modules si vous souhaitez recommencer le programme. Annulable à tout moment ; le renouvellement n\'est jamais automatique sans information préalable.', 'an annual subscription that triggers your reminder and your amendment worksheet on your couple\'s anniversary date, and lets you redo all the modules if you want to go through the program again. Cancel anytime; renewal is never automatic without prior notice.')}
@@ -141,7 +152,7 @@ export default async function MentionsLegales() {
             </p>
           </section>
 
-          <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="mentions.majdate">Dernière mise à jour : juin 2026</EditableText></p>
+          <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="mentions.majdate">Dernière mise à jour : septembre 2026</EditableText></p>
         </div>
       </main>
 

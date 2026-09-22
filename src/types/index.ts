@@ -14,6 +14,8 @@ export interface Profile {
   updated_at: string
 }
 
+export type SubscriptionStatus = 'aucun' | 'actif' | 'incomplet' | 'expire' | 'resilie'
+
 export interface Couple {
   id: string
   numero: number
@@ -23,9 +25,35 @@ export interface Couple {
   invite_token_expires_at: string | null
   invite_used: boolean
   pairing_code: string | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  subscription_status: SubscriptionStatus
+  subscription_current_period_end: string | null
+  subscription_cancel_at_period_end: boolean
+  subscription_canceled_at: string | null
+  data_retention_until: string | null
+  compte_resilie_le: string | null
+  acces_gratuit_expire_le: string | null
+  code_parrainage: string | null
+  parrain_couple_id: string | null
+  parrainages_recompenses: number
   created_at: string
   updated_at: string
 }
+
+export type CoupleAbonnement = Pick<Couple,
+  | 'id' | 'stripe_customer_id' | 'stripe_subscription_id' | 'subscription_status'
+  | 'subscription_current_period_end' | 'subscription_cancel_at_period_end'
+  | 'subscription_canceled_at' | 'data_retention_until' | 'compte_resilie_le'
+  | 'acces_gratuit_expire_le'
+>
+
+export const ABONNEMENT_COLONNES =
+  'id, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, subscription_canceled_at, data_retention_until, compte_resilie_le, acces_gratuit_expire_le'
+
+export type CoupleParrainage = Pick<Couple, 'id' | 'code_parrainage' | 'parrain_couple_id' | 'parrainages_recompenses'>
+
+export const PARRAINAGE_COLONNES = 'id, code_parrainage, parrain_couple_id, parrainages_recompenses'
 
 export interface Module {
   id: string

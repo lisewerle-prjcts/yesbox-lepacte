@@ -580,3 +580,38 @@ export async function adminDeleteModule(id: string, slug: string) {
   revalidateModuleLists()
   return { success: true }
 }
+
+function genererCodeAleatoire() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'
+  let code = ''
+  for (let i = 0; i < 8; i++) code += chars[randomInt(chars.length)]
+  return code
+}
+
+export async function adminCreerCodeGratuit(fields: {
+  code?: string; dureeMois?: number | null; usagesMax: number; note?: string
+}) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const code = (fields.code?.trim() || genererCodeAleatoire()).toUpperCase()
+  const { error } = await admin.from('codes_gratuits').insert({
+    code,
+    duree_mois: fields.dureeMois ?? null,
+    usages_max: fields.usagesMax,
+    note: fields.note?.trim() || null,
+  })
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/codes')
+  return { success: true, code }
+}
+
+export async function adminBasculerCodeGratuit(id: string, actif: boolean) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('codes_gratuits').update({ actif }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/codes')
+  return { success: true }
+}

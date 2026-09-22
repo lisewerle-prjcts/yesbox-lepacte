@@ -1,16 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy } from 'lucide-react'
-import { useT } from '@/components/i18n/LocaleContext'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift } from 'lucide-react'
+import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse,
 } from '@/app/actions/compte'
+import { annulerAbonnement, reprendreAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
+import type { CoupleAbonnement } from '@/types'
+import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
+import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
+import Link from 'next/link'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  nom, prenom, email, nomCouple, pairingCode, paired,
+  nom, prenom, email, nomCouple, pairingCode, paired, abonnement, codeParrainage, filleulsCount,
 }: {
   nom: string
   prenom: string
@@ -18,6 +23,9 @@ export default function MonCompteClient({
   nomCouple: string
   pairingCode: string | null
   paired: boolean
+  abonnement: CoupleAbonnement | null
+  codeParrainage: string | null
+  filleulsCount: number
 }) {
   const t = useT()
   return (
@@ -30,8 +38,186 @@ export default function MonCompteClient({
       <div className="space-y-5">
         <MesInfosCard nom={nom} prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
+        <AbonnementCard abonnement={abonnement} />
+        <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <PasswordCard />
       </div>
+    </div>
+  )
+}
+
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function AbonnementCard({ abonnement }: { abonnement: CoupleAbonnement | null }) {
+  const t = useT()
+  const { locale } = useLocale()
+  const [status, setStatus] = useState<SaveStatus>('idle')
+  const [error, setError] = useState('')
+
+  const actif = abonnement?.subscription_status === 'actif'
+  const annuleAPeriodeFin = !!abonnement?.subscription_cancel_at_period_end
+  const compteResilie = estCompteResilie(abonnement)
+  const gratuitActif = !actif && aAccesGratuitActif(abonnement)
+  const gratuitIllimite = abonnement?.acces_gratuit_expire_le === ACCES_GRATUIT_ILLIMITE_ISO
+
+  async function stopper() {
+    setError('')
+    setStatus('saving')
+    const res = await annulerAbonnement()
+    if (res.error) { setError(res.error); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  async function reprendre() {
+    setError('')
+    setStatus('saving')
+    const res = await reprendreAbonnement()
+    if (res.error) { setError(res.error); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <CreditCard className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Abonnement', 'Subscription')}</h2>
+      </div>
+
+      {compteResilie ? (
+        <div className="flex items-start gap-3 p-3 rounded-lg" style={{ background: '#fdf2f2' }}>
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
+          <p className="text-sm" style={{ color: '#8a2c2c' }}>
+            {t(
+              "Ce compte a été résilié après 13 mois sans abonnement actif. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
+              'This account was closed after 13 months without an active subscription. It can no longer be reactivated here: you need to start over with a new account.'
+            )}
+          </p>
+        </div>
+      ) : actif ? (
+        <>
+          <p className="text-sm text-gray-600 mb-1">
+            {annuleAPeriodeFin
+              ? t('Résilié — accès actif jusqu’au', 'Canceled — access active until')
+              : t('Prochain renouvellement automatique le', 'Next automatic renewal on')}
+            {' '}
+            <strong>{abonnement?.subscription_current_period_end ? formatDate(abonnement.subscription_current_period_end, locale) : '—'}</strong>
+          </p>
+          <p className="text-xs text-gray-400 mb-4">
+            {annuleAPeriodeFin
+              ? t('Après cette date, seules les parties déjà réalisées restent consultables.', 'After this date, only the parts you already completed remain viewable.')
+              : t('29€/mois · résiliable à tout moment.', '€29/month · cancel anytime.')}
+          </p>
+          {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+          {annuleAPeriodeFin ? (
+            <button onClick={reprendre} disabled={status === 'saving'} className="btn-secondary text-sm py-2 px-4">
+              {status === 'saving' ? t('Reprise…', 'Resuming…') : t('Reprendre l’abonnement', 'Resume subscription')}
+            </button>
+          ) : (
+            <button onClick={stopper} disabled={status === 'saving'} className="btn-ghost text-sm py-2 px-4" style={{ color: '#c0392b' }}>
+              {status === 'saving' ? t('Arrêt en cours…', 'Stopping…') : t('Arrêter le renouvellement automatique', 'Stop automatic renewal')}
+            </button>
+          )}
+        </>
+      ) : gratuitActif ? (
+        <>
+          <p className="text-sm text-gray-600 mb-1">
+            {gratuitIllimite
+              ? t('Accès gratuit illimité', 'Unlimited free access')
+              : <>{t('Accès gratuit jusqu’au', 'Free access until')} <strong>{abonnement?.acces_gratuit_expire_le ? formatDate(abonnement.acces_gratuit_expire_le, locale) : '—'}</strong></>}
+          </p>
+          <p className="text-xs text-gray-400">
+            {t('Offert (code testeur ou parrainage) — aucun paiement en cours.', 'Granted (tester code or referral) — no payment in progress.')}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-gray-600 mb-4">{t('Aucun abonnement actif pour le moment.', 'No active subscription at the moment.')}</p>
+          <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('S’abonner', 'Subscribe')}</Link>
+          <CodeGratuitForm />
+        </>
+      )}
+    </div>
+  )
+}
+
+function CodeGratuitForm() {
+  const t = useT()
+  const [code, setCode] = useState('')
+  const [status, setStatus] = useState<SaveStatus>('idle')
+  const [error, setError] = useState('')
+
+  async function valider() {
+    setError('')
+    setStatus('saving')
+    const res = await utiliserCodeGratuit(code)
+    if (res.error) { setError(res.error); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  return (
+    <div className="mt-4 pt-4" style={{ borderTop: '1px solid #eee' }}>
+      <label className="label">{t('J’ai un code gratuit', 'I have a free code')}</label>
+      <div className="flex items-center gap-2 max-w-xs">
+        <input
+          type="text"
+          className="input-field uppercase"
+          placeholder={t('Ex : BETA2026', 'e.g. BETA2026')}
+          value={code}
+          onChange={e => setCode(e.target.value)}
+        />
+        <button onClick={valider} disabled={status === 'saving' || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
+          {status === 'saving' ? t('…', '…') : t('Valider', 'Apply')}
+        </button>
+      </div>
+      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+    </div>
+  )
+}
+
+function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: string | null; filleulsCount: number }) {
+  const t = useT()
+  const [copied, setCopied] = useState(false)
+  if (!codeParrainage) return null
+
+  const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
+  const lien = `${appUrl}/inscription?parrain=${codeParrainage}`
+  const restants = 5 - (filleulsCount % 5)
+  const prochainSeuil = restants === 5 ? 0 : restants
+
+  async function copierLien() {
+    await navigator.clipboard.writeText(lien)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Gift className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Parrainage', 'Referrals')}</h2>
+      </div>
+      <p className="text-sm text-gray-600 mb-3">
+        {t('Chaque 5 couples parrainés qui s’inscrivent, vous recevez 1 mois offert.', 'For every 5 referred couples who sign up, you get 1 month free.')}
+      </p>
+      <div className="mb-3 max-w-md">
+        <label className="label">{t('Ton lien de parrainage', 'Your referral link')}</label>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs truncate" style={{ flex: 1 }}>{lien}</span>
+          <button onClick={copierLien} className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1.5 flex-shrink-0">
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? t('Copié', 'Copied') : t('Copier', 'Copy')}
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-gray-400">
+        {filleulsCount === 0
+          ? t('Aucun couple parrainé pour le moment.', 'No referred couples yet.')
+          : prochainSeuil === 0
+          ? t(`${filleulsCount} couple(s) parrainé(s) — bravo !`, `${filleulsCount} referred couple(s) — nice!`)
+          : t(`${filleulsCount} couple(s) parrainé(s) · encore ${prochainSeuil} avant ton prochain mois offert`, `${filleulsCount} referred couple(s) · ${prochainSeuil} more until your next free month`)}
+      </p>
     </div>
   )
 }

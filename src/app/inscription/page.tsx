@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useFormStatus } from 'react-dom'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
@@ -24,6 +25,8 @@ function SubmitButton() {
 
 export default function InscriptionPage() {
   const t = useT()
+  const searchParams = useSearchParams()
+  const codeParrainageInitial = searchParams.get('parrain')?.trim().toUpperCase() ?? ''
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null)
@@ -186,6 +189,22 @@ export default function InscriptionPage() {
               <p className="text-xs text-gray-400 mt-1">
                 <EditableText id="inscription.field.code.aide" multiline>Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 5 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.</EditableText>
               </p>
+            </div>
+
+            <div>
+              <label htmlFor="code_parrainage" className="label">
+                <EditableText id="inscription.field.parrainage">Code de parrainage</EditableText> <span className="text-gray-400 font-normal">{t('(optionnel)', '(optional)')}</span>
+              </label>
+              <input
+                id="code_parrainage"
+                name="code_parrainage"
+                type="text"
+                placeholder={t('Ex : B7K2Q9', 'e.g. B7K2Q9')}
+                defaultValue={codeParrainageInitial}
+                maxLength={6}
+                autoCapitalize="characters"
+                className="input-field uppercase"
+              />
             </div>
 
             <SubmitButton />
