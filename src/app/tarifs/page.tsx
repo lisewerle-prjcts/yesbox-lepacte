@@ -8,7 +8,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { Check, ArrowRight } from 'lucide-react'
 
 const FREE_FEATURES = ['Module "Moi et toi" pour chaque membre du couple', '5 questions introspectives', 'Espace couple privé', 'Aucune carte bancaire requise']
-const PRO_FEATURES = ['Les 10 modules complets', 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé']
+const PRO_FEATURES = ["L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)", 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé']
 const BAC_FEATURES = ['Rappel annuel à votre date anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous voulez recommencer', 'Nouvelles questions chaque année', 'Annulable à tout moment']
 
 export default function TarifsPage() {
