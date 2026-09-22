@@ -35,7 +35,6 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'rencontre', type: 'text', texte: 'Raconte ici votre rencontre ? Quels sont les moments clefs du tout début ?', texte_en: 'Tell the story of how you met. What were the key moments at the very beginning?' },
       { slug: 'moments_forts', type: 'text', texte: 'Quels sont les 3 ou 4 moments forts du début de votre couple ?', texte_en: 'What are the 3 or 4 milestones from the beginning of your relationship?' },
       { slug: 'craquer_moi', type: 'text', texte: "Qu'est-ce qui t'a séduit chez l'autre, la toute première fois ?", texte_en: 'What attracted you to your partner, the very first time?' },
-      { slug: 'craquer_autre', type: 'text', texte: "Selon toi, qu'est-ce qui a fait craquer l'autre, chez toi, au tout début ?", texte_en: 'In your opinion, what made your partner fall for you, at the very beginning?' },
       { slug: 'plait_aujourdhui', type: 'text', texte: "Et qu'est-ce qui te plaît aujourd'hui ?", texte_en: 'And what do you like about your partner today?' },
       { slug: 'plait_aujourdhui_autre', type: 'text', texte: "À ton avis, qu'est-ce qui plaît le plus à l'autre chez toi, aujourd'hui ?", texte_en: 'In your opinion, what does your partner like most about you today?' },
       { slug: 'serieux', type: 'text', texte: 'Quel est le moment où tu as su que « c\'était du sérieux » ?', texte_en: 'When did you know it was "serious"?' },
