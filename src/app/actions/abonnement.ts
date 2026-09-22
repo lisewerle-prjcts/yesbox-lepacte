@@ -40,29 +40,33 @@ export async function demarrerAbonnement() {
   const stripe = getStripe()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-  let customerId = couple.stripe_customer_id
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: ctx.email,
+  try {
+    let customerId = couple.stripe_customer_id
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: ctx.email,
+        metadata: { couple_id: ctx.coupleId },
+      })
+      customerId = customer.id
+      await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', ctx.coupleId)
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: PRIX_ABONNEMENT_MENSUEL_ID, quantity: 1 }],
+      success_url: `${appUrl}/mon-compte?abonnement=succes`,
+      cancel_url: `${appUrl}/abonnement?abonnement=annule`,
+      subscription_data: { metadata: { couple_id: ctx.coupleId } },
       metadata: { couple_id: ctx.coupleId },
+      allow_promotion_codes: true,
     })
-    customerId = customer.id
-    await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', ctx.coupleId)
+
+    if (!session.url) return { error: t(locale, 'Impossible de créer la session de paiement', 'Could not create the checkout session') }
+    return { url: session.url }
+  } catch (err) {
+    return { error: t(locale, `Erreur Stripe : ${(err as Error).message}`, `Stripe error: ${(err as Error).message}`) }
   }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerId,
-    line_items: [{ price: PRIX_ABONNEMENT_MENSUEL_ID, quantity: 1 }],
-    success_url: `${appUrl}/mon-compte?abonnement=succes`,
-    cancel_url: `${appUrl}/abonnement?abonnement=annule`,
-    subscription_data: { metadata: { couple_id: ctx.coupleId } },
-    metadata: { couple_id: ctx.coupleId },
-    allow_promotion_codes: true,
-  })
-
-  if (!session.url) return { error: t(locale, 'Impossible de créer la session de paiement', 'Could not create the checkout session') }
-  return { url: session.url }
 }
 
 export async function annulerAbonnement() {
@@ -75,18 +79,22 @@ export async function annulerAbonnement() {
   if (!couple?.stripe_subscription_id) return { error: t(locale, 'Aucun abonnement actif à résilier', 'No active subscription to cancel') }
 
   const stripe = getStripe()
-  const subscription = await stripe.subscriptions.update(couple.stripe_subscription_id, { cancel_at_period_end: true })
+  try {
+    const subscription = await stripe.subscriptions.update(couple.stripe_subscription_id, { cancel_at_period_end: true })
 
-  await admin.from('couples').update({
-    subscription_cancel_at_period_end: true,
-    subscription_canceled_at: new Date().toISOString(),
-    subscription_current_period_end: subscription.items.data[0]?.current_period_end
-      ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
-      : couple.subscription_current_period_end,
-  }).eq('id', ctx.coupleId)
+    await admin.from('couples').update({
+      subscription_cancel_at_period_end: true,
+      subscription_canceled_at: new Date().toISOString(),
+      subscription_current_period_end: subscription.items.data[0]?.current_period_end
+        ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
+        : couple.subscription_current_period_end,
+    }).eq('id', ctx.coupleId)
 
-  revalidatePath('/mon-compte')
-  return { success: true }
+    revalidatePath('/mon-compte')
+    return { success: true }
+  } catch (err) {
+    return { error: t(locale, `Erreur Stripe : ${(err as Error).message}`, `Stripe error: ${(err as Error).message}`) }
+  }
 }
 
 export async function utiliserCodeGratuit(code: string) {
@@ -134,13 +142,17 @@ export async function reprendreAbonnement() {
   if (!estAbonnementActif(couple)) return { error: t(locale, "La période payée est déjà terminée : relance l'abonnement depuis la page Abonnement.", 'The paid period has already ended: restart your subscription from the Subscription page.') }
 
   const stripe = getStripe()
-  await stripe.subscriptions.update(couple.stripe_subscription_id, { cancel_at_period_end: false })
+  try {
+    await stripe.subscriptions.update(couple.stripe_subscription_id, { cancel_at_period_end: false })
 
-  await admin.from('couples').update({
-    subscription_cancel_at_period_end: false,
-    subscription_canceled_at: null,
-  }).eq('id', ctx.coupleId)
+    await admin.from('couples').update({
+      subscription_cancel_at_period_end: false,
+      subscription_canceled_at: null,
+    }).eq('id', ctx.coupleId)
 
-  revalidatePath('/mon-compte')
-  return { success: true }
+    revalidatePath('/mon-compte')
+    return { success: true }
+  } catch (err) {
+    return { error: t(locale, `Erreur Stripe : ${(err as Error).message}`, `Stripe error: ${(err as Error).message}`) }
+  }
 }
