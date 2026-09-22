@@ -7,13 +7,13 @@ import { useT } from '@/components/i18n/LocaleContext'
 import { demarrerAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
 
 const FEATURES = [
-  'Les 10 modules complets',
+  "L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)",
   'Sessions de révélation à deux',
   'Journal de couple',
   'Votre CDD de couple personnalisé',
 ]
 const FEATURES_EN = [
-  'All 10 full modules',
+  'The full initial program (excluding Annual Couple Check-ins)',
   'Joint reveal sessions',
   "Your couple's journal",
   "Your couple's personalized CDD",
@@ -114,7 +114,7 @@ function CodeGratuitForm() {
 
   return (
     <div className="card p-5 mt-5 text-center">
-      <p className="text-sm text-gray-600 mb-3">{t('Tu as un code d’accès gratuit (testeur, parrainage) ?', 'Do you have a free access code (tester, referral)?')}</p>
+      <p className="text-sm text-gray-600 mb-3">{t('Tu as un code de réduction ?', 'Do you have a discount code?')}</p>
       <div className="flex items-center gap-2 justify-center max-w-xs mx-auto">
         <input
           type="text"
