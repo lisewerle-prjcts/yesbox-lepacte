@@ -235,6 +235,7 @@ create or replace function public.rejoindre_couple_via_token(p_token uuid, p_use
 returns json language plpgsql security definer as $$
 declare
   v_couple public.couples;
+  v_previous_couple_id uuid;
 begin
   select * into v_couple
   from public.couples
@@ -246,9 +247,15 @@ begin
     return json_build_object('success', false, 'error', 'Token invalide ou expiré');
   end if;
 
+  select couple_id into v_previous_couple_id from public.profiles where id = p_user_id;
+
   update public.profiles set couple_id = v_couple.id, role = 'partenaire' where id = p_user_id;
   update public.couples set invite_used = true where id = v_couple.id;
   perform public.initialiser_modules_couple(v_couple.id);
+
+  if v_previous_couple_id is not null and v_previous_couple_id is distinct from v_couple.id then
+    perform public.migrer_abonnement_solo_vers_couple(v_previous_couple_id, v_couple.id);
+  end if;
 
   return json_build_object('success', true, 'couple_id', v_couple.id);
 end;
@@ -296,6 +303,7 @@ begin
 
   -- Nettoie l'espace solo précédent si celui-ci devient vide (profil créé sans code, code ajouté plus tard)
   if v_previous_couple_id is not null and v_previous_couple_id is distinct from v_couple.id then
+    perform public.migrer_abonnement_solo_vers_couple(v_previous_couple_id, v_couple.id);
     select count(*) into v_previous_member_count from public.profiles where couple_id = v_previous_couple_id;
     if v_previous_member_count = 0 then
       delete from public.couples where id = v_previous_couple_id;
@@ -813,5 +821,131 @@ begin
     'total_parraines', v_total,
     'nouveaux_mois_offerts', v_nouveaux_blocs
   );
+end;
+$$;
+
+-- ============================================================
+-- MIGRATION D'ABONNEMENT AU PAIRAGE (v13)
+-- Correctif : un couple qui a souscrit en solo (avant de pairer avec son
+-- ou sa partenaire), puis rejoint le couple de l'autre via code ou lien
+-- d'invitation, voyait son ancien espace solo — et l'abonnement Stripe
+-- qui lui était rattaché — supprimé ou abandonné sans que rien ne soit
+-- transféré : l'abonnement continuait à être prélevé côté Stripe mais
+-- devenait invisible et inutilisable côté app. migrer_abonnement_solo_vers_couple
+-- transfère l'abonnement (ou l'accès gratuit) de l'ancien couple vers le
+-- nouveau avant que rejoindre_couple_via_code/rejoindre_couple_via_token
+-- ne l'abandonnent. Ne transfère jamais par-dessus un abonnement déjà actif
+-- sur le couple rejoint. À exécuter une fois.
+-- ============================================================
+create or replace function public.migrer_abonnement_solo_vers_couple(p_ancien_couple_id uuid, p_nouveau_couple_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_ancien public.couples;
+  v_nouveau public.couples;
+begin
+  if p_ancien_couple_id is null or p_ancien_couple_id = p_nouveau_couple_id then
+    return;
+  end if;
+
+  select * into v_ancien from public.couples where id = p_ancien_couple_id;
+  select * into v_nouveau from public.couples where id = p_nouveau_couple_id;
+  if v_ancien.id is null or v_nouveau.id is null then
+    return;
+  end if;
+
+  if v_ancien.stripe_subscription_id is not null and v_nouveau.stripe_subscription_id is null then
+    update public.couples set
+      stripe_customer_id = v_ancien.stripe_customer_id,
+      stripe_subscription_id = v_ancien.stripe_subscription_id,
+      subscription_status = v_ancien.subscription_status,
+      subscription_current_period_end = v_ancien.subscription_current_period_end,
+      subscription_cancel_at_period_end = v_ancien.subscription_cancel_at_period_end,
+      subscription_canceled_at = v_ancien.subscription_canceled_at,
+      data_retention_until = v_ancien.data_retention_until
+    where id = p_nouveau_couple_id;
+  end if;
+
+  if v_ancien.acces_gratuit_expire_le is not null
+     and (v_nouveau.acces_gratuit_expire_le is null or v_ancien.acces_gratuit_expire_le > v_nouveau.acces_gratuit_expire_le) then
+    update public.couples set acces_gratuit_expire_le = v_ancien.acces_gratuit_expire_le where id = p_nouveau_couple_id;
+  end if;
+end;
+$$;
+
+-- Réappliquées ici pour prendre effet sur un projet déjà migré (v3/v9) :
+-- identiques aux définitions plus haut dans ce fichier, avec l'appel à
+-- migrer_abonnement_solo_vers_couple ajouté.
+create or replace function public.rejoindre_couple_via_token(p_token uuid, p_user_id uuid)
+returns json language plpgsql security definer as $$
+declare
+  v_couple public.couples;
+  v_previous_couple_id uuid;
+begin
+  select * into v_couple
+  from public.couples
+  where invite_token = p_token
+    and invite_used = false
+    and invite_token_expires_at > now();
+
+  if not found then
+    return json_build_object('success', false, 'error', 'Token invalide ou expiré');
+  end if;
+
+  select couple_id into v_previous_couple_id from public.profiles where id = p_user_id;
+
+  update public.profiles set couple_id = v_couple.id, role = 'partenaire' where id = p_user_id;
+  update public.couples set invite_used = true where id = v_couple.id;
+  perform public.initialiser_modules_couple(v_couple.id);
+
+  if v_previous_couple_id is not null and v_previous_couple_id is distinct from v_couple.id then
+    perform public.migrer_abonnement_solo_vers_couple(v_previous_couple_id, v_couple.id);
+  end if;
+
+  return json_build_object('success', true, 'couple_id', v_couple.id);
+end;
+$$;
+
+create or replace function public.rejoindre_couple_via_code(p_code text, p_user_id uuid)
+returns json language plpgsql security definer as $$
+declare
+  v_couple public.couples;
+  v_member_count integer;
+  v_previous_couple_id uuid;
+  v_previous_member_count integer;
+begin
+  select * into v_couple
+  from public.couples
+  where pairing_code = upper(trim(p_code));
+
+  if not found then
+    return json_build_object('success', false, 'error', 'Code invalide');
+  end if;
+
+  select count(*) into v_member_count from public.profiles where couple_id = v_couple.id;
+  if v_member_count >= 2 then
+    return json_build_object('success', false, 'error', 'Ce couple a déjà deux membres');
+  end if;
+
+  select couple_id into v_previous_couple_id from public.profiles where id = p_user_id;
+
+  if v_previous_couple_id = v_couple.id then
+    return json_build_object('success', false, 'error', 'Tu fais déjà partie de ce couple');
+  end if;
+
+  update public.profiles
+  set couple_id = v_couple.id, role = case when v_member_count = 0 then 'initiateur' else 'partenaire' end
+  where id = p_user_id;
+
+  perform public.initialiser_modules_couple(v_couple.id);
+
+  if v_previous_couple_id is not null and v_previous_couple_id is distinct from v_couple.id then
+    perform public.migrer_abonnement_solo_vers_couple(v_previous_couple_id, v_couple.id);
+    select count(*) into v_previous_member_count from public.profiles where couple_id = v_previous_couple_id;
+    if v_previous_member_count = 0 then
+      delete from public.couples where id = v_previous_couple_id;
+    end if;
+  end if;
+
+  return json_build_object('success', true, 'couple_id', v_couple.id);
 end;
 $$;
