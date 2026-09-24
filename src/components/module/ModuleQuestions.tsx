@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
-import { hasAnsweredAll, isQuestionAnswered, parseGrille, serializeGrille } from '@/lib/questions'
+import { isQuestionAnswered, parseGrille, serializeGrille } from '@/lib/questions'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
@@ -14,12 +14,15 @@ interface Props {
   moduleInfo: ModuleInfo
   moduleData: Module
   mesReponses: Reponse[]
-  reponsesPartenaire: Reponse[]
+  partenaireTermine: boolean
+  partenaireACommence: boolean
+  // Les deux ont tout répondu : réponses partagées, plus modifiables.
+  reponsesVerrouillees: boolean
   userId: string
   partnerName?: string | null
 }
 
-export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, reponsesPartenaire, partnerName }: Props) {
+export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, partenaireTermine, partenaireACommence, reponsesVerrouillees, partnerName }: Props) {
   const router = useRouter()
   const t = useT()
   const [isPending, startTransition] = useTransition()
@@ -51,7 +54,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
   const answered = moduleInfo.questions.filter(qq => isQuestionAnswered(qq, reponses[qq.slug])).length
   const currentAnswered = isQuestionAnswered(q, reponses[q.slug])
   const allAnswered = answered === total
-  const partnerDone = hasAnsweredAll(moduleInfo.questions, reponsesPartenaire)
+  const partnerDone = partenaireTermine
 
   async function saveAndNext() {
     setSaving(true)
@@ -107,7 +110,9 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link href={`/module/${moduleInfo.slug}/revelation`} className="btn-brand"><EditableText id="module.voir.cta">Voir mes réponses</EditableText></Link>
-              <button onClick={reviewAnswers} className="btn-secondary"><EditableText id="module.revoir.cta">Modifier mes réponses</EditableText></button>
+              {!reponsesVerrouillees && (
+                <button onClick={reviewAnswers} className="btn-secondary"><EditableText id="module.revoir.cta">Modifier mes réponses</EditableText></button>
+              )}
               <Link href="/tableau-de-bord" className="btn-ghost"><EditableText id="module.termine.retour">Retour au dashboard</EditableText></Link>
             </div>
           </>
@@ -168,7 +173,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
       <p className="font-mono text-center mt-5" style={{ fontSize: 11, color: 'var(--muted)' }}>
         {partnerDone
           ? <>✓ {partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="module.partenaire.termine">a déjà terminé ce module</EditableText></>
-          : reponsesPartenaire.length > 0
+          : partenaireACommence
           ? <>⏳ {partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="module.partenaire.encours">répond de son côté…</EditableText></>
           : <>{partnerName || t('Ton/ta partenaire', 'Your partner')} <EditableText id="module.partenaire.pascommence">n&apos;a pas encore commencé</EditableText></>}
       </p>

@@ -14,7 +14,7 @@ export async function getRecoveryEmail(supabase: Awaited<ReturnType<typeof creat
 }
 
 export async function setRecoveryEmail(email: string) {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
   if (!email.includes('@')) return { error: 'Email invalide' }
@@ -28,7 +28,7 @@ export async function setRecoveryEmail(email: string) {
 }
 
 export async function changerMotDePasse(currentPassword: string, newPassword: string) {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return { error: 'Non authentifié' }
   if (newPassword.length < 8) return { error: 'Le nouveau mot de passe doit contenir au moins 8 caractères' }
@@ -45,7 +45,7 @@ export async function changerMotDePasse(currentPassword: string, newPassword: st
 }
 
 export async function deconnecterAutresSessions() {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data: { user } } = await supabase.auth.getUser()
   const { error } = await supabase.auth.signOut({ scope: 'others' })
   if (error) return { error: error.message }
@@ -58,14 +58,14 @@ export async function deconnecterAutresSessions() {
 }
 
 export async function demarrerActivationMfa() {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'YES BOX Admin' })
   if (error) return { error: error.message }
   return { success: true, factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret }
 }
 
 export async function confirmerActivationMfa(factorId: string, code: string) {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data: { user } } = await supabase.auth.getUser()
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code })
   if (error) return { error: 'Code invalide, réessaie.' }
@@ -79,7 +79,9 @@ export async function confirmerActivationMfa(factorId: string, code: string) {
 }
 
 export async function desactiverMfa(factorId: string, silent = false) {
-  const supabase = await assertAdmin()
+  // Toléré sans double authentification activée : sert aussi à annuler une
+  // activation en cours. Si un code est actif, il doit avoir été saisi.
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data: { user } } = await supabase.auth.getUser()
   const { error } = await supabase.auth.mfa.unenroll({ factorId })
   if (error) return { error: error.message }
@@ -100,7 +102,7 @@ export async function desactiverMfa(factorId: string, silent = false) {
 }
 
 export async function listerSessions() {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data, error } = await supabase.rpc('admin_list_own_sessions')
   if (error) return { error: error.message }
   return { success: true, sessions: data ?? [] }
@@ -131,7 +133,7 @@ export async function genererCodesSecours() {
 }
 
 export async function compterCodesSecours() {
-  const supabase = await assertAdmin()
+  const supabase = await assertAdmin({ sansMfaActivee: true })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: true, count: 0 }
   const admin = createAdminClient()

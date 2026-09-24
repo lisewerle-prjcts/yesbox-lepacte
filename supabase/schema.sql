@@ -1028,3 +1028,111 @@ update public.couples
 set data_retention_until = data_retention_until + interval '5 months'
 where data_retention_until is not null
   and compte_resilie_le is null;
+
+-- ============================================================
+-- SÉCURITÉ : RÈGLES DU JEU VERROUILLÉES EN BASE (v16)
+-- En deux parties, dans cet ordre :
+--   A. AVANT de déployer le code correspondant (nouvelles colonnes).
+--   B. APRÈS le déploiement (verrouillage : l'ancien code écrivait
+--      directement dans les modules et ne fonctionnerait plus).
+-- ============================================================
+
+-- ---------- Partie A ----------
+-- Réponses partagées : passe à true quand les deux membres ont répondu à
+-- toutes les questions (posé par le serveur, cf. src/lib/progression.ts).
+alter table public.modules add column if not exists reponses_partagees boolean not null default false;
+update public.modules set reponses_partagees = true where revealed;
+
+-- E-mail de bienvenue envoyé une seule fois, après confirmation de
+-- l'adresse. Les comptes existants sont considérés comme déjà servis.
+alter table public.profiles add column if not exists email_bienvenue_envoye_le timestamptz;
+update public.profiles set email_bienvenue_envoye_le = now() where email_bienvenue_envoye_le is null;
+
+-- ---------- Partie B ----------
+-- Pré-commandes : formulaire retiré, plus aucune insertion depuis l'API.
+drop policy if exists "precommande_insert" on public.precommandes;
+revoke insert on public.precommandes from anon, authenticated;
+
+-- Modules : statut, révélation et déblocage ne sont plus modifiables que
+-- par le serveur (fin du contournement du déroulé).
+drop policy if exists "module_insert" on public.modules;
+drop policy if exists "module_update" on public.modules;
+revoke insert, update, delete on public.modules from anon, authenticated;
+
+-- Réponses : celles de l'autre ne sont lisibles qu'une fois partagées ;
+-- on ne peut écrire que dans un module ouvert de son propre couple, et
+-- plus du tout une fois les réponses partagées.
+drop policy if exists "reponse_partner_select" on public.reponses;
+create policy "reponse_partner_select" on public.reponses for select using (
+  module_id in (
+    select m.id from public.modules m
+    join public.profiles p on p.couple_id = m.couple_id
+    where p.id = auth.uid() and (m.reponses_partagees or m.revealed)
+  )
+);
+drop policy if exists "reponse_insert" on public.reponses;
+create policy "reponse_insert" on public.reponses for insert with check (
+  auth.uid() = user_id
+  and module_id in (
+    select m.id from public.modules m
+    join public.profiles p on p.couple_id = m.couple_id
+    where p.id = auth.uid() and m.statut <> 'locked' and not m.reponses_partagees and not m.revealed
+  )
+);
+drop policy if exists "reponse_update" on public.reponses;
+create policy "reponse_update" on public.reponses for update using (
+  auth.uid() = user_id
+  and module_id in (
+    select m.id from public.modules m
+    join public.profiles p on p.couple_id = m.couple_id
+    where p.id = auth.uid() and m.statut <> 'locked' and not m.reponses_partagees and not m.revealed
+  )
+) with check (
+  auth.uid() = user_id
+  and module_id in (
+    select m.id from public.modules m
+    join public.profiles p on p.couple_id = m.couple_id
+    where p.id = auth.uid() and m.statut <> 'locked' and not m.reponses_partagees and not m.revealed
+  )
+);
+
+-- Conclusions : chacun·e écrit la sienne une fois les réponses partagées,
+-- et celle de l'autre n'est lisible qu'après la révélation.
+drop policy if exists "journal_select" on public.journal_entries;
+create policy "journal_select" on public.journal_entries for select using (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+  and (
+    user_id = auth.uid()
+    or exists (
+      select 1 from public.modules m
+      where m.couple_id = journal_entries.couple_id and m.slug = journal_entries.module_slug and m.revealed
+    )
+  )
+);
+drop policy if exists "journal_insert" on public.journal_entries;
+create policy "journal_insert" on public.journal_entries for insert with check (
+  auth.uid() = user_id
+  and couple_id in (select couple_id from public.profiles where id = auth.uid())
+  and exists (
+    select 1 from public.modules m
+    where m.couple_id = journal_entries.couple_id and m.slug = journal_entries.module_slug
+      and m.reponses_partagees and not m.revealed
+  )
+);
+drop policy if exists "journal_update" on public.journal_entries;
+create policy "journal_update" on public.journal_entries for update using (
+  auth.uid() = user_id
+  and couple_id in (select couple_id from public.profiles where id = auth.uid())
+  and exists (
+    select 1 from public.modules m
+    where m.couple_id = journal_entries.couple_id and m.slug = journal_entries.module_slug and not m.revealed
+  )
+) with check (
+  auth.uid() = user_id
+  and couple_id in (select couple_id from public.profiles where id = auth.uid())
+  and exists (
+    select 1 from public.modules m
+    where m.couple_id = journal_entries.couple_id and m.slug = journal_entries.module_slug
+      and m.reponses_partagees and not m.revealed
+  )
+);

@@ -8,7 +8,7 @@ import { sauvegarderConclusion } from '@/app/actions/journal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import GrilleComparaison from '@/components/module/GrilleComparaison'
-import { formatAnswer, hasAnsweredAll } from '@/lib/questions'
+import { formatAnswer } from '@/lib/questions'
 import { conclusionDuModule } from '@/lib/modules-data'
 import type { ModuleInfo, Module, Reponse } from '@/types'
 
@@ -18,19 +18,21 @@ interface Props {
   moduleInfo: ModuleInfo
   moduleData: Module
   mesReponses: Reponse[]
+  // Vide tant que les deux n'ont pas répondu à toutes les questions.
   reponsesPartner: Reponse[]
+  reponsesPartagees: boolean
   myName: string | null
   partnerName: string | null
   coupleId: string
   maConclusion: ConclusionRow[]
-  conclusionPartenaire: ConclusionRow[]
+  partenaireConclusionFaite: boolean
 }
 
 function getConclusion(rows: ConclusionRow[], slug: 'apprentissage' | 'surprise'): string {
   return rows.find(r => r.question_slug === slug)?.valeur ?? ''
 }
 
-export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, myName, partnerName, coupleId, maConclusion, conclusionPartenaire }: Props) {
+export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, reponsesPartagees, myName, partnerName, coupleId, maConclusion, partenaireConclusionFaite }: Props) {
   const router = useRouter()
   const t = useT()
   const [isPending, startTransition] = useTransition()
@@ -47,12 +49,11 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   // Tant que l'autre n'a pas terminé ses réponses, cette page sert d'aperçu :
   // on peut encore modifier les siennes, et la conclusion (qui peut sceller le
   // module) n'est pas encore proposée.
-  const partnerDone = hasAnsweredAll(moduleInfo.questions, reponsesPartner)
+  // La conclusion ne s'écrit qu'une fois que les deux ont tout répondu.
+  const partnerDone = reponsesPartagees
   const conclusion = conclusionDuModule(moduleInfo)
 
-  const partnerApprentissage = getConclusion(conclusionPartenaire, 'apprentissage')
-  const partnerSurprise = getConclusion(conclusionPartenaire, 'surprise')
-  const partnerConclusionDone = !!(partnerApprentissage && partnerSurprise)
+  const partnerConclusionDone = partenaireConclusionFaite
 
   const canSave = apprentissage.trim().length > 0 && surprise.trim().length > 0
 
@@ -140,7 +141,9 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                       <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{partnerName || t('Partenaire', 'Partner')}</span>
                     </div>
                     <p style={{ fontSize: 14, color: partnerFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: partnerFmt ? 'normal' : 'italic', lineHeight: 1.6 }}>
-                      {partnerFmt || t('— pas de réponse —', '— no answer yet —')}
+                      {partnerFmt || (reponsesPartagees
+                        ? t('— pas de réponse —', '— no answer yet —')
+                        : t('Visible quand vous aurez tous les deux répondu', 'Visible once you have both answered'))}
                     </p>
                   </div>
                 </div>
