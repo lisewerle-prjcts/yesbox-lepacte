@@ -6,6 +6,8 @@ import { getLocale, getT } from '@/lib/i18n/server'
 import { localizeModules } from '@/lib/i18n/module-text'
 import EditableText from '@/components/edit-mode/EditableText'
 import { CheckCircle, Lock, Heart, ScrollText, ChevronRight, UserPlus } from 'lucide-react'
+import GrilleComparaison from '@/components/module/GrilleComparaison'
+import { formatAnswer, hasAnsweredAll } from '@/lib/questions'
 import type { Module, Reponse } from '@/types'
 
 export default async function PactePage() {
@@ -95,8 +97,8 @@ export default async function PactePage() {
           const moduleData = modules?.find((mod: Module) => mod.slug === m.slug)
           const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
           const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
-          const jaiFini = mesReponses.length >= m.questions.length
-          const partenaireFini = reponsesPartner.length >= m.questions.length
+          const jaiFini = hasAnsweredAll(m.questions, mesReponses)
+          const partenaireFini = hasAnsweredAll(m.questions, reponsesPartner)
           const isToReveal = isActive && jaiFini && partenaireFini
 
           const card = (
@@ -161,7 +163,6 @@ export default async function PactePage() {
           const moduleData = modules?.find((m: Module) => m.slug === moduleInfo.slug)
           const mesReponses = moduleData ? getReponsesModule(moduleData.id, user.id) : []
           const reponsesPartner = moduleData && partner ? getReponsesModule(moduleData.id, partner.id) : []
-          const total = moduleInfo.questions.length
 
           // `statut === 'complete'` est un champ partagé par le couple qui bascule
           // dès que l'un·e des deux a fini de répondre — pas un indicateur fiable
@@ -169,8 +170,8 @@ export default async function PactePage() {
           // chacun·e. Seul `revealed` (après la session de révélation) autorise à
           // afficher les réponses côte à côte.
           const isRevealed = moduleData?.revealed === true
-          const jaiFini = mesReponses.length >= total
-          const partenaireFini = reponsesPartner.length >= total
+          const jaiFini = hasAnsweredAll(moduleInfo.questions, mesReponses)
+          const partenaireFini = hasAnsweredAll(moduleInfo.questions, reponsesPartner)
 
           if (!isRevealed) {
             return (
@@ -212,6 +213,24 @@ export default async function PactePage() {
                   const maReponse = mesReponses.find((r) => r.question_slug === question.slug)
                   const reponsePartner = reponsesPartner.find((r) => r.question_slug === question.slug)
 
+                  if (question.type === 'grille') {
+                    return (
+                      <div key={question.slug}>
+                        <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{question.texte}</p>
+                        <GrilleComparaison
+                          q={question}
+                          maValeur={maReponse?.valeur}
+                          valeurAutre={reponsePartner?.valeur}
+                          monNom={profile.prenom || t('Toi', 'You')}
+                          nomAutre={partner?.prenom || t('Partenaire', 'Partner')}
+                          sansReponse={t('—', '—')}
+                          libelleDifferent={t('Réponses différentes', 'Different answers')}
+                          theme="light"
+                        />
+                      </div>
+                    )
+                  }
+
                   return (
                     <div key={question.slug}>
                       <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{question.texte}</p>
@@ -221,7 +240,7 @@ export default async function PactePage() {
                             {profile.prenom || t('Toi', 'You')}
                           </p>
                           <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                            {maReponse?.valeur || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>{t('Sans réponse', 'No answer')}</span>}
+                            {formatAnswer(question, maReponse?.valeur) || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>{t('Sans réponse', 'No answer')}</span>}
                           </p>
                         </div>
                         {partner && (
@@ -230,7 +249,7 @@ export default async function PactePage() {
                               {partner.prenom || t('Partenaire', 'Partner')}
                             </p>
                             <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                              {reponsePartner?.valeur || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>{t('En attente', 'Waiting')}</span>}
+                              {formatAnswer(question, reponsePartner?.valeur) || <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>{t('En attente', 'Waiting')}</span>}
                             </p>
                           </div>
                         )}

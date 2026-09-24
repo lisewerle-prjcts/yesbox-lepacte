@@ -1,6 +1,6 @@
 export type ModuleSlug = string
 export type ModuleStatut = 'locked' | 'en_cours' | 'complete'
-export type QuestionType = 'text' | 'choix' | 'choix_multiple' | 'echelle'
+export type QuestionType = 'text' | 'choix' | 'choix_multiple' | 'echelle' | 'grille'
 
 export interface Profile {
   id: string
@@ -104,6 +104,13 @@ export interface Question {
   texte: string
   hint?: string
   options?: string[]
+  /** Type "grille" : une ligne par élément à évaluer ; `options` sert d'en-têtes de colonnes. */
+  lignes?: string[]
+  /**
+   * Type "grille" : les deux premières colonnes désignent la personne qui répond
+   * ("Moi") puis l'autre ("Toi"). La révélation les remplace par les prénoms.
+   */
+  colonnesMoiToi?: boolean
   min?: number
   max?: number
   labelMin?: string
@@ -112,8 +119,17 @@ export interface Question {
   texte_en?: string
   hint_en?: string
   options_en?: string[]
+  lignes_en?: string[]
   labelMin_en?: string
   labelMax_en?: string
+}
+
+/** Libellés d'une question de fin de module (affichée à la révélation et dans le journal). */
+export interface ConclusionTexte {
+  label: string
+  placeholder: string
+  label_en?: string
+  placeholder_en?: string
 }
 
 export interface ModuleInfo {
@@ -125,6 +141,8 @@ export interface ModuleInfo {
   emoji: string
   free: boolean
   questions: Question[]
+  /** Les 2 questions de fin de module, propres à ce module (sinon, CONCLUSION_PAR_DEFAUT). */
+  conclusion?: Record<ConclusionSlug, ConclusionTexte>
   /** Traductions anglaises US par défaut (contenu statique des modules). */
   titre_en?: string
   sousTitre_en?: string

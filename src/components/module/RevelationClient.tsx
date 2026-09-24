@@ -7,7 +7,10 @@ import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import { sauvegarderConclusion } from '@/app/actions/journal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
-import type { ModuleInfo, Module, Reponse, Question } from '@/types'
+import GrilleComparaison from '@/components/module/GrilleComparaison'
+import { formatAnswer, hasAnsweredAll } from '@/lib/questions'
+import { conclusionDuModule } from '@/lib/modules-data'
+import type { ModuleInfo, Module, Reponse } from '@/types'
 
 interface ConclusionRow { question_slug: string; valeur: string | null }
 
@@ -21,16 +24,6 @@ interface Props {
   coupleId: string
   maConclusion: ConclusionRow[]
   conclusionPartenaire: ConclusionRow[]
-}
-
-function fmtAnswer(q: Question, val: string | undefined): string | null {
-  if (val === undefined || val === '') return null
-  if (q.type === 'choix' && q.options) return q.options[parseInt(val)] ?? val
-  if (q.type === 'choix_multiple' && q.options) {
-    return val.split('||').map(i => q.options![parseInt(i)]).filter(Boolean).join(', ')
-  }
-  if (q.type === 'echelle') return `${val} / ${q.max ?? 10}`
-  return val
 }
 
 function getConclusion(rows: ConclusionRow[], slug: 'apprentissage' | 'surprise'): string {
@@ -54,7 +47,8 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   // Tant que l'autre n'a pas terminé ses réponses, cette page sert d'aperçu :
   // on peut encore modifier les siennes, et la conclusion (qui peut sceller le
   // module) n'est pas encore proposée.
-  const partnerDone = reponsesPartner.length >= moduleInfo.questions.length
+  const partnerDone = hasAnsweredAll(moduleInfo.questions, reponsesPartner)
+  const conclusion = conclusionDuModule(moduleInfo)
 
   const partnerApprentissage = getConclusion(conclusionPartenaire, 'apprentissage')
   const partnerSurprise = getConclusion(conclusionPartenaire, 'surprise')
@@ -103,8 +97,29 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
         {/* Questions */}
         <div className="flex flex-col gap-8">
           {moduleInfo.questions.map((q) => {
-            const myFmt = fmtAnswer(q, myMap[q.slug])
-            const partnerFmt = fmtAnswer(q, partnerMap[q.slug])
+            if (q.type === 'grille') {
+              return (
+                <div key={q.slug}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{q.texte}</p>
+                  <GrilleComparaison
+                    q={q}
+                    maValeur={myMap[q.slug]}
+                    valeurAutre={partnerMap[q.slug]}
+                    monNom={myName || t('Toi', 'You')}
+                    nomAutre={partnerName || t('Partenaire', 'Partner')}
+                    sansReponse={t('—', '—')}
+                    libelleDifferent={t('Réponses différentes', 'Different answers')}
+                    theme="dark"
+                  />
+                  <p style={{ fontSize: 12, color: 'var(--dark-muted)', marginTop: 8 }}>
+                    <span style={{ color: 'var(--brand)' }}>●</span> <EditableText id="revelation.grille.legende">Vos réponses diffèrent sur cette tâche</EditableText>
+                  </p>
+                </div>
+              )
+            }
+
+            const myFmt = formatAnswer(q, myMap[q.slug])
+            const partnerFmt = formatAnswer(q, partnerMap[q.slug])
 
             return (
               <div key={q.slug}>
@@ -163,13 +178,13 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 20, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              <EditableText id="revelation.conclusion.apprentissage.label">Qu&apos;est-ce qui t&apos;a marqué lors de ce module ? Qu&apos;est-ce qui t&apos;a fait plaisir ?</EditableText>
+              <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.label`}>{conclusion.apprentissage.label}</EditableText>
             </label>
             <textarea
               value={apprentissage}
               onChange={e => { setApprentissage(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder={t("Ce qui t'a marqué, ce qui t'a fait plaisir…", 'What struck you, what made you happy…')}
+              placeholder={conclusion.apprentissage.placeholder}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />
@@ -177,13 +192,13 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 28, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              <EditableText id="revelation.conclusion.surprise.label">Est-ce que tu as été ému·e par une question ou une réponse donnée par l&apos;autre ?</EditableText>
+              <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.label`}>{conclusion.surprise.label}</EditableText>
             </label>
             <textarea
               value={surprise}
               onChange={e => { setSurprise(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder={t("Ce qui t'a ému·e…", 'What moved you…')}
+              placeholder={conclusion.surprise.placeholder}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
+import { hasAnsweredAll, isQuestionAnswered, parseGrille, serializeGrille } from '@/lib/questions'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
@@ -25,7 +26,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
   const [idx, setIdx] = useState(() => {
     const saved: Record<string, string> = {}
     mesReponses.forEach(r => { if (r.valeur) saved[r.question_slug] = r.valeur })
-    const first = moduleInfo.questions.findIndex(q => !saved[q.slug])
+    const first = moduleInfo.questions.findIndex(q => !isQuestionAnswered(q, saved[q.slug]))
     return Math.max(0, first < 0 ? 0 : first)
   })
   const [reponses, setReponses] = useState<Record<string, string>>(() => {
@@ -38,22 +39,24 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
   // que l'un·e des deux a fini, pas seulement la personne qui consulte cette
   // page. On se base sur SES propres réponses pour savoir si ELLE a terminé.
   const [done, setDone] = useState(() => {
-    const mesReponsesValides = mesReponses.filter(r => r.valeur !== undefined && r.valeur !== '').length
-    return mesReponsesValides >= moduleInfo.questions.length
+    const saved: Record<string, string> = {}
+    mesReponses.forEach(r => { if (r.valeur) saved[r.question_slug] = r.valeur })
+    return moduleInfo.questions.every(q => isQuestionAnswered(q, saved[q.slug]))
   })
 
   const q = moduleInfo.questions[idx]
   const total = moduleInfo.questions.length
   const isFirst = idx === 0
   const isLast = idx === total - 1
-  const answered = moduleInfo.questions.filter(qq => reponses[qq.slug] !== undefined && reponses[qq.slug] !== '').length
+  const answered = moduleInfo.questions.filter(qq => isQuestionAnswered(qq, reponses[qq.slug])).length
+  const currentAnswered = isQuestionAnswered(q, reponses[q.slug])
   const allAnswered = answered === total
-  const partnerDone = reponsesPartenaire.length >= total
+  const partnerDone = hasAnsweredAll(moduleInfo.questions, reponsesPartenaire)
 
   async function saveAndNext() {
     setSaving(true)
     const val = reponses[q.slug]
-    if (val !== undefined && val !== '') {
+    if (isQuestionAnswered(q, val)) {
       await sauvegarderReponse(moduleData.id, q.slug, val)
     }
     setSaving(false)
@@ -149,9 +152,9 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, r
           <ArrowLeft className="w-4 h-4" /><EditableText id="module.precedent">Précédent</EditableText>
         </button>
 
-        <button onClick={saveAndNext} disabled={saving || isPending || (!reponses[q.slug] && reponses[q.slug] !== '0')}
+        <button onClick={saveAndNext} disabled={saving || isPending || !currentAnswered}
           className="btn-brand"
-          style={{ opacity: (!reponses[q.slug] && reponses[q.slug] !== '0') ? .45 : 1 }}>
+          style={{ opacity: !currentAnswered ? .45 : 1 }}>
           {saving || isPending
             ? <EditableText id="module.sauvegarde">Sauvegarde…</EditableText>
             : isLast && allAnswered
@@ -217,6 +220,59 @@ function QuestionInput({ q, value, onChange }: { q: Question; value: string; onC
             </button>
           )
         })}
+      </div>
+    )
+  }
+
+  if (q.type === 'grille' && q.options && q.lignes) {
+    const grille = parseGrille(value)
+    const colonnes = q.options
+    return (
+      <div style={{ overflowX: 'auto', margin: '0 -4px' }}>
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px 4px', tableLayout: 'fixed' }}>
+          <thead>
+            <tr>
+              <th style={{ width: '30%' }} />
+              {colonnes.map((col, ci) => (
+                <th key={ci} scope="col" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--muted)', lineHeight: 1.25, textAlign: 'center', verticalAlign: 'bottom', padding: '0 0 4px', hyphens: 'auto', overflowWrap: 'break-word' }}>
+                  {/* Une précision entre parenthèses passe à la ligne, en plus petit */}
+                  {col.split(/ (?=\()/).map((part, pi) => pi === 0
+                    ? <span key={pi}>{part}</span>
+                    : <span key={pi} style={{ display: 'block', fontSize: 8.5, fontWeight: 500, letterSpacing: '-.01em' }}>{part}</span>)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {q.lignes.map((ligne, li) => (
+              <tr key={li}>
+                <th scope="row" style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', textAlign: 'left', lineHeight: 1.3, padding: '6px 4px 6px 0' }}>
+                  {ligne}
+                </th>
+                {colonnes.map((col, ci) => {
+                  const isOn = grille[li] === ci
+                  return (
+                    <td key={ci} style={{ textAlign: 'center', padding: 0 }}>
+                      <button type="button" aria-pressed={isOn} aria-label={`${ligne} : ${col}`}
+                        onClick={() => onChange(serializeGrille({ ...grille, [li]: ci }))}
+                        className="w-full flex items-center justify-center rounded-lg transition-all"
+                        style={{
+                          height: 38,
+                          background: isOn ? 'var(--brand-tint)' : 'var(--cream)',
+                          border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--line)'}`,
+                        }}>
+                        <span className="w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                          style={{ borderColor: isOn ? 'var(--brand)' : 'var(--muted-2)', background: isOn ? 'var(--brand)' : 'transparent' }}>
+                          {isOn && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </span>
+                      </button>
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     )
   }

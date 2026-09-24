@@ -10,6 +10,7 @@ import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { CoupleAbonnement, Module } from '@/types'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { peutAccederModule } from '@/lib/abonnement'
+import { hasAnsweredAll } from '@/lib/questions'
 import { ArrowRight } from 'lucide-react'
 
 export default async function TableauDeBordPage({
@@ -28,7 +29,7 @@ export default async function TableauDeBordPage({
   let partner: { prenom: string | null; email: string; id: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
   let coupleAbonnement: CoupleAbonnement | null = null
-  let reponses: { module_id: string; user_id: string }[] = []
+  let reponses: { module_id: string; user_id: string; question_slug: string; valeur: string | null }[] = []
 
   if (profile?.couple_id) {
     const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }] = await Promise.all([
@@ -44,7 +45,7 @@ export default async function TableauDeBordPage({
 
     const { data: reps } = await supabase
       .from('reponses')
-      .select('module_id, user_id')
+      .select('module_id, user_id, question_slug, valeur')
       .in('module_id', modules.map(m => m.id))
     reponses = reps || []
   }
@@ -125,11 +126,11 @@ export default async function TableauDeBordPage({
         const titre = next.titre
 
         const nextModData = modules.find(m => m.slug === next.slug)
-        const total = next.questions.length
-        const monCompte = nextModData ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === user.id).length : 0
-        const sonCompte = nextModData && partner ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === partner!.id).length : 0
-        const jaiFini = monCompte >= total
-        const partenaireFini = sonCompte >= total
+        const mesReponses = nextModData ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === user.id) : []
+        const sesReponses = nextModData && partner ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === partner!.id) : []
+        const monCompte = mesReponses.length
+        const jaiFini = hasAnsweredAll(next.questions, mesReponses)
+        const partenaireFini = hasAnsweredAll(next.questions, sesReponses)
         const enAttentePartenaire = jaiFini && !partenaireFini
 
         // Dès que j'ai fini, "voir"/"ouvrir la révélation" pointent vers la page de
