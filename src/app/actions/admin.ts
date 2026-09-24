@@ -111,7 +111,6 @@ function revalidateModuleContent(moduleSlug: string) {
   revalidatePath(`/module/${moduleSlug}`)
   revalidatePath(`/module/${moduleSlug}/revelation`)
   revalidatePath('/pacte')
-  revalidatePath('/admin/voir-en-tant-que')
 }
 
 async function readModuleOverrides(supabase: Awaited<ReturnType<typeof createClient>>, moduleSlug: string): Promise<ModuleContentOverrides> {

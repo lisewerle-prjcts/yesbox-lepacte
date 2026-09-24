@@ -40,7 +40,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/actions', label: 'Actions manuelles' },
     { href: '/admin/codes', label: 'Codes gratuits' },
     { href: '/admin/securite', label: 'Sécurité' },
-    { href: '/admin/voir-en-tant-que', label: 'Voir en tant que' },
     { href: '/admin/contenu', label: 'Contenu des modules' },
   ]
 
