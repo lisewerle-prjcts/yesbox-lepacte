@@ -11,6 +11,7 @@ import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
 import { MODULES } from '@/lib/modules-data'
 import type { QuestionType, Question } from '@/types'
+import { formatAnswer } from '@/lib/questions'
 
 function revalidateModuleLists() {
   revalidatePath('/admin/contenu')
@@ -170,6 +171,8 @@ interface NewQuestionInput {
   texte: string
   hint?: string
   options?: string[]
+  lignes?: string[]
+  colonnesMoiToi?: boolean
   min?: number
   max?: number
   labelMin?: string
@@ -422,13 +425,7 @@ export async function adminDeleteUser(userId: string) {
 }
 
 function fmtAnswer(q: Question, val: string | null | undefined): string {
-  if (val === undefined || val === null || val === '') return '(pas de réponse)'
-  if (q.type === 'choix' && q.options) return q.options[parseInt(val)] ?? val
-  if (q.type === 'choix_multiple' && q.options) {
-    return val.split('||').map(i => q.options![parseInt(i)]).filter(Boolean).join(', ') || val
-  }
-  if (q.type === 'echelle') return `${val} / ${q.max ?? 10}`
-  return val
+  return formatAnswer(q, val) ?? '(pas de réponse)'
 }
 
 export async function adminGetCoupleArchive(coupleId: string) {

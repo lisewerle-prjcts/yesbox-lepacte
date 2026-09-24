@@ -16,6 +16,7 @@ interface QuestionOverride {
   texte?: string
   hint?: string
   options?: string[]
+  lignes?: string[]
   labelMin?: string
   labelMax?: string
 }
@@ -51,6 +52,7 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   choix: 'Choix unique',
   choix_multiple: 'Choix multiple',
   echelle: 'Échelle',
+  grille: 'Grille à cocher',
 }
 
 export default function ContenuClient({
@@ -223,6 +225,7 @@ function QuestionEditor({
   const [texte, setTexte] = useState(override?.texte ?? baseQuestion.texte)
   const [hint, setHint] = useState(override?.hint ?? baseQuestion.hint ?? '')
   const [optionsText, setOptionsText] = useState((override?.options ?? baseQuestion.options ?? []).join('\n'))
+  const [lignesText, setLignesText] = useState((override?.lignes ?? baseQuestion.lignes ?? []).join('\n'))
   const [labelMin, setLabelMin] = useState(override?.labelMin ?? baseQuestion.labelMin ?? '')
   const [labelMax, setLabelMax] = useState(override?.labelMax ?? baseQuestion.labelMax ?? '')
 
@@ -243,8 +246,11 @@ function QuestionEditor({
   async function save() {
     setSaving(true)
     const fields = { texte, hint: hint || undefined } as QuestionOverride
-    if (baseQuestion.type === 'choix' || baseQuestion.type === 'choix_multiple') {
+    if (baseQuestion.type === 'choix' || baseQuestion.type === 'choix_multiple' || baseQuestion.type === 'grille') {
       fields.options = optionsText.split('\n').map(s => s.trim()).filter(Boolean)
+    }
+    if (baseQuestion.type === 'grille') {
+      fields.lignes = lignesText.split('\n').map(s => s.trim()).filter(Boolean)
     }
     if (baseQuestion.type === 'echelle') {
       fields.labelMin = labelMin || undefined
@@ -259,6 +265,8 @@ function QuestionEditor({
         texte: fields.texte || texte,
         hint: fields.hint,
         options: fields.options,
+        lignes: fields.lignes,
+        colonnesMoiToi: baseQuestion.colonnesMoiToi,
         min: baseQuestion.min,
         max: baseQuestion.max,
         labelMin: fields.labelMin,
@@ -342,6 +350,14 @@ function QuestionEditor({
           </div>
         )}
 
+        {baseQuestion.type === 'grille' && (
+          <GrilleFields
+            colonnesText={optionsText} setColonnesText={setOptionsText}
+            lignesText={lignesText} setLignesText={setLignesText}
+            colonnesMoiToi={!!baseQuestion.colonnesMoiToi}
+          />
+        )}
+
         {baseQuestion.type === 'echelle' && (
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -394,6 +410,8 @@ function AddQuestionForm({ moduleSlug, onDone }: { moduleSlug: string; onDone: (
   const [texte, setTexte] = useState('')
   const [hint, setHint] = useState('')
   const [optionsText, setOptionsText] = useState('')
+  const [lignesText, setLignesText] = useState('')
+  const [colonnesMoiToi, setColonnesMoiToi] = useState(true)
   const [labelMin, setLabelMin] = useState('Pas vraiment')
   const [labelMax, setLabelMax] = useState('Pleinement')
   const [saving, setSaving] = useState(false)
@@ -406,7 +424,9 @@ function AddQuestionForm({ moduleSlug, onDone }: { moduleSlug: string; onDone: (
       type,
       texte,
       hint: hint || undefined,
-      options: (type === 'choix' || type === 'choix_multiple') ? optionsText.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
+      options: (type === 'choix' || type === 'choix_multiple' || type === 'grille') ? optionsText.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
+      lignes: type === 'grille' ? lignesText.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
+      colonnesMoiToi: type === 'grille' ? colonnesMoiToi : undefined,
       min: type === 'echelle' ? 1 : undefined,
       max: type === 'echelle' ? 10 : undefined,
       labelMin: type === 'echelle' ? labelMin : undefined,
@@ -414,7 +434,7 @@ function AddQuestionForm({ moduleSlug, onDone }: { moduleSlug: string; onDone: (
     })
     setSaving(false)
     if (result.error) { setError(result.error); return }
-    setTexte(''); setHint(''); setOptionsText('')
+    setTexte(''); setHint(''); setOptionsText(''); setLignesText('')
     onDone()
   }
 
@@ -428,6 +448,7 @@ function AddQuestionForm({ moduleSlug, onDone }: { moduleSlug: string; onDone: (
           <option value="choix">Choix unique</option>
           <option value="choix_multiple">Choix multiple</option>
           <option value="echelle">Échelle (1 à 10)</option>
+          <option value="grille">Grille à cocher (lignes × colonnes)</option>
         </select>
       </div>
       <div>
@@ -443,6 +464,19 @@ function AddQuestionForm({ moduleSlug, onDone }: { moduleSlug: string; onDone: (
           <label className="flabel">Options <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(une par ligne)</span></label>
           <textarea className="field" rows={4} value={optionsText} onChange={e => setOptionsText(e.target.value)} />
         </div>
+      )}
+      {type === 'grille' && (
+        <>
+          <GrilleFields
+            colonnesText={optionsText} setColonnesText={setOptionsText}
+            lignesText={lignesText} setLignesText={setLignesText}
+            colonnesMoiToi={colonnesMoiToi}
+          />
+          <label className="flex items-center gap-2" style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+            <input type="checkbox" checked={colonnesMoiToi} onChange={e => setColonnesMoiToi(e.target.checked)} />
+            Les deux premières colonnes sont « Moi » puis « Toi » (remplacées par les prénoms à la révélation)
+          </label>
+        </>
       )}
       {type === 'echelle' && (
         <div className="grid grid-cols-2 gap-3">
@@ -675,6 +709,30 @@ function ModuleMetaEditor({
             </button>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function GrilleFields({ colonnesText, setColonnesText, lignesText, setLignesText, colonnesMoiToi }: {
+  colonnesText: string
+  setColonnesText: (v: string) => void
+  lignesText: string
+  setLignesText: (v: string) => void
+  colonnesMoiToi: boolean
+}) {
+  return (
+    <div className="grid sm:grid-cols-2 gap-3">
+      <div>
+        <label className="flabel">Colonnes <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(une par ligne)</span></label>
+        <textarea className="field" rows={4} value={colonnesText} onChange={e => setColonnesText(e.target.value)} placeholder={'Moi\nToi\nNous deux\nPersonne'} />
+        {colonnesMoiToi && (
+          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Les deux premières colonnes désignent la personne qui répond, puis l&apos;autre.</p>
+        )}
+      </div>
+      <div>
+        <label className="flabel">Lignes <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(une par ligne)</span></label>
+        <textarea className="field" rows={6} value={lignesText} onChange={e => setLignesText(e.target.value)} />
       </div>
     </div>
   )

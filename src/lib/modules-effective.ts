@@ -4,7 +4,7 @@ import type { ModuleInfo, Question } from '@/types'
 
 export const OVERRIDE_KEY_PREFIX = 'module_questions_override::'
 
-export type QuestionOverride = Partial<Pick<Question, 'texte' | 'hint' | 'options' | 'labelMin' | 'labelMax'>>
+export type QuestionOverride = Partial<Pick<Question, 'texte' | 'hint' | 'options' | 'lignes' | 'labelMin' | 'labelMax'>>
 
 export interface ModuleContentOverrides {
   overrides: Record<string, QuestionOverride> // question_slug -> édition d'une question existante

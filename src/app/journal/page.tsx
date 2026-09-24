@@ -102,17 +102,25 @@ export default async function JournalPage() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
                     <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 8 }}>{profile.prenom || t('Toi', 'You')}</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.appris">Ce qui l&apos;a marqué</EditableText></p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
+                      ? <EditableText id={`journal.${moduleInfo.slug}.appris`}>{moduleInfo.conclusion.apprentissage.journal}</EditableText>
+                      : <EditableText id="journal.appris">Ce qui l&apos;a marqué</EditableText>}</p>
                     <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {monApprentissage} »</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.surpris">Ce qui l&apos;a ému·e</EditableText></p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
+                      ? <EditableText id={`journal.${moduleInfo.slug}.surpris`}>{moduleInfo.conclusion.surprise.journal}</EditableText>
+                      : <EditableText id="journal.surpris">Ce qui l&apos;a ému·e</EditableText>}</p>
                     <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {maSurprise} »</p>
                   </div>
                   {partner && (
                     <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px' }}>
                       <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{partner.prenom || t('Partenaire', 'Partner')}</p>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.appris">Ce qui l&apos;a marqué</EditableText></p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
+                      ? <EditableText id={`journal.${moduleInfo.slug}.appris`}>{moduleInfo.conclusion.apprentissage.journal}</EditableText>
+                      : <EditableText id="journal.appris">Ce qui l&apos;a marqué</EditableText>}</p>
                       <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {sonApprentissage} »</p>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}><EditableText id="journal.surpris">Ce qui l&apos;a ému·e</EditableText></p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
+                      ? <EditableText id={`journal.${moduleInfo.slug}.surpris`}>{moduleInfo.conclusion.surprise.journal}</EditableText>
+                      : <EditableText id="journal.surpris">Ce qui l&apos;a ému·e</EditableText>}</p>
                       <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {saSurprise} »</p>
                     </div>
                   )}

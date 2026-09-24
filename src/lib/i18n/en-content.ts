@@ -157,6 +157,7 @@ export const EN_CONTENT: Record<string, string> = {
   'revelation.conclusion.souscritre': "Each of you writes your own, without seeing the other's. The next module unlocks once you've both added an entry to your journal.",
   'revelation.conclusion.apprentissage.label': 'What did you learn from this module?',
   'revelation.conclusion.surprise.label': 'What surprised you?',
+  'revelation.grille.legende': 'Your answers differ on this task',
   'revelation.conclusion.scelle': 'Module sealed — both your conclusions are in the journal',
   'revelation.journal.voir': 'View the journal',
   'revelation.suivant': 'Next module',
