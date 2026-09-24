@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
-import PrecommandeModal from '@/components/PrecommandeModal'
+import InscriptionModal from '@/components/InscriptionModal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { Check, ArrowRight } from 'lucide-react'
 
@@ -28,8 +28,7 @@ export default function TarifsPage() {
             <EditableText id="tarifs.title">Un abonnement simple. Une vie de rendez-vous.</EditableText>
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
-            <EditableText id="tarifs.subtitle.prefix">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation. Lancement le</EditableText>{' '}
-            <strong style={{ color: 'var(--ink)' }}><EditableText id="tarifs.subtitle.date">1er septembre 2026</EditableText></strong>.
+            <EditableText id="tarifs.subtitle">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation.</EditableText>
           </p>
         </div>
 
@@ -68,9 +67,8 @@ export default function TarifsPage() {
               </div>
             ))}
             <button onClick={() => setModal(true)} className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
-              <EditableText id="tarifs.pro.cta">Pré-commander</EditableText> <ArrowRight className="w-4 h-4" />
+              <EditableText id="tarifs.pro.cta.inscription">Je m&apos;inscris</EditableText> <ArrowRight className="w-4 h-4" />
             </button>
-            <p className="text-center" style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}><EditableText id="tarifs.pro.footnote">Aucun paiement maintenant · au lancement</EditableText></p>
           </div>
 
           {/* BAC annuel */}
@@ -106,7 +104,7 @@ export default function TarifsPage() {
         </p>
       </main>
 
-      {modal && <PrecommandeModal onClose={() => setModal(false)} />}
+      {modal && <InscriptionModal onClose={() => setModal(false)} />}
     </div>
   )
 }
