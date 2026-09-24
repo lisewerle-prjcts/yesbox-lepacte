@@ -16,9 +16,9 @@ import { ArrowRight } from 'lucide-react'
 export default async function TableauDeBordPage({
   searchParams,
 }: {
-  searchParams: { code_error?: string }
+  searchParams: Promise<{ code_error?: string }>
 }) {
-  const { code_error } = searchParams
+  const { code_error } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
