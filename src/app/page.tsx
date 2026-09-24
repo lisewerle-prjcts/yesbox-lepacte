@@ -90,9 +90,9 @@ export default function LandingPage() {
             <Link href="/connexion" className="btn-ghost text-sm py-2 px-4">
               <EditableText id="home.nav.seconnecter">Se connecter</EditableText>
             </Link>
-            <Link href="/inscription" className="btn-brand text-sm py-2 px-4">
+            <button onClick={() => setModalOpen(true)} className="btn-brand text-sm py-2 px-4">
               <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
-            </Link>
+            </button>
           </div>
           <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -109,9 +109,9 @@ export default function LandingPage() {
               <Link href="/connexion" className="btn-ghost text-sm py-2 px-4 flex-1 justify-center">
                 <EditableText id="home.nav.connexion.mobile">Connexion</EditableText>
               </Link>
-              <Link href="/inscription" onClick={() => setMenuOpen(false)} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
+              <button onClick={() => { setMenuOpen(false); setModalOpen(true) }} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
                 <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
-              </Link>
+              </button>
             </div>
           </div>
         )}
@@ -127,9 +127,9 @@ export default function LandingPage() {
           <EditableText id="home.hero.subtitle" multiline>Un programme en 10 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.</EditableText>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
-          <Link href="/inscription" className="btn-brand lg">
+          <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             <EditableText id="home.hero.cta.primary">Inscription au module 1 — Gratuit</EditableText> <ArrowRight className="w-4 h-4" />
-          </Link>
+          </button>
           <a href="#modules" className="btn-ghost lg">
             <EditableText id="home.hero.cta.secondary">Voir le programme</EditableText>
           </a>
@@ -386,7 +386,7 @@ export default function LandingPage() {
           <div style={{ color: 'rgba(255,255,255,.4)', fontSize: 12 }}><EditableText id="home.footer.copyright">© 2026 YES BOX · yesbox-lepacte.fr</EditableText></div>
           <div className="flex gap-4 flex-wrap">
             <Link href="/connexion" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.connexion">Connexion</EditableText></Link>
-            <Link href="/inscription" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.inscription">Inscription</EditableText></Link>
+            <button onClick={() => setModalOpen(true)} style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.inscription">Inscription</EditableText></button>
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.tarifs">Tarifs</EditableText></Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.mentions">Mentions légales</EditableText></Link>
             <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.confidentialite">Confidentialité</EditableText></Link>
