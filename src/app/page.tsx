@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import InscriptionModal from '@/components/InscriptionModal'
+import OffresTarifs from '@/components/OffresTarifs'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import { MODULES } from '@/lib/modules-data'
@@ -52,9 +53,6 @@ const CDD_ROWS = (t: (fr: string, en: string) => string) => [
   { k: t('Renouvellement', 'Renewal'), v: t('À re-signer chaque année', 'Re-signed every year') },
 ]
 
-const FREE_FEATURES = (t: (fr: string, en: string) => string) => [t('Module "Toi et Moi" pour vous deux', 'The "You & Me" module for both of you'), t('Questions personnelles', 'Personal questions'), t('Espace couple privé', 'Private couple space')]
-const PRO_FEATURES = (t: (fr: string, en: string) => string) => [t('Les 10 modules complets', 'All 10 full modules'), t('Sessions de révélation à deux', 'Reveal sessions, just the two of you'), t('Journal de couple', "Couple's journal"), t('Votre CDD de couple', "Your Couple's Contract")]
-const BAC_FEATURES = (t: (fr: string, en: string) => string) => [t('Rappel annuel à votre anniversaire', 'Annual reminder on your anniversary'), t('Fiche avenant générée', 'Amendment sheet generated for you'), t('Refaites tous les modules si vous le souhaitez', 'Redo any module whenever you like'), t('Annulable à tout moment', 'Cancel anytime')]
 
 export default function LandingPage() {
   const t = useT()
@@ -69,9 +67,6 @@ export default function LandingPage() {
   const cddList = CDD_LIST(t)
   const cddRows = CDD_ROWS(t)
   const temoignagesList = TEMOIGNAGES(t)
-  const freeFeatures = FREE_FEATURES(t)
-  const proFeatures = PRO_FEATURES(t)
-  const bacFeatures = BAC_FEATURES(t)
 
   return (
     <div className="min-h-screen">
@@ -308,55 +303,7 @@ export default function LandingPage() {
               <EditableText id="home.tarifs.subtitle">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation.</EditableText>
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
-            <div className="card p-6 flex flex-col gap-4">
-              <div className="tag-muted self-start"><EditableText id="home.tarifs.free.tag">Découverte</EditableText></div>
-              <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>0 <small style={{ fontSize: 18 }}>€</small></div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="home.tarifs.free.desc">Module 1 gratuit · pour vous deux · jusqu&apos;à la révélation</EditableText></div>
-              </div>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-              {freeFeatures.map((f, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                  <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}><EditableText id={`home.tarifs.free.features.${i}`}>{f}</EditableText></span>
-                </div>
-              ))}
-              <button onClick={() => setModalOpen(true)} className="btn-ghost text-center justify-center mt-auto">
-                <EditableText id="home.tarifs.free.cta">Commencer gratuitement</EditableText>
-              </button>
-            </div>
-            <div className="card p-6 flex flex-col gap-4" style={{ background: 'var(--brand)', border: 'none' }}>
-              <div className="self-start px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(255,255,255,.2)', color: 'white' }}>
-                <EditableText id="home.tarifs.pro.tag">Accès complet</EditableText>
-              </div>
-              <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'white' }}>29 <small style={{ fontSize: 18 }}>{t('€/mois', '€/month')}</small></div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}><EditableText id="home.tarifs.pro.desc">abonnement · résiliable à tout moment</EditableText></div>
-              </div>
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
-              {proFeatures.map((f, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.8)' }} />
-                  <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.9)' }}><EditableText id={`home.tarifs.pro.features.${i}`}>{f}</EditableText></span>
-                </div>
-              ))}
-            </div>
-            <div className="card p-6 flex flex-col gap-4">
-              <div className="tag-brand self-start"><EditableText id="home.tarifs.bac.tag">BAC annuel</EditableText></div>
-              <div>
-                <div className="font-serif font-bold" style={{ fontSize: 36, color: 'var(--ink)' }}>19 <small style={{ fontSize: 18 }}>{t('€/an', '€/year')}</small></div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="home.tarifs.bac.desc">Bilan Annuel de Couple · à activer plus tard</EditableText></div>
-              </div>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
-              {bacFeatures.map((f, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                  <span style={{ fontSize: 13.5, color: 'var(--ink-2)' }}><EditableText id={`home.tarifs.bac.features.${i}`}>{f}</EditableText></span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <OffresTarifs onInscription={() => setModalOpen(true)} />
         </div>
       </section>
 
