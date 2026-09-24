@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
-  updateMesInfos, updateNomCouple, changerMonMotDePasse,
+  updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees,
 } from '@/app/actions/compte'
 import { annulerAbonnement, reprendreAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
@@ -41,6 +41,7 @@ export default function MonCompteClient({
         <AbonnementCard abonnement={abonnement} />
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <PasswordCard />
+        <MesDonneesCard />
       </div>
     </div>
   )
@@ -369,6 +370,47 @@ function PasswordCard() {
         className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
       >
         {status === 'saving' ? t('Modification…', 'Updating…') : status === 'saved' ? <><Check className="w-4 h-4" /> {t('Modifié', 'Updated')}</> : t('Modifier le mot de passe', 'Change Password')}
+      </button>
+    </div>
+  )
+}
+
+function MesDonneesCard() {
+  const t = useT()
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+
+  async function telecharger() {
+    setStatus('loading')
+    const res = await telechargerMesDonnees()
+    if ('error' in res) {
+      setStatus('error')
+      return
+    }
+    const blob = new Blob([res.content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = res.filename
+    a.click()
+    URL.revokeObjectURL(url)
+    setStatus('idle')
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-2">
+        <Download className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Mes données', 'My Data')}</h2>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        {t(
+          'Télécharge tes informations, tes réponses et celles de ton/ta partenaire pour les modules déjà révélés, ainsi que votre pacte.',
+          "Download your information, your answers, your partner's answers for modules already revealed, and your pact.",
+        )}
+      </p>
+      <button onClick={telecharger} disabled={status === 'loading'} className="btn-primary text-sm py-2 px-4 flex items-center gap-2">
+        <Download className="w-4 h-4" />
+        {status === 'loading' ? t('Préparation…', 'Preparing…') : status === 'error' ? t('Erreur — réessaie', 'Error — try again') : t('Télécharger mes données', 'Download my data')}
       </button>
     </div>
   )
