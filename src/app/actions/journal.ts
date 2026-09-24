@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { scellerModule } from '@/app/actions/modules'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
+import { consentementManquant } from '@/lib/consentement'
 import type { ConclusionSlug } from '@/types'
 
 const CONCLUSION_SLUGS: ConclusionSlug[] = ['apprentissage', 'surprise']
@@ -24,6 +25,7 @@ export async function sauvegarderConclusion(
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+  if (await consentementManquant(supabase, user.id)) return { error: t(locale, 'Ton consentement est nécessaire pour enregistrer tes réponses.', 'Your consent is required to save your answers.') }
 
   const rows = [
     { couple_id: coupleId, module_slug: moduleSlug, user_id: user.id, question_slug: 'apprentissage', valeur: apprentissage },

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isCouplePaired } from '@/lib/couple-status'
 import DashboardNav from '@/components/dashboard/DashboardNav'
+import { aDonneSonConsentement } from '@/lib/consentement'
 
 export default async function PacteLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -13,6 +14,7 @@ export default async function PacteLayout({ children }: { children: React.ReactN
     .select('*')
     .eq('id', user.id)
     .single()
+  if (!aDonneSonConsentement(profile)) redirect('/consentement')
 
   const paired = await isCouplePaired(supabase, profile?.couple_id)
 

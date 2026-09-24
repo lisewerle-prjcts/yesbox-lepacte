@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
+import { consentementManquant } from '@/lib/consentement'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 
 export async function creerCouple(formData: FormData) {
@@ -80,6 +81,7 @@ export async function enregistrerPacteTexte(texte: string) {
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+  if (await consentementManquant(supabase, user.id)) return { error: t(locale, 'Ton consentement est nécessaire pour enregistrer tes réponses.', 'Your consent is required to save your answers.') }
 
   const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
   if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }

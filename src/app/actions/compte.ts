@@ -232,3 +232,29 @@ export async function supprimerMonCompte(motDePasse: string) {
   revalidatePath('/', 'layout')
   return { success: true }
 }
+
+// Consentement des comptes créés avant l'ajout des cases à l'inscription
+// (page /consentement). Mêmes exigences et même preuve horodatée.
+export async function enregistrerConsentement(formData: FormData) {
+  const supabase = await createClient()
+  const locale = await getLocale()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+
+  if (formData.get('age_minimum') !== 'on') {
+    return { error: t(locale, 'Le programme est réservé aux personnes de 15 ans ou plus.', 'The program is reserved for people aged 15 or over.') }
+  }
+  if (formData.get('consentement_sensible') !== 'on') {
+    return { error: t(locale, 'Ton consentement est nécessaire pour continuer le programme.', 'Your consent is required to continue the program.') }
+  }
+
+  const maintenant = new Date().toISOString()
+  const { error } = await createAdminClient()
+    .from('profiles')
+    .update({ age_minimum_certifie_le: maintenant, consentement_donnees_sensibles_le: maintenant })
+    .eq('id', user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/', 'layout')
+  return { success: true }
+}

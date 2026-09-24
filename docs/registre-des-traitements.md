@@ -19,12 +19,12 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Prestataire | Rôle | Localisation | Garanties pour les transferts hors UE |
 |---|---|---|---|
 | Vercel Inc. | Hébergement du site | États-Unis | Clauses contractuelles types (CCT) / Data Privacy Framework |
-| Supabase Inc. | Base de données, authentification | Singapour / États-Unis (selon la région du projet) | CCT (DPA Supabase) |
+| Supabase Inc. | Base de données, authentification | Irlande (UE), région eu-west-1 | Données hébergées dans l'UE ; CCT (DPA Supabase) pour un éventuel accès depuis les États-Unis (assistance) |
 | Stripe Payments Europe, Ltd. | Paiement de l'abonnement | Irlande (UE), transferts possibles vers les États-Unis | CCT / Data Privacy Framework |
 | Google LLC (Gmail) | Envoi des e-mails de service | États-Unis | CCT / Data Privacy Framework |
 | Resend Inc. | Envoi des e-mails de service | États-Unis | CCT |
 
-> À faire : accepter ou signer le contrat de sous-traitance (DPA) de chacun de ces prestataires et en garder une copie avec ce registre. Vérifier dans Supabase (Project Settings → General) la région où la base est hébergée.
+> À faire : accepter ou signer le contrat de sous-traitance (DPA) de chacun de ces prestataires et en garder une copie avec ce registre.
 
 ---
 
@@ -39,7 +39,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Données | Prénom, nom (facultatif), e-mail, mot de passe (chiffré), nom et date du couple, code couple, code de parrainage, progression dans les modules |
 | Données sensibles | Non (voir fiche 2) |
 | Destinataires | Le ou la partenaire du couple (réponses des modules révélés, journal, pacte) ; l'administration du site (compte et progression, sans le contenu des réponses) ; sous-traitants Vercel et Supabase |
-| Transferts hors UE | Oui : États-Unis, Singapour (voir tableau des sous-traitants) |
+| Transferts hors UE | Base de données dans l'UE (Irlande). Hébergement du site : États-Unis (Vercel, voir tableau) |
 | Durée de conservation | Tant que le compte est utilisé. Compte jamais payé : suppression après 18 mois sans connexion. Après la fin d'un accès payé : clôture et effacement des réponses après 18 mois. Suppression immédiate sur demande (bouton « Supprimer mon compte ») |
 | Mesures de sécurité | HTTPS, mots de passe chiffrés, isolement de chaque couple par des règles d'accès en base (Row Level Security), droits en écriture limités aux champs modifiables, limitation des tentatives de connexion, double authentification disponible pour l'administration, purge automatique quotidienne |
 
@@ -49,11 +49,11 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 |---|---|
 | Date de création de la fiche | septembre 2026 |
 | Finalité | Enregistrer les réponses, conclusions et le pacte du couple pour les leur restituer |
-| Base légale | Consentement explicite (art. 9.2.a), recueilli à l'inscription par une case dédiée, horodaté (`profiles.consentement_donnees_sensibles_le`) |
+| Base légale | Consentement explicite (art. 9.2.a), recueilli à l'inscription par une case dédiée — ou à la connexion suivante pour les comptes créés avant (page /consentement) — horodaté (`profiles.consentement_donnees_sensibles_le`) |
 | Personnes concernées | Membres des couples inscrits |
 | Données | Réponses libres et à choix, conclusions, texte du pacte. Certaines questions portent sur la **vie intime** et les **convictions religieuses** (données sensibles, art. 9) |
 | Destinataires | Uniquement les deux membres du couple (réponses du ou de la partenaire visibles après la révélation). L'administration n'a pas accès au contenu |
-| Transferts hors UE | Oui : hébergement Supabase (voir tableau) |
+| Transferts hors UE | Non pour le stockage (Supabase, Irlande) ; éventuel accès d'assistance encadré par CCT |
 | Durée de conservation | Identique à la fiche 1. Retrait du consentement : suppression du compte |
 | Mesures de sécurité | Identiques à la fiche 1 ; aucun export ni affichage du contenu dans l'espace admin ; export réservé à la personne concernée (« Mes données ») |
 | Analyse d'impact (AIPD) | Recommandée compte tenu des données sensibles — outil gratuit PIA de la CNIL |
@@ -96,7 +96,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Personnes concernées | Toute personne tentant de se connecter |
 | Données | E-mail ou identifiant du compte, nombre d'essais, date de fin de blocage |
 | Destinataires | Aucun en dehors du serveur |
-| Transferts hors UE | Hébergement Supabase (voir tableau) |
+| Transferts hors UE | Non (Supabase, Irlande) |
 | Durée de conservation | Effacement à la connexion réussie ; blocage de 15 minutes |
 | Mesures de sécurité | Table accessible uniquement côté serveur |
 
@@ -110,7 +110,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Personnes concernées | Personnes ayant pré-commandé |
 | Données | Prénom, nom, e-mail, prénom du ou de la partenaire, ville, message |
 | Destinataires | Administration du site ; Supabase |
-| Transferts hors UE | Hébergement Supabase (voir tableau) |
+| Transferts hors UE | Non (Supabase, Irlande) |
 | Durée de conservation | 18 mois après l'envoi, effacement automatique |
 | Mesures de sécurité | Table accessible uniquement par l'administration |
 

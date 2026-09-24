@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isCouplePaired } from '@/lib/couple-status'
 import DashboardNav from '@/components/dashboard/DashboardNav'
+import { aDonneSonConsentement } from '@/lib/consentement'
 
 export const metadata = { title: 'Règles du jeu' }
 
@@ -15,6 +16,7 @@ export default async function ReglesDuJeuLayout({ children }: { children: React.
     .select('*')
     .eq('id', user.id)
     .single()
+  if (!aDonneSonConsentement(profile)) redirect('/consentement')
 
   const paired = await isCouplePaired(supabase, profile?.couple_id)
 
