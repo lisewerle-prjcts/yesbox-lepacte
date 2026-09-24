@@ -369,11 +369,8 @@ export default function LandingPage() {
         <p className="text-lg mb-8" style={{ color: 'var(--muted)' }}><EditableText id="home.ctafinal.subtitle" multiline>Le module 1 est gratuit pour vous deux. Commencez à deux, ce soir.</EditableText></p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            <EditableText id="home.ctafinal.cta.primary">Commencez maintenant</EditableText> <ArrowRight className="w-4 h-4" />
+            <EditableText id="home.ctafinal.cta">Commencer maintenant</EditableText> <ArrowRight className="w-4 h-4" />
           </button>
-          <Link href="/inscription" className="btn-ghost lg">
-            <EditableText id="home.ctafinal.cta.secondary">Essayer gratuitement</EditableText>
-          </Link>
         </div>
       </section>
 
