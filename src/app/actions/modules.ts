@@ -1,11 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { getEffectiveModules } from '@/lib/modules-effective'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
+import { moduleDuCouple, etatReponses } from '@/lib/progression'
+import { peutAccederModule } from '@/lib/abonnement'
+import { ABONNEMENT_COLONNES } from '@/types'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
@@ -13,6 +16,22 @@ export async function sauvegarderReponse(moduleId: string, questionSlug: string,
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
   if (await consentementManquant(supabase, user.id)) return { error: t(locale, 'Ton consentement est nécessaire pour enregistrer tes réponses.', 'Your consent is required to save your answers.') }
+
+  // Uniquement dans un module de son propre couple, ouvert, accessible
+  // (abonnement) et dont les réponses ne sont pas encore partagées.
+  const admin = createAdminClient()
+  const mod = await moduleDuCouple(admin, user.id, moduleId)
+  if (!mod) return { error: t(locale, 'Module introuvable', 'Module not found') }
+  if (mod.statut === 'locked') return { error: t(locale, 'Ce module n’est pas encore ouvert.', 'This module is not open yet.') }
+  if (mod.revealed || mod.reponses_partagees) {
+    return { error: t(locale, 'Vous avez tous les deux répondu : les réponses ne sont plus modifiables.', 'You have both answered: answers can no longer be changed.') }
+  }
+  const moduleInfo = await getEffectiveModuleBySlug(mod.slug)
+  if (!moduleInfo?.questions.some(q => q.slug === questionSlug)) return { error: t(locale, 'Question introuvable', 'Question not found') }
+  if (!moduleInfo.free) {
+    const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', mod.couple_id).single()
+    if (!peutAccederModule(moduleInfo, mod, couple)) return { error: t(locale, 'Un abonnement est nécessaire pour ce module.', 'A subscription is required for this module.') }
+  }
 
   const { error } = await supabase.from('reponses').upsert(
     { module_id: moduleId, user_id: user.id, question_slug: questionSlug, valeur },
@@ -28,37 +47,22 @@ export async function terminerModule(moduleId: string, moduleSlug: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
+  const admin = createAdminClient()
+  const mod = await moduleDuCouple(admin, user.id, moduleId)
+  if (!mod) return { error: t(locale, 'Module introuvable', 'Module not found') }
+  const moduleInfo = await getEffectiveModuleBySlug(mod.slug)
+  if (!moduleInfo) return { error: t(locale, 'Module introuvable', 'Module not found') }
 
-  await supabase.from('modules').update({ statut: 'complete', completed_at: new Date().toISOString() }).eq('id', moduleId)
+  // Vérifie côté serveur que la personne a vraiment tout répondu ; partage
+  // les réponses si l'autre a déjà fini (cf. etatReponses).
+  const etat = await etatReponses(admin, mod, user.id, moduleInfo.questions)
+  if (!etat.jaiTermine) return { error: t(locale, 'Il reste des questions sans réponse.', 'Some questions are still unanswered.') }
 
-  revalidatePath('/tableau-de-bord')
-  revalidatePath(`/module/${moduleSlug}`)
-  return { success: true }
-}
-
-// Scelle le module (marque la révélation comme faite) et déverrouille le
-// suivant. Appelé une fois que les deux partenaires ont écrit leur
-// conclusion — voir sauvegarderConclusion() dans actions/journal.ts.
-export async function scellerModule(coupleId: string, moduleId: string, moduleSlug: string) {
-  const supabase = await createClient()
-
-  await supabase.from('modules').update({
-    revealed: true,
-    revealed_at: new Date().toISOString(),
-  }).eq('id', moduleId)
-
-  const modules = await getEffectiveModules()
-  const ordre = modules.map(m => m.slug)
-  const idx = ordre.indexOf(moduleSlug)
-  if (idx >= 0 && idx < ordre.length - 1) {
-    await supabase.from('modules').update({ statut: 'en_cours' })
-      .eq('couple_id', coupleId)
-      .eq('slug', ordre[idx + 1])
+  if (mod.statut === 'en_cours') {
+    await admin.from('modules').update({ statut: 'complete', completed_at: new Date().toISOString() }).eq('id', mod.id)
   }
 
   revalidatePath('/tableau-de-bord')
-  revalidatePath(`/module/${moduleSlug}/revelation`)
-  return { success: true }
+  revalidatePath(`/module/${moduleSlug}`)
+  return { success: true, reponsesPartagees: etat.reponsesPartagees }
 }

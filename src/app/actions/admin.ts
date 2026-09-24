@@ -28,7 +28,8 @@ function generateTempPassword() {
 }
 
 export async function adminUnlockModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
+  await assertAdmin()
+  const supabase = createAdminClient()
   await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug)
   revalidatePath('/admin/couples')
   revalidatePath('/admin/actions')
@@ -36,14 +37,16 @@ export async function adminUnlockModule(coupleId: string, slug: string) {
 }
 
 export async function adminLockModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
-  await supabase.from('modules').update({ statut: 'locked', revealed: false, revealed_at: null }).eq('couple_id', coupleId).eq('slug', slug)
+  await assertAdmin()
+  const supabase = createAdminClient()
+  await supabase.from('modules').update({ statut: 'locked', revealed: false, revealed_at: null, reponses_partagees: false }).eq('couple_id', coupleId).eq('slug', slug)
   revalidatePath('/admin/couples')
   return { success: true }
 }
 
 export async function adminRevealModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
+  await assertAdmin()
+  const supabase = createAdminClient()
   await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
   // Déverrouille le suivant
   const ordre = (await getEffectiveModules()).map(m => m.slug)
@@ -56,12 +59,13 @@ export async function adminRevealModule(coupleId: string, slug: string) {
 }
 
 export async function adminResetModule(coupleId: string, slug: string) {
-  const supabase = await assertAdmin()
+  await assertAdmin()
+  const supabase = createAdminClient()
   const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).single()
   if (mod) {
     await supabase.from('reponses').delete().eq('module_id', mod.id)
     await supabase.from('journal_entries').delete().eq('couple_id', coupleId).eq('module_slug', slug)
-    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null }).eq('id', mod.id)
+    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null, reponses_partagees: false }).eq('id', mod.id)
   }
   revalidatePath('/admin/couples')
   return { success: true }

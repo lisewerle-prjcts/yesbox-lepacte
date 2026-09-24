@@ -8,7 +8,7 @@ import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/r
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
 import { notifySecurityEvent } from '@/lib/admin-mail'
-import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { z } from 'zod'
@@ -90,12 +90,14 @@ export async function inscription(formData: FormData) {
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
       if (!result.success) partnerCodeError = result.error || t(locale, 'Code invalide', 'Invalid code')
+      // Pas d'e-mail de bienvenue (avec code couple) pour qui rejoint un couple.
+      await createAdminClient().from('profiles').update({ email_bienvenue_envoye_le: maintenant }).eq('id', data.user.id)
     } else {
       const codeParrainage = (formData.get('code_parrainage') as string | null)?.trim()
-      const coupleResult = await creerCoupleSolo(data.user.id, codeParrainage)
-      if (coupleResult.success && coupleResult.couple) {
-        await sendWelcomeEmail(email, prenom, coupleResult.couple.pairing_code)
-      }
+      await creerCoupleSolo(data.user.id, codeParrainage)
+      // Envoyé tout de suite si l'adresse est déjà confirmée, sinon au clic
+      // sur le lien de confirmation (cf. /auth/callback).
+      await envoyerBienvenueSiEnAttente(data.user.id)
     }
   }
 
@@ -208,7 +210,11 @@ export async function verifierCodeMfa(code: string) {
   if (error) return { error: error.message }
 
   revalidatePath('/', 'layout')
-  redirect('/tableau-de-bord')
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = user
+    ? await createAdminClient().from('profiles').select('is_admin').eq('id', user.id).single()
+    : { data: null }
+  redirect(profile?.is_admin ? '/admin' : '/tableau-de-bord')
 }
 
 export async function verifierCodeRecuperationMfa(code: string) {

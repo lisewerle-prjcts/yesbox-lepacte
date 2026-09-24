@@ -1,11 +1,13 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { moduleDuCouple, etatReponses } from '@/lib/progression'
 import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeModule } from '@/lib/i18n/module-text'
 import ModuleQuestions from '@/components/module/ModuleQuestions'
 import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
+import type { Reponse } from '@/types'
 
 interface PageProps { params: Promise<{ slug: string }> }
 
@@ -31,23 +33,22 @@ export default async function ModulePage({ params }: PageProps) {
     if (!peutAccederModule(moduleInfo, moduleData, couple)) redirect('/abonnement')
   }
 
-  const { data: partner } = await supabase.from('profiles').select('id, prenom').eq('couple_id', profile.couple_id).neq('id', user.id).single()
-
-  const [{ data: mesReponses }, { data: reponsesPartenaire }] = await Promise.all([
-    supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', user.id),
-    partner
-      ? supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', partner.id)
-      : { data: [] },
-  ])
+  // Seul l'avancement de l'autre est envoyé au navigateur, jamais ses réponses.
+  const admin = createAdminClient()
+  const mod = await moduleDuCouple(admin, user.id, moduleData.id)
+  if (!mod) redirect('/tableau-de-bord')
+  const etat = await etatReponses<Reponse>(admin, mod, user.id, moduleInfo.questions)
 
   return (
     <ModuleQuestions
       moduleInfo={moduleInfo}
       moduleData={moduleData}
-      mesReponses={mesReponses || []}
-      reponsesPartenaire={reponsesPartenaire || []}
+      mesReponses={etat.mesReponses}
+      partenaireTermine={etat.partenaireTermine}
+      partenaireACommence={etat.partenaireACommence}
+      reponsesVerrouillees={etat.reponsesPartagees}
       userId={user.id}
-      partnerName={partner?.prenom || null}
+      partnerName={etat.partenaire?.prenom || null}
     />
   )
 }

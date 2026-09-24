@@ -7,7 +7,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  let supabaseResponse = NextResponse.next({ request })
+  // Chemin courant transmis aux layouts serveur (le layout admin s'en sert
+  // pour n'autoriser que la page Sécurité tant que la double authentification
+  // n'est pas activée).
+  const suivant = () => {
+    const headers = new Headers(request.headers)
+    headers.set('x-pathname', request.nextUrl.pathname)
+    return NextResponse.next({ request: { headers } })
+  }
+
+  let supabaseResponse = suivant()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -21,7 +30,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({ request })
+          supabaseResponse = suivant()
           cookiesToSet.forEach(({ name, value, options }) =>
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             supabaseResponse.cookies.set(name, value, options as any)
@@ -55,7 +64,10 @@ export async function updateSession(request: NextRequest) {
 
   // Redirige vers /tableau-de-bord si déjà connecté sur les routes auth
   const authRoutes = ['/connexion', '/inscription']
-  if (user && authRoutes.includes(pathname)) {
+  // Exception : /connexion?mfa=1 permet de saisir le code de double
+  // authentification d'une session ouverte avec le mot de passe seul.
+  const saisieCodeMfa = pathname === '/connexion' && request.nextUrl.searchParams.get('mfa') === '1'
+  if (user && authRoutes.includes(pathname) && !saisieCodeMfa) {
     const url = request.nextUrl.clone()
     url.pathname = '/tableau-de-bord'
     return NextResponse.redirect(url)

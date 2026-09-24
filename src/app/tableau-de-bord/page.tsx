@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getInviteLink } from '@/app/actions/couple'
 import { getLocale, getT } from '@/lib/i18n/server'
@@ -43,7 +43,9 @@ export default async function TableauDeBordPage({
     couple = coup
     coupleAbonnement = coupAbo
 
-    const { data: reps } = await supabase
+    // Lu côté serveur (service role) uniquement pour calculer l'avancement de
+    // chacun·e : aucune réponse n'est envoyée au navigateur depuis cette page.
+    const { data: reps } = await createAdminClient()
       .from('reponses')
       .select('module_id, user_id, question_slug, valeur')
       .in('module_id', modules.map(m => m.id))

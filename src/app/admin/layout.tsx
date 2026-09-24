@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { etatMfaAdmin } from '@/lib/admin-mail'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
@@ -32,6 +34,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!profile?.is_admin) redirect('/tableau-de-bord')
 
+  // Double authentification obligatoire pour l'espace admin.
+  const mfa = await etatMfaAdmin(supabase)
+  if (mfa === 'code_requis') redirect('/connexion?mfa=1')
+  const pathname = (await headers()).get('x-pathname') ?? ''
+  if (mfa === 'non_activee' && pathname !== '/admin/securite') redirect('/admin/securite?mfa=obligatoire')
+
   const NAV = [
     { href: '/admin', label: 'Vue d\'ensemble' },
     { href: '/admin/utilisateurs', label: 'Utilisateurs' },
@@ -61,7 +69,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/tableau-de-bord" className="text-xs" style={{ color: 'rgba(255,255,255,.4)' }}>← App</Link>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {mfa === 'non_activee' && (
+          <div className="card p-4 mb-6" style={{ borderColor: '#dc2626', background: '#fef2f2' }}>
+            <p style={{ fontSize: 14, color: '#991b1b', fontWeight: 600 }}>Double authentification obligatoire</p>
+            <p style={{ fontSize: 13, color: '#7f1d1d' }}>Active-la ci-dessous pour accéder au reste de l&apos;espace admin, puis génère tes codes de secours.</p>
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   )
 }

@@ -1,11 +1,13 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { moduleDuCouple, etatReponses } from '@/lib/progression'
 import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeModule } from '@/lib/i18n/module-text'
 import RevelationClient from '@/components/module/RevelationClient'
 import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
+import type { Reponse } from '@/types'
 
 interface PageProps { params: Promise<{ slug: string }> }
 
@@ -31,33 +33,39 @@ export default async function RevelationPage({ params }: PageProps) {
     if (!peutAccederModule(moduleInfo, moduleData, couple)) redirect('/abonnement')
   }
 
-  const { data: partner } = await supabase.from('profiles').select('id, prenom').eq('couple_id', profile.couple_id).neq('id', user.id).single()
-
-  const [{ data: mesReponses }, { data: reponsesPartner }] = await Promise.all([
-    supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', user.id),
-    partner ? supabase.from('reponses').select('*').eq('module_id', moduleData.id).eq('user_id', partner.id) : { data: [] },
-  ])
+  // Tout est calculé côté serveur : les réponses de l'autre ne sont envoyées
+  // au navigateur qu'une fois que les deux ont répondu à tout, et sa
+  // conclusion jamais (seulement si elle est écrite ou non).
+  const admin = createAdminClient()
+  const mod = await moduleDuCouple(admin, user.id, moduleData.id)
+  if (!mod) redirect('/tableau-de-bord')
+  const etat = await etatReponses<Reponse>(admin, mod, user.id, moduleInfo.questions)
+  const partner = etat.partenaire
 
   const [{ data: maConclusion }, { data: conclusionPartenaire }] = await Promise.all([
     supabase.from('journal_entries').select('question_slug, valeur')
       .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', user.id),
     partner
-      ? supabase.from('journal_entries').select('question_slug, valeur')
+      ? admin.from('journal_entries').select('question_slug, valeur')
           .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', partner.id)
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [] as { question_slug: string; valeur: string | null }[] }),
   ])
+  const partenaireConclusionFaite = ['apprentissage', 'surprise'].every(q =>
+    (conclusionPartenaire ?? []).some(c => c.question_slug === q && c.valeur?.trim())
+  )
 
   return (
     <RevelationClient
       moduleInfo={moduleInfo}
       moduleData={moduleData}
-      mesReponses={mesReponses || []}
-      reponsesPartner={reponsesPartner || []}
+      mesReponses={etat.mesReponses}
+      reponsesPartner={etat.reponsesPartenaire}
+      reponsesPartagees={etat.reponsesPartagees}
       myName={profile.prenom}
       partnerName={partner?.prenom || null}
       coupleId={profile.couple_id}
       maConclusion={maConclusion || []}
-      conclusionPartenaire={conclusionPartenaire || []}
+      partenaireConclusionFaite={partenaireConclusionFaite}
     />
   )
 }

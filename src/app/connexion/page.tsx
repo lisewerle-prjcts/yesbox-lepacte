@@ -32,7 +32,9 @@ export default function ConnexionPage() {
   const [mfaResetNotice, setMfaResetNotice] = useState(false)
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('mfa_reset') === '1') setMfaResetNotice(true)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('mfa_reset') === '1') setMfaResetNotice(true)
+    if (params.get('mfa') === '1') setMfaRequired(true)
   }, [])
 
   async function handleAction(formData: FormData) {

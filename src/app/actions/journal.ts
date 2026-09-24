@@ -1,21 +1,20 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { scellerModule } from '@/app/actions/modules'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
-import type { ConclusionSlug } from '@/types'
-
-const CONCLUSION_SLUGS: ConclusionSlug[] = ['apprentissage', 'surprise']
+import { moduleDuCouple, revelerSiPret } from '@/lib/progression'
 
 // Chaque partenaire écrit sa conclusion de son côté, en 2 questions
-// ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"). Une fois que les
-// deux ont écrit la leur pour ce module, il se scelle et le suivant se
-// débloque.
+// ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"), une fois que les
+// deux ont répondu à toutes les questions. Quand les deux conclusions sont
+// écrites, le module est révélé et le suivant se débloque.
+// `_coupleId` est ignoré : le couple est déduit du module, côté serveur.
 export async function sauvegarderConclusion(
-  coupleId: string,
+  _coupleId: string,
   moduleId: string,
   moduleSlug: string,
   apprentissage: string,
@@ -27,37 +26,28 @@ export async function sauvegarderConclusion(
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
   if (await consentementManquant(supabase, user.id)) return { error: t(locale, 'Ton consentement est nécessaire pour enregistrer tes réponses.', 'Your consent is required to save your answers.') }
 
+  const admin = createAdminClient()
+  const mod = await moduleDuCouple(admin, user.id, moduleId)
+  if (!mod || mod.slug !== moduleSlug) return { error: t(locale, 'Module introuvable', 'Module not found') }
+  if (mod.revealed) return { error: t(locale, 'Ce module est déjà révélé.', 'This module has already been revealed.') }
+  if (!mod.reponses_partagees) {
+    return { error: t(locale, 'Vous devez d’abord avoir tous les deux répondu à toutes les questions.', 'You both need to answer every question first.') }
+  }
+
   const rows = [
-    { couple_id: coupleId, module_slug: moduleSlug, user_id: user.id, question_slug: 'apprentissage', valeur: apprentissage },
-    { couple_id: coupleId, module_slug: moduleSlug, user_id: user.id, question_slug: 'surprise', valeur: surprise },
+    { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'apprentissage', valeur: apprentissage },
+    { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'surprise', valeur: surprise },
   ]
   const { error } = await supabase
     .from('journal_entries')
     .upsert(rows, { onConflict: 'couple_id,module_slug,user_id,question_slug' })
   if (error) return { error: error.message }
 
-  const { data: partner } = await supabase
-    .from('profiles').select('id').eq('couple_id', coupleId).neq('id', user.id).maybeSingle()
-
-  let sealed = false
-  if (partner) {
-    const { data: partnerEntries } = await supabase
-      .from('journal_entries')
-      .select('question_slug, valeur')
-      .eq('couple_id', coupleId)
-      .eq('module_slug', moduleSlug)
-      .eq('user_id', partner.id)
-
-    const partnerDone = CONCLUSION_SLUGS.every(slug =>
-      partnerEntries?.some(e => e.question_slug === slug && e.valeur?.trim())
-    )
-    if (partnerDone) {
-      await scellerModule(coupleId, moduleId, moduleSlug)
-      sealed = true
-    }
-  }
+  const ordre = (await getEffectiveModules()).map(m => m.slug)
+  const sealed = await revelerSiPret(admin, mod, ordre)
 
   revalidatePath('/journal')
+  revalidatePath('/tableau-de-bord')
   revalidatePath(`/module/${moduleSlug}/revelation`)
   return { success: true, sealed }
 }
