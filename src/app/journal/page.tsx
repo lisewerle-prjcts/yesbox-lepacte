@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { localizeModules } from '@/lib/i18n/module-text'
+import { conclusionDuModule } from '@/lib/modules-data'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
@@ -85,47 +86,48 @@ export default async function JournalPage() {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
             if (!modData) return null
 
-            const monApprentissage = getConclusion(moduleInfo.slug, user.id, 'apprentissage')
-            const maSurprise = getConclusion(moduleInfo.slug, user.id, 'surprise')
-            const sonApprentissage = partner ? getConclusion(moduleInfo.slug, partner.id, 'apprentissage') : ''
-            const saSurprise = partner ? getConclusion(moduleInfo.slug, partner.id, 'surprise') : ''
+            const conclusion = conclusionDuModule(moduleInfo)
+            const questions = (['apprentissage', 'surprise'] as const).map(slug => ({
+              slug,
+              label: conclusion[slug].label,
+              moi: getConclusion(moduleInfo.slug, user.id, slug),
+              autre: partner ? getConclusion(moduleInfo.slug, partner.id, slug) : '',
+            }))
 
             return (
-              <div key={moduleInfo.slug} className="card p-6">
-                <div className="flex items-center gap-3 mb-4">
+              <section key={moduleInfo.slug} className="card p-6" aria-labelledby={`journal-${moduleInfo.slug}`}>
+                <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: '1px solid var(--line)' }}>
                   <span style={{ fontSize: 22 }}>{moduleInfo.emoji}</span>
                   <div>
-                    <p className="font-serif font-bold" style={{ fontSize: 16, color: 'var(--ink)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
-                    <p style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id={`module.${moduleInfo.slug}.sousTitre`}>{moduleInfo.sousTitre}</EditableText></p>
+                    <h2 id={`journal-${moduleInfo.slug}`} className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>
+                      {t('Module', 'Module')} {moduleInfo.n}
+                    </h2>
+                    <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${moduleInfo.slug}.titre`}>{moduleInfo.titre}</EditableText></p>
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
-                    <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 8 }}>{profile.prenom || t('Toi', 'You')}</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
-                      ? <EditableText id={`journal.${moduleInfo.slug}.appris`}>{moduleInfo.conclusion.apprentissage.journal}</EditableText>
-                      : <EditableText id="journal.appris">Ce qui l&apos;a marqué</EditableText>}</p>
-                    <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {monApprentissage} »</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
-                      ? <EditableText id={`journal.${moduleInfo.slug}.surpris`}>{moduleInfo.conclusion.surprise.journal}</EditableText>
-                      : <EditableText id="journal.surpris">Ce qui l&apos;a ému·e</EditableText>}</p>
-                    <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {maSurprise} »</p>
-                  </div>
-                  {partner && (
-                    <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px' }}>
-                      <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>{partner.prenom || t('Partenaire', 'Partner')}</p>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
-                      ? <EditableText id={`journal.${moduleInfo.slug}.appris`}>{moduleInfo.conclusion.apprentissage.journal}</EditableText>
-                      : <EditableText id="journal.appris">Ce qui l&apos;a marqué</EditableText>}</p>
-                      <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, marginBottom: 10, fontStyle: 'italic' }}>« {sonApprentissage} »</p>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 2 }}>{moduleInfo.conclusion
-                      ? <EditableText id={`journal.${moduleInfo.slug}.surpris`}>{moduleInfo.conclusion.surprise.journal}</EditableText>
-                      : <EditableText id="journal.surpris">Ce qui l&apos;a ému·e</EditableText>}</p>
-                      <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {saSurprise} »</p>
+
+                <div className="flex flex-col gap-5">
+                  {questions.map(q => (
+                    <div key={q.slug}>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-2)', lineHeight: 1.4, marginBottom: 10 }}>
+                        <EditableText id={`revelation.conclusion.${moduleInfo.slug}.${q.slug}.label`}>{q.label}</EditableText>
+                      </h3>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px', borderLeft: '3px solid var(--brand)' }}>
+                          <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 4 }}>{profile.prenom || t('Toi', 'You')}</p>
+                          <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {q.moi} »</p>
+                        </div>
+                        {partner && (
+                          <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px' }}>
+                            <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 4 }}>{partner.prenom || t('Partenaire', 'Partner')}</p>
+                            <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {q.autre} »</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              </div>
+              </section>
             )
           })}
         </div>

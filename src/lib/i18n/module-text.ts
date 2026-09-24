@@ -1,5 +1,6 @@
 import type { Locale } from './locale'
 import type { ConclusionTexte, ModuleInfo, Question } from '@/types'
+import { conclusionDuModule } from '@/lib/modules-data'
 
 /** Applique les traductions statiques `_en` d'une question si la langue active est l'anglais. */
 export function localizeQuestion(q: Question, locale: Locale): Question {
@@ -29,9 +30,9 @@ export function localizeModule(m: ModuleInfo, locale: Locale): ModuleInfo {
     sousTitre: m.sousTitre_en ?? m.sousTitre,
     description: m.description_en ?? m.description,
     questions: m.questions.map(q => localizeQuestion(q, locale)),
-    conclusion: m.conclusion && {
-      apprentissage: localizeConclusion(m.conclusion.apprentissage),
-      surprise: localizeConclusion(m.conclusion.surprise),
+    conclusion: {
+      apprentissage: localizeConclusion(conclusionDuModule(m).apprentissage),
+      surprise: localizeConclusion(conclusionDuModule(m).surprise),
     },
   }
 }
@@ -45,6 +46,5 @@ function localizeConclusion(c: ConclusionTexte): ConclusionTexte {
     ...c,
     label: c.label_en ?? c.label,
     placeholder: c.placeholder_en ?? c.placeholder,
-    journal: c.journal_en ?? c.journal,
   }
 }

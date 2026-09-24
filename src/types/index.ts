@@ -124,15 +124,12 @@ export interface Question {
   labelMax_en?: string
 }
 
-/** Libellés d'une question de conclusion, propres à un module. */
+/** Libellés d'une question de fin de module (affichée à la révélation et dans le journal). */
 export interface ConclusionTexte {
   label: string
   placeholder: string
-  /** Intitulé affiché dans le journal au-dessus de la réponse. */
-  journal: string
   label_en?: string
   placeholder_en?: string
-  journal_en?: string
 }
 
 export interface ModuleInfo {
@@ -144,7 +141,7 @@ export interface ModuleInfo {
   emoji: string
   free: boolean
   questions: Question[]
-  /** Questions de fin de module propres à ce module (sinon, les questions par défaut). */
+  /** Les 2 questions de fin de module, propres à ce module (sinon, CONCLUSION_PAR_DEFAUT). */
   conclusion?: Record<ConclusionSlug, ConclusionTexte>
   /** Traductions anglaises US par défaut (contenu statique des modules). */
   titre_en?: string

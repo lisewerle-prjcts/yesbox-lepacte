@@ -1,4 +1,29 @@
-import type { ModuleInfo } from '@/types'
+import type { ConclusionSlug, ConclusionTexte, ModuleInfo } from '@/types'
+
+type Conclusion = Record<ConclusionSlug, ConclusionTexte>
+
+/**
+ * Questions de fin de module utilisées quand un module n'a pas encore les siennes
+ * (modules personnalisés créés depuis l'admin, notamment).
+ */
+export const CONCLUSION_PAR_DEFAUT: Conclusion = {
+  apprentissage: {
+    label: "Qu'est-ce qui t'a marqué lors de ce module ? Qu'est-ce qui t'a fait plaisir ?",
+    placeholder: "Ce qui t'a marqué, ce qui t'a fait plaisir…",
+    label_en: 'What struck you during this module? What made you happy?',
+    placeholder_en: 'What struck you, what made you happy…',
+  },
+  surprise: {
+    label: "Est-ce que tu as été ému·e par une question ou une réponse donnée par l'autre ?",
+    placeholder: "Ce qui t'a ému·e…",
+    label_en: 'Were you moved by a question or by one of your partner\'s answers?',
+    placeholder_en: 'What moved you…',
+  },
+}
+
+export function conclusionDuModule(m: ModuleInfo): Conclusion {
+  return m.conclusion ?? CONCLUSION_PAR_DEFAUT
+}
 
 export const MODULES: ModuleInfo[] = [
   {
@@ -8,6 +33,8 @@ export const MODULES: ModuleInfo[] = [
     description: "On croit se connaître par cœur. Ce module révèle les angles morts, avec tendresse.",
     description_en: 'You think you know each other by heart. This module gently reveals the blind spots.',
     emoji: '👁️', free: true,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'bonheur_def', type: 'text', texte: 'Quelle est ta définition du bonheur ?', texte_en: 'What is your definition of happiness?' },
       { slug: 'qualites_preferees', type: 'text', texte: "Quelles sont les qualités que tu préfères chez l'autre ?", hint: 'Donne entre 3 et 5 qualités', texte_en: 'What qualities do you like most about your partner?', hint_en: 'Give between 3 and 5 qualities' },
@@ -31,6 +58,8 @@ export const MODULES: ModuleInfo[] = [
     description: "On revient sur ce qu'on a construit : la rencontre, les moments forts, ce qui nous fait tenir.",
     description_en: "Let's look back at what you've built together: how you met, the milestones, what keeps you going.",
     emoji: '💑', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'rencontre', type: 'text', texte: 'Raconte ici votre rencontre ? Quels sont les moments clefs du tout début ?', texte_en: 'Tell the story of how you met. What were the key moments at the very beginning?' },
       { slug: 'moments_forts', type: 'text', texte: 'Quels sont les 3 ou 4 moments forts du début de votre couple ?', texte_en: 'What are the 3 or 4 milestones from the beginning of your relationship?' },
@@ -83,18 +112,14 @@ export const MODULES: ModuleInfo[] = [
       apprentissage: {
         label: 'Quels changements pouvez-vous engager suite à ce module au niveau du partage des tâches ou de vos loisirs solo / en duo ?',
         placeholder: 'Les changements que vous pouvez engager…',
-        journal: 'Les changements à engager',
         label_en: 'What changes can you make after this module, in how you share tasks or in your solo / couple hobbies?',
         placeholder_en: 'The changes you can make…',
-        journal_en: 'Changes to make',
       },
       surprise: {
         label: "Que retenez-vous de ce module ? Qu'est-ce qui vous a surpris ?",
         placeholder: 'Ce que vous retenez, ce qui vous a surpris…',
-        journal: 'Ce qui est retenu, ce qui a surpris',
         label_en: 'What do you take away from this module? What surprised you?',
         placeholder_en: 'What you take away, what surprised you…',
-        journal_en: 'Takeaways and surprises',
       },
     },
   },
@@ -105,6 +130,8 @@ export const MODULES: ModuleInfo[] = [
     description: "L'argent, le travail, les rêves à deux : des sujets qu'on esquive trop souvent, à poser sur la table.",
     description_en: "Money, work, shared dreams: topics we too often dodge — time to put them on the table.",
     emoji: '🎯', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'econome_depensier', type: 'text', texte: "Êtes-vous plutôt économe ou dépensier·ère ? Dans quels domaines surtout (loisirs, vêtements, nourriture, voyages) ?", texte_en: 'Are you more of a saver or a spender? In which areas especially (leisure, clothes, food, travel)?' },
       { slug: 'reves_enfant_projets', type: 'text', texte: 'Quand vous aviez 5, 10, 15 puis 20 ans, que rêviez-vous de faire dans la vie ?', texte_en: 'When you were 5, 10, 15, then 20, what did you dream of doing with your life?' },
@@ -132,6 +159,8 @@ export const MODULES: ModuleInfo[] = [
     description: "L'éducation reçue, les enfants, la religion, le lieu de vie : ce qui vient de nos familles et ce qu'on choisit d'en garder.",
     description_en: 'The upbringing we received, children, religion, where to live: what comes from our families, and what we choose to keep.',
     emoji: '🌳', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'fete_solitaire', type: 'text', texte: 'Êtes-vous plutôt fête de famille ou loup solitaire ?', texte_en: 'Are you more of a family-gathering person or a lone wolf?' },
       { slug: 'apprecie_famille', type: 'text', texte: 'Qu\'est-ce que vous appréciez le plus dans votre famille ?', texte_en: 'What do you appreciate most about your family?' },
@@ -164,6 +193,8 @@ export const MODULES: ModuleInfo[] = [
     description: "Comment vous vous parlez, ce que vous taisez, ce qui vous ferait mieux vous comprendre.",
     description_en: 'How you talk to each other, what you leave unsaid, what would help you understand each other better.',
     emoji: '💬', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'raconter_journees', type: 'text', texte: 'Vous arrive-t-il de vous raconter vos journées ? De quoi parlez-vous ?', texte_en: 'Do you tell each other about your day? What do you talk about?' },
       { slug: 'emotions', type: 'text', texte: 'Parlez-vous des émotions ressenties (joie, tristesse, colère) ?', texte_en: 'Do you talk about the emotions you feel (joy, sadness, anger)?' },
@@ -187,6 +218,8 @@ export const MODULES: ModuleInfo[] = [
     description: "Comment vous vous manifestez votre amour et votre désir — en privé comme en public.",
     description_en: 'How you show your love and desire to each other — in private and in public.',
     emoji: '🔥', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'sexualite_besoins_2', type: 'text', texte: 'Arrivez-vous à aborder ensemble vos besoins et vos attentes sur les questions de sexualité ?', texte_en: 'Are you able to discuss your needs and expectations around sex together?' },
       { slug: 'tendresse', type: 'text', texte: 'Exprimez-vous votre tendresse à l\'égard de l\'autre ? Quand et comment, en privé et en public ?', texte_en: 'Do you express affection toward each other? When and how, in private and in public?' },
@@ -203,6 +236,8 @@ export const MODULES: ModuleInfo[] = [
     description: 'Comment vous vous disputez, comment vous vous réconciliez, ce que vous pourriez encore améliorer.',
     description_en: 'How you argue, how you make up, and what you could still improve.',
     emoji: '⚡', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'sujet_dispute', type: 'text', texte: 'À propos de quoi vous disputez-vous ?', texte_en: 'What do you argue about?' },
       { slug: 'quand_dispute', type: 'text', texte: 'Quand cela se manifeste-t-il ?', texte_en: 'When does it tend to happen?' },
@@ -228,6 +263,8 @@ export const MODULES: ModuleInfo[] = [
     description: "L'aboutissement : ce à quoi vous vous engagez, ce que représente pour vous le mariage, vos vœux. Ce module se conclut par la rédaction de votre CDD de couple, le contrat qui formalise vos engagements mutuels.",
     description_en: "The culmination: what you commit to, what marriage means to you, your vows. This module ends with writing your Couple's Pact — the contract that formalizes your mutual commitments.",
     emoji: '📜', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'important_couple', type: 'text', texte: "Qu'est-ce qui est important pour vous et pour votre couple ? À quoi vous engagez-vous ? À quoi renoncez-vous ?", texte_en: 'What matters to you and to your relationship? What do you commit to? What do you give up?' },
       { slug: 'regles_quotidien', type: 'text', texte: "D'après toutes ces questions, quelles sont vos règles de couple au quotidien ? (Indispensable / souhaitable / négociable / inacceptable.)", texte_en: 'Based on everything you\'ve discussed, what are your everyday rules as a couple? (Essential / desirable / negotiable / unacceptable.)' },
@@ -248,6 +285,8 @@ export const MODULES: ModuleInfo[] = [
     description: 'À refaire chaque année, à votre date anniversaire : ce qui a marché, ce qui a été dur, ce que vous voulez pour la suite.',
     description_en: 'To redo every year, on your anniversary: what worked, what was hard, and what you want next.',
     emoji: '🌱', free: false,
+    // Questions de fin de module : à personnaliser pour ce module.
+    conclusion: CONCLUSION_PAR_DEFAUT,
     questions: [
       { slug: 'points_positifs', type: 'text', texte: 'Quels sont les points positifs que vous pouvez noter concernant votre couple, sur l\'année écoulée ?', texte_en: 'What positives can you note about your relationship over the past year?' },
       { slug: 'moments_difficiles', type: 'text', texte: 'Quels moments ont été plus difficiles à vivre ?', texte_en: 'Which moments were harder to go through?' },

@@ -9,6 +9,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import GrilleComparaison from '@/components/module/GrilleComparaison'
 import { formatAnswer, hasAnsweredAll } from '@/lib/questions'
+import { conclusionDuModule } from '@/lib/modules-data'
 import type { ModuleInfo, Module, Reponse } from '@/types'
 
 interface ConclusionRow { question_slug: string; valeur: string | null }
@@ -47,7 +48,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   // on peut encore modifier les siennes, et la conclusion (qui peut sceller le
   // module) n'est pas encore proposée.
   const partnerDone = hasAnsweredAll(moduleInfo.questions, reponsesPartner)
-  const conclusion = moduleInfo.conclusion
+  const conclusion = conclusionDuModule(moduleInfo)
 
   const partnerApprentissage = getConclusion(conclusionPartenaire, 'apprentissage')
   const partnerSurprise = getConclusion(conclusionPartenaire, 'surprise')
@@ -177,15 +178,13 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 20, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              {conclusion
-                ? <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.label`}>{conclusion.apprentissage.label}</EditableText>
-                : <EditableText id="revelation.conclusion.apprentissage.label">Qu&apos;est-ce qui t&apos;a marqué lors de ce module ? Qu&apos;est-ce qui t&apos;a fait plaisir ?</EditableText>}
+              <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.label`}>{conclusion.apprentissage.label}</EditableText>
             </label>
             <textarea
               value={apprentissage}
               onChange={e => { setApprentissage(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder={conclusion?.apprentissage.placeholder ?? t("Ce qui t'a marqué, ce qui t'a fait plaisir…", 'What struck you, what made you happy…')}
+              placeholder={conclusion.apprentissage.placeholder}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />
@@ -193,15 +192,13 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 28, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
-              {conclusion
-                ? <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.label`}>{conclusion.surprise.label}</EditableText>
-                : <EditableText id="revelation.conclusion.surprise.label">Est-ce que tu as été ému·e par une question ou une réponse donnée par l&apos;autre ?</EditableText>}
+              <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.label`}>{conclusion.surprise.label}</EditableText>
             </label>
             <textarea
               value={surprise}
               onChange={e => { setSurprise(e.target.value); setSaved(false) }}
               disabled={revealed}
-              placeholder={conclusion?.surprise.placeholder ?? t("Ce qui t'a ému·e…", 'What moved you…')}
+              placeholder={conclusion.surprise.placeholder}
               rows={3}
               style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
             />

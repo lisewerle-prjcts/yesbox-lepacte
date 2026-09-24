@@ -9,7 +9,7 @@ import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
-import { MODULES } from '@/lib/modules-data'
+import { MODULES, conclusionDuModule } from '@/lib/modules-data'
 import type { QuestionType, Question } from '@/types'
 import { formatAnswer } from '@/lib/questions'
 
@@ -491,8 +491,9 @@ export async function adminGetCoupleArchive(coupleId: string) {
         const appris = conclusionsCeModule.find(j => j.user_id === member.id && j.question_slug === 'apprentissage')?.valeur
         const surpris = conclusionsCeModule.find(j => j.user_id === member.id && j.question_slug === 'surprise')?.valeur
         if (appris?.trim() || surpris?.trim()) {
-          lines.push(`  ${member.prenom || member.email} — appris : ${appris?.trim() || '—'}`)
-          lines.push(`  ${member.prenom || member.email} — surpris : ${surpris?.trim() || '—'}`)
+          const conclusion = conclusionDuModule(modInfo)
+          lines.push(`  ${member.prenom || member.email} — ${conclusion.apprentissage.label} ${appris?.trim() || '—'}`)
+          lines.push(`  ${member.prenom || member.email} — ${conclusion.surprise.label} ${surpris?.trim() || '—'}`)
         }
       }
       lines.push('')
