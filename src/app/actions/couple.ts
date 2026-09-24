@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
-import { enregistrerParrainage } from '@/lib/parrainage'
+import { rejoindreCoupleParCode } from '@/lib/couple-join'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -43,34 +43,6 @@ export async function creerCouple(formData: FormData) {
   return { success: true, couple, inviteToken: couple.invite_token }
 }
 
-export async function creerCoupleSolo(userId: string, codeParrainage?: string | null) {
-  const admin = createAdminClient()
-
-  const { data: couple, error: coupleError } = await admin
-    .from('couples')
-    .insert({})
-    .select()
-    .single()
-
-  if (coupleError) return { error: coupleError.message }
-
-  const { error: profileError } = await admin
-    .from('profiles')
-    .update({ couple_id: couple.id, role: 'initiateur' })
-    .eq('id', userId)
-
-  if (profileError) return { error: profileError.message }
-
-  await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
-  await admin.rpc('renumeroter_couples')
-
-  if (codeParrainage) {
-    await enregistrerParrainage(admin, codeParrainage, couple.id)
-  }
-
-  return { success: true, couple }
-}
-
 export async function rejoindreCouple(token: string) {
   const supabase = await createClient()
   const locale = await getLocale()
@@ -78,7 +50,7 @@ export async function rejoindreCouple(token: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
-  const { data, error } = await supabase.rpc('rejoindre_couple_via_token', {
+  const { data, error } = await createAdminClient().rpc('rejoindre_couple_via_token', {
     p_token: token,
     p_user_id: user.id,
   })
@@ -90,27 +62,6 @@ export async function rejoindreCouple(token: string) {
   return { success: true }
 }
 
-export async function rejoindreCoupleParCode(userId: string, code: string) {
-  const supabase = await createClient()
-  const locale = await getLocale()
-
-  const cleanCode = code.trim().toUpperCase()
-  if (!/^[A-Z0-9]{5}$/.test(cleanCode)) {
-    return { error: t(locale, 'Le code doit contenir 5 lettres/chiffres', 'The code must contain 5 letters/digits') }
-  }
-
-  const { data, error } = await supabase.rpc('rejoindre_couple_via_code', {
-    p_code: cleanCode,
-    p_user_id: userId,
-  })
-
-  if (error) return { error: error.message }
-  if (!data.success) return { error: data.error }
-
-  revalidatePath('/tableau-de-bord')
-  return { success: true, coupleId: data.couple_id }
-}
-
 export async function rejoindrePartenaireParCode(formData: FormData) {
   const supabase = await createClient()
   const locale = await getLocale()
@@ -119,7 +70,9 @@ export async function rejoindrePartenaireParCode(formData: FormData) {
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
   const code = formData.get('code') as string
-  return rejoindreCoupleParCode(user.id, code)
+  const result = await rejoindreCoupleParCode(user.id, code)
+  if (result.success) revalidatePath('/tableau-de-bord')
+  return result
 }
 
 export async function enregistrerPacteTexte(texte: string) {

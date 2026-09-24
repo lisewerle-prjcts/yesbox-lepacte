@@ -949,3 +949,62 @@ begin
   return json_build_object('success', true, 'couple_id', v_couple.id);
 end;
 $$;
+
+-- ============================================================
+-- SÉCURITÉ : VERROUILLAGE DES DROITS (v14)
+-- Correctifs de failles :
+--   1. La policy "profil_own_update" laissait chaque compte modifier
+--      toutes les colonnes de son profil, y compris is_admin (accès à
+--      tout l'espace admin) et couple_id (accès aux réponses d'un autre
+--      couple).
+--   2. Les "revoke update (colonnes)" des v11/v12 étaient sans effet :
+--      dans PostgreSQL, retirer un droit colonne par colonne ne change
+--      rien tant que le rôle garde le droit UPDATE sur toute la table
+--      (accordé par défaut par Supabase). Un couple pouvait donc se
+--      passer lui-même en abonnement actif ou en accès gratuit illimité,
+--      ou créer un couple déjà "actif" (policy "couple_insert" ouverte).
+--   3. Les fonctions security definer (pairage, codes gratuits,
+--      parrainage, migration d'abonnement…) pouvaient être appelées
+--      directement par n'importe qui via l'API Supabase, avec des
+--      identifiants choisis librement.
+-- Désormais, les comptes connectés ne peuvent modifier que les champs
+-- éditables depuis l'app ; tout le reste passe par le service role côté
+-- serveur (actions serveur, webhook Stripe). À exécuter une fois.
+-- ============================================================
+
+-- profiles : seuls prénom, nom et avatar sont modifiables par la personne elle-même.
+-- (Les profils sont créés par le trigger handle_new_user, jamais par l'app.)
+drop policy if exists "profil_insert" on public.profiles;
+revoke insert, update on public.profiles from anon, authenticated;
+grant update (prenom, nom, avatar_url, updated_at) on public.profiles to authenticated;
+
+-- couples : création réservée au serveur ; les membres ne modifient que
+-- le nom, la date d'anniversaire et le texte du pacte.
+drop policy if exists "couple_insert" on public.couples;
+revoke insert, update on public.couples from anon, authenticated;
+grant update (nom_couple, date_anniversaire, pacte_texte, pacte_modifie_par, pacte_modifie_le, updated_at)
+  on public.couples to authenticated;
+
+-- Fonctions sensibles : exécutables uniquement par le service role.
+revoke execute on function public.rejoindre_couple_via_token(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.rejoindre_couple_via_code(text, uuid) from public, anon, authenticated;
+revoke execute on function public.utiliser_code_gratuit(text, uuid) from public, anon, authenticated;
+revoke execute on function public.parrainer_couple(text, uuid) from public, anon, authenticated;
+revoke execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.initialiser_modules_couple(uuid) from public, anon, authenticated;
+revoke execute on function public.renumeroter_couples() from public, anon, authenticated;
+revoke execute on function public.backfill_module_pour_tous_les_couples(text) from public, anon, authenticated;
+
+grant execute on function public.rejoindre_couple_via_token(uuid, uuid) to service_role;
+grant execute on function public.rejoindre_couple_via_code(text, uuid) to service_role;
+grant execute on function public.utiliser_code_gratuit(text, uuid) to service_role;
+grant execute on function public.parrainer_couple(text, uuid) to service_role;
+grant execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) to service_role;
+grant execute on function public.initialiser_modules_couple(uuid) to service_role;
+grant execute on function public.renumeroter_couples() to service_role;
+grant execute on function public.backfill_module_pour_tous_les_couples(text) to service_role;
+
+-- Vérification après exécution : seules les adresses admin attendues
+-- doivent apparaître. Si une autre adresse est listée, la faille a pu
+-- être exploitée : repasse-la à false et vérifie les actions admin récentes.
+--   select email from public.profiles where is_admin = true;

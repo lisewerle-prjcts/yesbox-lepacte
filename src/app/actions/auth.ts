@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { rejoindreCoupleParCode, creerCoupleSolo } from '@/app/actions/couple'
+import { rejoindreCoupleParCode, creerCoupleSolo } from '@/lib/couple-join'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
