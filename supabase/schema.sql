@@ -1008,3 +1008,23 @@ grant execute on function public.backfill_module_pour_tous_les_couples(text) to 
 -- doivent apparaître. Si une autre adresse est listée, la faille a pu
 -- être exploitée : repasse-la à false et vérifie les actions admin récentes.
 --   select email from public.profiles where is_admin = true;
+
+-- ============================================================
+-- RGPD : CONSENTEMENT ET CONSERVATION 18 MOIS (v15)
+-- 1. Preuve du consentement à l'inscription (RGPD art. 7 et 9) :
+--    certification d'avoir 15 ans ou plus et consentement explicite au
+--    traitement des données sensibles (vie intime, convictions
+--    religieuses), horodatés. Colonnes renseignées côté serveur uniquement
+--    (non modifiables par les comptes, cf. v14).
+-- 2. Conservation portée de 13 à 18 mois : les couples déjà en période de
+--    conservation (accès payé terminé, compte pas encore clos) gagnent les
+--    5 mois supplémentaires.
+-- À exécuter une fois.
+-- ============================================================
+alter table public.profiles add column if not exists age_minimum_certifie_le timestamptz;
+alter table public.profiles add column if not exists consentement_donnees_sensibles_le timestamptz;
+
+update public.couples
+set data_retention_until = data_retention_until + interval '5 months'
+where data_retention_until is not null
+  and compte_resilie_le is null;

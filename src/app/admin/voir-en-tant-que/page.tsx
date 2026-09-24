@@ -5,8 +5,10 @@ import { CheckCircle, Lock, Clock } from 'lucide-react'
 
 interface Profile { id: string; prenom: string | null; email: string; couple_id: string | null; role: string | null }
 interface ModuleRow { id: string; couple_id: string; slug: string; statut: string; revealed: boolean }
-interface ReponseRow { id: string; module_id: string; user_id: string; question_slug: string; valeur: string | null }
-interface JournalRow { module_slug: string; user_id: string; question_slug: string; valeur: string | null }
+// Aucune valeur de réponse n'est lue ici : l'admin ne voit que la progression
+// (RGPD — les réponses sont réservées au couple).
+interface ReponseRow { module_id: string; user_id: string; question_slug: string }
+interface JournalRow { module_slug: string; user_id: string; question_slug: string }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   revealed: { label: 'Révélé', color: 'var(--sage)' },
@@ -33,7 +35,7 @@ export default async function VoirEnTantQuePage({
     <div className="mb-6">
       <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Voir en tant que</h1>
       <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-        Choisis un membre pour visualiser son espace exactement comme il/elle le voit — en lecture seule.
+        Choisis un membre pour suivre sa progression. Le contenu des réponses et des conclusions n&apos;est jamais affiché : il reste réservé au couple.
       </p>
     </div>
   )
@@ -69,12 +71,12 @@ export default async function VoirEnTantQuePage({
 
   const moduleIds = modules.map(m => m.id)
   const { data: reponsesData } = moduleIds.length
-    ? await supabase.from('reponses').select('id, module_id, user_id, question_slug, valeur').in('module_id', moduleIds)
+    ? await supabase.from('reponses').select('module_id, user_id, question_slug').in('module_id', moduleIds)
     : { data: [] as ReponseRow[] }
   const reponses = (reponsesData || []) as ReponseRow[]
 
   const { data: journalData } = member.couple_id
-    ? await supabase.from('journal_entries').select('module_slug, user_id, question_slug, valeur').eq('couple_id', member.couple_id)
+    ? await supabase.from('journal_entries').select('module_slug, user_id, question_slug').eq('couple_id', member.couple_id)
     : { data: [] as JournalRow[] }
   const journalEntries = (journalData || []) as JournalRow[]
 
@@ -114,11 +116,6 @@ export default async function VoirEnTantQuePage({
             const modData = modules.find(m => m.slug === moduleInfo.slug)
             const statutKey = modData?.revealed ? 'revealed' : (modData?.statut || 'locked')
             const status = STATUS_LABEL[statutKey] || STATUS_LABEL.locked
-            const mesReponses = modData ? reponsesFor(modData.id, member.id) : []
-            const reponsesPartner = modData && partner && modData.revealed ? reponsesFor(modData.id, partner.id) : []
-            const monApprentissage = journalEntries.find(e => e.module_slug === moduleInfo.slug && e.user_id === member.id && e.question_slug === 'apprentissage')?.valeur
-            const maSurprise = journalEntries.find(e => e.module_slug === moduleInfo.slug && e.user_id === member.id && e.question_slug === 'surprise')?.valeur
-
             return (
               <div key={moduleInfo.slug} className="card p-6">
                 <div className="flex items-center gap-3 mb-4 pb-4 flex-wrap" style={{ borderBottom: '1px solid var(--line)' }}>
@@ -135,48 +132,20 @@ export default async function VoirEnTantQuePage({
                   </span>
                 </div>
 
-                {mesReponses.length === 0 ? (
-                  <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>Pas encore de réponses de ce membre pour ce module.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {moduleInfo.questions.map(question => {
-                      const maReponse = mesReponses.find(r => r.question_slug === question.slug)
-                      const reponsePartner = reponsesPartner.find(r => r.question_slug === question.slug)
-                      if (!maReponse && !modData?.revealed) return null
-                      return (
-                        <div key={question.slug}>
-                          <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 8 }}>{question.texte}</p>
-                          <div className="grid sm:grid-cols-2 gap-3">
-                            <div className="surface p-3">
-                              <p className="font-semibold" style={{ fontSize: 11, color: 'var(--brand)', marginBottom: 4 }}>{member.prenom || 'Ce membre'}</p>
-                              <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                                {maReponse?.valeur || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Sans réponse</span>}
-                              </p>
-                            </div>
-                            {partner && (
-                              <div className="surface p-3">
-                                <p className="font-semibold" style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4 }}>{partner.prenom || 'Partenaire'}</p>
-                                <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                                  {modData?.revealed
-                                    ? (reponsePartner?.valeur || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Sans réponse</span>)
-                                    : <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>En attente de la révélation</span>}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {(monApprentissage || maSurprise) && (
-                  <div className="mt-4" style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '14px 16px', borderLeft: '3px solid var(--brand)' }}>
-                    <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.04em' }}>Conclusion</p>
-                    {monApprentissage && <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {monApprentissage} »</p>}
-                    {maSurprise && <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic', marginTop: 6 }}>« {maSurprise} »</p>}
-                  </div>
-                )}
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {[member, ...(partner ? [partner] : [])].map(p => {
+                    const repondues = modData ? new Set(reponsesFor(modData.id, p.id).map(r => r.question_slug)) : new Set<string>()
+                    const nbRepondues = moduleInfo.questions.filter(q => repondues.has(q.slug)).length
+                    const conclusionEcrite = journalEntries.some(e => e.module_slug === moduleInfo.slug && e.user_id === p.id)
+                    return (
+                      <div key={p.id} className="surface p-3">
+                        <p className="font-semibold" style={{ fontSize: 11, color: p.id === member.id ? 'var(--brand)' : 'var(--muted)', marginBottom: 4 }}>{p.prenom || p.email}</p>
+                        <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>{nbRepondues}/{moduleInfo.questions.length} questions répondues</p>
+                        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Conclusion : {conclusionEcrite ? 'écrite' : 'pas encore'}</p>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )
           })}

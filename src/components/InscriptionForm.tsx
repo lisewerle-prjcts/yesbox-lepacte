@@ -196,6 +196,22 @@ export default function InscriptionForm({
           />
         </div>
 
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" name="age_minimum" required className="mt-1 flex-shrink-0" />
+            <span className="text-sm text-gray-600">
+              <EditableText id="inscription.age">Je certifie avoir 15 ans ou plus.</EditableText>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" name="consentement_sensible" required className="mt-1 flex-shrink-0" />
+            <span className="text-sm text-gray-600">
+              <EditableText id="inscription.consentement" multiline>J&apos;accepte que mes réponses aux modules, qui peuvent concerner ma vie intime ou mes convictions religieuses, soient enregistrées pour le fonctionnement du programme. Elles ne sont visibles que par mon couple, et je peux retirer ce consentement à tout moment en supprimant mon compte.</EditableText>{' '}
+              <Link href="/confidentialite" target="_blank" className="text-magenta hover:underline">{t('Politique de confidentialité', 'Privacy policy')}</Link>
+            </span>
+          </label>
+        </div>
+
         <SubmitButton submitId={submitId} submitLabel={submitLabel} />
       </form>
 

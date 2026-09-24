@@ -6,5 +6,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: 'https://yesbox-lepacte.fr/tarifs', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: 'https://yesbox-lepacte.fr/inscription', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: 'https://yesbox-lepacte.fr/connexion', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: 'https://yesbox-lepacte.fr/confidentialite', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ]
 }

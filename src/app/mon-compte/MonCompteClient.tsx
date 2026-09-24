@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Trash2 } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
-  updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees,
+  updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, supprimerMonCompte,
 } from '@/app/actions/compte'
 import { annulerAbonnement, reprendreAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
@@ -42,6 +42,7 @@ export default function MonCompteClient({
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <PasswordCard />
         <MesDonneesCard />
+        <SupprimerCompteCard />
       </div>
     </div>
   )
@@ -91,8 +92,8 @@ function AbonnementCard({ abonnement }: { abonnement: CoupleAbonnement | null })
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
-              "Ce compte a été résilié après 13 mois sans abonnement actif. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
-              'This account was closed after 13 months without an active subscription. It can no longer be reactivated here: you need to start over with a new account.'
+              "Ce compte a été résilié après 18 mois sans abonnement actif. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
+              'This account was closed after 18 months without an active subscription. It can no longer be reactivated here: you need to start over with a new account.'
             )}
           </p>
         </div>
@@ -412,6 +413,73 @@ function MesDonneesCard() {
         <Download className="w-4 h-4" />
         {status === 'loading' ? t('Préparation…', 'Preparing…') : status === 'error' ? t('Erreur — réessaie', 'Error — try again') : t('Télécharger mes données', 'Download my data')}
       </button>
+    </div>
+  )
+}
+
+function SupprimerCompteCard() {
+  const t = useT()
+  const [ouvert, setOuvert] = useState(false)
+  const [motDePasse, setMotDePasse] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const motCle = t('SUPPRIMER', 'DELETE')
+
+  async function supprimer() {
+    setError(null)
+    setStatus('loading')
+    const res = await supprimerMonCompte(motDePasse)
+    if (res.error) {
+      setError(res.error)
+      setStatus('idle')
+      return
+    }
+    window.location.href = '/'
+  }
+
+  return (
+    <div className="card p-6" style={{ borderColor: '#f5c2c0' }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Trash2 className="w-4 h-4" style={{ color: '#c0392b' }} />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Supprimer mon compte', 'Delete my account')}</h2>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        {t(
+          'Ton compte, tes réponses et tes conclusions seront effacés définitivement. Si ton/ta partenaire garde son compte, votre espace couple reste ouvert, sans tes réponses. Si personne d’autre n’est dans l’espace, il est supprimé et l’abonnement en cours est arrêté immédiatement. Pense à télécharger tes données avant.',
+          'Your account, answers and conclusions will be permanently deleted. If your partner keeps their account, your couple space stays open for them, without your answers. If you are alone in the space, it is deleted and any current subscription is stopped immediately. Remember to download your data first.',
+        )}
+      </p>
+      {!ouvert ? (
+        <button onClick={() => setOuvert(true)} className="text-sm font-semibold py-2 px-4 rounded-lg" style={{ border: '1px solid #c0392b', color: '#c0392b' }}>
+          {t('Supprimer mon compte', 'Delete my account')}
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <label className="label">{t('Ton mot de passe', 'Your password')}</label>
+            <input type="password" className="input-field" autoComplete="current-password" value={motDePasse} onChange={e => setMotDePasse(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">{t(`Tape ${motCle} pour confirmer`, `Type ${motCle} to confirm`)}</label>
+            <input type="text" className="input-field" value={confirmation} onChange={e => setConfirmation(e.target.value)} />
+          </div>
+          {error && <p className="text-sm" style={{ color: '#c0392b' }}>{error}</p>}
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={supprimer}
+              disabled={status === 'loading' || !motDePasse || confirmation.trim().toUpperCase() !== motCle}
+              className="text-sm font-semibold py-2 px-4 rounded-lg text-white disabled:opacity-40"
+              style={{ background: '#c0392b' }}
+            >
+              {status === 'loading' ? t('Suppression…', 'Deleting…') : t('Supprimer définitivement', 'Delete permanently')}
+            </button>
+            <button onClick={() => { setOuvert(false); setError(null) }} className="text-sm py-2 px-4 text-gray-500">
+              {t('Annuler', 'Cancel')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

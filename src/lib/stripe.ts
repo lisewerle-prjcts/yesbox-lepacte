@@ -15,4 +15,4 @@ export const PRIX_ABONNEMENT_MENSUEL_ID = process.env.STRIPE_PRICE_ID_ABONNEMENT
 
 // Durée de conservation des données après la fin de l'accès payé (résiliation
 // ou échéance non renouvelée), avant clôture définitive du compte.
-export const RETENTION_MOIS = 13
+export const RETENTION_MOIS = 18

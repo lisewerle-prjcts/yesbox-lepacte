@@ -6,7 +6,7 @@ import { getLocale, getT } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Mentions légales',
-  description: 'Mentions légales et politique de confidentialité de YES BOX — Le Pacte.',
+  description: 'Mentions légales et conditions d’utilisation de YES BOX — Le Pacte.',
   robots: { index: false, follow: false },
 }
 
@@ -32,7 +32,10 @@ export default async function MentionsLegales() {
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.editeur.titre">Éditeur du site</EditableText></h2>
             <p><EditableText id="mentions.editeur.texte">Le site yesbox-lepacte.fr est édité par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
-              <li>{t('Nom :', 'Name:')} YES BOX</li>
+              <li>{t('Nom commercial :', 'Trade name:')} YES BOX</li>
+              <li>{t('Édité par :', 'Published by:')} Lise YESSOUROUR</li>
+              <li>{t('Adresse :', 'Address:')} 15 résidence des Charmilles, 78590 Noisy-le-Roi, France</li>
+              <li>{t('Responsable de la publication :', 'Publication director:')} Lise YESSOUROUR</li>
               <li>{t('Adresse e-mail :', 'Email address:')} <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a></li>
             </ul>
           </section>
@@ -41,7 +44,7 @@ export default async function MentionsLegales() {
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.hebergement.titre">Hébergement</EditableText></h2>
             <p><EditableText id="mentions.hebergement.texte">Le site est hébergé par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
-              <li>Vercel Inc. — 340 Pine Street, Suite 700, San Francisco, CA 94104, USA</li>
+              <li>Vercel Inc. — 440 N Barranca Ave #4133, Covina, CA 91723, {t('États-Unis', 'USA')} — {t('Tél.', 'Phone:')} +1 559 288 7060</li>
               <li>Supabase Inc. ({t('base de données', 'database')}) — 970 Toa Payoh North, {t('Singapour', 'Singapore')}</li>
               <li>Stripe Payments Europe, Ltd. ({t('paiement de l’abonnement', 'subscription payment')}) — {t('Irlande', 'Ireland')}</li>
             </ul>
@@ -50,27 +53,15 @@ export default async function MentionsLegales() {
           <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.donnees.titre">Données personnelles</EditableText></h2>
             <p>
-              <EditableText id="mentions.donnees.intro" multiline>Dans le cadre de l&apos;utilisation du site YES BOX, nous collectons uniquement les données nécessaires au fonctionnement du service :</EditableText>
-            </p>
-            <ul className="mt-3 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
-              <li>{t('Adresse e-mail (compte utilisateur)', 'Email address (user account)')}</li>
-              <li>{t('Prénom (personnalisation)', 'First name (personalization)')}</li>
-              <li>{t('Réponses aux modules (stockées de façon privée, accessibles au couple uniquement)', 'Module answers (stored privately, accessible only to the couple)')}</li>
-              <li>{t('Informations de pré-commande (nom, e-mail, adresse optionnelle)', 'Pre-order information (name, email, optional address)')}</li>
-              <li>{t('Données d’abonnement (statut, date de renouvellement) — le paiement lui-même est traité par Stripe, qui ne nous transmet jamais votre numéro de carte', 'Subscription data (status, renewal date) — payment itself is processed by Stripe, which never shares your card number with us')}</li>
-            </ul>
-            <p className="mt-4">
-              <EditableText id="mentions.donnees.stockage" multiline>Ces données sont stockées sur des serveurs sécurisés (Supabase). Elles ne sont ni vendues, ni transmises à des tiers. Chaque couple dispose d&apos;un espace isolé et privé, protégé par des règles d&apos;accès strictes (Row Level Security).</EditableText>
-            </p>
-            <p className="mt-3">
-              <EditableText id="mentions.donnees.rgpd" multiline>Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ce droit, contactez-nous à</EditableText> <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a>.
+              {t('La collecte et l’utilisation de vos données (bases légales, prestataires, transferts hors UE, durées de conservation, vos droits et la réclamation auprès de la CNIL) sont détaillées dans notre', 'How we collect and use your data (legal bases, providers, transfers outside the EU, retention periods, your rights and complaints to the CNIL) is detailed in our')}{' '}
+              <Link href="/confidentialite" style={{ color: 'var(--brand)' }}>{t('politique de confidentialité', 'privacy policy')}</Link>.
             </p>
           </section>
 
           <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.cookies.titre">Cookies</EditableText></h2>
             <p>
-              <EditableText id="mentions.cookies.texte" multiline>Le site utilise uniquement un cookie de session pour maintenir votre connexion. Aucun cookie publicitaire ou de tracking n&apos;est utilisé.</EditableText>
+              {t('Le site utilise uniquement des cookies strictement nécessaires : la session qui vous garde connecté·e et la mémorisation de votre langue. Aucun cookie publicitaire ou de mesure d’audience n’est utilisé.', 'The site only uses strictly necessary cookies: the session that keeps you logged in and remembering your language. No advertising or analytics cookies are used.')}
             </p>
           </section>
 
@@ -107,7 +98,7 @@ export default async function MentionsLegales() {
                 <strong style={{ color: 'var(--ink-2)' }}>{t('Après l\'arrêt de l\'abonnement :', 'After stopping the subscription:')}</strong> {t('une fois la période déjà payée terminée, seules les parties déjà réalisées (modules révélés, journal, CDD déjà rédigé) restent consultables dans votre espace ; les modules non commencés ou non terminés ne sont plus accessibles tant que l\'abonnement n\'est pas repris.', 'once the period you\'ve already paid for ends, only the parts you\'ve already completed (revealed modules, journal, an already-written CDD) remain viewable in your account; modules not started or not finished are no longer accessible until the subscription is resumed.')}
               </li>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Conservation des données et clôture du compte :', 'Data retention and account closure:')}</strong> {t('à compter de la fin de votre accès payé (arrêt du renouvellement ou échéance non reconduite), vos données sont conservées 13 mois. Passé ce délai, votre compte est définitivement clos : l\'abonnement ne peut plus être réactivé sur cet espace et vos réponses sont effacées. Pour continuer l\'aventure au-delà de ce délai, il faut recommencer le programme avec un nouveau compte.', 'starting from the end of your paid access (stopped renewal or a period that was not renewed), your data is kept for 13 months. After that period, your account is permanently closed: the subscription can no longer be reactivated on that account and your answers are deleted. To continue past this point, you need to start the program over with a new account.')}
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Conservation des données et clôture du compte :', 'Data retention and account closure:')}</strong> {t('à compter de la fin de votre accès payé (arrêt du renouvellement ou échéance non reconduite), vos données sont conservées 18 mois. Passé ce délai, votre compte est définitivement clos : l\'abonnement ne peut plus être réactivé sur cet espace et vos réponses sont effacées. Pour continuer l\'aventure au-delà de ce délai, il faut recommencer le programme avec un nouveau compte.', 'starting from the end of your paid access (stopped renewal or a period that was not renewed), your data is kept for 18 months. After that period, your account is permanently closed: the subscription can no longer be reactivated on that account and your answers are deleted. To continue past this point, you need to start the program over with a new account.')}
               </li>
               <li>
                 <strong style={{ color: 'var(--ink-2)' }}>{t('BAC annuel (Bilan Annuel de Couple) — 19 €/an :', 'Annual BAC (Bilan Annuel de Couple, or Yearly Couple Check-in) — €19/year:')}</strong> {t('abonnement annuel qui déclenche votre rappel et votre fiche avenant à la date anniversaire de votre couple, et vous permet de refaire l\'intégralité des modules si vous souhaitez recommencer le programme. Annulable à tout moment ; le renouvellement n\'est jamais automatique sans information préalable.', 'an annual subscription that triggers your reminder and your amendment worksheet on your couple\'s anniversary date, and lets you redo all the modules if you want to go through the program again. Cancel anytime; renewal is never automatic without prior notice.')}

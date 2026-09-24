@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       const coupleId = await trouverCoupleId(admin, subscription)
       if (!coupleId) break
 
-      // L'accès payé se termine ici : les 13 mois de conservation des
+      // L'accès payé se termine ici : les 18 mois de conservation des
       // données démarrent maintenant (cf. RETENTION_MOIS et la tâche
       // planifiée /api/cron/purger-comptes-expires).
       await admin.from('couples').update({

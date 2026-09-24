@@ -180,6 +180,8 @@ export const EN_CONTENT: Record<string, string> = {
   'inscription.seconnecter': 'Log in',
   'inscription.cgu.prefix': 'By creating an account, you agree to our',
   'inscription.cgu.lien': 'terms of use',
+  'inscription.age': 'I certify that I am 15 or older.',
+  'inscription.consentement': 'I agree that my module answers, which may relate to my intimate life or religious beliefs, are stored to run the program. Only my couple can see them, and I can withdraw this consent at any time by deleting my account.',
 
   // src/components/dashboard/DashboardNav.tsx
   'dashboard.nav.dashboard': 'Home',
@@ -347,4 +349,5 @@ export const EN_CONTENT: Record<string, string> = {
   'home.footer.link.inscription': 'Sign up',
   'home.footer.link.tarifs': 'Pricing',
   'home.footer.link.mentions': 'Legal Notice',
+  'home.footer.link.confidentialite': 'Privacy',
 }

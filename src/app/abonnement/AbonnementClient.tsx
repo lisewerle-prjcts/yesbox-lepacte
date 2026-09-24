@@ -53,8 +53,8 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
-              "Ce compte a été résilié après 13 mois sans abonnement actif : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
-              'This account was closed after 13 months without an active subscription: it can no longer be reactivated here — you need to start over with a new account.'
+              "Ce compte a été résilié après 18 mois sans abonnement actif : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
+              'This account was closed after 18 months without an active subscription: it can no longer be reactivated here — you need to start over with a new account.'
             )}
           </p>
         </div>
