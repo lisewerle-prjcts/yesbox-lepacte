@@ -5,12 +5,14 @@ import { createClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
+import { consentementManquant } from '@/lib/consentement'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+  if (await consentementManquant(supabase, user.id)) return { error: t(locale, 'Ton consentement est nécessaire pour enregistrer tes réponses.', 'Your consent is required to save your answers.') }
 
   const { error } = await supabase.from('reponses').upsert(
     { module_id: moduleId, user_id: user.id, question_slug: questionSlug, valeur },

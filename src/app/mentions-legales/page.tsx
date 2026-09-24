@@ -44,8 +44,8 @@ export default async function MentionsLegales() {
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.hebergement.titre">Hébergement</EditableText></h2>
             <p><EditableText id="mentions.hebergement.texte">Le site est hébergé par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
-              <li>Vercel Inc. — 440 N Barranca Ave #4133, Covina, CA 91723, {t('États-Unis', 'USA')} — {t('Tél.', 'Phone:')} +1 559 288 7060</li>
-              <li>Supabase Inc. ({t('base de données', 'database')}) — 970 Toa Payoh North, {t('Singapour', 'Singapore')}</li>
+              <li>Vercel Inc. — {t('Siège social :', 'Head office:')} 440 N Barranca Avenue #4133, Covina, CA 91723, {t('États-Unis', 'USA')} — {t('Contact :', 'Contact:')} <a href="https://vercel.com/contact" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand)' }}>vercel.com/contact</a> — {t('Site :', 'Website:')} <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand)' }}>vercel.com</a></li>
+              <li>Supabase Inc. ({t('base de données', 'database')}) — {t('données hébergées en Irlande (UE), région eu-west-1', 'data hosted in Ireland (EU), eu-west-1 region')}</li>
               <li>Stripe Payments Europe, Ltd. ({t('paiement de l’abonnement', 'subscription payment')}) — {t('Irlande', 'Ireland')}</li>
             </ul>
           </section>

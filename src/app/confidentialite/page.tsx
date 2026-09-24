@@ -34,7 +34,7 @@ export default async function Confidentialite() {
 
   const sousTraitants: [string, string, string][] = [
     ['Vercel Inc.', t('Hébergement du site', 'Website hosting'), t('États-Unis', 'United States')],
-    ['Supabase Inc.', t('Base de données et authentification', 'Database and authentication'), t('Singapour / États-Unis', 'Singapore / United States')],
+    ['Supabase Inc.', t('Base de données et authentification', 'Database and authentication'), t('Irlande (UE) — base hébergée dans la région eu-west-1', 'Ireland (EU) — database hosted in the eu-west-1 region')],
     ['Stripe Payments Europe, Ltd.', t('Paiement de l’abonnement (nous ne voyons jamais votre numéro de carte)', 'Subscription payment (we never see your card number)'), t('Irlande (UE), avec transferts possibles vers les États-Unis', 'Ireland (EU), with possible transfers to the United States')],
     ['Google LLC (Gmail)', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
     ['Resend Inc.', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
@@ -118,8 +118,8 @@ export default async function Confidentialite() {
             <h2 className={h2} style={h2Style}>{t('Transferts hors de l’Union européenne', 'Transfers outside the European Union')}</h2>
             <p>
               {t(
-                'Certains prestataires sont situés hors de l’UE (États-Unis, Singapour). Ces transferts sont encadrés par les clauses contractuelles types adoptées par la Commission européenne (art. 46 RGPD) et, pour les sociétés américaines certifiées, par le cadre de protection des données UE–États-Unis (Data Privacy Framework, décision d’adéquation du 10 juillet 2023). Vous pouvez obtenir une copie de ces garanties en nous écrivant.',
-                'Some providers are located outside the EU (United States, Singapore). These transfers are covered by the standard contractual clauses adopted by the European Commission (GDPR art. 46) and, for certified US companies, by the EU–US Data Privacy Framework (adequacy decision of 10 July 2023). You can get a copy of these safeguards by writing to us.',
+                'Votre base de données (réponses, comptes) est hébergée dans l’Union européenne, en Irlande. Certains prestataires techniques sont toutefois situés aux États-Unis (hébergement du site, envoi des e-mails, et le cas échéant paiement ou assistance technique). Ces transferts sont encadrés par les clauses contractuelles types adoptées par la Commission européenne (art. 46 RGPD) et, pour les sociétés américaines certifiées, par le cadre de protection des données UE–États-Unis (Data Privacy Framework, décision d’adéquation du 10 juillet 2023). Vous pouvez obtenir une copie de ces garanties en nous écrivant.',
+                'Your database (answers, accounts) is hosted in the European Union, in Ireland. Some technical providers are however located in the United States (website hosting, email delivery, and where applicable payment or technical support). These transfers are covered by the standard contractual clauses adopted by the European Commission (GDPR art. 46) and, for certified US companies, by the EU–US Data Privacy Framework (adequacy decision of 10 July 2023). You can get a copy of these safeguards by writing to us.',
               )}
             </p>
           </section>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isCouplePaired } from '@/lib/couple-status'
 import DashboardNav from '@/components/dashboard/DashboardNav'
+import { aDonneSonConsentement } from '@/lib/consentement'
 
 export const metadata = { title: 'Accueil' }
 
@@ -10,6 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  if (!aDonneSonConsentement(profile)) redirect('/consentement')
   const paired = await isCouplePaired(supabase, profile?.couple_id)
   return (
     <div style={{ minHeight: '100vh' }}>
