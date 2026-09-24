@@ -56,7 +56,6 @@ export const EN_CONTENT: Record<string, string> = {
   'tarifs.pro.features.1': 'Reveal sessions together',
   'tarifs.pro.features.2': "Shared couple's journal",
   'tarifs.pro.features.3': "Your personalized couple's pact",
-  'tarifs.pro.features.4': '30-day money-back guarantee',
   'tarifs.bac.tag': 'Annual Check-in',
   'tarifs.bac.desc': 'Annual Couple Check-in · activate later',
   'tarifs.bac.features.0': 'Annual reminder on your anniversary',
@@ -65,8 +64,6 @@ export const EN_CONTENT: Record<string, string> = {
   'tarifs.bac.features.3': 'New questions every year',
   'tarifs.bac.features.4': 'Cancel anytime',
   'tarifs.bac.cta': 'Later, in the app',
-  'tarifs.garantie.titre': '30-Day Guarantee',
-  'tarifs.garantie.texte': "If you finish all 10 modules and aren't happy, we'll refund you in full. No questions asked. Because we truly believe in this program.",
   'tarifs.footer.prefix': 'Subscription details, cancellation, and the rules of the game:',
   'tarifs.footer.link': 'terms of use',
 
