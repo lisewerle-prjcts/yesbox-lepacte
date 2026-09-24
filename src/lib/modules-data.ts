@@ -8,15 +8,15 @@ type Conclusion = Record<ConclusionSlug, ConclusionTexte>
  */
 export const CONCLUSION_PAR_DEFAUT: Conclusion = {
   apprentissage: {
-    label: "Qu'est-ce qui t'a marqué lors de ce module ? Qu'est-ce qui t'a fait plaisir ?",
-    placeholder: "Ce qui t'a marqué, ce qui t'a fait plaisir…",
-    label_en: 'What struck you during this module? What made you happy?',
-    placeholder_en: 'What struck you, what made you happy…',
+    label: "Qu'est-ce qui t'a marqué·e dans ce module ?",
+    placeholder: "Ce qui t'a marqué·e…",
+    label_en: 'What stood out to you in this module?',
+    placeholder_en: 'What stood out to you…',
   },
   surprise: {
-    label: "Est-ce que tu as été ému·e par une question ou une réponse donnée par l'autre ?",
+    label: "Qu'est-ce qui t'a ému·e ?",
     placeholder: "Ce qui t'a ému·e…",
-    label_en: 'Were you moved by a question or by one of your partner\'s answers?',
+    label_en: 'What moved you?',
     placeholder_en: 'What moved you…',
   },
 }
