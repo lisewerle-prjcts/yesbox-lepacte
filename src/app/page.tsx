@@ -3,14 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
-import PrecommandeModal from '@/components/PrecommandeModal'
+import InscriptionModal from '@/components/InscriptionModal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import { MODULES } from '@/lib/modules-data'
 import { localizeModules } from '@/lib/i18n/module-text'
-import { ArrowRight, Check, Menu, X, User, Users, Heart, MessageCircle, Zap, FileText, RefreshCw } from 'lucide-react'
+import { ArrowRight, Check, Menu, X } from 'lucide-react'
 
-const MODULE_ICONS = [User, Users, Heart, FileText, Users, MessageCircle, Heart, Zap, FileText, RefreshCw]
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
   { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on conflict saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
@@ -120,9 +119,6 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <div className="tag-brand mb-6 mx-auto w-fit">
-          <EditableText id="home.hero.badge">✦ Lancement le 1er septembre 2026</EditableText>
-        </div>
         <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-6" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
@@ -139,7 +135,8 @@ export default function LandingPage() {
           </a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
-          {['✦ Module 1 gratuit pour vous deux', '✦ À votre rythme', '✦ Lancement 1er sept. 2026', '✦ Résiliable à tout moment'].map((badge, i) => (
+          {/* Identifiants fixes : le badge n°2 (date de lancement) a été retiré. */}
+          {([[0, '✦ Module 1 gratuit pour vous deux'], [1, '✦ À votre rythme'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
             <span key={i}><EditableText id={`home.hero.badges.${i}`}>{badge}</EditableText></span>
           ))}
         </div>
@@ -209,13 +206,9 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-3">
             {modules.map((m, i) => {
-              const Icon = MODULE_ICONS[i] || User
               return (
               <div key={m.slug} className="card flex items-center gap-5 p-5">
                 <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
-                <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 38, height: 38, background: 'var(--cream)', borderRadius: 10, border: '1px solid var(--line)' }}>
-                  <Icon className="w-4 h-4" style={{ color: 'var(--ink-2)' }} />
-                </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${m.slug}.titre`}>{m.titre}</EditableText></span>
@@ -312,8 +305,7 @@ export default function LandingPage() {
               <EditableText id="home.tarifs.title">Un abonnement simple. Une vie de rendez-vous.</EditableText>
             </h2>
             <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
-              <EditableText id="home.tarifs.subtitle.prefix">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation. Lancement le</EditableText>{' '}
-              <strong style={{ color: 'var(--ink)' }}><EditableText id="home.tarifs.subtitle.date">1er septembre 2026</EditableText></strong>.
+              <EditableText id="home.tarifs.subtitle">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation.</EditableText>
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
@@ -405,7 +397,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {modalOpen && <PrecommandeModal onClose={() => setModalOpen(false)} />}
+      {modalOpen && <InscriptionModal onClose={() => setModalOpen(false)} />}
     </div>
   )
 }

@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Download } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
-  adminUpdateCouple, adminDeleteCouple, adminUpdateProfile, adminGetCoupleArchive,
+  adminUpdateCouple, adminDeleteCouple, adminUpdateProfile,
 } from '@/app/actions/admin'
 
 interface UnassignedMember { id: string; prenom: string | null; nom: string | null; email: string; role: string | null }
@@ -89,7 +89,6 @@ function CoupleCard({
   const [saving, setSaving] = useState(false)
   const [assignChoice, setAssignChoice] = useState('')
   const [busy, setBusy] = useState(false)
-  const [downloading, setDownloading] = useState(false)
 
   async function save() {
     setSaving(true)
@@ -106,23 +105,6 @@ function CoupleCard({
     }
     setEditing(false)
     router.refresh()
-  }
-
-  async function downloadArchive() {
-    setDownloading(true)
-    const res = await adminGetCoupleArchive(couple.id)
-    setDownloading(false)
-    if ('error' in res) {
-      alert(res.error)
-      return
-    }
-    const blob = new Blob([res.content], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = res.filename
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   async function remove() {
@@ -168,9 +150,6 @@ function CoupleCard({
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
             Créé le {new Date(couple.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
-          <button onClick={downloadArchive} disabled={downloading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)', opacity: downloading ? 0.6 : 1 }}>
-            <Download className="w-3.5 h-3.5" /> {downloading ? 'Préparation…' : 'Télécharger les réponses'}
-          </button>
           <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
             <Pencil className="w-3.5 h-3.5" /> Modifier
           </button>

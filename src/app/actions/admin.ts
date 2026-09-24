@@ -9,9 +9,8 @@ import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
-import { MODULES, conclusionDuModule } from '@/lib/modules-data'
-import type { QuestionType, Question } from '@/types'
-import { formatAnswer } from '@/lib/questions'
+import { MODULES } from '@/lib/modules-data'
+import type { QuestionType } from '@/types'
 
 function revalidateModuleLists() {
   revalidatePath('/admin/contenu')
@@ -422,89 +421,6 @@ export async function adminDeleteUser(userId: string) {
   revalidatePath('/admin/couples')
   revalidatePath('/admin/securite')
   return { success: true }
-}
-
-function fmtAnswer(q: Question, val: string | null | undefined): string {
-  return formatAnswer(q, val) ?? '(pas de réponse)'
-}
-
-export async function adminGetCoupleArchive(coupleId: string) {
-  await assertAdmin()
-  const admin = createAdminClient()
-
-  const { data: couple } = await admin
-    .from('couples')
-    .select('numero, nom_couple, date_anniversaire, pairing_code')
-    .eq('id', coupleId)
-    .single()
-  if (!couple) return { error: 'Couple introuvable' }
-
-  const [{ data: members }, { data: modules }, { data: journal }, effectiveModules] = await Promise.all([
-    admin.from('profiles').select('id, prenom, nom, email, role').eq('couple_id', coupleId),
-    admin.from('modules').select('id, slug').eq('couple_id', coupleId),
-    admin.from('journal_entries').select('module_slug, user_id, question_slug, valeur').eq('couple_id', coupleId),
-    getEffectiveModules(),
-  ])
-
-  const moduleIds = (modules || []).map(m => m.id)
-  const { data: reponses } = moduleIds.length
-    ? await admin.from('reponses').select('module_id, user_id, question_slug, valeur').in('module_id', moduleIds)
-    : { data: [] }
-
-  const membersList = members || []
-
-  const lines: string[] = []
-  const titre = `Couple ${couple.numero}${couple.nom_couple ? ` — ${couple.nom_couple}` : ''}`
-  lines.push('YES BOX — Le Pacte — Archive des réponses')
-  lines.push(titre)
-  if (couple.date_anniversaire) lines.push(`Date de couple : ${couple.date_anniversaire}`)
-  if (couple.pairing_code) lines.push(`Code couple : ${couple.pairing_code}`)
-  lines.push(`Membres : ${membersList.map(m => `${[m.prenom, m.nom].filter(Boolean).join(' ') || '—'} <${m.email}>`).join(' & ') || '—'}`)
-  lines.push(`Généré le ${new Date().toLocaleString('fr-FR')}`)
-  lines.push('')
-
-  for (const modInfo of effectiveModules) {
-    const mod = (modules || []).find(m => m.slug === modInfo.slug)
-    lines.push('='.repeat(60))
-    lines.push(`Module : ${modInfo.titre}`)
-    lines.push('='.repeat(60))
-
-    if (!mod) {
-      lines.push('(module non commencé)')
-      lines.push('')
-      continue
-    }
-
-    for (const q of modInfo.questions) {
-      lines.push(`- ${q.texte}`)
-      for (const member of membersList) {
-        const r = (reponses || []).find(r => r.module_id === mod.id && r.user_id === member.id && r.question_slug === q.slug)
-        lines.push(`  ${member.prenom || member.email} : ${fmtAnswer(q, r?.valeur)}`)
-      }
-      lines.push('')
-    }
-
-    const conclusionsCeModule = (journal || []).filter(j => j.module_slug === modInfo.slug)
-    if (conclusionsCeModule.length) {
-      lines.push('Conclusions :')
-      for (const member of membersList) {
-        const appris = conclusionsCeModule.find(j => j.user_id === member.id && j.question_slug === 'apprentissage')?.valeur
-        const surpris = conclusionsCeModule.find(j => j.user_id === member.id && j.question_slug === 'surprise')?.valeur
-        if (appris?.trim() || surpris?.trim()) {
-          const conclusion = conclusionDuModule(modInfo)
-          lines.push(`  ${member.prenom || member.email} — ${conclusion.apprentissage.label} ${appris?.trim() || '—'}`)
-          lines.push(`  ${member.prenom || member.email} — ${conclusion.surprise.label} ${surpris?.trim() || '—'}`)
-        }
-      }
-      lines.push('')
-    }
-  }
-
-  return {
-    success: true as const,
-    filename: `yesbox-couple-${couple.numero}-archive.txt`,
-    content: lines.join('\n'),
-  }
 }
 
 interface NewModuleInput {

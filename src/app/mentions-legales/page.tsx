@@ -33,7 +33,7 @@ export default async function MentionsLegales() {
             <p><EditableText id="mentions.editeur.texte">Le site yesbox-lepacte.fr est édité par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>{t('Nom :', 'Name:')} YES BOX</li>
-              <li>{t('Adresse e-mail :', 'Email address:')} <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a></li>
+              <li>{t('Adresse e-mail :', 'Email address:')} <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a></li>
             </ul>
           </section>
 
@@ -63,7 +63,7 @@ export default async function MentionsLegales() {
               <EditableText id="mentions.donnees.stockage" multiline>Ces données sont stockées sur des serveurs sécurisés (Supabase). Elles ne sont ni vendues, ni transmises à des tiers. Chaque couple dispose d&apos;un espace isolé et privé, protégé par des règles d&apos;accès strictes (Row Level Security).</EditableText>
             </p>
             <p className="mt-3">
-              <EditableText id="mentions.donnees.rgpd" multiline>Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ce droit, contactez-nous à</EditableText> <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>.
+              <EditableText id="mentions.donnees.rgpd" multiline>Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour exercer ce droit, contactez-nous à</EditableText> <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a>.
             </p>
           </section>
 
@@ -113,9 +113,6 @@ export default async function MentionsLegales() {
                 <strong style={{ color: 'var(--ink-2)' }}>{t('BAC annuel (Bilan Annuel de Couple) — 19 €/an :', 'Annual BAC (Bilan Annuel de Couple, or Yearly Couple Check-in) — €19/year:')}</strong> {t('abonnement annuel qui déclenche votre rappel et votre fiche avenant à la date anniversaire de votre couple, et vous permet de refaire l\'intégralité des modules si vous souhaitez recommencer le programme. Annulable à tout moment ; le renouvellement n\'est jamais automatique sans information préalable.', 'an annual subscription that triggers your reminder and your amendment worksheet on your couple\'s anniversary date, and lets you redo all the modules if you want to go through the program again. Cancel anytime; renewal is never automatic without prior notice.')}
               </li>
               <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Garantie :', 'Guarantee:')}</strong> {t('si après avoir terminé les 10 modules vous n\'êtes pas satisfait·s, nous vous remboursons intégralement dans les 30 jours suivant la fin du programme, sans justification.', 'if you\'re not satisfied after completing all 10 modules, we\'ll give you a full refund within 30 days of finishing the program, no questions asked.')}
-              </li>
-              <li>
                 {t('Les tarifs sont indiqués par couple (un seul abonnement pour les deux membres) et peuvent évoluer ; toute modification vous sera communiquée avant d\'être appliquée à votre abonnement en cours.', 'Prices are shown per couple (a single subscription covers both members) and may change; you\'ll be notified of any change before it applies to your current subscription.')}
               </li>
             </ul>
@@ -148,7 +145,7 @@ export default async function MentionsLegales() {
           <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.contact.titre">Contact</EditableText></h2>
             <p>
-              <EditableText id="mentions.contact.texte">Pour toute question :</EditableText> <a href="mailto:contact@yesbox-lepacte.fr" style={{ color: 'var(--brand)' }}>contact@yesbox-lepacte.fr</a>
+              <EditableText id="mentions.contact.texte">Pour toute question :</EditableText> <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a>
             </p>
           </section>
 

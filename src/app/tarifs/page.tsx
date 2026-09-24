@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
-import PrecommandeModal from '@/components/PrecommandeModal'
+import InscriptionModal from '@/components/InscriptionModal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { Check, ArrowRight } from 'lucide-react'
 
 const FREE_FEATURES = ['Module "Moi et toi" pour chaque membre du couple', '5 questions introspectives', 'Espace couple privé', 'Aucune carte bancaire requise']
-const PRO_FEATURES = ["L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)", 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple personnalisé', 'Garantie 30 jours satisfait ou remboursé']
+const PRO_FEATURES = ["L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)", 'Sessions de révélation à deux', 'Journal de couple', 'Votre CDD de couple personnalisé']
 const BAC_FEATURES = ['Rappel annuel à votre date anniversaire', 'Fiche avenant générée', 'Refaites tous les modules si vous voulez recommencer', 'Nouvelles questions chaque année', 'Annulable à tout moment']
 
 export default function TarifsPage() {
@@ -28,8 +28,7 @@ export default function TarifsPage() {
             <EditableText id="tarifs.title">Un abonnement simple. Une vie de rendez-vous.</EditableText>
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
-            <EditableText id="tarifs.subtitle.prefix">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation. Lancement le</EditableText>{' '}
-            <strong style={{ color: 'var(--ink)' }}><EditableText id="tarifs.subtitle.date">1er septembre 2026</EditableText></strong>.
+            <EditableText id="tarifs.subtitle">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation.</EditableText>
           </p>
         </div>
 
@@ -68,9 +67,8 @@ export default function TarifsPage() {
               </div>
             ))}
             <button onClick={() => setModal(true)} className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
-              <EditableText id="tarifs.pro.cta">Pré-commander</EditableText> <ArrowRight className="w-4 h-4" />
+              <EditableText id="tarifs.pro.cta.inscription">Je m&apos;inscris</EditableText> <ArrowRight className="w-4 h-4" />
             </button>
-            <p className="text-center" style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}><EditableText id="tarifs.pro.footnote">Aucun paiement maintenant · au lancement</EditableText></p>
           </div>
 
           {/* BAC annuel */}
@@ -91,22 +89,13 @@ export default function TarifsPage() {
           </div>
         </div>
 
-        {/* Garantie */}
-        <div className="card p-6 text-center" style={{ maxWidth: 520, margin: '0 auto' }}>
-          <div className="text-3xl mb-3">🛡️</div>
-          <h3 className="font-serif font-bold mb-2" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="tarifs.garantie.titre">Garantie 30 jours</EditableText></h3>
-          <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7 }}>
-            <EditableText id="tarifs.garantie.texte" multiline>Si après avoir terminé les 10 modules vous n&apos;êtes pas satisfait·s, on vous rembourse intégralement. Sans question. Parce qu&apos;on croit vraiment à ce programme.</EditableText>
-          </p>
-        </div>
-
         <p className="text-center mt-8" style={{ fontSize: 12, color: 'var(--muted)' }}>
           <EditableText id="tarifs.footer.prefix">Détail des abonnements, résiliation et règles du jeu :</EditableText>{' '}
           <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}><EditableText id="tarifs.footer.link">conditions d&apos;utilisation</EditableText></Link>.
         </p>
       </main>
 
-      {modal && <PrecommandeModal onClose={() => setModal(false)} />}
+      {modal && <InscriptionModal onClose={() => setModal(false)} />}
     </div>
   )
 }

@@ -12,24 +12,6 @@ const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multili
     default: WELCOME_EMAIL_DEFAULTS.email_bienvenue_body,
     multiline: true,
   },
-  precommande_success: {
-    label: 'Message après pré-commande (affiché dans le modal)',
-    default: 'Ta place est réservée ! Tu recevras un email dès l\'ouverture le 1er septembre 2026. À très vite.',
-    multiline: true,
-  },
-  email_confirmation_subject: {
-    label: 'Objet de l\'email de confirmation (envoyé au pré-commandeur)',
-    default: 'Ta pré-commande YES BOX est confirmée ✦',
-  },
-  email_confirmation_body: {
-    label: 'Corps de l\'email de confirmation (pré-commandeur)',
-    default: `Bonjour {prenom},\n\nMerci pour ta pré-commande ! Tu fais partie des premiers couples à rejoindre YES BOX — Le Pacte.\n\nLe programme ouvre le 1er septembre 2026. Tu recevras un email dès que tu pourras accéder à ton espace couple et commencer le Module 1 gratuitement.\n\nÀ très vite,\nL'équipe YES BOX`,
-    multiline: true,
-  },
-  email_admin_subject: {
-    label: 'Objet de l\'email de notification admin',
-    default: '✦ Nouvelle pré-commande — {prenom}',
-  },
   module_debloque_message: {
     label: 'Message affiché quand un module est débloqué',
     default: 'Le module suivant est maintenant disponible. À vous deux de décider quand vous êtes prêts.',
