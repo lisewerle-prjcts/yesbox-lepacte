@@ -9,8 +9,10 @@ export const runtime = 'nodejs'
 // être réactivé sur ce couple (cf. demarrerAbonnement) : les réponses et le
 // journal sont effacés, et il faut recommencer avec un nouveau compte.
 export async function GET(req: Request) {
+  // Refuse tout appel si CRON_SECRET n'est pas configuré : sans secret, la
+  // route (qui efface des données) serait ouverte à n'importe qui.
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
