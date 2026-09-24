@@ -7,6 +7,7 @@ import { t } from '@/lib/i18n/locale'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { conclusionDuModule } from '@/lib/modules-data'
 import { formatAnswer } from '@/lib/questions'
+import { supprimerCompte } from '@/lib/suppression-compte'
 
 export async function updateMesInfos(nom: string, prenom: string) {
   const supabase = await createClient()
@@ -204,4 +205,30 @@ export async function telechargerMesDonnees() {
     filename: 'yesbox-mes-donnees.txt',
     content: lines.join('\n'),
   }
+}
+
+// Suppression définitive du compte par la personne elle-même (droit à
+// l'effacement, RGPD art. 17). Mot de passe redemandé pour éviter une
+// suppression depuis une session laissée ouverte.
+export async function supprimerMonCompte(motDePasse: string) {
+  const supabase = await createClient()
+  const locale = await getLocale()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({ email: user.email, password: motDePasse })
+  if (reauthError) return { error: t(locale, 'Mot de passe incorrect', 'Incorrect password') }
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).single()
+  if (profile?.is_admin) {
+    return { error: t(locale, 'Un compte admin ne peut pas être supprimé depuis cette page.', 'An admin account cannot be deleted from this page.') }
+  }
+
+  const { error } = await supprimerCompte(admin, user.id)
+  if (error) return { error }
+
+  await supabase.auth.signOut()
+  revalidatePath('/', 'layout')
+  return { success: true }
 }

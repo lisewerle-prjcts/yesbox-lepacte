@@ -29,8 +29,8 @@ export async function demarrerAbonnement() {
 
   if (estCompteResilie(couple)) {
     return { error: t(locale,
-      "Ce compte a été résilié après 13 mois d'inactivité de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
-      'This account was closed after 13 months without an active subscription: the subscription cannot be reactivated on this space. You need to start over with a new account.'
+      "Ce compte a été résilié après 18 mois d'inactivité de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
+      'This account was closed after 18 months without an active subscription: the subscription cannot be reactivated on this space. You need to start over with a new account.'
     ) }
   }
   if (estAbonnementActif(couple)) {

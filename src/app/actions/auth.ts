@@ -50,6 +50,16 @@ export async function inscription(formData: FormData) {
 
   const { prenom, email, password } = parsed.data
 
+  // Âge minimum (majorité numérique en France : 15 ans) et consentement
+  // explicite au traitement des données sensibles (RGPD art. 9 : religion,
+  // vie intime). Vérifiés ici aussi, pas seulement dans le formulaire.
+  if (formData.get('age_minimum') !== 'on') {
+    return { error: t(locale, "L'inscription est réservée aux personnes de 15 ans ou plus.", 'You must be at least 15 years old to sign up.') }
+  }
+  if (formData.get('consentement_sensible') !== 'on') {
+    return { error: t(locale, 'Ton consentement est nécessaire pour utiliser le programme.', 'Your consent is required to use the program.') }
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -70,9 +80,11 @@ export async function inscription(formData: FormData) {
   let partnerCodeError: string | null = null
 
   if (data.user) {
-    await supabase
+    // Preuve du consentement (RGPD art. 7) : horodatée sur le profil.
+    const maintenant = new Date().toISOString()
+    await createAdminClient()
       .from('profiles')
-      .update({ prenom })
+      .update({ prenom, age_minimum_certifie_le: maintenant, consentement_donnees_sensibles_le: maintenant })
       .eq('id', data.user.id)
 
     if (partnerCode) {

@@ -9,6 +9,7 @@ import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
 import type { QuestionType } from '@/types'
 
@@ -406,16 +407,8 @@ export async function adminDeleteUser(userId: string) {
   await assertAdmin()
   const admin = createAdminClient()
 
-  const { data: profile } = await admin.from('profiles').select('couple_id').eq('id', userId).single()
-  const coupleId = profile?.couple_id
-
-  const { error } = await admin.auth.admin.deleteUser(userId)
-  if (error) return { error: error.message }
-
-  if (coupleId) {
-    const { count } = await admin.from('profiles').select('id', { count: 'exact', head: true }).eq('couple_id', coupleId)
-    if (!count) await admin.from('couples').delete().eq('id', coupleId)
-  }
+  const { error } = await supprimerCompte(admin, userId)
+  if (error) return { error }
 
   revalidatePath('/admin/utilisateurs')
   revalidatePath('/admin/couples')
