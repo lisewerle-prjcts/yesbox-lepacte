@@ -127,9 +127,9 @@ export default function LandingPage() {
           <EditableText id="home.hero.subtitle" multiline>Un programme en 10 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.</EditableText>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
-          <Link href="/inscription" className="btn-brand lg">
+          <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             <EditableText id="home.hero.cta.primary">Inscription au module 1 — Gratuit</EditableText> <ArrowRight className="w-4 h-4" />
-          </Link>
+          </button>
           <a href="#modules" className="btn-ghost lg">
             <EditableText id="home.hero.cta.secondary">Voir le programme</EditableText>
           </a>
