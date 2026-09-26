@@ -312,8 +312,8 @@ export default function LandingPage() {
       <section className="py-20" style={{ background: 'var(--cream-2)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
-            <div className="eyebrow justify-center mb-3"><EditableText id="home.temoignages.eyebrow">Ils ont signé leur pacte</EditableText></div>
-            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title">Ce qu&apos;ils ont vraiment changé.</EditableText></h2>
+            <div className="eyebrow justify-center mb-3"><EditableText id="home.temoignages.eyebrow.v2">Ces couples ont signé leur pacte</EditableText></div>
+            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title.v2">Ce que ça a vraiment changé pour eux.</EditableText></h2>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {temoignagesList.map((item, i) => (
