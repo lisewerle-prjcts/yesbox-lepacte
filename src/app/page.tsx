@@ -22,7 +22,7 @@ const POUR_QUI = (t: (fr: string, en: string) => string) => [
   { titre: t('Vous préparez votre mariage', "You're planning your wedding"), desc: t('Et vous voulez que la préparation porte sur vous deux — pas seulement sur le plan de table.', 'And you want the planning to be about the two of you — not just the seating chart.') },
   { titre: t("Vous vous engagez bientôt", "You're making a commitment soon"), desc: t("Emménagement, achat commun, premier enfant : un nouveau cap, qui mérite qu'on s'y prépare.", 'Moving in together, buying a home, your first child: a new chapter worth preparing for.') },
   { titre: t("Vous voulez éviter les non-dits", "You want to avoid the things left unsaid"), desc: t("Vous sentez qu'il y a des sujets qu'on évite, des conversations qu'on remet à plus tard.", "You can sense there are topics you're avoiding, conversations you keep putting off.") },
-  { titre: t('Vous aimez les choses faites bien', 'You like doing things right'), desc: t('Pas de thérapie en urgence : une démarche posée, intentionnelle, à votre rythme.', 'No crisis therapy — just a calm, intentional process, at your own pace.') },
+  { titre: t('Vous aimez les choses bien faites', 'You like doing things right'), desc: t('Pas de thérapie en urgence : une démarche posée, intentionnelle, à votre rythme.', 'No crisis therapy — just a calm, intentional process, at your own pace.') },
   { titre: t('Vous voulez écrire vos vœux', 'You want to write your vows'), desc: t("Et vous ne savez pas par où commencer. Le programme se termine par cet exercice, accompagné.", "And you don't know where to start. The program ends with this exercise, guided every step of the way.") },
   { titre: t("Vous croyez à l'engagement long", 'You believe in the long game'), desc: t('Et vous voulez vous donner les outils pour le faire durer — pas le subir.', 'And you want the tools to make it last — not just endure it.') },
 ]
@@ -215,6 +215,15 @@ export default function LandingPage() {
                 {m.n === 10 && <span className="tag-muted flex-shrink-0">{t('Annuel', 'Yearly')}</span>}
               </div>
             )})}
+          </div>
+          <div className="text-center" style={{ maxWidth: 680, margin: '40px auto 0', fontSize: 14.5, lineHeight: 1.7, color: 'var(--muted)' }}>
+            <p>
+              <EditableText id="home.modules.duree" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <EditableText id="home.modules.infos.prefix">Pour plus d&apos;informations, lire les</EditableText>{' '}
+              <Link href="/mentions-legales" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link">mentions légales</EditableText></Link>.
+            </p>
           </div>
         </div>
       </section>

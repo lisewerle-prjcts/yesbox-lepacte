@@ -47,7 +47,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.duree.titre">Durée des modules</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.duree.texte" multiline>Chaque module contient une quinzaine de questions. Il faut compter 45 à 60 minutes pour répondre chacun·e de son côté, révéler les réponses et les découvrir à deux, puis noter ses remarques dans le journal.</EditableText>
+              <EditableText id="regles.duree.texte" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler (réponses chacun·e de son côté, révélation, puis quelques notes dans le journal). Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
             </p>
           </li>
           <li>

@@ -125,6 +125,9 @@ export default async function MentionsLegales() {
                 <strong style={{ color: 'var(--ink-2)' }}>{t('La révélation :', 'The reveal:')}</strong> {t('un module n\'est révélé que lorsque les deux membres ont terminé leurs réponses. C\'est à ce moment que le module suivant se débloque.', 'a module is only revealed once both members have finished answering. That\'s when the next module unlocks.')}
               </li>
               <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Durée des modules :', 'Module length:')}</strong> {t('chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.', 'each module has between 10 and 15 questions. Together, plan for 30 to 60 minutes, depending on the conversations they spark. In all, that means setting aside 9 short evenings.')}
+              </li>
+              <li>
                 <strong style={{ color: 'var(--ink-2)' }}>{t('Confidentialité :', 'Privacy:')}</strong> {t('les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers.', 'your answers stay strictly private between the two of you; they are never shared with third parties.')}
               </li>
               <li>
