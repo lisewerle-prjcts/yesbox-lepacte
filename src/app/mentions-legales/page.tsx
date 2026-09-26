@@ -29,6 +29,33 @@ export default async function MentionsLegales() {
         <div className="space-y-10" style={{ color: 'var(--ink-2)', lineHeight: 1.8, fontSize: 14.5 }}>
 
           <section>
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.regles.titre">Règles du jeu</EditableText></h2>
+            <p>
+              <EditableText id="mentions.regles.intro" multiline>Pour que l&apos;expérience reste juste et sincère pour les deux membres du couple, YES BOX applique les règles suivantes :</EditableText>
+            </p>
+            <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Pairage du couple :', 'Pairing up:')}</strong> {t('le premier membre qui crée son profil obtient un code unique de 5 lettres/chiffres. Le second membre saisit ce code lors de son inscription (ou plus tard, depuis son espace) pour rejoindre le même couple. Un couple ne peut compter que deux membres.', 'the first member to create a profile gets a unique 5-character code (letters/numbers). The second member enters this code when signing up (or later, from their account) to join the same couple. A couple can only have two members.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Réponses individuelles :', 'Individual answers:')}</strong> {t('chaque membre répond seul aux questions de chaque module. Aucun des deux ne peut voir les réponses de l\'autre avant que le module ne soit marqué « révélé ».', 'each member answers the questions in every module on their own. Neither partner can see the other\'s answers until the module is marked as "revealed."')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('La révélation :', 'The reveal:')}</strong> {t('un module n\'est révélé que lorsque les deux membres ont terminé leurs réponses. C\'est à ce moment que le module suivant se débloque.', 'a module is only revealed once both members have finished answering. That\'s when the next module unlocks.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Durée des modules :', 'Module length:')}</strong> {t('chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.', 'each module has between 10 and 15 questions. Together, plan for 30 to 60 minutes, depending on the conversations they spark. In all, that means setting aside 9 short evenings.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Confidentialité :', 'Privacy:')}</strong> {t('les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers.', 'your answers stay strictly private between the two of you; they are never shared with third parties.')}
+              </li>
+              <li>
+                <strong style={{ color: 'var(--ink-2)' }}>{t('Le CDD de couple :', 'The couple\'s CDD:')}</strong> {t('rédigé à la fin du programme, il est réexaminé chaque année via le BAC annuel, avec la possibilité de le faire évoluer par avenant.', 'written at the end of the program, it\'s revisited every year through the annual BAC, with the option to update it through an amendment.')}
+              </li>
+            </ul>
+          </section>
+
+          <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.conditions.titre">Conditions d&apos;utilisation &amp; tarifs</EditableText></h2>
             <p>
               <EditableText id="mentions.conditions.intro" multiline>L&apos;utilisation de YES BOX — Le Pacte est soumise aux conditions suivantes, applicables aux deux membres d&apos;un couple :</EditableText>
@@ -54,33 +81,6 @@ export default async function MentionsLegales() {
               </li>
               <li>
                 {t('Les tarifs sont indiqués par couple (un seul abonnement pour les deux membres) et peuvent évoluer ; toute modification vous sera communiquée avant d\'être appliquée à votre abonnement en cours.', 'Prices are shown per couple (a single subscription covers both members) and may change; you\'ll be notified of any change before it applies to your current subscription.')}
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.regles.titre">Règles du jeu</EditableText></h2>
-            <p>
-              <EditableText id="mentions.regles.intro" multiline>Pour que l&apos;expérience reste juste et sincère pour les deux membres du couple, YES BOX applique les règles suivantes :</EditableText>
-            </p>
-            <ul className="mt-3 space-y-2 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
-              <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Pairage du couple :', 'Pairing up:')}</strong> {t('le premier membre qui crée son profil obtient un code unique de 5 lettres/chiffres. Le second membre saisit ce code lors de son inscription (ou plus tard, depuis son espace) pour rejoindre le même couple. Un couple ne peut compter que deux membres.', 'the first member to create a profile gets a unique 5-character code (letters/numbers). The second member enters this code when signing up (or later, from their account) to join the same couple. A couple can only have two members.')}
-              </li>
-              <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Réponses individuelles :', 'Individual answers:')}</strong> {t('chaque membre répond seul aux questions de chaque module. Aucun des deux ne peut voir les réponses de l\'autre avant que le module ne soit marqué « révélé ».', 'each member answers the questions in every module on their own. Neither partner can see the other\'s answers until the module is marked as "revealed."')}
-              </li>
-              <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('La révélation :', 'The reveal:')}</strong> {t('un module n\'est révélé que lorsque les deux membres ont terminé leurs réponses. C\'est à ce moment que le module suivant se débloque.', 'a module is only revealed once both members have finished answering. That\'s when the next module unlocks.')}
-              </li>
-              <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Durée des modules :', 'Module length:')}</strong> {t('chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.', 'each module has between 10 and 15 questions. Together, plan for 30 to 60 minutes, depending on the conversations they spark. In all, that means setting aside 9 short evenings.')}
-              </li>
-              <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Confidentialité :', 'Privacy:')}</strong> {t('les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers.', 'your answers stay strictly private between the two of you; they are never shared with third parties.')}
-              </li>
-              <li>
-                <strong style={{ color: 'var(--ink-2)' }}>{t('Le CDD de couple :', 'The couple\'s CDD:')}</strong> {t('rédigé à la fin du programme, il est réexaminé chaque année via le BAC annuel, avec la possibilité de le faire évoluer par avenant.', 'written at the end of the program, it\'s revisited every year through the annual BAC, with the option to update it through an amendment.')}
               </li>
             </ul>
           </section>
