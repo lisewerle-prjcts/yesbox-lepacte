@@ -55,9 +55,18 @@ interface Mail {
 }
 
 // Renvoie true si l'e-mail est parti, false sinon (aucun envoi configuré ou erreur).
-export async function envoyerMail({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<boolean> {
+export async function envoyerMail(mail: Mail): Promise<boolean> {
+  return (await envoyerMailDetail(mail)).ok
+}
+
+// Comme envoyerMail, mais renvoie aussi la raison de l'échec (message de
+// Resend ou de Gmail), affichée dans l'admin et écrite dans les logs.
+// Si Resend refuse l'envoi (ex. domaine pas encore validé chez Resend, qui
+// n'autorise alors que l'adresse du compte Resend), on réessaie par Gmail.
+export async function envoyerMailDetail({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ ok: boolean; erreur?: string }> {
   const html = mailHtml(body)
   const text = `${htmlVersTexte(body)}\n\n--\nYES BOX · yesbox-lepacte.fr`
+  const erreurs: string[] = []
 
   if (process.env.RESEND_API_KEY) {
     try {
@@ -66,22 +75,35 @@ export async function envoyerMail({ to, subject, body, nom = 'YES BOX' }: Mail):
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], reply_to: REPONDRE_A, subject, html, text }),
       })
-      return res.ok
-    } catch {
-      return false
+      if (res.ok) return { ok: true }
+      const detail = await res.json().catch(() => null) as { message?: string } | null
+      erreurs.push(`Resend (${res.status}) : ${detail?.message || res.statusText}`)
+    } catch (e) {
+      erreurs.push(`Resend : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return false
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
-  })
-  return transporter.sendMail({
-    from: { name: nom, address: process.env.GMAIL_USER },
-    to,
-    subject,
-    html,
-    text,
-  }).then(() => true, () => false)
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+    })
+    try {
+      await transporter.sendMail({
+        from: { name: nom, address: process.env.GMAIL_USER },
+        to,
+        subject,
+        html,
+        text,
+      })
+      if (erreurs.length) console.warn(`[mail] Envoyé par Gmail après échec de Resend (${to}) — ${erreurs.join(' | ')}`)
+      return { ok: true }
+    } catch (e) {
+      erreurs.push(`Gmail : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  const erreur = erreurs.join(' | ') || 'Aucun envoi d\'e-mail configuré'
+  console.error(`[mail] Échec de l'envoi à ${to} — ${erreur}`)
+  return { ok: false, erreur }
 }

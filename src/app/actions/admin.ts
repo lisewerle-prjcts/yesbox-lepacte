@@ -408,7 +408,7 @@ export async function adminRenvoyerConfirmation(userId: string) {
   const res = await renvoyerMailConfirmation(email)
   if (res.ok) return { success: true }
   if (res.raison === 'deja_confirme') return { error: 'Adresse déjà confirmée' }
-  if (res.raison === 'envoi') return { error: 'Échec de l\'envoi' }
+  if (res.raison === 'envoi') return { error: `Échec de l'envoi${res.erreur ? ` — ${res.erreur}` : ''}` }
   return { error: res.raison || 'Échec' }
 }
 

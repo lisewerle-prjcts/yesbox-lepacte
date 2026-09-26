@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { envoyerMail, mailConfigure } from '@/lib/mailer'
+import { envoyerMailDetail, mailConfigure } from '@/lib/mailer'
 
 // Le mail de confirmation d'adresse part de notre propre envoi (Resend, ou
 // Gmail en repli — voir lib/mailer) plutôt que du service d'envoi de Supabase, qui échouait
@@ -17,9 +17,13 @@ export function lienConfirmation(hashedToken: string, type: 'signup' | 'magiclin
 }
 
 export async function envoyerMailConfirmation(email: string, prenom: string, lien: string): Promise<boolean> {
-  if (!gmailConfigure()) return false
+  return (await envoyerMailConfirmationDetail(email, prenom, lien)).ok
+}
+
+async function envoyerMailConfirmationDetail(email: string, prenom: string, lien: string): Promise<{ ok: boolean; erreur?: string }> {
+  if (!gmailConfigure()) return { ok: false, erreur: 'Aucun envoi d\'e-mail configuré' }
   const prenomSur = prenom.replace(/[<>&"']/g, '')
-  return envoyerMail({
+  return envoyerMailDetail({
     to: email,
     subject: 'Confirme ton adresse e-mail — YES BOX',
     body: `
@@ -34,7 +38,7 @@ export async function envoyerMailConfirmation(email: string, prenom: string, lie
 
 // Renvoi pour un compte existant non confirmé. Renvoie false si rien n'est
 // parti (compte introuvable, déjà confirmé, ou échec d'envoi).
-export async function renvoyerMailConfirmation(email: string): Promise<{ ok: boolean; raison?: string }> {
+export async function renvoyerMailConfirmation(email: string): Promise<{ ok: boolean; raison?: string; erreur?: string }> {
   const admin = createAdminClient()
   const { data: profile } = await admin.from('profiles').select('id, prenom').eq('email', email.toLowerCase()).maybeSingle()
   if (!profile) return { ok: false, raison: 'introuvable' }
@@ -45,6 +49,6 @@ export async function renvoyerMailConfirmation(email: string): Promise<{ ok: boo
   const { data: lien, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
   if (error || !lien?.properties?.hashed_token) return { ok: false, raison: error?.message || 'lien' }
 
-  const envoye = await envoyerMailConfirmation(email, profile.prenom || '', lienConfirmation(lien.properties.hashed_token, 'magiclink'))
-  return envoye ? { ok: true } : { ok: false, raison: 'envoi' }
+  const envoi = await envoyerMailConfirmationDetail(email, profile.prenom || '', lienConfirmation(lien.properties.hashed_token, 'magiclink'))
+  return envoi.ok ? { ok: true } : { ok: false, raison: 'envoi', erreur: envoi.erreur }
 }
