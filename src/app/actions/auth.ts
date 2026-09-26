@@ -9,6 +9,7 @@ import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
 import { notifySecurityEvent } from '@/lib/admin-mail'
 import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
+import { gmailConfigure, envoyerMailConfirmation, renvoyerMailConfirmation, lienConfirmation } from '@/lib/confirmation-email'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { z } from 'zod'
@@ -60,17 +61,21 @@ export async function inscription(formData: FormData) {
     return { error: t(locale, 'Ton consentement est nécessaire pour utiliser le programme.', 'Your consent is required to use the program.') }
   }
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { prenom },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback`,
-    },
-  })
+  // Avec Gmail configuré, Supabase crée le compte et génère le lien sans
+  // envoyer de mail : c'est nous qui l'envoyons (cf. lib/confirmation-email).
+  const { data, error } = gmailConfigure()
+    ? await inscrireAvecNotreMail(email, password, prenom)
+    : await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { prenom },
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback`,
+        },
+      })
 
   if (error) {
-    if (error.message.includes('already registered')) {
+    if (error.message.includes('already registered') || error.message.includes('already been registered')) {
       return { error: t(locale, 'Cet email est déjà utilisé. Connecte-toi !', 'This email is already in use. Log in instead!') }
     }
     return { error: error.message }
@@ -112,6 +117,21 @@ export async function inscription(formData: FormData) {
     redirect(`/tableau-de-bord?code_error=${encodeURIComponent(partnerCodeError)}`)
   }
   redirect('/tableau-de-bord')
+}
+
+async function inscrireAvecNotreMail(email: string, password: string, prenom: string) {
+  const { data, error } = await createAdminClient().auth.admin.generateLink({
+    type: 'signup',
+    email,
+    password,
+    options: { data: { prenom } },
+  })
+  if (error || !data.user) return { data: { user: null, session: null }, error: error ?? new Error('Inscription impossible') }
+  const envoye = await envoyerMailConfirmation(email, prenom, lienConfirmation(data.properties.hashed_token, 'signup'))
+  // Le compte existe : même si l'envoi échoue, la personne pourra redemander
+  // le mail depuis l'écran « Vérifie ta boîte mail ».
+  if (!envoye) console.error('Envoi du mail de confirmation échoué pour', email)
+  return { data: { user: data.user, session: null }, error: null }
 }
 
 export async function connexion(formData: FormData) {
@@ -183,6 +203,16 @@ export async function renvoyerConfirmation(email: string) {
   const parsed = z.string().email().safeParse(email)
   if (!parsed.success) {
     return { error: t(locale, 'Email invalide', 'Invalid email') }
+  }
+
+  if (gmailConfigure()) {
+    const res = await renvoyerMailConfirmation(parsed.data)
+    // Compte introuvable ou déjà confirmé : on répond pareil, pour ne pas
+    // révéler quelles adresses sont inscrites.
+    if (!res.ok && res.raison !== 'introuvable' && res.raison !== 'deja_confirme') {
+      return { error: t(locale, "L'envoi a échoué, réessaie dans quelques minutes.", 'Sending failed, please try again in a few minutes.') }
+    }
+    return { success: true }
   }
 
   const supabase = await createClient()
