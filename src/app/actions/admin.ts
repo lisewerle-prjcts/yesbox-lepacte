@@ -9,6 +9,7 @@ import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { renvoyerMailConfirmation } from '@/lib/confirmation-email'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
 import type { QuestionType } from '@/types'
@@ -414,18 +415,15 @@ export async function adminRenvoyerConfirmation(userId: string) {
   const admin = createAdminClient()
 
   const { data } = await admin.auth.admin.getUserById(userId)
-  const user = data?.user
-  const email = user?.email
-  if (!user || !email) return { error: 'Utilisateur introuvable' }
-  if (user.email_confirmed_at) return { error: 'Adresse déjà confirmée' }
+  const email = data?.user?.email
+  if (!email) return { error: 'Utilisateur introuvable' }
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
 
-  const { error } = await admin.auth.resend({
-    type: 'signup',
-    email,
-    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback` },
-  })
-  if (error) return { error: error.message }
-  return { success: true }
+  const res = await renvoyerMailConfirmation(email)
+  if (res.ok) return { success: true }
+  if (res.raison === 'deja_confirme') return { error: 'Adresse déjà confirmée' }
+  if (res.raison === 'envoi') return { error: 'Échec de l\'envoi Gmail' }
+  return { error: res.raison || 'Échec' }
 }
 
 export async function adminDeleteUser(userId: string) {
