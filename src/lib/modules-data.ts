@@ -138,8 +138,8 @@ export const MODULES: ModuleInfo[] = [
         placeholder_en: 'What you will change…',
       },
       surprise: {
-        label: "Qu'est-ce qui vous a étonné ou marqué ?",
-        placeholder: 'Ce qui vous a étonné ou marqué…',
+        label: "Qu'est-ce qui vous a étonné·e ou marqué·e ?",
+        placeholder: 'Ce qui vous a étonné·e ou marqué·e…',
         label_en: 'What surprised you or stood out to you?',
         placeholder_en: 'What surprised you or stood out…',
       },
