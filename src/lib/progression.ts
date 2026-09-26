@@ -1,6 +1,7 @@
 import type { createAdminClient } from '@/lib/supabase/server'
 import type { ModuleInfo } from '@/types'
 import { hasAnsweredAll } from '@/lib/questions'
+import { getEffectiveModules } from '@/lib/modules-effective'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -107,4 +108,18 @@ export async function revelerSiPret(admin: AdminClient, mod: ModuleCouple, ordre
       .eq('statut', 'locked')
   }
   return true
+}
+
+// Ouvre le premier module d'un couple dont aucun module n'est ouvert ni
+// révélé (initialiser_modules_couple crée tous les modules verrouillés) :
+// sans ça, un nouveau couple n'a rien à commencer. Renvoie true si un
+// module a été ouvert.
+export async function ouvrirPremierModuleSiBesoin(admin: AdminClient, coupleId: string): Promise<boolean> {
+  const { data: mods } = await admin.from('modules').select('slug, statut, revealed').eq('couple_id', coupleId)
+  if (!mods?.length || mods.some(m => m.statut !== 'locked' || m.revealed)) return false
+  const premier = (await getEffectiveModules())[0]?.slug
+  if (!premier) return false
+  const { data } = await admin.from('modules').update({ statut: 'en_cours' })
+    .eq('couple_id', coupleId).eq('slug', premier).eq('statut', 'locked').select('id')
+  return !!data?.length
 }
