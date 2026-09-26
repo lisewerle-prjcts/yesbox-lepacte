@@ -175,6 +175,7 @@ export const EN_CONTENT: Record<string, string> = {
   'inscription.field.passwordconfirm': 'Confirm your password',
   'inscription.field.code': "Your partner's code",
   'inscription.field.code.aide': "Has your partner already created their profile? Enter their 5-character code to get paired right away. Otherwise, you can add them later.",
+  'inscription.field.parrainage_promo': 'Referral or promo code',
   'inscription.dejacompte': 'Already have an account?',
   'inscription.seconnecter': 'Log in',
   'inscription.cgu.prefix': 'By creating an account, you agree to our',

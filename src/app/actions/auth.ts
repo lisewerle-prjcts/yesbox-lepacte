@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { rejoindreCoupleParCode, creerCoupleSolo } from '@/lib/couple-join'
+import { rejoindreCoupleParCode, creerCoupleSolo, appliquerCodeInscription } from '@/lib/couple-join'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
@@ -82,6 +82,7 @@ export async function inscription(formData: FormData) {
   }
 
   const partnerCode = (formData.get('partner_code') as string | null)?.trim()
+  const codeAvantage = (formData.get('code_parrainage') as string | null)?.trim()
   let partnerCodeError: string | null = null
 
   if (data.user) {
@@ -95,23 +96,24 @@ export async function inscription(formData: FormData) {
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
       if (!result.success) partnerCodeError = result.error || t(locale, 'Code invalide', 'Invalid code')
+      // En rejoignant un couple existant, seul un code promo peut encore
+      // s'appliquer (le parrainage ne concerne que les nouveaux couples).
+      else if (codeAvantage && result.coupleId) await appliquerCodeInscription(result.coupleId, codeAvantage, false)
       // Pas d'e-mail de bienvenue (avec code couple) pour qui rejoint un couple.
       await createAdminClient().from('profiles').update({ email_bienvenue_envoye_le: maintenant }).eq('id', data.user.id)
     } else {
-      const codeParrainage = (formData.get('code_parrainage') as string | null)?.trim()
-      await creerCoupleSolo(data.user.id, codeParrainage)
+      await creerCoupleSolo(data.user.id, codeAvantage)
       // Envoyé tout de suite si l'adresse est déjà confirmée, sinon au clic
       // sur le lien de confirmation (cf. /auth/callback).
       await envoyerBienvenueSiEnAttente(data.user.id)
     }
 
-    const codeParrainage = (formData.get('code_parrainage') as string | null)?.trim()
     await notifierNouvelleInscription({
       prenom,
       email,
       parcours: partnerCode
         ? (partnerCodeError ? `a tenté de rejoindre un couple (code ${partnerCode} refusé)` : `a rejoint un couple avec le code ${partnerCode}`)
-        : `a créé un nouveau couple${codeParrainage ? ` (code de parrainage ${codeParrainage})` : ''}`,
+        : `a créé un nouveau couple${codeAvantage ? ` (code de parrainage ou promo ${codeAvantage})` : ''}`,
     })
   }
 

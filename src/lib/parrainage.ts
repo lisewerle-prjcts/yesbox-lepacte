@@ -56,18 +56,20 @@ export async function accorderMoisGratuits(admin: AdminClient, coupleId: string,
 // Rattache un couple qui vient de s'inscrire à son parrain (RPC atomique,
 // cf. supabase/schema.sql v12) et accorde la récompense dès qu'un palier
 // de 5 filleuls est franchi. Best-effort : un code de parrainage invalide
-// ne bloque jamais l'inscription.
-export async function enregistrerParrainage(admin: AdminClient, codeParrainage: string, nouveauCoupleId: string) {
+// ne bloque jamais l'inscription. Renvoie true si le code était bien un
+// code de parrainage valide.
+export async function enregistrerParrainage(admin: AdminClient, codeParrainage: string, nouveauCoupleId: string): Promise<boolean> {
   const clean = codeParrainage.trim()
-  if (!clean) return
+  if (!clean) return false
 
   const { data, error } = await admin.rpc('parrainer_couple', {
     p_code_parrainage: clean,
     p_nouveau_couple_id: nouveauCoupleId,
   })
-  if (error || !data?.success) return
+  if (error || !data?.success) return false
 
   if (data.nouveaux_mois_offerts > 0) {
     await accorderMoisGratuits(admin, data.parrain_couple_id, data.nouveaux_mois_offerts)
   }
+  return true
 }
