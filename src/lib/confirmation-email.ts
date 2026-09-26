@@ -1,14 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { getMailTransporter, mailHtml } from '@/lib/admin-mail'
+import { envoyerMail, mailConfigure } from '@/lib/mailer'
 
-// Le mail de confirmation d'adresse part de notre Gmail (comme le mail de
-// bienvenue) plutôt que du service d'envoi de Supabase, qui échouait
+// Le mail de confirmation d'adresse part de notre propre envoi (Resend, ou
+// Gmail en repli — voir lib/mailer) plutôt que du service d'envoi de Supabase, qui échouait
 // (« Error sending confirmation email »). Supabase ne fait que générer le
 // lien ; /auth/confirm le vérifie, dans n'importe quel navigateur.
 
-export function gmailConfigure() {
-  return !!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD
-}
+export const gmailConfigure = mailConfigure
 
 function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
@@ -21,18 +19,17 @@ export function lienConfirmation(hashedToken: string, type: 'signup' | 'magiclin
 export async function envoyerMailConfirmation(email: string, prenom: string, lien: string): Promise<boolean> {
   if (!gmailConfigure()) return false
   const prenomSur = prenom.replace(/[<>&"']/g, '')
-  return getMailTransporter().sendMail({
-    from: '"YES BOX" <lise.yesbox@gmail.com>',
+  return envoyerMail({
     to: email,
     subject: 'Confirme ton adresse e-mail — YES BOX',
-    html: mailHtml(`
+    body: `
       <p>Bonjour ${prenomSur},</p>
       <p>Pour activer ton compte YES BOX — Le Pacte, confirme ton adresse e-mail en cliquant sur le bouton ci-dessous :</p>
       <p style="margin:24px 0;"><a href="${lien}" style="background:#c5256e;color:white;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block;">Confirmer mon adresse</a></p>
       <p style="font-size:12px;color:#736c63;">Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :<br>${lien}</p>
       <p style="font-size:12px;color:#736c63;">Si tu n'es pas à l'origine de cette inscription, ignore simplement ce message.</p>
-    `),
-  }).then(() => true, () => false)
+    `,
+  })
 }
 
 // Renvoi pour un compte existant non confirmé. Renvoie false si rien n'est

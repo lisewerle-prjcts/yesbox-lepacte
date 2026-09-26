@@ -4,10 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { createClient } from '@/lib/supabase/server'
 import { randomInt } from 'crypto'
-import nodemailer from 'nodemailer'
 import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_KEY_PREFIX, type ModuleContentOverrides, type QuestionOverride, type ModuleMetaOverride } from '@/lib/modules-effective'
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
-import { assertAdmin, getMailTransporter, mailHtml } from '@/lib/admin-mail'
+import { assertAdmin } from '@/lib/admin-mail'
+import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { sendWelcomeEmail } from '@/lib/welcome-email'
 import { renvoyerMailConfirmation } from '@/lib/confirmation-email'
 import { supprimerCompte } from '@/lib/suppression-compte'
@@ -74,22 +74,10 @@ export async function adminResetModule(coupleId: string, slug: string) {
 
 export async function adminSendEmail(to: string, subject: string, body: string) {
   await assertAdmin()
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
-  })
-  await transporter.sendMail({
-    from: '"YES BOX" <lise.yesbox@gmail.com>',
-    to,
-    subject,
-    html: `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fbf8f3;border-radius:16px;overflow:hidden;">
-      <div style="background:#c5256e;padding:24px 32px;"><p style="color:white;font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">YES BOX — Le Pacte</p></div>
-      <div style="padding:32px;color:#1a1816;font-size:15px;line-height:1.7;">${body.replace(/\n/g, '<br/>')}</div>
-      <div style="background:#1a1816;padding:16px 32px;text-align:center;"><p style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin:0;">YES BOX · yesbox-lepacte.fr</p></div>
-    </div>`,
-  })
+  const envoye = await envoyerMail({ to, subject, body: body.replace(/\n/g, '<br/>') })
+  if (!envoye) return { error: 'Échec de l\'envoi' }
   return { success: true }
 }
 
@@ -370,24 +358,22 @@ export async function adminResetAndSendPassword(userId: string) {
   const { data: profile } = await admin.from('profiles').select('prenom').eq('id', userId).single()
   if (!email) return { error: 'Email introuvable pour ce membre' }
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+  if (!mailConfigure()) {
     return { success: true, password: newPassword, emailed: false }
   }
 
-  const transporter = getMailTransporter()
-  await transporter.sendMail({
-    from: '"YES BOX" <lise.yesbox@gmail.com>',
+  const emailed = await envoyerMail({
     to: email,
     subject: 'Ton nouveau mot de passe YES BOX',
-    html: mailHtml(`
+    body: `
       <p>Bonjour ${profile?.prenom || ''},</p>
       <p>Voici ton nouveau mot de passe pour te connecter à ton espace YES BOX — Le Pacte :</p>
       <p style="font-family:monospace;font-size:20px;font-weight:700;background:#f7d9e6;color:#c5256e;padding:12px 20px;border-radius:10px;display:inline-block;letter-spacing:.05em;">${newPassword}</p>
       <p>Connecte-toi puis change-le si tu le souhaites depuis ton espace.</p>
-    `),
+    `,
   })
 
-  return { success: true, password: newPassword, emailed: true }
+  return { success: true, password: newPassword, emailed }
 }
 
 export async function adminRenvoyerBienvenue(userId: string) {
@@ -401,7 +387,7 @@ export async function adminRenvoyerBienvenue(userId: string) {
   const { data: couple } = await admin.from('couples').select('pairing_code').eq('id', profile.couple_id).single()
   if (!couple?.pairing_code) return { error: 'Code couple introuvable' }
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
 
   const envoye = await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
   if (!envoye) return { error: 'Échec de l\'envoi' }
@@ -417,12 +403,12 @@ export async function adminRenvoyerConfirmation(userId: string) {
   const { data } = await admin.auth.admin.getUserById(userId)
   const email = data?.user?.email
   if (!email) return { error: 'Utilisateur introuvable' }
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
 
   const res = await renvoyerMailConfirmation(email)
   if (res.ok) return { success: true }
   if (res.raison === 'deja_confirme') return { error: 'Adresse déjà confirmée' }
-  if (res.raison === 'envoi') return { error: 'Échec de l\'envoi Gmail' }
+  if (res.raison === 'envoi') return { error: 'Échec de l\'envoi' }
   return { error: res.raison || 'Échec' }
 }
 

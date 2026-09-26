@@ -41,8 +41,12 @@ export function ConfirmationEmail({ email }: { email: string }) {
       <p className="text-gray-500 mb-1">
         {t('On a envoyé un lien de confirmation à', 'We sent a confirmation link to')} <span className="font-semibold text-gray-700">{email}</span>.
       </p>
-      <p className="text-gray-500 mb-6">
-        {t('Clique sur ce lien pour activer ton compte et accéder à ton espace couple. Pense à vérifier tes spams.', 'Click the link to activate your account and access your couple space. Be sure to check your spam folder.')}
+      <p className="text-gray-500 mb-4">
+        {t('Clique sur ce lien pour activer ton compte et accéder à ton espace couple.', 'Click the link to activate your account and access your couple space.')}
+      </p>
+      <p className="mb-6 rounded-lg px-4 py-3 text-sm" style={{ background: 'var(--brand-tint)', color: 'var(--ink)' }}>
+        <strong>{t('Pense à vérifier tes spams.', 'Be sure to check your spam folder.')}</strong>{' '}
+        {t('Ton e-mail de bienvenue, avec ton code couple, suivra juste après la confirmation.', 'Your welcome email, with your couple code, will follow right after you confirm.')}
       </p>
       {resendState === 'sent' ? (
         <Alert type="success" message={t('Email renvoyé ! Vérifie ta boîte mail (et tes spams).', 'Email resent! Check your inbox (and your spam folder).')} />
