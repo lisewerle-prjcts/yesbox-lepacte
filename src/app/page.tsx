@@ -261,41 +261,41 @@ export default function LandingPage() {
       </section>
 
       {/* CDD DE COUPLE */}
-      <section className="py-20" style={{ background: '#16120e' }}>
+      <section className="py-20" style={{ background: 'var(--brand-tint)', borderTop: '1px solid var(--brand-soft)', borderBottom: '1px solid var(--brand-soft)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="eyebrow mb-4" style={{ color: 'rgba(255,255,255,.35)', fontFamily: 'var(--font-geist-mono)' }}>
+              <div className="eyebrow mb-4">
                 <EditableText id="home.cdd.eyebrow">— L&apos;idée signature</EditableText>
               </div>
-              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'rgba(255,255,255,.92)', lineHeight: 1.15 }}>
+              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
                 <EditableText id="home.cdd.title.prefix">Un</EditableText>{' '}
                 <EditableText id="home.cdd.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>CDD de couple</EditableText>,<br />
                 <EditableText id="home.cdd.title.suffix">à re-signer chaque année.</EditableText>
               </h2>
-              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'rgba(255,255,255,.5)', marginTop: 20 }}>
+              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)', marginTop: 20 }}>
                 <EditableText id="home.cdd.paragraph" multiline>Comme en entreprise — la clarté des engagements, le bilan régulier, la révision des projets — mais avec amour. À la fin du programme, vous rédigez votre Contrat à Durée Déterminée de couple : vos articles, vos valeurs, vos projets. Avec un rendez-vous annuel inscrit dedans.</EditableText>
               </p>
               <ul className="mt-6 space-y-3">
                 {cddList.map((item, i) => (
                   <li key={i} className="flex gap-3 items-start">
                     <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.55)' }}><EditableText id={`home.cdd.list.${i}`}>{item}</EditableText></span>
+                    <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.cdd.list.${i}`}>{item}</EditableText></span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div style={{ background: '#1e1a15', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid rgba(255,255,255,.08)' }}>
-              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'rgba(255,255,255,.3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
+            <div style={{ background: 'var(--paper)', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}>
+              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'var(--muted-2)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
                 <EditableText id="home.cdd.card.eyebrow">Contrat à durée déterminée</EditableText>
               </p>
-              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'rgba(255,255,255,.85)' }}>
+              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'var(--ink)' }}>
                 <EditableText id="home.cdd.card.title">Le CDD de couple</EditableText>
               </h3>
               {cddRows.map((row, idx) => (
-                <div key={idx} className="flex justify-between py-3" style={{ borderBottom: idx < cddRows.length - 1 ? '1px solid rgba(255,255,255,.07)' : 'none', fontSize: 13 }}>
-                  <span className="font-mono uppercase" style={{ color: 'rgba(255,255,255,.35)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.cdd.card.rows.${idx}.k`}>{row.k}</EditableText></span>
-                  <span style={{ color: 'rgba(255,255,255,.7)', fontWeight: 500 }}><EditableText id={`home.cdd.card.rows.${idx}.v`}>{row.v}</EditableText></span>
+                <div key={idx} className="flex justify-between py-3" style={{ borderBottom: idx < cddRows.length - 1 ? '1px solid var(--line)' : 'none', fontSize: 13 }}>
+                  <span className="font-mono uppercase" style={{ color: 'var(--muted-2)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.cdd.card.rows.${idx}.k`}>{row.k}</EditableText></span>
+                  <span style={{ color: 'var(--ink)', fontWeight: 500 }}><EditableText id={`home.cdd.card.rows.${idx}.v`}>{row.v}</EditableText></span>
                 </div>
               ))}
               <div className="flex justify-end mt-4">
