@@ -42,3 +42,25 @@ export async function notifySecurityEvent(recipientEmail: string | null, subject
     body: `<p>${bodyText}</p><p style="font-size:12px;color:#736c63;">${new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}</p>`,
   })
 }
+
+function echapper(texte: string) {
+  return texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+// Prévient l'équipe à chaque nouvelle inscription. Ne bloque jamais
+// l'inscription : une erreur d'envoi est simplement ignorée.
+export async function notifierNouvelleInscription(infos: { prenom: string; email: string; parcours: string }) {
+  const destinataire = process.env.ADMIN_NOTIF_EMAIL || 'lise.yesbox@gmail.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
+  const date = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' })
+  await envoyerMail({
+    nom: 'YES BOX Inscriptions',
+    to: destinataire,
+    subject: `Nouvelle inscription : ${infos.prenom.replace(/[\r\n]+/g, ' ')}`,
+    body: `
+      <p>Une nouvelle personne vient de s'inscrire sur YES BOX.</p>
+      <p><strong>Prénom :</strong> ${echapper(infos.prenom)}<br><strong>E-mail :</strong> ${echapper(infos.email)}<br><strong>Parcours :</strong> ${echapper(infos.parcours)}<br><strong>Date :</strong> ${date}</p>
+      <p><a href="${appUrl}/admin/utilisateurs">Voir les utilisateurs dans l'admin</a></p>
+    `,
+  }).catch(() => false)
+}
