@@ -208,9 +208,11 @@ export default function LandingPage() {
           </h3>
           <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
             <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple, ça se choisit, puis ça se re-choisit.</EditableText></p>
-            <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
-            <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
-            <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
+            <div>
+              <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
+              <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
+              <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
+            </div>
           </div>
           <p className="font-serif mt-6" style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink)' }}>
             <EditableText id="home.constat.reveal.chute" multiline>Et si tout va bien ? C&apos;est justement le meilleur moment pour commencer.</EditableText>
@@ -218,45 +220,6 @@ export default function LandingPage() {
           <p className="mt-6" style={{ fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.6, color: 'var(--muted)' }}>
             <EditableText id="home.constat.reveal.avertissement" multiline>YES BOX n&apos;est pas une thérapie. Si vous traversez une crise profonde, tournez-vous vers un·e professionnel·le. Et pour toute situation de violence, contactez le 3919 ou le numéro des urgences 17, 112 ou par SMS au 114 (contact gratuit).</EditableText>
           </p>
-        </div>
-      </section>
-
-      {/* LES 10 MODULES */}
-      <section id="modules" className="py-20" style={{ background: 'var(--cream-2)' }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <div className="eyebrow justify-center mb-3"><EditableText id="home.modules.eyebrow">Le programme</EditableText></div>
-            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-              <EditableText id="home.modules.title.line1">Neuf modules pour poser les bases.</EditableText><br />
-              <EditableText id="home.modules.title.line2">Un dixième pour les faire durer.</EditableText>
-            </h2>
-          </div>
-          <div className="flex flex-col gap-3">
-            {modules.map((m, i) => {
-              return (
-              <div key={m.slug} className="card flex items-center gap-5 p-5">
-                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${m.slug}.titre`}>{m.titre}</EditableText></span>
-                    <span style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${m.slug}.sousTitre`}>{m.sousTitre}</EditableText></span>
-                  </div>
-                  <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
-                </div>
-                {m.free && <span className="tag-sage flex-shrink-0">{t('Gratuit', 'Free')}</span>}
-                {m.n === 10 && <span className="tag-muted flex-shrink-0">{t('Annuel', 'Yearly')}</span>}
-              </div>
-            )})}
-          </div>
-          <div className="text-center" style={{ maxWidth: 680, margin: '40px auto 0', fontSize: 14.5, lineHeight: 1.7, color: 'var(--muted)' }}>
-            <p>
-              <EditableText id="home.modules.duree" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
-            </p>
-            <p style={{ marginTop: 8 }}>
-              <EditableText id="home.modules.infos.prefix">Pour plus d&apos;informations, lire les</EditableText>{' '}
-              <Link href="/mentions-legales" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link">mentions légales</EditableText></Link>.
-            </p>
-          </div>
         </div>
       </section>
 
@@ -304,6 +267,45 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LES 10 MODULES */}
+      <section id="modules" className="py-20" style={{ background: 'var(--paper)' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <div className="eyebrow justify-center mb-3"><EditableText id="home.modules.eyebrow">Le programme</EditableText></div>
+            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
+              <EditableText id="home.modules.title.line1">Neuf modules pour poser les bases.</EditableText><br />
+              <EditableText id="home.modules.title.line2">Un dixième pour les faire durer.</EditableText>
+            </h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {modules.map((m, i) => {
+              return (
+              <div key={m.slug} className="card flex items-center gap-5 p-5">
+                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${m.slug}.titre`}>{m.titre}</EditableText></span>
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${m.slug}.sousTitre`}>{m.sousTitre}</EditableText></span>
+                  </div>
+                  <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
+                </div>
+                {m.free && <span className="tag-sage flex-shrink-0">{t('Gratuit', 'Free')}</span>}
+                {m.n === 10 && <span className="tag-muted flex-shrink-0">{t('Annuel', 'Yearly')}</span>}
+              </div>
+            )})}
+          </div>
+          <div className="text-center" style={{ maxWidth: 680, margin: '40px auto 0', fontSize: 14.5, lineHeight: 1.7, color: 'var(--muted)' }}>
+            <p>
+              <EditableText id="home.modules.duree" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <EditableText id="home.modules.infos.prefix">Pour plus d&apos;informations, lire les</EditableText>{' '}
+              <Link href="/mentions-legales" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link">mentions légales</EditableText></Link>.
+            </p>
           </div>
         </div>
       </section>
