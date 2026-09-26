@@ -7,7 +7,7 @@ import { rejoindreCoupleParCode, creerCoupleSolo } from '@/lib/couple-join'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
-import { notifySecurityEvent } from '@/lib/admin-mail'
+import { notifySecurityEvent, notifierNouvelleInscription } from '@/lib/admin-mail'
 import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { gmailConfigure, envoyerMailConfirmation, renvoyerMailConfirmation, lienConfirmation } from '@/lib/confirmation-email'
 import { getLocale } from '@/lib/i18n/server'
@@ -104,6 +104,15 @@ export async function inscription(formData: FormData) {
       // sur le lien de confirmation (cf. /auth/callback).
       await envoyerBienvenueSiEnAttente(data.user.id)
     }
+
+    const codeParrainage = (formData.get('code_parrainage') as string | null)?.trim()
+    await notifierNouvelleInscription({
+      prenom,
+      email,
+      parcours: partnerCode
+        ? (partnerCodeError ? `a tenté de rejoindre un couple (code ${partnerCode} refusé)` : `a rejoint un couple avec le code ${partnerCode}`)
+        : `a créé un nouveau couple${codeParrainage ? ` (code de parrainage ${codeParrainage})` : ''}`,
+    })
   }
 
   revalidatePath('/', 'layout')

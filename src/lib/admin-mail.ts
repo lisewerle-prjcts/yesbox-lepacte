@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import nodemailer from 'nodemailer'
+import { envoyerMail } from '@/lib/mailer'
 
 // Niveau de double authentification de la session admin :
 //   - 'ok'           : code saisi (aal2) ;
@@ -33,28 +33,34 @@ export async function assertAdmin({ sansMfaActivee = false }: { sansMfaActivee?:
   return supabase
 }
 
-export function getMailTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+export async function notifySecurityEvent(recipientEmail: string | null, subject: string, bodyText: string) {
+  if (!recipientEmail) return
+  await envoyerMail({
+    nom: 'YES BOX Sécurité',
+    to: recipientEmail,
+    subject,
+    body: `<p>${bodyText}</p><p style="font-size:12px;color:#736c63;">${new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}</p>`,
   })
 }
 
-export function mailHtml(body: string) {
-  return `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fbf8f3;border-radius:16px;overflow:hidden;">
-    <div style="background:#c5256e;padding:24px 32px;"><p style="color:white;font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px;">YES BOX — Le Pacte</p></div>
-    <div style="padding:32px;color:#1a1816;font-size:15px;line-height:1.7;">${body}</div>
-    <div style="background:#1a1816;padding:16px 32px;text-align:center;"><p style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin:0;">YES BOX · yesbox-lepacte.fr</p></div>
-  </div>`
+function echapper(texte: string) {
+  return texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-export async function notifySecurityEvent(recipientEmail: string | null, subject: string, bodyText: string) {
-  if (!recipientEmail || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return
-  const transporter = getMailTransporter()
-  await transporter.sendMail({
-    from: '"YES BOX Sécurité" <lise.yesbox@gmail.com>',
-    to: recipientEmail,
-    subject,
-    html: mailHtml(`<p>${bodyText}</p><p style="font-size:12px;color:#736c63;">${new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}</p>`),
-  }).catch(() => {})
+// Prévient l'équipe à chaque nouvelle inscription. Ne bloque jamais
+// l'inscription : une erreur d'envoi est simplement ignorée.
+export async function notifierNouvelleInscription(infos: { prenom: string; email: string; parcours: string }) {
+  const destinataire = process.env.ADMIN_NOTIF_EMAIL || 'lise.yesbox@gmail.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
+  const date = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Paris' })
+  await envoyerMail({
+    nom: 'YES BOX Inscriptions',
+    to: destinataire,
+    subject: `Nouvelle inscription : ${infos.prenom.replace(/[\r\n]+/g, ' ')}`,
+    body: `
+      <p>Une nouvelle personne vient de s'inscrire sur YES BOX.</p>
+      <p><strong>Prénom :</strong> ${echapper(infos.prenom)}<br><strong>E-mail :</strong> ${echapper(infos.email)}<br><strong>Parcours :</strong> ${echapper(infos.parcours)}<br><strong>Date :</strong> ${date}</p>
+      <p><a href="${appUrl}/admin/utilisateurs">Voir les utilisateurs dans l'admin</a></p>
+    `,
+  }).catch(() => false)
 }

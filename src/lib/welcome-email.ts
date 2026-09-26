@@ -1,25 +1,25 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { getMailTransporter, mailHtml } from '@/lib/admin-mail'
+import { envoyerMail, mailConfigure } from '@/lib/mailer'
 
 export const WELCOME_EMAIL_DEFAULTS = {
-  email_bienvenue_subject: 'Bienvenue sur YES BOX — voici ton code couple ✦',
+  email_bienvenue_subject: 'Bienvenue sur YES BOX — voici ton code couple',
   email_bienvenue_body: `Bonjour {prenom},
 
 Ton compte YES BOX — Le Pacte est créé !
 
-Voici ton code couple, à donner à ton/ta partenaire pour qu'il/elle rejoigne ton pacte :
+Voici ton code couple, à transmettre à la personne avec qui tu veux signer ton pacte :
 
 {code}
 
-Il/elle pourra le renseigner lors de son inscription, ou depuis son espace.
+Elle pourra le saisir lors de son inscription, ou depuis son espace.
 
 À très vite,
 L'équipe YES BOX`,
 }
 
-// Renvoie true si l'e-mail est parti, false sinon (Gmail non configuré ou erreur d'envoi).
+// Renvoie true si l'e-mail est parti, false sinon (envoi non configuré ou erreur).
 export async function sendWelcomeEmail(email: string, prenom: string, code: string): Promise<boolean> {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return false
+  if (!mailConfigure()) return false
 
   const admin = createAdminClient()
   const { data: settings } = await admin
@@ -39,13 +39,11 @@ export async function sendWelcomeEmail(email: string, prenom: string, code: stri
   const subject = subjectTemplate.replace(/\{prenom\}/g, prenom).replace(/\{code\}/g, code).replace(/[\r\n]+/g, ' ')
   const body = echapperHtml(bodyTemplate.replace(/\{prenom\}/g, prenom).replace(/\{code\}/g, code))
 
-  const transporter = getMailTransporter()
-  return transporter.sendMail({
-    from: '"YES BOX" <lise.yesbox@gmail.com>',
+  return envoyerMail({
     to: email,
     subject,
-    html: mailHtml(body.split('\n').map(line => `<p style="margin:0 0 12px;">${line || '&nbsp;'}</p>`).join('')),
-  }).then(() => true, () => false)
+    body: body.split('\n').map(line => `<p style="margin:0 0 12px;">${line || '&nbsp;'}</p>`).join(''),
+  })
 }
 
 function echapperHtml(texte: string) {
