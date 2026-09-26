@@ -144,14 +144,14 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3"><EditableText id="home.pourqui.eyebrow">Pour qui</EditableText></div>
+            <p className="mb-3 text-base" style={{ color: 'var(--muted)' }}>
+              <EditableText id="home.pourqui.subtitle">Ensemble depuis 2 mois ou 20 ans, en union libre, en PACS ou en mariage.</EditableText>
+            </p>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
               <EditableText id="home.pourqui.title.prefix">Ce programme est fait pour</EditableText>{' '}
               <EditableText id="home.pourqui.title.highlight" as="em" style={{ color: 'var(--brand)' }}>vous deux</EditableText>
               <EditableText id="home.pourqui.title.suffix">, si…</EditableText>
             </h2>
-            <p className="mt-3 text-base" style={{ color: 'var(--muted)' }}>
-              <EditableText id="home.pourqui.subtitle">Ensemble depuis 2 mois ou 20 ans, en union libre, en PACS ou en mariage.</EditableText>
-            </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pourQuiList.map((item, i) => (
@@ -202,7 +202,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="card mt-12 p-8 md:p-10 text-center" style={{ maxWidth: 820, marginLeft: 'auto', marginRight: 'auto' }}>
+        <div className="mt-16 text-center" style={{ maxWidth: 760, marginLeft: 'auto', marginRight: 'auto' }}>
           <h3 className="font-serif mb-5" style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.25 }}>
             <EditableText id="home.constat.reveal.titre" as="em" style={{ color: 'var(--brand)' }}>Il manquait un rendez-vous régulier, à deux.</EditableText>
           </h3>
