@@ -23,6 +23,22 @@ export async function appliquerCodeInscription(coupleId: string, code: string, n
   await admin.rpc('utiliser_code_gratuit', { p_code: clean, p_couple_id: coupleId })
 }
 
+// Vérifié avant de créer le compte, pour afficher une erreur dans le
+// formulaire : le code doit être un code de parrainage existant, ou un code
+// gratuit actif qui n'a pas atteint son nombre maximum d'utilisations.
+export async function codeInscriptionValide(code: string) {
+  const clean = code.trim().toUpperCase()
+  if (!clean) return true
+  const admin = createAdminClient()
+
+  const { data: parrain } = await admin.from('couples').select('id').eq('code_parrainage', clean).maybeSingle()
+  if (parrain) return true
+
+  const { data: gratuit } = await admin.from('codes_gratuits').select('usages, usages_max')
+    .eq('code', clean).eq('actif', true).maybeSingle()
+  return !!gratuit && gratuit.usages < gratuit.usages_max
+}
+
 export async function creerCoupleSolo(userId: string, codeAvantage?: string | null) {
   const admin = createAdminClient()
 

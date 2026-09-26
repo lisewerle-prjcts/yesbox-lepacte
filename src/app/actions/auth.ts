@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { rejoindreCoupleParCode, creerCoupleSolo, appliquerCodeInscription } from '@/lib/couple-join'
+import { rejoindreCoupleParCode, creerCoupleSolo, appliquerCodeInscription, codeInscriptionValide } from '@/lib/couple-join'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/app/actions/security'
@@ -61,6 +61,11 @@ export async function inscription(formData: FormData) {
     return { error: t(locale, 'Ton consentement est nécessaire pour utiliser le programme.', 'Your consent is required to use the program.') }
   }
 
+  const codeAvantage = (formData.get('code_parrainage') as string | null)?.trim()
+  if (codeAvantage && !(await codeInscriptionValide(codeAvantage))) {
+    return { error: t(locale, "Ce code n'existe pas ou est expiré.", 'This code does not exist or has expired.') }
+  }
+
   // Avec Gmail configuré, Supabase crée le compte et génère le lien sans
   // envoyer de mail : c'est nous qui l'envoyons (cf. lib/confirmation-email).
   const { data, error } = gmailConfigure()
@@ -82,7 +87,6 @@ export async function inscription(formData: FormData) {
   }
 
   const partnerCode = (formData.get('partner_code') as string | null)?.trim()
-  const codeAvantage = (formData.get('code_parrainage') as string | null)?.trim()
   let partnerCodeError: string | null = null
 
   if (data.user) {
