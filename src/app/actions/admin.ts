@@ -8,7 +8,7 @@ import { normalizeOverrides, emptyOverrides, getEffectiveModules, META_OVERRIDE_
 import { SITE_CONTENT_PREFIX } from '@/lib/site-content'
 import { assertAdmin } from '@/lib/admin-mail'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
-import { sendWelcomeEmail } from '@/lib/welcome-email'
+import { sendWelcomeEmail, envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { renvoyerMailConfirmation } from '@/lib/confirmation-email'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
@@ -410,6 +410,25 @@ export async function adminRenvoyerConfirmation(userId: string) {
   if (res.raison === 'deja_confirme') return { error: 'Adresse déjà confirmée' }
   if (res.raison === 'envoi') return { error: `Échec de l'envoi${res.erreur ? ` — ${res.erreur}` : ''}` }
   return { error: res.raison || 'Échec' }
+}
+
+// Confirme l'adresse sans passer par le mail (ex. mail qui n'arrive pas) :
+// la personne peut alors se connecter et commencer les modules. Le mail de
+// bienvenue (avec le code couple) part s'il n'a pas encore été envoyé.
+export async function adminConfirmerEmail(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data } = await admin.auth.admin.getUserById(userId)
+  if (!data?.user) return { error: 'Utilisateur introuvable' }
+  if (data.user.email_confirmed_at) return { error: 'Adresse déjà confirmée' }
+
+  const { error } = await admin.auth.admin.updateUserById(userId, { email_confirm: true })
+  if (error) return { error: error.message }
+
+  await envoyerBienvenueSiEnAttente(userId)
+  revalidatePath('/admin/utilisateurs')
+  return { success: true }
 }
 
 export async function adminDeleteUser(userId: string) {

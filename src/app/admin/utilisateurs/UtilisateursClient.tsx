@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { KeyRound, Mail, MailCheck, Trash2, X } from 'lucide-react'
-import { adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminDeleteUser } from '@/app/actions/admin'
+import { BadgeCheck, KeyRound, Mail, MailCheck, Trash2, X } from 'lucide-react'
+import { adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser } from '@/app/actions/admin'
 
 interface User {
   id: string
@@ -51,6 +51,13 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
     await run(`confirm-${user.id}`, async () => {
       const res = await adminRenvoyerConfirmation(user.id)
       showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Mail de confirmation renvoyé')
+    })
+  }
+
+  async function confirmerManuellement(user: User) {
+    await run(`confirm-manuel-${user.id}`, async () => {
+      const res = await adminConfirmerEmail(user.id)
+      showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Adresse confirmée : la personne peut se connecter')
     })
   }
 
@@ -105,6 +112,17 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
                     >
                       <MailCheck className="w-3.5 h-3.5" />
                       {loading[`confirm-${user.id}`] ? 'Envoi…' : 'Renvoyer le mail de confirmation'}
+                    </button>
+                  )}
+                  {!user.emailConfirme && (
+                    <button
+                      disabled={loading[`confirm-manuel-${user.id}`]}
+                      onClick={() => confirmerManuellement(user)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--sage)', opacity: loading[`confirm-manuel-${user.id}`] ? 0.5 : 1 }}
+                    >
+                      <BadgeCheck className="w-3.5 h-3.5" />
+                      {loading[`confirm-manuel-${user.id}`] ? 'Confirmation…' : 'Confirmer l\'adresse manuellement'}
                     </button>
                   )}
                   {user.hasCouple && (
