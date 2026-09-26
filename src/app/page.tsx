@@ -207,7 +207,7 @@ export default function LandingPage() {
             <EditableText id="home.constat.reveal.titre" as="em" style={{ color: 'var(--brand)' }}>Il manquait un rendez-vous régulier, à deux.</EditableText>
           </h3>
           <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
-            <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple, ça se choisit, puis ça se re-choisit.</EditableText></p>
+            <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText></p>
             <div>
               <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
               <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
