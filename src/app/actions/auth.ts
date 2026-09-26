@@ -163,6 +163,12 @@ export async function connexion(formData: FormData) {
 
   await clearLoginAttempts(email)
 
+  // Filet de sécurité : si le lien de confirmation a été ouvert dans un autre
+  // navigateur (appli mail du téléphone…), /auth/callback échoue alors que
+  // l'adresse est bien confirmée, et l'e-mail de bienvenue n'était jamais envoyé.
+  const { data: { user: connecte } } = await supabase.auth.getUser()
+  if (connecte) await envoyerBienvenueSiEnAttente(connecte.id)
+
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
   if (aal && aal.nextLevel === 'aal2' && aal.nextLevel !== aal.currentLevel) {
     return { mfaRequired: true }

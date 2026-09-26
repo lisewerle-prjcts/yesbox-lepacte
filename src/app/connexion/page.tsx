@@ -30,11 +30,13 @@ export default function ConnexionPage() {
   const [mfaRequired, setMfaRequired] = useState(false)
   const [useRecoveryCode, setUseRecoveryCode] = useState(false)
   const [mfaResetNotice, setMfaResetNotice] = useState(false)
+  const [callbackNotice, setCallbackNotice] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('mfa_reset') === '1') setMfaResetNotice(true)
     if (params.get('mfa') === '1') setMfaRequired(true)
+    if (params.get('error') === 'auth_callback_error') setCallbackNotice(true)
   }, [])
 
   async function handleAction(formData: FormData) {
@@ -153,6 +155,7 @@ export default function ConnexionPage() {
         </div>
 
         <div className="card">
+          {callbackNotice && <Alert type="info" message={t("Si tu viens de cliquer sur le lien de confirmation, ton adresse est bien confirmée : il ne te reste plus qu'à te connecter.", "If you just clicked the confirmation link, your email address is confirmed: all you need to do now is sign in.")} className="mb-5" />}
           {mfaResetNotice && <Alert type="info" message={t("Ta double authentification a été désactivée avec un code de secours. Reconnecte-toi, puis réactive-la depuis l'onglet Sécurité.", 'Your two-factor authentication was turned off using a backup code. Sign back in, then re-enable it from the Security tab.')} className="mb-5" />}
           {error && (
             <div className="mb-5 space-y-2">
