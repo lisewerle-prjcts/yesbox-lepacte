@@ -389,7 +389,7 @@ export async function adminResetAndSendPassword(userId: string) {
   return { success: true, password: newPassword, emailed: true }
 }
 
-export async function adminRenvoyerCodeCouple(userId: string) {
+export async function adminRenvoyerBienvenue(userId: string) {
   await assertAdmin()
   const admin = createAdminClient()
 
@@ -402,7 +402,29 @@ export async function adminRenvoyerCodeCouple(userId: string) {
 
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return { error: 'GMAIL non configuré' }
 
-  await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
+  const envoye = await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
+  if (!envoye) return { error: 'Échec de l\'envoi' }
+  // Évite un second envoi automatique à la prochaine connexion.
+  await admin.from('profiles').update({ email_bienvenue_envoye_le: new Date().toISOString() }).eq('id', userId).is('email_bienvenue_envoye_le', null)
+  return { success: true }
+}
+
+export async function adminRenvoyerConfirmation(userId: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+
+  const { data } = await admin.auth.admin.getUserById(userId)
+  const user = data?.user
+  const email = user?.email
+  if (!user || !email) return { error: 'Utilisateur introuvable' }
+  if (user.email_confirmed_at) return { error: 'Adresse déjà confirmée' }
+
+  const { error } = await admin.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'}/auth/callback` },
+  })
+  if (error) return { error: error.message }
   return { success: true }
 }
 

@@ -17,8 +17,9 @@ Il/elle pourra le renseigner lors de son inscription, ou depuis son espace.
 L'équipe YES BOX`,
 }
 
-export async function sendWelcomeEmail(email: string, prenom: string, code: string) {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return
+// Renvoie true si l'e-mail est parti, false sinon (Gmail non configuré ou erreur d'envoi).
+export async function sendWelcomeEmail(email: string, prenom: string, code: string): Promise<boolean> {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return false
 
   const admin = createAdminClient()
   const { data: settings } = await admin
@@ -39,12 +40,12 @@ export async function sendWelcomeEmail(email: string, prenom: string, code: stri
   const body = echapperHtml(bodyTemplate.replace(/\{prenom\}/g, prenom).replace(/\{code\}/g, code))
 
   const transporter = getMailTransporter()
-  await transporter.sendMail({
+  return transporter.sendMail({
     from: '"YES BOX" <lise.yesbox@gmail.com>',
     to: email,
     subject,
     html: mailHtml(body.split('\n').map(line => `<p style="margin:0 0 12px;">${line || '&nbsp;'}</p>`).join('')),
-  }).catch(() => {})
+  }).then(() => true, () => false)
 }
 
 function echapperHtml(texte: string) {
