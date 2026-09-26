@@ -11,7 +11,35 @@ import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/r
 // devient une action appelable depuis le navigateur avec n'importe quels
 // arguments.
 
-export async function creerCoupleSolo(userId: string, codeParrainage?: string | null) {
+// Le champ « Code de parrainage ou code promo » de l'inscription accepte
+// les deux : on essaie d'abord le code comme code de parrainage (seulement
+// pour un nouveau couple), puis comme code gratuit (Admin > Codes gratuits).
+// Best-effort : un code invalide ne bloque jamais l'inscription.
+export async function appliquerCodeInscription(coupleId: string, code: string, nouveauCouple: boolean) {
+  const clean = code.trim()
+  if (!clean) return
+  const admin = createAdminClient()
+  if (nouveauCouple && await enregistrerParrainage(admin, clean, coupleId)) return
+  await admin.rpc('utiliser_code_gratuit', { p_code: clean, p_couple_id: coupleId })
+}
+
+// Vérifié avant de créer le compte, pour afficher une erreur dans le
+// formulaire : le code doit être un code de parrainage existant, ou un code
+// gratuit actif qui n'a pas atteint son nombre maximum d'utilisations.
+export async function codeInscriptionValide(code: string) {
+  const clean = code.trim().toUpperCase()
+  if (!clean) return true
+  const admin = createAdminClient()
+
+  const { data: parrain } = await admin.from('couples').select('id').eq('code_parrainage', clean).maybeSingle()
+  if (parrain) return true
+
+  const { data: gratuit } = await admin.from('codes_gratuits').select('usages, usages_max')
+    .eq('code', clean).eq('actif', true).maybeSingle()
+  return !!gratuit && gratuit.usages < gratuit.usages_max
+}
+
+export async function creerCoupleSolo(userId: string, codeAvantage?: string | null) {
   const admin = createAdminClient()
 
   const { data: couple, error: coupleError } = await admin
@@ -32,8 +60,8 @@ export async function creerCoupleSolo(userId: string, codeParrainage?: string | 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
   await admin.rpc('renumeroter_couples')
 
-  if (codeParrainage) {
-    await enregistrerParrainage(admin, codeParrainage, couple.id)
+  if (codeAvantage) {
+    await appliquerCodeInscription(couple.id, codeAvantage, true)
   }
 
   return { success: true, couple }

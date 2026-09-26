@@ -186,15 +186,14 @@ export default function InscriptionForm({
 
         <div>
           <label htmlFor="code_parrainage" className="label">
-            <EditableText id="inscription.field.parrainage">Code de parrainage</EditableText> <span className="text-gray-400 font-normal">{t('(optionnel)', '(optional)')}</span>
+            <EditableText id="inscription.field.parrainage_promo">Code de parrainage ou code promo</EditableText> <span className="text-gray-400 font-normal">{t('(optionnel)', '(optional)')}</span>
           </label>
           <input
             id="code_parrainage"
             name="code_parrainage"
             type="text"
-            placeholder={t('Ex : B7K2Q9', 'e.g. B7K2Q9')}
+            placeholder={t('Ex : B7K2Q9 ou BETA2026', 'e.g. B7K2Q9 or BETA2026')}
             defaultValue={codeParrainageInitial}
-            maxLength={6}
             autoCapitalize="characters"
             className="input-field uppercase"
           />
