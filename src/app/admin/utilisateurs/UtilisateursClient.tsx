@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { KeyRound, Mail, Trash2, X } from 'lucide-react'
-import { adminResetAndSendPassword, adminRenvoyerCodeCouple, adminDeleteUser } from '@/app/actions/admin'
+import { KeyRound, Mail, MailCheck, Trash2, X } from 'lucide-react'
+import { adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminDeleteUser } from '@/app/actions/admin'
 
 interface User {
   id: string
@@ -12,12 +12,13 @@ interface User {
   createdAt: string
   coupleNumero: number | null
   hasCouple: boolean
+  emailConfirme: boolean
 }
 
 export default function UtilisateursClient({ users }: { users: User[] }) {
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [passwordShown, setPasswordShown] = useState<Record<string, { password: string; emailed: boolean }>>({})
-  const [codeStatus, setCodeStatus] = useState<Record<string, 'sent' | 'error'>>({})
+  const [mailStatus, setMailStatus] = useState<Record<string, { ok: boolean; message: string } | undefined>>({})
   const [confirmDelete, setConfirmDelete] = useState<User | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -34,11 +35,22 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
     })
   }
 
-  async function resendCode(user: User) {
-    await run(`code-${user.id}`, async () => {
-      const res = await adminRenvoyerCodeCouple(user.id)
-      setCodeStatus(s => ({ ...s, [user.id]: res.error ? 'error' : 'sent' }))
-      setTimeout(() => setCodeStatus(s => ({ ...s, [user.id]: undefined as unknown as 'sent' })), 3000)
+  function showStatus(user: User, ok: boolean, message: string) {
+    setMailStatus(s => ({ ...s, [user.id]: { ok, message } }))
+    setTimeout(() => setMailStatus(s => ({ ...s, [user.id]: undefined })), 5000)
+  }
+
+  async function resendWelcome(user: User) {
+    await run(`bienvenue-${user.id}`, async () => {
+      const res = await adminRenvoyerBienvenue(user.id)
+      showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Mail de bienvenue envoyé')
+    })
+  }
+
+  async function resendConfirmation(user: User) {
+    await run(`confirm-${user.id}`, async () => {
+      const res = await adminRenvoyerConfirmation(user.id)
+      showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Mail de confirmation renvoyé')
     })
   }
 
@@ -80,19 +92,30 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
                       </span>
                     </div>
                   )}
-                  {codeStatus[user.id] === 'sent' && <p style={{ fontSize: 11, color: 'var(--sage)' }} className="mt-1">Code envoyé par email</p>}
-                  {codeStatus[user.id] === 'error' && <p style={{ fontSize: 11, color: '#dc2626' }} className="mt-1">Erreur — vérifie que l&apos;email est configuré</p>}
+                  {!user.emailConfirme && <div style={{ fontSize: 11, color: '#b45309' }}>Adresse e-mail pas encore confirmée</div>}
+                  {mailStatus[user.id] && <p style={{ fontSize: 11, color: mailStatus[user.id]!.ok ? 'var(--sage)' : '#dc2626' }} className="mt-1">{mailStatus[user.id]!.message}</p>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
+                  {!user.emailConfirme && (
+                    <button
+                      disabled={loading[`confirm-${user.id}`]}
+                      onClick={() => resendConfirmation(user)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--brand)', opacity: loading[`confirm-${user.id}`] ? 0.5 : 1 }}
+                    >
+                      <MailCheck className="w-3.5 h-3.5" />
+                      {loading[`confirm-${user.id}`] ? 'Envoi…' : 'Renvoyer le mail de confirmation'}
+                    </button>
+                  )}
                   {user.hasCouple && (
                     <button
-                      disabled={loading[`code-${user.id}`]}
-                      onClick={() => resendCode(user)}
+                      disabled={loading[`bienvenue-${user.id}`]}
+                      onClick={() => resendWelcome(user)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                      style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--brand)', opacity: loading[`code-${user.id}`] ? 0.5 : 1 }}
+                      style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--brand)', opacity: loading[`bienvenue-${user.id}`] ? 0.5 : 1 }}
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      {loading[`code-${user.id}`] ? 'Envoi…' : 'Renvoyer le code couple'}
+                      {loading[`bienvenue-${user.id}`] ? 'Envoi…' : 'Renvoyer le mail de bienvenue'}
                     </button>
                   )}
                   <button

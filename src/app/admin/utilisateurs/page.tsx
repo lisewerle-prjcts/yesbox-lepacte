@@ -4,13 +4,17 @@ import UtilisateursClient from './UtilisateursClient'
 export default async function AdminUtilisateurs() {
   const supabase = createAdminClient()
 
-  const [{ data: profiles }, { data: couples }] = await Promise.all([
+  const [{ data: profiles }, { data: couples }, { data: authUsers }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, email, nom, prenom, created_at, couple_id')
       .order('created_at', { ascending: false }),
     supabase.from('couples').select('id, numero'),
+    supabase.auth.admin.listUsers({ perPage: 1000 }),
   ])
+
+  const confirmeById: Record<string, boolean> = {}
+  for (const u of authUsers?.users || []) confirmeById[u.id] = !!u.email_confirmed_at
 
   const numeroByCoupleId: Record<string, number> = {}
   for (const c of couples || []) numeroByCoupleId[c.id] = c.numero
@@ -23,6 +27,7 @@ export default async function AdminUtilisateurs() {
     createdAt: p.created_at,
     coupleNumero: p.couple_id ? numeroByCoupleId[p.couple_id] ?? null : null,
     hasCouple: !!p.couple_id,
+    emailConfirme: confirmeById[p.id] ?? true,
   }))
 
   return (
