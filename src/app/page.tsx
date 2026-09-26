@@ -19,12 +19,12 @@ const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
 ]
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
-  { titre: t('Vous préparez votre mariage', "You're planning your wedding"), desc: t('Et vous voulez que la préparation porte sur vous deux — pas seulement sur le plan de table.', 'And you want the planning to be about the two of you — not just the seating chart.') },
-  { titre: t("Vous vous engagez bientôt", "You're making a commitment soon"), desc: t("Emménagement, achat commun, premier enfant : un nouveau cap, qui mérite qu'on s'y prépare.", 'Moving in together, buying a home, your first child: a new chapter worth preparing for.') },
-  { titre: t("Vous voulez éviter les non-dits", "You want to avoid the things left unsaid"), desc: t("Vous sentez qu'il y a des sujets qu'on évite, des conversations qu'on remet à plus tard.", "You can sense there are topics you're avoiding, conversations you keep putting off.") },
-  { titre: t('Vous aimez les choses bien faites', 'You like doing things right'), desc: t('Pas de thérapie en urgence : une démarche posée, intentionnelle, à votre rythme.', 'No crisis therapy — just a calm, intentional process, at your own pace.') },
-  { titre: t('Vous voulez écrire vos vœux', 'You want to write your vows'), desc: t("Et vous ne savez pas par où commencer. Le programme se termine par cet exercice, accompagné.", "And you don't know where to start. The program ends with this exercise, guided every step of the way.") },
-  { titre: t("Vous croyez à l'engagement long", 'You believe in the long game'), desc: t('Et vous voulez vous donner les outils pour le faire durer — pas le subir.', 'And you want the tools to make it last — not just endure it.') },
+  { titre: t('Tout va bien, et vous voulez que ça dure', "Everything's fine, and you want it to last"), desc: t("Pas besoin d'une crise pour prendre soin de votre couple. Juste l'envie de mieux vous connaître.", "You don't need a crisis to take care of your relationship. Just the wish to get to know each other better.") },
+  { titre: t('Il y a des non-dits', 'There are things left unsaid'), desc: t("De petites frustrations qui s'accumulent, des sujets qu'on évite, des conversations qu'on remet toujours à plus tard.", 'Small frustrations piling up, topics you avoid, conversations you keep putting off.') },
+  { titre: t('Vos disputes tournent en rond', 'Your arguments go round in circles'), desc: t('Toujours les mêmes sujets, toujours la même fin. Vous voulez comprendre ce qui se joue et en sortir autrement.', "Always the same topics, always the same ending. You want to understand what's really going on and find another way out.") },
+  { titre: t('Le quotidien a pris toute la place', 'Everyday life has taken over'), desc: t('Travail, tâches, écrans. Vous voulez retrouver du temps rien qu\'à deux et vous redécouvrir.', 'Work, chores, screens. You want to find time just for the two of you and rediscover each other.') },
+  { titre: t('Un nouveau cap arrive', 'A new chapter is coming'), desc: t("Emménagement, achat commun, enfant, PACS, mariage : une étape qui mérite qu'on s'y prépare ensemble.", 'Moving in, buying a home, a child, a civil union, a wedding: a milestone worth preparing for together.') },
+  { titre: t("Consulter, ce n'est pas (encore) pour vous", "Therapy isn't for you (yet)"), desc: t("Pas envie de raconter votre vie à une personne extérieure pour l'instant ? Commencez par vous parler, entre vous.", "Not ready to share your life with an outsider just yet? Start by talking to each other.") },
 ]
 
 const NAV_LINKS = (t: (fr: string, en: string) => string) => [
@@ -33,10 +33,10 @@ const NAV_LINKS = (t: (fr: string, en: string) => string) => [
   { href: '#tarifs', key: 'tarifs', label: t('Tarifs', 'Pricing') },
 ]
 
-const STATS = (t: (fr: string, en: string) => string) => [
-  { n: '45 %', l: t('des mariages se terminent par un divorce en France', 'of marriages in France end in divorce') },
-  { n: '68 %', l: t("des disputes portent sur des sujets jamais abordés avant l'engagement", 'of arguments are about topics never discussed before committing') },
-  { n: '0 h', l: t('de préparation conjugale en moyenne, hors mariage religieux', "of couple's preparation on average, outside of religious marriage prep") },
+const OPTIONS = (t: (fr: string, en: string) => string) => [
+  { titre: t('On ne dit rien', 'We say nothing'), desc: t("C'est gratuit… sur le moment. Les non-dits, eux, s'accumulent.", 'It costs nothing… in the moment. But the things left unsaid keep piling up.') },
+  { titre: t('On achète un livre', 'We buy a book'), desc: t('Environ 20 €, souvent lu par un seul des deux membres du couple, et il faut tout transposer soi-même dans sa propre histoire.', "Around €20, often read by only one of the two partners, and you have to translate it all into your own story yourselves.") },
+  { titre: t('On consulte', 'We see a therapist'), desc: t("C'est indispensable quand ça va vraiment mal. Il faut compter 80 à 150 € la séance, sur plusieurs mois. Tout le monde n'a pas envie de se confier à une personne extérieure dès le départ.", "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.") },
 ]
 
 const CDD_LIST = (t: (fr: string, en: string) => string) => [
@@ -63,7 +63,7 @@ export default function LandingPage() {
   const modules = localizeModules(MODULES, locale)
   const navLinks = NAV_LINKS(t)
   const pourQuiList = POUR_QUI(t)
-  const statsList = STATS(t)
+  const optionsList = OPTIONS(t)
   const cddList = CDD_LIST(t)
   const cddRows = CDD_ROWS(t)
   const temoignagesList = TEMOIGNAGES(t)
@@ -118,9 +118,11 @@ export default function LandingPage() {
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted)' }}>
-          <EditableText id="home.hero.subtitle" multiline>Un programme en 10 modules pour se choisir en conscience, signer votre CDD de couple, et vous retrouver chaque année.</EditableText>
-        </p>
+        <div className="text-lg md:text-xl max-w-2xl mx-auto mb-10 space-y-3" style={{ color: 'var(--muted)' }}>
+          <p><EditableText id="home.hero.intro.0" multiline>Les non-dits s&apos;accumulent sans bruit. YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
+          <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
+          <p><EditableText id="home.hero.intro.2" multiline>Pour tous les couples, à votre rythme.</EditableText></p>
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             <EditableText id="home.hero.cta.primary">Inscription au module 1 — Gratuit</EditableText> <ArrowRight className="w-4 h-4" />
@@ -130,8 +132,8 @@ export default function LandingPage() {
           </a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
-          {/* Identifiants fixes : le badge n°2 (date de lancement) a été retiré. */}
-          {([[0, '✦ Module 1 gratuit pour vous deux'], [1, '✦ À votre rythme'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
+          {/* Identifiants fixes : nouveaux ids pour les badges dont le texte a changé. */}
+          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sansjugement', '✦ Sans thérapeute, sans jugement'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
             <span key={i}><EditableText id={`home.hero.badges.${i}`}>{badge}</EditableText></span>
           ))}
         </div>
@@ -147,6 +149,9 @@ export default function LandingPage() {
               <EditableText id="home.pourqui.title.highlight" as="em" style={{ color: 'var(--brand)' }}>vous deux</EditableText>
               <EditableText id="home.pourqui.title.suffix">, si…</EditableText>
             </h2>
+            <p className="mt-3 text-base" style={{ color: 'var(--muted)' }}>
+              <EditableText id="home.pourqui.subtitle">Ensemble depuis 2 mois ou 20 ans, en union libre, en PACS ou en mariage.</EditableText>
+            </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pourQuiList.map((item, i) => (
@@ -155,8 +160,8 @@ export default function LandingPage() {
                   <Check className="w-3.5 h-3.5" style={{ color: 'var(--sage)' }} />
                 </span>
                 <div>
-                  <h4 className="font-semibold mb-1.5" style={{ fontSize: 15 }}><EditableText id={`home.pourqui.${i}.titre`}>{item.titre}</EditableText></h4>
-                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.pourqui.${i}.desc`} multiline>{item.desc}</EditableText></p>
+                  <h4 className="font-semibold mb-1.5" style={{ fontSize: 15 }}><EditableText id={`home.pourqui.v2.${i}.titre`}>{item.titre}</EditableText></h4>
+                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.pourqui.v2.${i}.desc`} multiline>{item.desc}</EditableText></p>
                 </div>
               </div>
             ))}
@@ -169,23 +174,50 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div>
             <div className="eyebrow mb-4"><EditableText id="home.constat.eyebrow">Le constat</EditableText></div>
-            <blockquote className="font-serif" style={{ fontSize: 'clamp(22px, 3vw, 30px)', lineHeight: 1.35, color: 'var(--ink)', marginBottom: 20, fontStyle: 'italic' }}>
-              &ldquo;<EditableText id="home.constat.quote" multiline>On organise un mariage pendant 18 mois. On prépare le couple pendant… combien ?</EditableText>&rdquo;
-            </blockquote>
-            <p style={{ fontSize: 14.5, lineHeight: 1.8, color: 'var(--muted)' }}>
-              <EditableText id="home.constat.paragraph.prefix">La plupart des couples s&apos;engagent</EditableText>{' '}
-              <EditableText id="home.constat.paragraph.highlight" as="em">sans avoir pris le temps de poser les bases</EditableText>
-              <EditableText id="home.constat.paragraph.suffix" multiline>. On parle de robe, de salle, de menu, de musique. Mais rarement de finances, de désir d&apos;enfants, de famille, de rythme, de silences.</EditableText>
-            </p>
+            <h2 className="font-serif" style={{ fontSize: 'clamp(24px, 3.2vw, 34px)', lineHeight: 1.25, fontWeight: 700, color: 'var(--ink)', marginBottom: 20 }}>
+              <EditableText id="home.constat.titre">Un couple ne se sépare pas en un jour.</EditableText>
+            </h2>
+            <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
+              <p><EditableText id="home.constat.texte.0" multiline>Il se sépare à force de petites choses jamais dites.</EditableText></p>
+              <p><EditableText id="home.constat.texte.1" multiline>Une frustration qu&apos;on garde pour soi, un sujet qu&apos;on évite, une dispute qu&apos;on ne termine jamais vraiment.</EditableText></p>
+              <p><EditableText id="home.constat.texte.2" multiline>Une à une, elles ne pèsent rien. Accumulées pendant des années, elles finissent par tout peser.</EditableText></p>
+            </div>
+            <div className="card p-6 flex gap-5 items-center mt-8">
+              <div className="font-serif font-bold flex-shrink-0" style={{ fontSize: 36, color: 'var(--brand)', lineHeight: 1 }}><EditableText id="home.constat.chiffre.n">45 %</EditableText></div>
+              <div style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5 }}><EditableText id="home.constat.chiffre.l" multiline>des mariages se terminent par un divorce (Insee, 2022).</EditableText></div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            {statsList.map((s, i) => (
-              <div key={i} className="card p-6 flex gap-5 items-center">
-                <div className="font-serif font-bold flex-shrink-0" style={{ fontSize: 36, color: 'var(--brand)', lineHeight: 1 }}><EditableText id={`home.constat.stats.${i}.n`}>{s.n}</EditableText></div>
-                <div style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5 }}><EditableText id={`home.constat.stats.${i}.l`} multiline>{s.l}</EditableText></div>
-              </div>
-            ))}
+          <div>
+            <h3 className="font-serif mb-5" style={{ fontSize: 'clamp(20px, 2.4vw, 26px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3 }}>
+              <EditableText id="home.constat.options.titre">Et quand ça coince, on fait quoi ?</EditableText>
+            </h3>
+            <div className="grid grid-cols-1 gap-4">
+              {optionsList.map((o, i) => (
+                <div key={i} className="card p-6">
+                  <h4 className="font-semibold mb-1.5" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`home.constat.options.${i}.titre`}>{o.titre}</EditableText></h4>
+                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.constat.options.${i}.desc`} multiline>{o.desc}</EditableText></p>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="card mt-12 p-8 md:p-10 text-center" style={{ maxWidth: 820, marginLeft: 'auto', marginRight: 'auto' }}>
+          <h3 className="font-serif mb-5" style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.25 }}>
+            <EditableText id="home.constat.reveal.titre" as="em" style={{ color: 'var(--brand)' }}>Il manquait un rendez-vous régulier, à deux.</EditableText>
+          </h3>
+          <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
+            <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple, ça se choisit, puis ça se re-choisit.</EditableText></p>
+            <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
+            <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
+            <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
+          </div>
+          <p className="font-serif mt-6" style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink)' }}>
+            <EditableText id="home.constat.reveal.chute" multiline>Et si tout va bien ? C&apos;est justement le meilleur moment pour commencer.</EditableText>
+          </p>
+          <p className="mt-6" style={{ fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.6, color: 'var(--muted)' }}>
+            <EditableText id="home.constat.reveal.avertissement" multiline>YES BOX n&apos;est pas une thérapie. Si vous traversez une crise profonde, tournez-vous vers un·e professionnel·le. Et pour toute situation de violence, contactez le 3919 ou le numéro des urgences 17, 112 ou par SMS au 114 (contact gratuit).</EditableText>
+          </p>
         </div>
       </section>
 
