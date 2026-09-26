@@ -290,7 +290,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.constat.options.2.desc': "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.",
   'home.constat.reveal.titre': 'What was missing: a regular date, just the two of you.',
   'home.constat.reveal.texte.0': 'YES BOX starts from a simple idea: a couple that lasts and thrives is something you choose, and something you nurture, gently.',
-  'home.constat.reveal.texte.programme': 'It is a playful personal development program for every couple, to follow at your own pace.',
+  'home.constat.reveal.texte.programme': "It's a playful, self-guided personal development program for every couple.",
   'home.constat.reveal.texte.1': "At the end of the program, you draft and sign your Couple's Contract, your pact for the year ahead.",
   'home.constat.reveal.texte.2': "Every year, just like at work, an anniversary module helps you take stock, say what's been weighing on you and adjust your commitments.",
   'home.constat.reveal.texte.3': 'You never lose the thread, and frustrations never get the chance to settle in.',
