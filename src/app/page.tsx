@@ -118,10 +118,10 @@ export default function LandingPage() {
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <div className="text-lg md:text-xl max-w-2xl mx-auto mb-10 space-y-3" style={{ color: 'var(--muted)' }}>
-          <p><EditableText id="home.hero.intro.0" multiline>Les non-dits s&apos;accumulent sans bruit. YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
+        <div className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted)' }}>
+          <p><EditableText id="home.hero.intro.line1" multiline>Les non-dits s&apos;accumulent sans bruit.</EditableText></p>
+          <p><EditableText id="home.hero.intro.line2" multiline>YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
           <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
-          <p><EditableText id="home.hero.intro.2" multiline>Pour tous les couples, à votre rythme.</EditableText></p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
@@ -208,9 +208,11 @@ export default function LandingPage() {
           </h3>
           <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
             <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple, ça se choisit, puis ça se re-choisit.</EditableText></p>
-            <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
-            <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
-            <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
+            <div>
+              <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
+              <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
+              <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
+            </div>
           </div>
           <p className="font-serif mt-6" style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink)' }}>
             <EditableText id="home.constat.reveal.chute" multiline>Et si tout va bien ? C&apos;est justement le meilleur moment pour commencer.</EditableText>
@@ -221,8 +223,56 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* CDD DE COUPLE */}
+      <section className="py-20" style={{ background: 'var(--brand-tint)', borderTop: '1px solid var(--brand-soft)', borderBottom: '1px solid var(--brand-soft)' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="eyebrow mb-4">
+                <EditableText id="home.cdd.eyebrow">— L&apos;idée signature</EditableText>
+              </div>
+              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
+                <EditableText id="home.cdd.title.prefix">Un</EditableText>{' '}
+                <EditableText id="home.cdd.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>CDD de couple</EditableText>,<br />
+                <EditableText id="home.cdd.title.suffix">à re-signer chaque année.</EditableText>
+              </h2>
+              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)', marginTop: 20 }}>
+                <EditableText id="home.cdd.paragraph" multiline>Comme en entreprise — la clarté des engagements, le bilan régulier, la révision des projets — mais avec amour. À la fin du programme, vous rédigez votre Contrat à Durée Déterminée de couple : vos articles, vos valeurs, vos projets. Avec un rendez-vous annuel inscrit dedans.</EditableText>
+              </p>
+              <ul className="mt-6 space-y-3">
+                {cddList.map((item, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
+                    <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.cdd.list.${i}`}>{item}</EditableText></span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ background: 'var(--paper)', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}>
+              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'var(--muted-2)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
+                <EditableText id="home.cdd.card.eyebrow">Contrat à durée déterminée</EditableText>
+              </p>
+              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'var(--ink)' }}>
+                <EditableText id="home.cdd.card.title">Le CDD de couple</EditableText>
+              </h3>
+              {cddRows.map((row, idx) => (
+                <div key={idx} className="flex justify-between py-3" style={{ borderBottom: idx < cddRows.length - 1 ? '1px solid var(--line)' : 'none', fontSize: 13 }}>
+                  <span className="font-mono uppercase" style={{ color: 'var(--muted-2)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.cdd.card.rows.${idx}.k`}>{row.k}</EditableText></span>
+                  <span style={{ color: 'var(--ink)', fontWeight: 500 }}><EditableText id={`home.cdd.card.rows.${idx}.v`}>{row.v}</EditableText></span>
+                </div>
+              ))}
+              <div className="flex justify-end mt-4">
+                <div className="flex items-center justify-center text-center font-bold" style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.2 }}>
+                  {t('À re-signer', 'Renewed')}<br />{t('chaque', 'every')}<br />{t('année', 'year')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* LES 10 MODULES */}
-      <section id="modules" className="py-20" style={{ background: 'var(--cream-2)' }}>
+      <section id="modules" className="py-20" style={{ background: 'var(--paper)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3"><EditableText id="home.modules.eyebrow">Le programme</EditableText></div>
@@ -256,54 +306,6 @@ export default function LandingPage() {
               <EditableText id="home.modules.infos.prefix">Pour plus d&apos;informations, lire les</EditableText>{' '}
               <Link href="/mentions-legales" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link">mentions légales</EditableText></Link>.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CDD DE COUPLE */}
-      <section className="py-20" style={{ background: '#16120e' }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="eyebrow mb-4" style={{ color: 'rgba(255,255,255,.35)', fontFamily: 'var(--font-geist-mono)' }}>
-                <EditableText id="home.cdd.eyebrow">— L&apos;idée signature</EditableText>
-              </div>
-              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'rgba(255,255,255,.92)', lineHeight: 1.15 }}>
-                <EditableText id="home.cdd.title.prefix">Un</EditableText>{' '}
-                <EditableText id="home.cdd.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>CDD de couple</EditableText>,<br />
-                <EditableText id="home.cdd.title.suffix">à re-signer chaque année.</EditableText>
-              </h2>
-              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'rgba(255,255,255,.5)', marginTop: 20 }}>
-                <EditableText id="home.cdd.paragraph" multiline>Comme en entreprise — la clarté des engagements, le bilan régulier, la révision des projets — mais avec amour. À la fin du programme, vous rédigez votre Contrat à Durée Déterminée de couple : vos articles, vos valeurs, vos projets. Avec un rendez-vous annuel inscrit dedans.</EditableText>
-              </p>
-              <ul className="mt-6 space-y-3">
-                {cddList.map((item, i) => (
-                  <li key={i} className="flex gap-3 items-start">
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.55)' }}><EditableText id={`home.cdd.list.${i}`}>{item}</EditableText></span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div style={{ background: '#1e1a15', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid rgba(255,255,255,.08)' }}>
-              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'rgba(255,255,255,.3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
-                <EditableText id="home.cdd.card.eyebrow">Contrat à durée déterminée</EditableText>
-              </p>
-              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'rgba(255,255,255,.85)' }}>
-                <EditableText id="home.cdd.card.title">Le CDD de couple</EditableText>
-              </h3>
-              {cddRows.map((row, idx) => (
-                <div key={idx} className="flex justify-between py-3" style={{ borderBottom: idx < cddRows.length - 1 ? '1px solid rgba(255,255,255,.07)' : 'none', fontSize: 13 }}>
-                  <span className="font-mono uppercase" style={{ color: 'rgba(255,255,255,.35)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.cdd.card.rows.${idx}.k`}>{row.k}</EditableText></span>
-                  <span style={{ color: 'rgba(255,255,255,.7)', fontWeight: 500 }}><EditableText id={`home.cdd.card.rows.${idx}.v`}>{row.v}</EditableText></span>
-                </div>
-              ))}
-              <div className="flex justify-end mt-4">
-                <div className="flex items-center justify-center text-center font-bold" style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.2 }}>
-                  {t('À re-signer', 'Renewed')}<br />{t('chaque', 'every')}<br />{t('année', 'year')}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
