@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { enregistrerParrainage } from '@/lib/parrainage'
+import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 
 // Ces fonctions reçoivent un userId sans le vérifier : elles ne doivent
@@ -58,6 +59,7 @@ export async function creerCoupleSolo(userId: string, codeAvantage?: string | nu
   if (profileError) return { error: profileError.message }
 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await ouvrirPremierModuleSiBesoin(admin, couple.id)
   await admin.rpc('renumeroter_couples')
 
   if (codeAvantage) {

@@ -1136,3 +1136,67 @@ create policy "journal_update" on public.journal_entries for update using (
       and m.reponses_partagees and not m.revealed
   )
 );
+
+-- ============================================================
+-- LES RÉPONSES SUIVENT LA PERSONNE AU PAIRAGE (v17)
+-- Avant : les réponses étaient rattachées aux modules du couple. Quand
+-- une personne ayant déjà répondu seule rejoignait le couple de l'autre
+-- (code, lien d'invitation ou réaffectation depuis l'admin), ses
+-- réponses restaient dans son ancien couple, supprimé s'il était vide :
+-- elles étaient perdues.
+-- Désormais, dès qu'un profil change de couple, ses réponses sont
+-- déplacées vers le module du même slug dans le nouveau couple (en cas
+-- de doublon, la réponse la plus récente l'emporte). Elles quittent donc
+-- aussi l'ancien couple : l'autre membre ne les voit plus. Si la
+-- personne change encore de couple plus tard, elles la suivent à nouveau.
+-- Le couple rejoint repart de zéro pour les révélations (réponses de
+-- nouveau privées et modifiables jusqu'à ce que les deux aient répondu),
+-- puisque les réponses mises en face sont celles d'un nouveau binôme.
+-- Les conclusions (journal) restent dans le couple où elles ont été
+-- écrites. Une personne simplement retirée de son couple (sans en
+-- rejoindre un autre) garde ses réponses dans l'ancien couple, et les
+-- récupère quand elle en rejoint un nouveau.
+-- À exécuter une fois.
+-- ============================================================
+create or replace function public.reponses_suivent_la_personne()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.couple_id is null or new.couple_id is not distinct from old.couple_id then
+    return new;
+  end if;
+
+  perform public.initialiser_modules_couple(new.couple_id);
+
+  update public.modules
+  set reponses_partagees = false, revealed = false, revealed_at = null
+  where couple_id = new.couple_id and (reponses_partagees or revealed);
+
+  insert into public.reponses (module_id, user_id, question_slug, valeur, created_at, updated_at)
+  select distinct on (m_new.id, r.question_slug)
+    m_new.id, r.user_id, r.question_slug, r.valeur, r.created_at, r.updated_at
+  from public.reponses r
+  join public.modules m_old on m_old.id = r.module_id
+  join public.modules m_new on m_new.couple_id = new.couple_id and m_new.slug = m_old.slug
+  where r.user_id = new.id and m_old.couple_id <> new.couple_id
+  order by m_new.id, r.question_slug, r.updated_at desc nulls last
+  on conflict (module_id, user_id, question_slug) do update
+    set valeur = excluded.valeur, updated_at = excluded.updated_at
+    where public.reponses.updated_at is null or excluded.updated_at > public.reponses.updated_at;
+
+  delete from public.reponses r
+  using public.modules m_old
+  where r.module_id = m_old.id
+    and r.user_id = new.id
+    and m_old.couple_id <> new.couple_id
+    and exists (select 1 from public.modules m_new where m_new.couple_id = new.couple_id and m_new.slug = m_old.slug);
+
+  return new;
+end;
+$$;
+
+revoke execute on function public.reponses_suivent_la_personne() from public, anon, authenticated;
+
+drop trigger if exists profiles_reponses_suivent_la_personne on public.profiles;
+create trigger profiles_reponses_suivent_la_personne
+  after update of couple_id on public.profiles
+  for each row execute function public.reponses_suivent_la_personne();

@@ -6,6 +6,7 @@ import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
+import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -38,6 +39,7 @@ export async function creerCouple(formData: FormData) {
   if (profileError) return { error: profileError.message }
 
   await admin.rpc('initialiser_modules_couple', { p_couple_id: couple.id })
+  await ouvrirPremierModuleSiBesoin(admin, couple.id)
   await admin.rpc('renumeroter_couples')
 
   revalidatePath('/tableau-de-bord')

@@ -9,9 +9,12 @@ import EditableText from '@/components/edit-mode/EditableText'
 import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { CoupleAbonnement, Module } from '@/types'
 import { ABONNEMENT_COLONNES } from '@/types'
-import { peutAccederModule } from '@/lib/abonnement'
+import { peutAccederModule, estCompteResilie } from '@/lib/abonnement'
+import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
 import { hasAnsweredAll } from '@/lib/questions'
 import { ArrowRight } from 'lucide-react'
+import { creerCoupleSolo } from '@/lib/couple-join'
+import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 
 export default async function TableauDeBordPage({
   searchParams,
@@ -23,7 +26,18 @@ export default async function TableauDeBordPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  let { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+  // Compte sans couple (création ratée à l'inscription, ou personne retirée
+  // de son couple depuis l'admin) : on lui crée son espace, comme à
+  // l'inscription, pour qu'elle puisse commencer à répondre seule.
+  if (profile && !profile.couple_id) {
+    const res = await creerCoupleSolo(user.id)
+    if (res.success) {
+      await envoyerBienvenueSiEnAttente(user.id)
+      ;({ data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single())
+    }
+  }
 
   let modules: Module[] = []
   let partner: { prenom: string | null; email: string; id: string } | null = null
@@ -42,6 +56,11 @@ export default async function TableauDeBordPage({
     partner = part
     couple = coup
     coupleAbonnement = coupAbo
+
+    if (!estCompteResilie(coupleAbonnement) && await ouvrirPremierModuleSiBesoin(createAdminClient(), profile.couple_id)) {
+      const { data: modsOuverts } = await supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at')
+      modules = modsOuverts || []
+    }
 
     // Lu côté serveur (service role) uniquement pour calculer l'avancement de
     // chacun·e : aucune réponse n'est envoyée au navigateur depuis cette page.
