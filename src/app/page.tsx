@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import InscriptionModal from '@/components/InscriptionModal'
@@ -10,6 +10,7 @@ import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import { MODULES } from '@/lib/modules-data'
 import { localizeModules } from '@/lib/i18n/module-text'
 import { ArrowRight, Check, Menu, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
@@ -58,6 +59,12 @@ export default function LandingPage() {
   const { locale } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  // Personne connectée qui revient sur l'accueil (onglet « YES BOX ») : on lui
+  // propose de retourner à son espace plutôt que de se connecter / s'inscrire.
+  const [connecte, setConnecte] = useState(false)
+  useEffect(() => {
+    createClient().auth.getSession().then(({ data }) => setConnecte(!!data.session))
+  }, [])
 
   const modules = localizeModules(MODULES, locale)
   const navLinks = NAV_LINKS(t)
@@ -81,12 +88,20 @@ export default function LandingPage() {
             ))}
           </nav>
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/connexion" className="btn-ghost text-sm py-2 px-4">
-              <EditableText id="home.nav.seconnecter">Se connecter</EditableText>
-            </Link>
-            <button onClick={() => setModalOpen(true)} className="btn-brand text-sm py-2 px-4">
-              <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
-            </button>
+            {connecte ? (
+              <Link href="/tableau-de-bord" className="btn-brand text-sm py-2 px-4">
+                <EditableText id="home.nav.monespace">Mon espace</EditableText> <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <>
+                <Link href="/connexion" className="btn-ghost text-sm py-2 px-4">
+                  <EditableText id="home.nav.seconnecter">Se connecter</EditableText>
+                </Link>
+                <button onClick={() => setModalOpen(true)} className="btn-brand text-sm py-2 px-4">
+                  <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
+                </button>
+              </>
+            )}
           </div>
           <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -100,12 +115,20 @@ export default function LandingPage() {
               </a>
             ))}
             <div className="flex gap-3 pt-2">
-              <Link href="/connexion" className="btn-ghost text-sm py-2 px-4 flex-1 justify-center">
-                <EditableText id="home.nav.connexion.mobile">Connexion</EditableText>
-              </Link>
-              <button onClick={() => { setMenuOpen(false); setModalOpen(true) }} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
-                <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
-              </button>
+              {connecte ? (
+                <Link href="/tableau-de-bord" className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
+                  <EditableText id="home.nav.monespace">Mon espace</EditableText> <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link href="/connexion" className="btn-ghost text-sm py-2 px-4 flex-1 justify-center">
+                    <EditableText id="home.nav.connexion.mobile">Connexion</EditableText>
+                  </Link>
+                  <button onClick={() => { setMenuOpen(false); setModalOpen(true) }} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
+                    <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

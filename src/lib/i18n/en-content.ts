@@ -184,6 +184,7 @@ export const EN_CONTENT: Record<string, string> = {
   'inscription.consentement': 'I agree that my module answers, which may relate to my intimate life or religious beliefs, are stored to run the program. Only my couple can see them, and I can withdraw this consent at any time by deleting my account.',
 
   // src/components/dashboard/DashboardNav.tsx
+  'dashboard.nav.yesbox': 'YES BOX',
   'dashboard.nav.dashboard': 'Home',
   'dashboard.nav.pacte': 'Progress',
   'dashboard.nav.journal': 'Our Pact',
@@ -245,6 +246,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.nav.forwhom': "Who it's for",
   'home.nav.modules': 'The modules',
   'home.nav.tarifs': 'Pricing',
+  'home.nav.monespace': 'My space',
   'home.nav.seconnecter': 'Log in',
   'home.nav.sinscrire': 'Sign up',
   'home.nav.connexion.mobile': 'Log in',
