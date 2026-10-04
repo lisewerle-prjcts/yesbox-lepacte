@@ -156,7 +156,7 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'son_compte_arreter', type: 'text', texte: "Envisageriez-vous un jour de vous mettre à votre compte ou d'arrêter de travailler ?", texte_en: 'Would you ever consider becoming self-employed or stopping work?' },
       { slug: 'demenager', type: 'text', texte: 'Avez-vous déjà envisagé de déménager, et de changer de ville/pays ? Pourquoi et dans quelles conditions idéales le feriez-vous ?', texte_en: 'Have you ever considered moving to another city or country? Why, and under what ideal conditions would you do it?' },
       { slug: 'maison_reve', type: 'text', texte: 'Imaginez la maison de vos rêves et décrivez-la.', texte_en: 'Picture your dream home and describe it.' },
-      { slug: 'reve_fou', type: 'text', texte: 'Avez-vous un rêve fou personnel ? Est-ce réalisable ? Comment / pourquoi ?', texte_en: 'Do you have a wild personal dream? Is it achievable? How / why?' },
+      { slug: 'reve_fou', type: 'text', texte: 'Avez-vous un ou des rêves fous personnels et/ou professionnels ? Sont-ils réalisables ? Comment / pourquoi ?', texte_en: 'Do you have one or more wild personal and/or professional dreams? Are they achievable? How / why?' },
     ],
   },
   {
