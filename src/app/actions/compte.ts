@@ -121,7 +121,7 @@ export async function telechargerMesDonnees() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
-  const { data: moi } = await supabase.from('profiles').select('prenom, nom, email, couple_id').eq('id', user.id).single()
+  const { data: moi } = await supabase.from('profiles').select('prenom, email, couple_id').eq('id', user.id).single()
   if (!moi) return { error: t(locale, 'Profil introuvable', 'Profile not found') }
 
   const lines: string[] = []
@@ -129,8 +129,6 @@ export async function telechargerMesDonnees() {
   lines.push(`${t(locale, 'Généré le', 'Generated on')} ${new Date().toLocaleString(locale === 'en' ? 'en-GB' : 'fr-FR')}`)
   lines.push('')
   lines.push(`${t(locale, 'Prénom', 'First name')} : ${moi.prenom || '—'}`)
-  // Le nom de famille n'est plus demandé : on ne l'exporte que s'il a été saisi autrefois.
-  if (moi.nom) lines.push(`${t(locale, 'Nom', 'Last name')} : ${moi.nom}`)
   lines.push(`Email : ${moi.email}`)
   lines.push('')
 

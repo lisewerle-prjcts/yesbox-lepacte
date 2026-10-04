@@ -36,7 +36,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Finalité | Créer et gérer les comptes, associer les deux membres d'un couple, faire fonctionner les modules, les révélations, le journal et le pacte |
 | Base légale | Exécution du contrat (art. 6.1.b) |
 | Personnes concernées | Utilisatrices et utilisateurs inscrits (15 ans ou plus) |
-| Données | Prénom, nom (facultatif), e-mail, mot de passe (chiffré), nom et date du couple, code couple, code de parrainage, progression dans les modules |
+| Données | Prénom, e-mail, mot de passe (chiffré), nom et date du couple, code couple, code de parrainage, progression dans les modules |
 | Données sensibles | Non (voir fiche 2) |
 | Destinataires | Le ou la partenaire du couple (réponses des modules révélés, journal, pacte) ; l'administration du site (compte et progression, sans le contenu des réponses) ; sous-traitants Vercel et Supabase |
 | Transferts hors UE | Base de données dans l'UE (Irlande). Hébergement du site : États-Unis (Vercel, voir tableau) |
@@ -108,7 +108,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Finalité | Recueillir les pré-commandes avant l'ouverture du programme (formulaire désormais retiré du site) |
 | Base légale | Mesures précontractuelles (art. 6.1.b) |
 | Personnes concernées | Personnes ayant pré-commandé |
-| Données | Prénom, nom, e-mail, prénom du ou de la partenaire, ville, message |
+| Données | Prénom, e-mail, prénom du ou de la partenaire, ville, message |
 | Destinataires | Administration du site ; Supabase |
 | Transferts hors UE | Non (Supabase, Irlande) |
 | Durée de conservation | 18 mois après l'envoi, effacement automatique |

@@ -68,7 +68,7 @@ export default async function Confidentialite() {
               <li>{t('Abonnement : statut, dates de renouvellement et identifiants Stripe (pas vos données bancaires).', 'Subscription: status, renewal dates and Stripe identifiers (not your banking details).')}</li>
               <li>{t('Preuves de consentement : date à laquelle vous avez certifié avoir 15 ans ou plus et accepté le traitement des données sensibles.', 'Proof of consent: the date you certified being 15 or older and agreed to the processing of sensitive data.')}</li>
               <li>{t('Sécurité : tentatives de connexion échouées (pour bloquer temporairement les attaques).', 'Security: failed login attempts (to temporarily block attacks).')}</li>
-              <li>{t('Pré-commandes reçues avant l’ouverture : prénom, nom, e-mail, prénom du ou de la partenaire, ville, message.', 'Pre-orders received before opening: first name, last name, email, partner’s first name, city, message.')}</li>
+              <li>{t('Pré-commandes reçues avant l’ouverture : prénom, e-mail, prénom du ou de la partenaire, ville, message.', 'Pre-orders received before opening: first name, email, partner’s first name, city, message.')}</li>
             </ul>
           </section>
 

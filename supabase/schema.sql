@@ -972,11 +972,11 @@ $$;
 -- serveur (actions serveur, webhook Stripe). À exécuter une fois.
 -- ============================================================
 
--- profiles : seuls prénom, nom et avatar sont modifiables par la personne elle-même.
+-- profiles : seuls prénom et avatar sont modifiables par la personne elle-même.
 -- (Les profils sont créés par le trigger handle_new_user, jamais par l'app.)
 drop policy if exists "profil_insert" on public.profiles;
 revoke insert, update on public.profiles from anon, authenticated;
-grant update (prenom, nom, avatar_url, updated_at) on public.profiles to authenticated;
+grant update (prenom, avatar_url, updated_at) on public.profiles to authenticated;
 
 -- couples : création réservée au serveur ; les membres ne modifient que
 -- le nom, la date d'anniversaire et le texte du pacte.
@@ -1200,3 +1200,13 @@ drop trigger if exists profiles_reponses_suivent_la_personne on public.profiles;
 create trigger profiles_reponses_suivent_la_personne
   after update of couple_id on public.profiles
   for each row execute function public.reponses_suivent_la_personne();
+
+-- ============================================================
+-- SUPPRESSION DES NOMS DE FAMILLE
+-- Le nom de famille n'est plus demandé : on efface ceux déjà saisis
+-- (profils et pré-commandes) et on retire le droit de le modifier.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+update public.profiles set nom = null where nom is not null;
+update public.precommandes set nom = null where nom is not null;
+revoke update (nom) on public.profiles from authenticated;
