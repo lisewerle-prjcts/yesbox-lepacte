@@ -324,7 +324,7 @@ export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?:
   return { success: true }
 }
 
-export async function adminUpdateProfile(userId: string, fields: { prenom?: string | null; nom?: string | null }) {
+export async function adminUpdateProfile(userId: string, fields: { prenom?: string | null }) {
   await assertAdmin()
   const admin = createAdminClient()
   const { error } = await admin.from('profiles').update(fields).eq('id', userId)

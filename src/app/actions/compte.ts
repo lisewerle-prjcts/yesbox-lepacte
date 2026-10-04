@@ -9,7 +9,7 @@ import { conclusionDuModule } from '@/lib/modules-data'
 import { formatAnswer } from '@/lib/questions'
 import { supprimerCompte } from '@/lib/suppression-compte'
 
-export async function updateMesInfos(nom: string, prenom: string) {
+export async function updateMesInfos(prenom: string) {
   const supabase = await createClient()
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
@@ -18,7 +18,7 @@ export async function updateMesInfos(nom: string, prenom: string) {
 
   const { error } = await supabase
     .from('profiles')
-    .update({ nom: nom.trim() || null, prenom: prenom.trim() })
+    .update({ prenom: prenom.trim() })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
@@ -121,7 +121,7 @@ export async function telechargerMesDonnees() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
 
-  const { data: moi } = await supabase.from('profiles').select('prenom, nom, email, couple_id').eq('id', user.id).single()
+  const { data: moi } = await supabase.from('profiles').select('prenom, email, couple_id').eq('id', user.id).single()
   if (!moi) return { error: t(locale, 'Profil introuvable', 'Profile not found') }
 
   const lines: string[] = []
@@ -129,7 +129,6 @@ export async function telechargerMesDonnees() {
   lines.push(`${t(locale, 'Généré le', 'Generated on')} ${new Date().toLocaleString(locale === 'en' ? 'en-GB' : 'fr-FR')}`)
   lines.push('')
   lines.push(`${t(locale, 'Prénom', 'First name')} : ${moi.prenom || '—'}`)
-  lines.push(`${t(locale, 'Nom', 'Last name')} : ${moi.nom || '—'}`)
   lines.push(`Email : ${moi.email}`)
   lines.push('')
 

@@ -15,9 +15,8 @@ import Link from 'next/link'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  nom, prenom, email, nomCouple, pairingCode, paired, abonnement, codeParrainage, filleulsCount,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, codeParrainage, filleulsCount,
 }: {
-  nom: string
   prenom: string
   email: string
   nomCouple: string
@@ -36,7 +35,7 @@ export default function MonCompteClient({
       </div>
 
       <div className="space-y-5">
-        <MesInfosCard nom={nom} prenom={prenom} email={email} />
+        <MesInfosCard prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <AbonnementCard abonnement={abonnement} />
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
@@ -224,15 +223,14 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
   )
 }
 
-function MesInfosCard({ nom: initialNom, prenom: initialPrenom, email }: { nom: string; prenom: string; email: string }) {
+function MesInfosCard({ prenom: initialPrenom, email }: { prenom: string; email: string }) {
   const t = useT()
-  const [nom, setNom] = useState(initialNom)
   const [prenom, setPrenom] = useState(initialPrenom)
   const [status, setStatus] = useState<SaveStatus>('idle')
 
   async function save() {
     setStatus('saving')
-    const res = await updateMesInfos(nom, prenom)
+    const res = await updateMesInfos(prenom)
     setStatus(res.error ? 'error' : 'saved')
     setTimeout(() => setStatus('idle'), 2500)
   }
@@ -248,10 +246,6 @@ function MesInfosCard({ nom: initialNom, prenom: initialPrenom, email }: { nom: 
         <div>
           <label className="label">{t('Prénom', 'First name')}</label>
           <input type="text" className="input-field" value={prenom} onChange={e => setPrenom(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">{t('Nom', 'Last name')}</label>
-          <input type="text" className="input-field" value={nom} onChange={e => setNom(e.target.value)} />
         </div>
       </div>
       <button onClick={save} disabled={status === 'saving'} className="btn-primary text-sm py-2 px-4 flex items-center gap-2">
