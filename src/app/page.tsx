@@ -113,12 +113,14 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-6" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <div className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted)' }}>
-          <p><EditableText id="home.hero.intro.line1" multiline>Les non-dits s&apos;accumulent sans bruit.</EditableText></p>
+        <p className="font-serif italic text-2xl md:text-3xl mx-auto mb-4" style={{ color: 'var(--ink-2)', textWrap: 'balance' }}>
+          <EditableText id="home.hero.intro.line1" multiline>Les non-dits s&apos;accumulent sans bruit.</EditableText>
+        </p>
+        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
           <p><EditableText id="home.hero.intro.line2" multiline>YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
           <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
         </div>
