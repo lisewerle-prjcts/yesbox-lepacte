@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
@@ -39,7 +39,10 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   const [apprentissage, setApprentissage] = useState(() => getConclusion(maConclusion, 'apprentissage'))
   const [surprise, setSurprise] = useState(() => getConclusion(maConclusion, 'surprise'))
   const [saved, setSaved] = useState(() => !!(getConclusion(maConclusion, 'apprentissage') && getConclusion(maConclusion, 'surprise')))
-  const [revealed, setRevealed] = useState(moduleData.revealed)
+  // `revealedLocal` couvre la personne qui scelle le module ; `moduleData.revealed`
+  // (rafraîchi par router.refresh) couvre celle qui attendait l'autre.
+  const [revealedLocal, setRevealed] = useState(false)
+  const revealed = moduleData.revealed || revealedLocal
 
   const myMap: Record<string, string> = {}
   mesReponses.forEach(r => { if (r.valeur) myMap[r.question_slug] = r.valeur })
@@ -56,6 +59,23 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   const partnerConclusionDone = partenaireConclusionFaite
 
   const canSave = apprentissage.trim().length > 0 && surprise.trim().length > 0
+
+  // Ma conclusion est enregistrée, celle de l'autre pas encore (ou le module
+  // n'est pas encore scellé) : on rafraîchit régulièrement pour que le bouton
+  // « Module suivant » apparaisse aussi de ce côté-ci sans recharger la page.
+  const enAttente = partnerDone && saved && !revealed
+  useEffect(() => {
+    if (!enAttente) return
+    const refresh = () => { if (document.visibilityState === 'visible') router.refresh() }
+    const timer = setInterval(refresh, 5000)
+    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('focus', refresh)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [enAttente, router])
 
   async function enregistrer() {
     if (!canSave) return
