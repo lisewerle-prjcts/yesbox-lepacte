@@ -287,7 +287,7 @@ export const MODULES: ModuleInfo[] = [
   },
   {
     slug: 'renouvellement', n: 10,
-    titre: 'Le bilan annuel de couple (BAC)', titre_en: 'The Annual Couple Check-In (ACC)',
+    titre: 'Notre rendez-vous annuel', titre_en: 'Our Yearly Date',
     sousTitre: 'Le module qui fait durer', sousTitre_en: 'The module that makes it last',
     description: 'À refaire chaque année, à votre date anniversaire : ce qui a marché, ce qui a été dur, ce que vous voulez pour la suite.',
     description_en: 'To redo every year, on your anniversary: what worked, what was hard, and what you want next.',
