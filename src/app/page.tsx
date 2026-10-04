@@ -113,12 +113,14 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-6" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <div className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'var(--muted)' }}>
-          <p><EditableText id="home.hero.intro.line1" multiline>Les non-dits s&apos;accumulent sans bruit.</EditableText></p>
+        <p className="font-serif italic text-2xl md:text-3xl mx-auto mb-4" style={{ color: 'var(--ink-2)', textWrap: 'balance' }}>
+          <EditableText id="home.hero.intro.line1" multiline>Les non-dits s&apos;accumulent sans bruit.</EditableText>
+        </p>
+        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
           <p><EditableText id="home.hero.intro.line2" multiline>YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
           <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
         </div>
@@ -205,19 +207,21 @@ export default function LandingPage() {
           <h3 className="font-serif mb-5" style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.25 }}>
             <EditableText id="home.constat.reveal.titre" as="em" style={{ color: 'var(--brand)' }}>Il manquait un rendez-vous régulier, à deux.</EditableText>
           </h3>
-          <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
-            <div>
-              <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText></p>
-              <p><EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText></p>
-              <p><EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText></p>
-            </div>
-            <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
+          <div className="space-y-4 mx-auto" style={{ maxWidth: 620, fontSize: 15.5, lineHeight: 1.75, color: 'var(--muted)', textWrap: 'balance' }}>
+            <p>
+              <EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText>{' '}
+              <EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText>
+            </p>
+            <p>
+              <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText>{' '}
+              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
+            </p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
           </div>
-          <p className="font-serif mt-6" style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink)' }}>
+          <p className="font-serif mt-8" style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)', textWrap: 'balance' }}>
             <EditableText id="home.constat.reveal.chute" multiline>Et si tout va bien ? C&apos;est justement le meilleur moment pour commencer.</EditableText>
           </p>
-          <p className="mt-6" style={{ fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.6, color: 'var(--muted)' }}>
+          <p className="mt-8 mx-auto pt-6" style={{ maxWidth: 600, borderTop: '1px solid var(--line)', fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.6, color: 'var(--muted)', textWrap: 'balance' }}>
             <EditableText id="home.constat.reveal.avertissement" multiline>YES BOX n&apos;est pas une thérapie. Si vous traversez une crise profonde, tournez-vous vers un·e professionnel·le. Et pour toute situation de violence, contactez le 3919 ou le numéro des urgences 17, 112 ou par SMS au 114 (contact gratuit).</EditableText>
           </p>
         </div>
