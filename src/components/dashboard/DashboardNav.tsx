@@ -19,8 +19,8 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
 
   const links = [
     // Page d'accueil publique du site, consultable sans se déconnecter.
-    { href: '/', key: 'yesbox', label: 'YES BOX', icon: <Home className="w-4 h-4" /> },
-    { href: '/tableau-de-bord', key: 'dashboard', label: 'Accueil', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { href: '/', key: 'yesbox', label: 'Accueil', icon: <Home className="w-4 h-4" /> },
+    { href: '/tableau-de-bord', key: 'dashboard', label: 'Tableau de bord', icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: '/pacte', key: 'pacte', label: 'Progression', icon: <ScrollText className="w-4 h-4" /> },
     { href: '/journal', key: 'journal', label: 'Notre Pacte', icon: <BookOpen className="w-4 h-4" /> },
     { href: '/mon-compte', key: 'moncompte', label: 'Mon compte', icon: <UserCircle className="w-4 h-4" /> },
@@ -39,8 +39,8 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
               {l.icon}
-              {l.key === 'yesbox' && <EditableText id="dashboard.nav.yesbox">YES BOX</EditableText>}
-              {l.key === 'dashboard' && <EditableText id="dashboard.nav.dashboard">Accueil</EditableText>}
+              {l.key === 'yesbox' && <EditableText id="dashboard.nav.accueil">Accueil</EditableText>}
+              {l.key === 'dashboard' && <EditableText id="dashboard.nav.tableaudebord">Tableau de bord</EditableText>}
               {l.key === 'pacte' && <EditableText id="dashboard.nav.pacte">Progression</EditableText>}
               {l.key === 'journal' && <EditableText id="dashboard.nav.journal">Notre Pacte</EditableText>}
               {l.key === 'moncompte' && <EditableText id="dashboard.nav.moncompte">Mon compte</EditableText>}
@@ -73,8 +73,8 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--ink)' }}
               onClick={() => setOpen(false)}>
               {l.icon}
-              {l.key === 'yesbox' && <EditableText id="dashboard.nav.yesbox">YES BOX</EditableText>}
-              {l.key === 'dashboard' && <EditableText id="dashboard.nav.dashboard">Accueil</EditableText>}
+              {l.key === 'yesbox' && <EditableText id="dashboard.nav.accueil">Accueil</EditableText>}
+              {l.key === 'dashboard' && <EditableText id="dashboard.nav.tableaudebord">Tableau de bord</EditableText>}
               {l.key === 'pacte' && <EditableText id="dashboard.nav.pacte">Progression</EditableText>}
               {l.key === 'journal' && <EditableText id="dashboard.nav.journal">Notre Pacte</EditableText>}
               {l.key === 'moncompte' && <EditableText id="dashboard.nav.moncompte">Mon compte</EditableText>}

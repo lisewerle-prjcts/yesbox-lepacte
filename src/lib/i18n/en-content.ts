@@ -184,8 +184,8 @@ export const EN_CONTENT: Record<string, string> = {
   'inscription.consentement': 'I agree that my module answers, which may relate to my intimate life or religious beliefs, are stored to run the program. Only my couple can see them, and I can withdraw this consent at any time by deleting my account.',
 
   // src/components/dashboard/DashboardNav.tsx
-  'dashboard.nav.yesbox': 'YES BOX',
-  'dashboard.nav.dashboard': 'Home',
+  'dashboard.nav.accueil': 'Home',
+  'dashboard.nav.tableaudebord': 'Dashboard',
   'dashboard.nav.pacte': 'Progress',
   'dashboard.nav.journal': 'Our Pact',
   'dashboard.nav.moncompte': 'My Account',
