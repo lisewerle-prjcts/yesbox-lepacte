@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { moduleDuCouple, etatReponses } from '@/lib/progression'
-import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
+import { moduleDuCouple, etatReponses, revelerSiPret } from '@/lib/progression'
+import { getEffectiveModuleBySlug, getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeModule } from '@/lib/i18n/module-text'
 import RevelationClient from '@/components/module/RevelationClient'
@@ -50,14 +50,23 @@ export default async function RevelationPage({ params }: PageProps) {
           .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', partner.id)
       : Promise.resolve({ data: [] as { question_slug: string; valeur: string | null }[] }),
   ])
-  const partenaireConclusionFaite = ['apprentissage', 'surprise'].every(q =>
-    (conclusionPartenaire ?? []).some(c => c.question_slug === q && c.valeur?.trim())
-  )
+  const conclusionFaite = (rows: { question_slug: string; valeur: string | null }[] | null) =>
+    ['apprentissage', 'surprise'].every(q => (rows ?? []).some(c => c.question_slug === q && c.valeur?.trim()))
+  const partenaireConclusionFaite = conclusionFaite(conclusionPartenaire)
+
+  // Filet de sécurité : les deux conclusions sont écrites mais le module n'a
+  // pas été scellé (échec ou course lors de l'enregistrement) → on le scelle
+  // ici, pour que le bouton « Module suivant » s'affiche chez les deux.
+  let revealed = moduleData.revealed
+  if (!revealed && etat.reponsesPartagees && partenaireConclusionFaite && conclusionFaite(maConclusion)) {
+    const ordre = (await getEffectiveModules()).map(m => m.slug)
+    revealed = await revelerSiPret(admin, { ...mod, reponses_partagees: true }, ordre)
+  }
 
   return (
     <RevelationClient
       moduleInfo={moduleInfo}
-      moduleData={moduleData}
+      moduleData={{ ...moduleData, revealed }}
       mesReponses={etat.mesReponses}
       reponsesPartner={etat.reponsesPartenaire}
       reponsesPartagees={etat.reponsesPartagees}
