@@ -207,19 +207,21 @@ export default function LandingPage() {
           <h3 className="font-serif mb-5" style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.25 }}>
             <EditableText id="home.constat.reveal.titre" as="em" style={{ color: 'var(--brand)' }}>Il manquait un rendez-vous régulier, à deux.</EditableText>
           </h3>
-          <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
-            <div>
-              <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText></p>
-              <p><EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText></p>
-              <p><EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText></p>
-            </div>
-            <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
+          <div className="space-y-4 mx-auto" style={{ maxWidth: 620, fontSize: 15.5, lineHeight: 1.75, color: 'var(--muted)', textWrap: 'balance' }}>
+            <p>
+              <EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText>{' '}
+              <EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText>
+            </p>
+            <p>
+              <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText>{' '}
+              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
+            </p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
           </div>
-          <p className="font-serif mt-6" style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink)' }}>
+          <p className="font-serif mt-8" style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)', textWrap: 'balance' }}>
             <EditableText id="home.constat.reveal.chute" multiline>Et si tout va bien ? C&apos;est justement le meilleur moment pour commencer.</EditableText>
           </p>
-          <p className="mt-6" style={{ fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.6, color: 'var(--muted)' }}>
+          <p className="mt-8 mx-auto pt-6" style={{ maxWidth: 600, borderTop: '1px solid var(--line)', fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.6, color: 'var(--muted)', textWrap: 'balance' }}>
             <EditableText id="home.constat.reveal.avertissement" multiline>YES BOX n&apos;est pas une thérapie. Si vous traversez une crise profonde, tournez-vous vers un·e professionnel·le. Et pour toute situation de violence, contactez le 3919 ou le numéro des urgences 17, 112 ou par SMS au 114 (contact gratuit).</EditableText>
           </p>
         </div>
