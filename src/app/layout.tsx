@@ -15,8 +15,8 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-newsre
 
 export const metadata: Metadata = {
   title: { default: 'YES BOX — Le Pacte des couples qui tiennent', template: '%s | YES BOX' },
-  description: 'Les non-dits s\'accumulent sans bruit. YES BOX aide tous les couples à les poser sur la table, sans thérapeute et sans pression, puis à signer leur CDD de couple. Module 1 gratuit.',
-  keywords: ['couple', 'mariage', 'préparation mariage', 'non-dits couple', 'programme couple', 'CDD de couple', 'communication couple'],
+  description: 'Les non-dits s\'accumulent sans bruit. YES BOX aide tous les couples à les poser sur la table, sans thérapeute et sans pression, puis à écrire leur pacte de couple. Module 1 gratuit.',
+  keywords: ['couple', 'mariage', 'préparation mariage', 'non-dits couple', 'programme couple', 'pacte de couple', 'communication couple'],
   authors: [{ name: 'YES BOX' }],
   creator: 'YES BOX',
   openGraph: {

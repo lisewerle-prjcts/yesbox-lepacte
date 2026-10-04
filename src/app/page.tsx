@@ -14,7 +14,7 @@ import { ArrowRight, Check, Menu, X } from 'lucide-react'
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
   { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on conflict saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
-  { texte: t("Notre CDD de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Contract is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'Inès & Rémi', lieu: 'Lyon' },
+  { texte: t("Notre pacte de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Pact is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'Inès & Rémi', lieu: 'Lyon' },
   { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'Sophie & Lucas', lieu: 'Bordeaux' },
 ]
 
@@ -39,18 +39,17 @@ const OPTIONS = (t: (fr: string, en: string) => string) => [
   { titre: t('On consulte', 'We see a therapist'), desc: t("C'est indispensable quand ça va vraiment mal. Il faut compter 80 à 150 € la séance, sur plusieurs mois. Tout le monde n'a pas envie de se confier à une personne extérieure dès le départ.", "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.") },
 ]
 
-const CDD_LIST = (t: (fr: string, en: string) => string) => [
-  t('Vos engagements, écrits noir sur blanc', 'Your commitments, in black and white'),
-  t('Un bilan à votre date anniversaire, chaque année', 'A check-in on your anniversary, every year'),
-  t('Un avenant pour évoluer ensemble, et re-signer « nous »', 'An amendment to grow together, and re-sign on "us"'),
+const PACTE_LIST = (t: (fr: string, en: string) => string) => [
+  t('Votre pacte, écrit à deux et rien qu\'à vous', 'Your pact, written together and just for the two of you'),
+  t('Votre rendez-vous chaque année à date anniversaire', 'Your date every year on your anniversary'),
+  t('Un couple qui évolue avec vous, et des promesses qu\'on renouvelle ensemble', 'A relationship that grows with you, and promises you renew together'),
 ]
 
-const CDD_ROWS = (t: (fr: string, en: string) => string) => [
-  { k: t('Article 1', 'Article 1'), v: t('Engagement mutuel', 'Mutual commitment') },
-  { k: t('Article 2', 'Article 2'), v: t('Valeurs partagées', 'Shared values') },
-  { k: t('Article 3', 'Article 3'), v: t('Projets communs', 'Shared plans') },
-  { k: t('Avenant', 'Amendment'), v: t('Bilan annuel', 'Annual check-in') },
-  { k: t('Renouvellement', 'Renewal'), v: t('À re-signer chaque année', 'Re-signed every year') },
+const PACTE_ROWS = (t: (fr: string, en: string) => string) => [
+  { k: t('Nos valeurs', 'Our values'), v: t('Ce qui nous tient à cœur', 'What matters to us') },
+  { k: t('Nos promesses', 'Our promises'), v: t('Ce à quoi on s\'engage', 'What we commit to') },
+  { k: t('Nos projets', 'Our plans'), v: t('Pour l\'année qui vient', 'For the year ahead') },
+  { k: t('Chaque année', 'Every year'), v: t('On se choisit à nouveau', 'We choose each other again') },
 ]
 
 
@@ -64,8 +63,8 @@ export default function LandingPage() {
   const navLinks = NAV_LINKS(t)
   const pourQuiList = POUR_QUI(t)
   const optionsList = OPTIONS(t)
-  const cddList = CDD_LIST(t)
-  const cddRows = CDD_ROWS(t)
+  const pacteList = PACTE_LIST(t)
+  const pacteRows = PACTE_ROWS(t)
   const temoignagesList = TEMOIGNAGES(t)
 
   return (
@@ -210,7 +209,7 @@ export default function LandingPage() {
             <div>
               <p><EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText></p>
               <p><EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText></p>
-              <p><EditableText id="home.constat.reveal.texte.1" multiline>À la fin du programme, vous élaborez et signez votre CDD de couple, votre pacte pour l&apos;année qui vient.</EditableText></p>
+              <p><EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText></p>
             </div>
             <p><EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText></p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
@@ -224,47 +223,47 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CDD DE COUPLE */}
+      {/* PACTE DE COUPLE */}
       <section className="py-20" style={{ background: 'var(--brand-tint)', borderTop: '1px solid var(--brand-soft)', borderBottom: '1px solid var(--brand-soft)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="eyebrow mb-4">
-                <EditableText id="home.cdd.eyebrow">— L&apos;idée signature</EditableText>
+                <EditableText id="home.pacte.eyebrow">— Notre rituel</EditableText>
               </div>
               <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
-                <EditableText id="home.cdd.title.prefix">Un</EditableText>{' '}
-                <EditableText id="home.cdd.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>CDD de couple</EditableText>,<br />
-                <EditableText id="home.cdd.title.suffix">à re-signer chaque année.</EditableText>
+                <EditableText id="home.pacte.title.prefix">Un</EditableText>{' '}
+                <EditableText id="home.pacte.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>pacte de couple</EditableText>,<br />
+                <EditableText id="home.pacte.title.suffix">à renouveler chaque année.</EditableText>
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)', marginTop: 20 }}>
-                <EditableText id="home.cdd.paragraph" multiline>Comme en entreprise — la clarté des engagements, le bilan régulier, la révision des projets — mais avec amour. À la fin du programme, vous rédigez votre Contrat à Durée Déterminée de couple : vos articles, vos valeurs, vos projets. Avec un rendez-vous annuel inscrit dedans.</EditableText>
+                <EditableText id="home.pacte.paragraph" multiline>À la fin du programme, vous écrivez ensemble votre pacte de couple, avec ce qui compte pour vous, ce à quoi vous vous engagez et vos projets pour l&apos;année qui vient. Puis, chaque année à votre date anniversaire, vous vous offrez un rendez-vous rien qu&apos;à vous deux : comme une promesse que vous vous faites. Une soirée pour regarder l&apos;année écoulée, dire ce qui a pesé avant que ça ne s&apos;installe, et vous choisir à nouveau.</EditableText>
               </p>
               <ul className="mt-6 space-y-3">
-                {cddList.map((item, i) => (
+                {pacteList.map((item, i) => (
                   <li key={i} className="flex gap-3 items-start">
                     <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                    <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.cdd.list.${i}`}>{item}</EditableText></span>
+                    <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.pacte.list.${i}`}>{item}</EditableText></span>
                   </li>
                 ))}
               </ul>
             </div>
             <div style={{ background: 'var(--paper)', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}>
               <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'var(--muted-2)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
-                <EditableText id="home.cdd.card.eyebrow">Contrat à durée déterminée</EditableText>
+                <EditableText id="home.pacte.card.eyebrow">Notre pacte</EditableText>
               </p>
               <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'var(--ink)' }}>
-                <EditableText id="home.cdd.card.title">Le CDD de couple</EditableText>
+                <EditableText id="home.pacte.card.title">Le pacte de couple</EditableText>
               </h3>
-              {cddRows.map((row, idx) => (
-                <div key={idx} className="flex justify-between py-3" style={{ borderBottom: idx < cddRows.length - 1 ? '1px solid var(--line)' : 'none', fontSize: 13 }}>
-                  <span className="font-mono uppercase" style={{ color: 'var(--muted-2)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.cdd.card.rows.${idx}.k`}>{row.k}</EditableText></span>
-                  <span style={{ color: 'var(--ink)', fontWeight: 500 }}><EditableText id={`home.cdd.card.rows.${idx}.v`}>{row.v}</EditableText></span>
+              {pacteRows.map((row, idx) => (
+                <div key={idx} className="flex justify-between gap-4 py-3" style={{ borderBottom: idx < pacteRows.length - 1 ? '1px solid var(--line)' : 'none', fontSize: 13 }}>
+                  <span className="font-mono uppercase" style={{ color: 'var(--muted-2)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.pacte.card.rows.${idx}.k`}>{row.k}</EditableText></span>
+                  <span className="text-right" style={{ color: 'var(--ink)', fontWeight: 500 }}><EditableText id={`home.pacte.card.rows.${idx}.v`}>{row.v}</EditableText></span>
                 </div>
               ))}
               <div className="flex justify-end mt-4">
-                <div className="flex items-center justify-center text-center font-bold" style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.2 }}>
-                  {t('À re-signer', 'Renewed')}<br />{t('chaque', 'every')}<br />{t('année', 'year')}
+                <div className="flex items-center justify-center text-center font-bold" style={{ width: 112, height: 112, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.25, padding: 14 }}>
+                  <EditableText id="home.pacte.card.pastille" multiline>Un pacte à deux, un rendez-vous chaque année.</EditableText>
                 </div>
               </div>
             </div>

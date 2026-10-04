@@ -14,14 +14,14 @@ const DECOUVERTE = [
   'Espace couple privé',
 ]
 const ACCES_COMPLET = [
-  "L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)",
+  "L'ensemble des modules du parcours initial (hors rendez-vous annuels)",
   'Sessions de révélation à deux',
   'Journal de couple',
-  'Votre CDD de couple',
+  'Votre pacte de couple',
 ]
 const BAC = [
   'Rappel annuel à votre date anniversaire',
-  'Fiche avenant générée pour évaluer votre année et remplir à deux votre Bilan Annuel de Couple (BAC)',
+  'Fiche bilan générée pour faire le point à deux sur votre année',
   'Refaites tous les modules du parcours initial si vous le souhaitez',
   'Annulable à tout moment',
 ]
@@ -73,12 +73,12 @@ export default function OffresTarifs({ onInscription }: { onInscription: () => v
         </button>
       </div>
 
-      {/* BAC annuel */}
+      {/* Rendez-vous annuel */}
       <div className="card p-6 flex flex-col gap-4">
-        <div className="tag-brand self-start"><EditableText id="offres.bac.tag">BAC annuel</EditableText></div>
+        <div className="tag-brand self-start"><EditableText id="offres.bac.tag">Votre rendez-vous annuel</EditableText></div>
         <div>
           <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>{t('€/an', '€/year')}</small></div>
-          <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="offres.bac.desc">Bilan Annuel de Couple · à activer plus tard</EditableText></div>
+          <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="offres.bac.desc">À activer plus tard</EditableText></div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
         <Avantages prefixe="offres.bac.avantages" items={BAC} couleurCoche="var(--sage)" couleurTexte="var(--ink-2)" />

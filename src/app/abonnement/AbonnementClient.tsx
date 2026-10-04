@@ -7,16 +7,16 @@ import { useT } from '@/components/i18n/LocaleContext'
 import { demarrerAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
 
 const FEATURES = [
-  "L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)",
+  "L'ensemble des modules du parcours initial (hors rendez-vous annuels)",
   'Sessions de révélation à deux',
   'Journal de couple',
-  'Votre CDD de couple personnalisé',
+  'Votre pacte de couple personnalisé',
 ]
 const FEATURES_EN = [
-  'The full initial program (excluding Annual Couple Check-ins)',
+  'The full initial program (excluding yearly dates)',
   'Joint reveal sessions',
   "Your couple's journal",
-  "Your couple's personalized CDD",
+  "Your personalized couple's pact",
 ]
 
 export default function AbonnementClient({ compteResilie }: { compteResilie: boolean }) {

@@ -60,10 +60,10 @@ export default function ReglesDuJeuPage() {
           </li>
           <li>
             <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-              <EditableText id="regles.cdd.titre">Le CDD de couple</EditableText>
+              <EditableText id="regles.pacte.titre">Le pacte de couple</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.cdd.texte" multiline>Rédigé à la fin du programme, il reprend les éléments importants vus au travers des différents modules. Il sera réexaminé chaque année via le Bilan annuel de couple, avec la possibilité de le faire évoluer par avenant. Comme un CDD :)</EditableText>
+              <EditableText id="regles.pacte.texte" multiline>Écrit à deux à la fin du programme, il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. Chaque année, à votre date anniversaire, votre rendez-vous annuel vous permet de le relire ensemble et de le faire évoluer avec vous.</EditableText>
             </p>
           </li>
           <li>
