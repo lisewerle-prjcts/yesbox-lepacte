@@ -12,7 +12,7 @@ export default async function MonComptePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('nom, prenom, email, couple_id')
+    .select('prenom, email, couple_id')
     .eq('id', user.id)
     .single()
 
@@ -45,7 +45,6 @@ export default async function MonComptePage() {
 
   return (
     <MonCompteClient
-      nom={profile?.nom ?? ''}
       prenom={profile?.prenom ?? ''}
       email={profile?.email ?? user.email ?? ''}
       nomCouple={couple?.nom_couple ?? ''}

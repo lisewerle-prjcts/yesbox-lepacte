@@ -62,7 +62,7 @@ export default async function Confidentialite() {
           <section>
             <h2 className={h2} style={h2Style}>{t('Données collectées', 'Data we collect')}</h2>
             <ul className={liste} style={{ color: 'var(--muted)' }}>
-              <li>{t('Compte : prénom, nom (facultatif), adresse e-mail, mot de passe (stocké chiffré, jamais lisible).', 'Account: first name, last name (optional), email address, password (stored encrypted, never readable).')}</li>
+              <li>{t('Compte : prénom, adresse e-mail, mot de passe (stocké chiffré, jamais lisible).', 'Account: first name, email address, password (stored encrypted, never readable).')}</li>
               <li>{t('Espace couple : nom du couple, date de couple, code couple, code de parrainage.', 'Couple space: couple name, couple date, couple code, referral code.')}</li>
               <li>{t('Contenu du programme : vos réponses aux modules, vos conclusions et votre pacte. Certaines questions portent sur la vie intime ou les convictions religieuses : ce sont des données sensibles, traitées uniquement avec votre consentement explicite.', 'Program content: your module answers, your conclusions and your pact. Some questions relate to intimate life or religious beliefs: this is sensitive data, processed only with your explicit consent.')}</li>
               <li>{t('Abonnement : statut, dates de renouvellement et identifiants Stripe (pas vos données bancaires).', 'Subscription: status, renewal dates and Stripe identifiers (not your banking details).')}</li>

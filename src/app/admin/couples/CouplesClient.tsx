@@ -252,12 +252,11 @@ function MemberRow({
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [prenom, setPrenom] = useState(member.prenom || '')
-  const [nom, setNom] = useState(member.nom || '')
   const [saving, setSaving] = useState(false)
 
   async function save() {
     setSaving(true)
-    const res = await adminUpdateProfile(member.id, { prenom: prenom || null, nom: nom || null })
+    const res = await adminUpdateProfile(member.id, { prenom: prenom || null })
     setSaving(false)
     if (res?.error) {
       alert(res.error)
@@ -292,10 +291,6 @@ function MemberRow({
           <div style={{ flex: 1, minWidth: 100 }}>
             <label className="flabel">Prénom</label>
             <input type="text" className="field" value={prenom} onChange={e => setPrenom(e.target.value)} />
-          </div>
-          <div style={{ flex: 1, minWidth: 100 }}>
-            <label className="flabel">Nom</label>
-            <input type="text" className="field" value={nom} onChange={e => setNom(e.target.value)} />
           </div>
           <button onClick={save} disabled={saving} className="btn-brand text-xs py-2 px-3">
             {saving ? 'Enregistrement…' : 'Enregistrer'}
