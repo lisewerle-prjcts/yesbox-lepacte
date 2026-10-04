@@ -267,8 +267,8 @@ export const MODULES: ModuleInfo[] = [
     slug: 'engagement', n: 9,
     titre: 'Notre pacte de couple', titre_en: "Our Couple's Pact",
     sousTitre: 'Vœux et engagements', sousTitre_en: 'Vows and commitments',
-    description: "L'aboutissement : ce à quoi vous vous engagez, ce que représente pour vous le mariage, vos vœux. Ce module se conclut par la rédaction de votre CDD de couple, le contrat qui formalise vos engagements mutuels.",
-    description_en: "The culmination: what you commit to, what marriage means to you, your vows. This module ends with writing your Couple's Pact — the contract that formalizes your mutual commitments.",
+    description: "L'aboutissement : ce à quoi vous vous engagez, ce que représente pour vous le mariage, vos vœux. Ce module se conclut par l'écriture de votre pacte de couple, les promesses que vous vous faites pour l'année à venir.",
+    description_en: "The culmination: what you commit to, what marriage means to you, your vows. This module ends with writing your couple's pact, the promises you make to each other for the year ahead.",
     emoji: '📜', free: false,
     // Questions de fin de module : à personnaliser pour ce module.
     conclusion: CONCLUSION_PAR_DEFAUT,

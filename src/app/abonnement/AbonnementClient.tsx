@@ -10,13 +10,13 @@ const FEATURES = [
   "L'ensemble des modules du parcours initial (hors Bilans annuels de Couple)",
   'Sessions de révélation à deux',
   'Journal de couple',
-  'Votre CDD de couple personnalisé',
+  'Votre pacte de couple personnalisé',
 ]
 const FEATURES_EN = [
   'The full initial program (excluding Annual Couple Check-ins)',
   'Joint reveal sessions',
   "Your couple's journal",
-  "Your couple's personalized CDD",
+  "Your personalized couple's pact",
 ]
 
 export default function AbonnementClient({ compteResilie }: { compteResilie: boolean }) {
