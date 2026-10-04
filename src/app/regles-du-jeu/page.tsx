@@ -55,7 +55,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.confidentialite.titre">Confidentialité</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.confidentialite.texte" multiline>Les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers. Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part au bout de 18 mois, vos comptes sont supprimés et vos réponses sont effacées de manière permanente.</EditableText>
+              <EditableText id="regles.confidentialite.texte" multiline>Les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers. Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part, 18 mois après la fin de votre abonnement ou votre dernière connexion, vos comptes sont supprimés et vos réponses sont effacées de manière permanente.</EditableText>
             </p>
           </li>
           <li>

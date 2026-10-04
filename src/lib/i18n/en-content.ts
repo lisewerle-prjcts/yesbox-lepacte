@@ -17,7 +17,7 @@ export const EN_CONTENT: Record<string, string> = {
   'regles.duree.titre': 'Module length',
   'regles.duree.texte': 'Each module has between 10 and 15 questions. Together, plan for 30 to 60 minutes, depending on the conversations they spark (answering on your own, the reveal, then a few notes in the journal). In all, that means setting aside 9 short evenings.',
   'regles.confidentialite.titre': 'Privacy',
-  'regles.confidentialite.texte': 'Your answers stay strictly private between the two of you; they are never shared with third parties. The people who run YES BOX have no access to couples’ answers. At the end of your journey, if you want to keep your answers, you can download them from the MY ACCOUNT section. Without any action on your part after 18 months, your accounts are deleted and your answers are permanently erased.',
+  'regles.confidentialite.texte': 'Your answers stay strictly private between the two of you; they are never shared with third parties. The people who run YES BOX have no access to couples’ answers. At the end of your journey, if you want to keep your answers, you can download them from the MY ACCOUNT section. Without any action on your part, 18 months after your subscription ends or your last login, your accounts are deleted and your answers are permanently erased.',
   'regles.pacte.titre': "The couple's pact",
   'regles.pacte.texte': "Written together at the end of the program, it brings together what matters most from the different modules. Every year on your anniversary, your yearly date is a chance to look back on it and make it grow with you.",
   'regles.questions.titre': 'Questions',
