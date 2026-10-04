@@ -1210,3 +1210,21 @@ create trigger profiles_reponses_suivent_la_personne
 update public.profiles set nom = null where nom is not null;
 update public.precommandes set nom = null where nom is not null;
 revoke update (nom) on public.profiles from authenticated;
+
+-- ============================================================
+-- NOTIFICATIONS PAR E-MAIL ENTRE PARTENAIRES
+-- Quand l'un·e a fini de répondre à un module, ou a écrit sa conclusion
+-- dans le journal, l'autre reçoit un e-mail (à son tour, ou c'est bon
+-- pour la suite). Cette table garantit qu'un même e-mail ne part qu'une
+-- fois par personne et par module. Écrite uniquement par le serveur
+-- (clé service) : RLS activée, aucune politique.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.notifications_module (
+  module_id uuid not null references public.modules(id) on delete cascade,
+  destinataire_id uuid not null references public.profiles(id) on delete cascade,
+  type text not null check (type in ('reponses_a_ton_tour', 'reponses_partagees', 'journal_a_ton_tour', 'journal_complet')),
+  envoye_le timestamptz not null default now(),
+  primary key (module_id, destinataire_id, type)
+);
+alter table public.notifications_module enable row level security;

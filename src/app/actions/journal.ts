@@ -1,12 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
 import { moduleDuCouple, revelerSiPret } from '@/lib/progression'
+import { notifierPartenaire } from '@/lib/notifications-module'
 
 // Chaque partenaire écrit sa conclusion de son côté, en 2 questions
 // ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"), une fois que les
@@ -43,8 +45,20 @@ export async function sauvegarderConclusion(
     .upsert(rows, { onConflict: 'couple_id,module_slug,user_id,question_slug' })
   if (error) return { error: error.message }
 
-  const ordre = (await getEffectiveModules()).map(m => m.slug)
+  const modules = await getEffectiveModules()
+  const ordre = modules.map(m => m.slug)
   const sealed = await revelerSiPret(admin, mod, ordre)
+
+  // Prévient l'autre par e-mail : à son tour d'écrire sa conclusion, ou
+  // module scellé et suivant débloqué.
+  after(() => notifierPartenaire(sealed ? 'journal_complet' : 'journal_a_ton_tour', {
+    moduleId: mod.id,
+    moduleSlug: mod.slug,
+    moduleTitre: modules.find(m => m.slug === mod.slug)?.titre ?? mod.slug,
+    coupleId: mod.couple_id,
+    auteurId: user.id,
+    dernierModule: ordre.indexOf(mod.slug) === ordre.length - 1,
+  }))
 
   revalidatePath('/journal')
   revalidatePath('/tableau-de-bord')
