@@ -66,6 +66,8 @@ export async function adminResetModule(coupleId: string, slug: string) {
   if (mod) {
     await supabase.from('reponses').delete().eq('module_id', mod.id)
     await supabase.from('journal_entries').delete().eq('couple_id', coupleId).eq('module_slug', slug)
+    // Le module repart de zéro : les e-mails entre partenaires pourront repartir.
+    await supabase.from('notifications_module').delete().eq('module_id', mod.id)
     await supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null, reponses_partagees: false }).eq('id', mod.id)
   }
   revalidatePath('/admin/couples')

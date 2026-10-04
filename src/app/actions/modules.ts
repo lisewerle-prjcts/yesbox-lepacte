@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
@@ -9,6 +10,7 @@ import { consentementManquant } from '@/lib/consentement'
 import { moduleDuCouple, etatReponses } from '@/lib/progression'
 import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
+import { notifierPartenaire } from '@/lib/notifications-module'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
@@ -61,6 +63,12 @@ export async function terminerModule(moduleId: string, moduleSlug: string) {
   if (mod.statut === 'en_cours') {
     await admin.from('modules').update({ statut: 'complete', completed_at: new Date().toISOString() }).eq('id', mod.id)
   }
+
+  // Prévient l'autre par e-mail (après la réponse, sans la ralentir) : à son
+  // tour de répondre, ou réponses désormais visibles pour le débrief.
+  after(() => notifierPartenaire(etat.reponsesPartagees ? 'reponses_partagees' : 'reponses_a_ton_tour', {
+    moduleId: mod.id, moduleSlug: mod.slug, moduleTitre: moduleInfo.titre, coupleId: mod.couple_id, auteurId: user.id,
+  }))
 
   revalidatePath('/tableau-de-bord')
   revalidatePath(`/module/${moduleSlug}`)
