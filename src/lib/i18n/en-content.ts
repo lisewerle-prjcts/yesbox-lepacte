@@ -295,7 +295,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.constat.reveal.texte.programme': "It's a playful, self-guided personal development program for every couple.",
   'home.constat.reveal.texte.pause': "At last, a chance to put everyday life on pause and make time for your relationship: to see what works, strengthen it, and improve what can be improved.",
   'home.constat.reveal.texte.pacte': "At the end of the program, you write your couple's pact for the year ahead.",
-  'home.constat.reveal.texte.2': "Every year, just like at work, an anniversary module helps you take stock, say what's been weighing on you and adjust your commitments.",
+  'home.constat.reveal.texte.2': "Every year, an anniversary module helps you take stock, say what's been weighing on you and adjust your commitments.",
   'home.constat.reveal.texte.3': 'You never lose the thread, and frustrations never get the chance to settle in.',
   'home.constat.reveal.chute': "And if everything's fine? That's exactly the best time to start.",
   'home.constat.reveal.avertissement': 'YES BOX is not therapy. If you are going through a deep crisis, please reach out to a professional. In any situation involving violence, call 3919 or the emergency numbers 17 or 112, or text 114 (free of charge).',

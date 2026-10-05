@@ -237,7 +237,7 @@ export default function LandingPage() {
             <p><EditableText id="home.constat.reveal.texte.pause" multiline>C&apos;est enfin l&apos;occasion de mettre le quotidien en pause et de prendre du temps pour votre couple, pour voir ce qui marche, le renforcer et améliorer ce qui peut l&apos;être.</EditableText></p>
             <p>
               <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText>{' '}
-              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
+              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
             </p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
           </div>
