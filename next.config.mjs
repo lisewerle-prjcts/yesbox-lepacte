@@ -13,6 +13,8 @@ const nextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
+      // Import du fichier « Mes données » (réponses de tout un couple).
+      bodySizeLimit: '5mb',
     },
   },
   async headers() {

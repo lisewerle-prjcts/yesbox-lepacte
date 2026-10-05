@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Trash2 } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2 } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
-  updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, supprimerMonCompte,
+  updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, importerMesDonnees, supprimerMonCompte,
 } from '@/app/actions/compte'
 import { annulerAbonnement, reprendreAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
@@ -41,6 +41,7 @@ export default function MonCompteClient({
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <PasswordCard />
         <MesDonneesCard />
+        <ImporterDonneesCard />
         <SupprimerCompteCard />
       </div>
     </div>
@@ -407,6 +408,67 @@ function MesDonneesCard() {
         <Download className="w-4 h-4" />
         {status === 'loading' ? t('Préparation…', 'Preparing…') : status === 'error' ? t('Erreur — réessaie', 'Error — try again') : t('Télécharger mes données', 'Download my data')}
       </button>
+    </div>
+  )
+}
+
+function ImporterDonneesCard() {
+  const t = useT()
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [message, setMessage] = useState<string | null>(null)
+
+  async function importer(e: React.ChangeEvent<HTMLInputElement>) {
+    const fichier = e.target.files?.[0]
+    e.target.value = ''
+    if (!fichier) return
+    if (fichier.size > 4 * 1024 * 1024) {
+      setStatus('error')
+      setMessage(t('Ce fichier est trop volumineux.', 'This file is too large.'))
+      return
+    }
+    setStatus('loading')
+    setMessage(null)
+    const res = await importerMesDonnees(await fichier.text())
+    if ('error' in res) {
+      setStatus('error')
+      setMessage(res.error ?? null)
+      return
+    }
+    setStatus('done')
+    const bilan = t(
+      `${res.reponses} réponse(s) et ${res.conclusions} conclusion(s) retrouvée(s), ${res.modulesReveles} module(s) révélé(s) restauré(s).`,
+      `${res.reponses} answer(s) and ${res.conclusions} conclusion(s) recovered, ${res.modulesReveles} revealed module(s) restored.`,
+    )
+    setMessage(res.partenaireManquant
+      ? `${bilan} ${t(
+          'Ton/ta partenaire n’est pas encore de retour dans votre espace : ses réponses et votre progression seront restaurées si tu réimportes ce fichier une fois vos comptes pairés.',
+          'Your partner is not back in your space yet: their answers and your progress will be restored if you import this file again once your accounts are paired.',
+        )}`
+      : bilan)
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-2">
+        <Upload className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Retrouver mes réponses', 'Restore my answers')}</h2>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        {t(
+          'Tu reviens après une désinscription ? Importe le fichier téléchargé depuis « Mes données » pour retrouver vos réponses, votre journal et votre pacte. Rien de ce que vous avez déjà écrit depuis votre retour n’est remplacé.',
+          'Coming back after unsubscribing? Import the file downloaded from "My data" to get back your answers, your journal and your pact. Nothing you have written since coming back is replaced.',
+        )}
+      </p>
+      <label className={`btn-primary text-sm py-2 px-4 inline-flex items-center gap-2 ${status === 'loading' ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}>
+        <Upload className="w-4 h-4" />
+        {status === 'loading' ? t('Import…', 'Importing…') : t('Importer mon fichier', 'Import my file')}
+        <input type="file" accept=".txt,text/plain" className="sr-only" onChange={importer} disabled={status === 'loading'} />
+      </label>
+      {message && (
+        <p role={status === 'error' ? 'alert' : 'status'} className={`text-sm mt-3 ${status === 'error' ? 'text-red-600' : 'text-gray-600'}`}>
+          {status === 'done' && <Check className="w-4 h-4 inline mr-1" />}{message}
+        </p>
+      )}
     </div>
   )
 }
