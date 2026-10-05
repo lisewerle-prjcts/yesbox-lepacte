@@ -37,6 +37,10 @@ export interface Couple {
   code_parrainage: string | null
   parrain_couple_id: string | null
   parrainages_recompenses: number
+  /** Signature du pacte (fin du module 9) et date de déblocage du module 10. */
+  pacte_signe_le: string | null
+  pacte_signe_par: string | null
+  rdv_annuel_le: string | null
   created_at: string
   updated_at: string
 }

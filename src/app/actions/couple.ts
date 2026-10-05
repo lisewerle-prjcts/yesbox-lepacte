@@ -6,7 +6,8 @@ import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
-import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
+import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
+import { bornesRdvAnnuel } from '@/lib/rdv-annuel'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -135,4 +136,41 @@ export async function getInviteLink() {
     dateAnniversaire: couple.date_anniversaire,
     paired: (memberCount ?? 0) >= 2,
   }
+}
+
+// Signature du pacte, dès la fin du module 9 : fixe la date du rendez-vous
+// annuel, à laquelle le module 10 se débloque. Tant que le module 10 n'est
+// pas ouvert, la date peut encore être changée (même action).
+export async function signerPacte(dateRdvAnnuel: string) {
+  const supabase = await createClient()
+  const admin = createAdminClient()
+  const locale = await getLocale()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+
+  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
+  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
+
+  const [{ data: pacte }, { data: rdv }, { data: couple }] = await Promise.all([
+    admin.from('modules').select('revealed').eq('couple_id', profile.couple_id).eq('slug', MODULE_PACTE).maybeSingle(),
+    admin.from('modules').select('statut, revealed').eq('couple_id', profile.couple_id).eq('slug', MODULE_RDV_ANNUEL).maybeSingle(),
+    admin.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).single(),
+  ])
+  if (!pacte?.revealed) return { error: t(locale, 'Le pacte se signe une fois le module 9 terminé.', 'The pact can be signed once module 9 is complete.') }
+  if (rdv && (rdv.statut !== 'locked' || rdv.revealed)) return { error: t(locale, 'Votre rendez-vous annuel est déjà ouvert.', 'Your yearly date is already open.') }
+
+  const { min, max } = bornesRdvAnnuel()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRdvAnnuel) || dateRdvAnnuel < min || dateRdvAnnuel > max) {
+    return { error: t(locale, 'Choisis une date entre 6 mois et 1 an à partir d’aujourd’hui.', 'Pick a date between 6 months and 1 year from today.') }
+  }
+
+  const { error } = await admin.from('couples').update({
+    rdv_annuel_le: dateRdvAnnuel,
+    ...(couple?.pacte_signe_le ? {} : { pacte_signe_le: new Date().toISOString(), pacte_signe_par: user.id }),
+  }).eq('id', profile.couple_id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/journal')
+  revalidatePath('/tableau-de-bord')
+  return { success: true }
 }

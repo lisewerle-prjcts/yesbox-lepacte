@@ -7,7 +7,10 @@ import { conclusionDuModule } from '@/lib/modules-data'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
-import { BookOpen, Heart, UserPlus } from 'lucide-react'
+import SignaturePacte from './SignaturePacte'
+import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
+import { bornesRdvAnnuel, anniversaireDansBornes } from '@/lib/rdv-annuel'
+import { BookOpen, UserPlus } from 'lucide-react'
 import type { Module } from '@/types'
 
 export const metadata = { title: 'Notre Pacte' }
@@ -22,11 +25,14 @@ export default async function JournalPage() {
 
   const locale = await getLocale()
   const t = getT(locale)
-  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }, effectiveModules] = await Promise.all([
+  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }, { data: signature }, effectiveModules] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
     supabase.from('journal_entries').select('*').eq('couple_id', profile.couple_id),
     supabase.from('profiles').select('prenom, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
     supabase.from('couples').select('pacte_texte, pacte_modifie_le, pacte_modifie_par').eq('id', profile.couple_id).single(),
+    // Requête à part : si les colonnes de signature manquent en base, le
+    // texte du pacte s'affiche quand même.
+    supabase.from('couples').select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single(),
     getEffectiveModules(),
   ])
   const MODULES = localizeModules(effectiveModules, locale)
@@ -34,7 +40,10 @@ export default async function JournalPage() {
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)
   // Le pacte se signe dès la fin du module 9 (le module 10, rendez-vous annuel,
   // se fait un an plus tard).
-  const pacteTermine = (modules || []).some((m: Module) => m.slug === 'engagement' && m.revealed)
+  const pacteTermine = (modules || []).some((m: Module) => m.slug === MODULE_PACTE && m.revealed)
+  const moduleRdv = (modules || []).find((m: Module) => m.slug === MODULE_RDV_ANNUEL)
+  const rdvOuvert = !!moduleRdv && (moduleRdv.statut !== 'locked' || moduleRdv.revealed)
+  const bornesRdv = bornesRdvAnnuel()
 
   function getConclusion(moduleSlug: string, userId: string, questionSlug: 'apprentissage' | 'surprise'): string {
     return entries?.find(e => e.module_slug === moduleSlug && e.user_id === userId && e.question_slug === questionSlug)?.valeur || ''
@@ -135,20 +144,16 @@ export default async function JournalPage() {
         </div>
       )}
 
-      {pacteTermine && (
-        <div className="card p-5 text-center" style={{ marginTop: 24, paddingTop: 40, paddingBottom: 40 }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>💍</div>
-          <h2 className="font-serif font-bold" style={{ fontSize: 24, color: 'var(--ink)', marginBottom: 12 }}>
-            <EditableText id="pacte.signature.titre">Signez votre Pacte</EditableText>
-          </h2>
-          <p style={{ color: 'var(--muted)', maxWidth: 380, margin: '0 auto 24px' }}>
-            <EditableText id="pacte.signature.texte" multiline>En signant, vous vous engagez à honorer les valeurs et accords explorés ensemble.</EditableText>
-          </p>
-          <button className="btn-brand" style={{ padding: '16px 32px', fontSize: 16, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Heart className="w-5 h-5" />
-            <EditableText id="pacte.signature.cta">Signer notre Pacte</EditableText>
-          </button>
-        </div>
+      {pacteTermine && partner && (
+        <SignaturePacte
+          signeLe={signature?.pacte_signe_le ?? null}
+          rdvLe={signature?.rdv_annuel_le ?? null}
+          rdvOuvert={rdvOuvert}
+          min={bornesRdv.min}
+          max={bornesRdv.max}
+          parDefaut={bornesRdv.parDefaut}
+          anniversaire={anniversaireDansBornes(signature?.date_anniversaire ?? null)}
+        />
       )}
     </div>
   )
