@@ -33,8 +33,20 @@ export const MODULES: ModuleInfo[] = [
     description: "On croit se connaître par cœur. Ce module révèle les angles morts, avec tendresse.",
     description_en: 'You think you know each other by heart. This module gently reveals the blind spots.',
     emoji: '👁️', free: true,
-    // Questions de fin de module : à personnaliser pour ce module.
-    conclusion: CONCLUSION_PAR_DEFAUT,
+    conclusion: {
+      apprentissage: {
+        label: "Qu'as-tu découvert sur l'autre pendant votre échange qui t'a le plus surpris·e ou touché·e ?",
+        placeholder: "Ce que tu as découvert…",
+        label_en: "What did you discover about your partner during your conversation that surprised or moved you most?",
+        placeholder_en: "What you discovered…",
+      },
+      surprise: {
+        label: "De cet échange, que voudrais-tu garder en tête pour votre pacte : un rêve à soutenir, une qualité à ne jamais perdre de vue… ?",
+        placeholder: "Ce que tu veux garder en tête…",
+        label_en: "From this conversation, what would you like to keep in mind for your pact: a dream to support, a quality never to lose sight of… ?",
+        placeholder_en: "What you want to keep in mind…",
+      },
+    },
     questions: [
       { slug: 'bonheur_def', type: 'text', texte: 'Quelle est ta définition du bonheur ?', texte_en: 'What is your definition of happiness?' },
       { slug: 'qualites_preferees', type: 'text', texte: "Quelles sont les qualités que tu préfères chez l'autre ?", hint: 'Donne entre 3 et 5 qualités', texte_en: 'What qualities do you like most about your partner?', hint_en: 'Give between 3 and 5 qualities' },
@@ -58,8 +70,20 @@ export const MODULES: ModuleInfo[] = [
     description: "On revient sur ce qu'on a construit : la rencontre, les moments forts, ce qui nous fait tenir.",
     description_en: "Let's look back at what you've built together: how you met, the milestones, what keeps you going.",
     emoji: '💑', free: false,
-    // Questions de fin de module : à personnaliser pour ce module.
-    conclusion: CONCLUSION_PAR_DEFAUT,
+    conclusion: {
+      apprentissage: {
+        label: "En vous racontant votre histoire, qu'est-ce qui t'a frappé·e dans vos souvenirs respectifs des mêmes moments ?",
+        placeholder: "Ce qui t'a frappé·e…",
+        label_en: "As you told each other your story, what struck you about your respective memories of the same moments?",
+        placeholder_en: "What struck you…",
+      },
+      surprise: {
+        label: "Qu'est-ce qui fait votre force et que vous voulez protéger dans votre pacte ?",
+        placeholder: "Votre force, ce que vous voulez protéger…",
+        label_en: "What makes you strong as a couple, and what do you want to protect in your pact?",
+        placeholder_en: "Your strength, what you want to protect…",
+      },
+    },
     questions: [
       { slug: 'rencontre', type: 'text', texte: 'Raconte ici votre rencontre ? Quels sont les moments clefs du tout début ?', texte_en: 'Tell the story of how you met. What were the key moments at the very beginning?' },
       { slug: 'moments_forts', type: 'text', texte: 'Quels sont les 3 ou 4 moments forts du début de votre couple ?', texte_en: 'What are the 3 or 4 milestones from the beginning of your relationship?' },
@@ -101,8 +125,8 @@ export const MODULES: ModuleInfo[] = [
           'Paperwork', 'Planning vacations',
         ],
       },
-      { slug: 'organisation_convient', type: 'text', texte: 'Est-ce que cette organisation te convient ?', texte_en: 'Does this arrangement work for you?' },
-      { slug: 'changer_repartition', type: 'text', texte: "Qu'est-ce que tu aimerais changer dans cette répartition ?", texte_en: 'What would you like to change about how things are split?' },
+      { slug: 'choix_habitude_defaut', type: 'text', texte: 'Ce que tu fais pour le foyer, le fais-tu plutôt par choix, par habitude ou par défaut ?', texte_en: 'The things you do for the household: do you do them mostly by choice, out of habit, or by default?' },
+      { slug: 'organisation_convient', type: 'text', texte: "Est-ce que cette organisation te convient, à toi ? Qu'est-ce que tu aimerais changer dans cette répartition ?", texte_en: 'Does this arrangement work for you, personally? What would you like to change about how things are split?' },
       { slug: 'geste_touche', type: 'text', texte: "Quel est le geste ou l'attention qui te touche le plus, au quotidien, de la part de l'autre ?", texte_en: 'What gesture or thoughtful act from your partner touches you most in everyday life?' },
       { slug: 'loisir_solo', type: 'text', texte: 'Quel loisir aimerais-tu prendre le temps de faire en solo ?', texte_en: 'What hobby would you like to make time for on your own?' },
       { slug: 'loisir_couple', type: 'text', texte: 'Quel loisir aimerais-tu prendre le temps de faire en couple ?', texte_en: 'What hobby would you like to make time for as a couple?' },
@@ -110,16 +134,16 @@ export const MODULES: ModuleInfo[] = [
     ],
     conclusion: {
       apprentissage: {
-        label: 'Quels changements peux-tu engager suite à ce module au niveau du partage des tâches ou de tes loisirs solo / en duo ?',
-        placeholder: 'Les changements que tu peux engager…',
-        label_en: 'What changes can you make after this module, in how you share tasks or in your solo / couple hobbies?',
-        placeholder_en: 'The changes you can make…',
+        label: "En comparant vos tableaux, qu'est-ce qui différait entre ta perception et celle de l'autre ?",
+        placeholder: "Ce qui différait…",
+        label_en: "Comparing your grids, what differed between your perception and your partner's?",
+        placeholder_en: "What differed…",
       },
       surprise: {
-        label: "Que retiens-tu de ce module ? Qu'est-ce qui t'a surpris·e ?",
-        placeholder: "Ce que tu retiens, ce qui t'a surpris·e…",
-        label_en: 'What do you take away from this module? What surprised you?',
-        placeholder_en: 'What you take away, what surprised you…',
+        label: "Quel point de votre organisation aimerais-tu voir figurer dans le pacte, à garder tel quel ou à revoir ?",
+        placeholder: "Le point à garder ou à revoir…",
+        label_en: "Which aspect of how you organize things would you like to see in the pact, to keep as is or to rethink?",
+        placeholder_en: "The point to keep or rethink…",
       },
     },
   },
@@ -132,16 +156,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '🎯', free: false,
     conclusion: {
       apprentissage: {
-        label: 'Vas-tu changer quelque chose suite à ce module et si oui, quoi ?',
-        placeholder: 'Ce que tu vas changer…',
-        label_en: 'Will you change anything after this module? If so, what?',
-        placeholder_en: 'What you will change…',
+        label: "Qu'as-tu compris du rapport de l'autre à l'argent que tu ne voyais pas avant ?",
+        placeholder: "Ce que tu as compris…",
+        label_en: "What did you understand about your partner's relationship with money that you didn't see before?",
+        placeholder_en: "What you understood…",
       },
       surprise: {
-        label: "Qu'est-ce qui t'a étonné·e ou marqué·e ?",
-        placeholder: "Ce qui t'a étonné·e ou marqué·e…",
-        label_en: 'What surprised you or stood out to you?',
-        placeholder_en: 'What surprised you or stood out…',
+        label: "Sur l'argent et vos projets, quel point d'accord veux-tu inscrire dans le pacte, et quel point reste à discuter ?",
+        placeholder: "Le point d'accord, le point à discuter…",
+        label_en: "On money and your plans, which point of agreement do you want to write into the pact, and which point is still to be discussed?",
+        placeholder_en: "The point of agreement, the point to discuss…",
       },
     },
     questions: [
@@ -168,16 +192,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '🌳', free: false,
     conclusion: {
       apprentissage: {
-        label: "Quelle règle aimerais-tu poser ensemble vis-à-vis de vos familles : un rythme de visites, un sujet qui reste entre vous, une tradition rien qu'à vous… ?",
-        placeholder: "La règle que tu aimerais poser…",
-        label_en: "What rule would you like to set together regarding your families: how often you visit, a topic that stays between you, a tradition all your own… ?",
-        placeholder_en: "The rule you would like to set…",
+        label: "Qu'as-tu compris de l'histoire familiale de l'autre qui éclaire certaines de ses réactions ?",
+        placeholder: "Ce que tu as compris…",
+        label_en: "What did you understand about your partner's family history that sheds light on some of their reactions?",
+        placeholder_en: "What you understood…",
       },
       surprise: {
-        label: "Quel héritage familial aimerais-tu laisser derrière toi, pour être davantage toi-même ?",
-        placeholder: "Ce que tu aimerais laisser derrière toi…",
-        label_en: "What family legacy would you like to leave behind, to be more fully yourself?",
-        placeholder_en: "What you would like to leave behind…",
+        label: "Quelles valeurs ou traditions te semblent faire partie de votre socle commun ?",
+        placeholder: "Les valeurs, les traditions…",
+        label_en: "Which values or traditions seem to you to be part of your common foundation?",
+        placeholder_en: "The values, the traditions…",
       },
     },
     questions: [
@@ -204,16 +228,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '💬', free: false,
     conclusion: {
       apprentissage: {
-        label: "Quel sujet évité aimerais-tu qu'on ose aborder prochainement, et dans quelles conditions ?",
-        placeholder: "Le sujet, les conditions…",
-        label_en: "Which avoided topic would you like us to dare to bring up soon, and under what conditions?",
-        placeholder_en: "The topic, the conditions…",
+        label: "Qu'as-tu appris sur la façon dont l'autre vit ses émotions et sur ce qui l'apaise ?",
+        placeholder: "Ce que tu as appris…",
+        label_en: "What did you learn about how your partner experiences their emotions and what soothes them?",
+        placeholder_en: "What you learned…",
       },
       surprise: {
-        label: "Quel besoin vas-tu essayer de formuler clairement cette semaine, plutôt que d'attendre qu'il soit deviné ?",
-        placeholder: "Le besoin que tu vas formuler…",
-        label_en: "Which need will you try to put clearly into words this week, rather than waiting for it to be guessed?",
-        placeholder_en: "The need you will put into words…",
+        label: "Quel point de vigilance retiens-tu pour mieux vous parler ?",
+        placeholder: "Ton point de vigilance…",
+        label_en: "What point of attention do you take away to talk to each other better?",
+        placeholder_en: "Your point of attention…",
       },
     },
     questions: [
@@ -242,16 +266,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '🔥', free: false,
     conclusion: {
       apprentissage: {
-        label: "Quel serait votre rendez-vous de connexion idéal : quoi, où, à quelle fréquence ?",
-        placeholder: "Votre rendez-vous idéal…",
-        label_en: "What would your ideal connection date be: what, where, how often?",
-        placeholder_en: "Your ideal date…",
+        label: "Qu'as-tu compris de la façon dont l'autre a besoin de recevoir l'amour ?",
+        placeholder: "Ce que tu as compris…",
+        label_en: "What did you understand about how your partner needs to receive love?",
+        placeholder_en: "What you understood…",
       },
       surprise: {
-        label: "Quel geste d'amour, dans le langage de l'autre plutôt que le tien, vas-tu lui offrir cette semaine ?",
-        placeholder: "Le geste que tu vas offrir…",
-        label_en: "What gesture of love, in your partner's language rather than yours, will you offer them this week?",
-        placeholder_en: "The gesture you will offer…",
+        label: "Dans votre intimité, qu'aimerais-tu préserver, et qu'aimerais-tu voir évoluer ?",
+        placeholder: "Ce que tu aimerais préserver, faire évoluer…",
+        label_en: "In your intimacy, what would you like to preserve, and what would you like to see evolve?",
+        placeholder_en: "What you would like to preserve, to evolve…",
       },
     },
     questions: [
@@ -280,16 +304,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '⚡', free: false,
     conclusion: {
       apprentissage: {
-        label: "Parmi vos sujets de dispute, lequel te semble négociable, et lequel te paraît pour l'instant non négociable ?",
-        placeholder: "Négociable, non négociable…",
-        label_en: "Among the things you argue about, which seems negotiable to you, and which seems non-negotiable for now?",
-        placeholder_en: "Negotiable, non-negotiable…",
+        label: "Qu'est-ce que cet échange t'a fait comprendre sur vos disputes, que tu ne voyais pas avant ?",
+        placeholder: "Ce que tu as compris…",
+        label_en: "What did this conversation help you understand about your arguments that you didn't see before?",
+        placeholder_en: "What you understood…",
       },
       surprise: {
-        label: "La prochaine fois que tu sentiras une dispute monter, qu'est-ce que tu feras différemment ?",
-        placeholder: "Ce que tu feras différemment…",
-        label_en: "Next time you feel an argument building, what will you do differently?",
-        placeholder_en: "What you will do differently…",
+        label: "Parmi les règles du jeu évoquées, laquelle te semble indispensable ?",
+        placeholder: "La règle indispensable…",
+        label_en: "Among the ground rules you discussed, which one seems essential to you?",
+        placeholder_en: "The essential rule…",
       },
     },
     questions: [
