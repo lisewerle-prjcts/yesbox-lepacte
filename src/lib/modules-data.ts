@@ -168,16 +168,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '🌳', free: false,
     conclusion: {
       apprentissage: {
-        label: "Qu'est-ce que ce module t'a fait ressentir ?",
-        placeholder: "Ce que ce module t'a fait ressentir…",
-        label_en: 'How did this module make you feel?',
-        placeholder_en: 'How this module made you feel…',
+        label: "Quelle règle aimerais-tu poser ensemble vis-à-vis de vos familles : un rythme de visites, un sujet qui reste entre vous, une tradition rien qu'à vous… ?",
+        placeholder: "La règle que tu aimerais poser…",
+        label_en: "What rule would you like to set together regarding your families: how often you visit, a topic that stays between you, a tradition all your own… ?",
+        placeholder_en: "The rule you would like to set…",
       },
       surprise: {
-        label: 'Que te donne-t-il envie de continuer à faire ? Et de changer ?',
-        placeholder: 'Ce que tu as envie de continuer, de changer…',
-        label_en: 'What does it make you want to keep doing? And to change?',
-        placeholder_en: 'What you want to keep doing, to change…',
+        label: "Quel héritage familial aimerais-tu laisser derrière toi, pour être davantage toi-même ?",
+        placeholder: "Ce que tu aimerais laisser derrière toi…",
+        label_en: "What family legacy would you like to leave behind, to be more fully yourself?",
+        placeholder_en: "What you would like to leave behind…",
       },
     },
     questions: [
@@ -202,8 +202,20 @@ export const MODULES: ModuleInfo[] = [
     description: "Comment tu vis et montres tes émotions, comment vous vous parlez, ce qui vous aiderait à mieux vous comprendre.",
     description_en: 'How you feel and show your emotions, how you talk to each other, what would help you understand each other better.',
     emoji: '💬', free: false,
-    // Questions de fin de module : à personnaliser pour ce module.
-    conclusion: CONCLUSION_PAR_DEFAUT,
+    conclusion: {
+      apprentissage: {
+        label: "Quel sujet évité aimerais-tu qu'on ose aborder prochainement, et dans quelles conditions ?",
+        placeholder: "Le sujet, les conditions…",
+        label_en: "Which avoided topic would you like us to dare to bring up soon, and under what conditions?",
+        placeholder_en: "The topic, the conditions…",
+      },
+      surprise: {
+        label: "Quel besoin vas-tu essayer de formuler clairement cette semaine, plutôt que d'attendre qu'il soit deviné ?",
+        placeholder: "Le besoin que tu vas formuler…",
+        label_en: "Which need will you try to put clearly into words this week, rather than waiting for it to be guessed?",
+        placeholder_en: "The need you will put into words…",
+      },
+    },
     questions: [
       { slug: 'joie', type: 'text', texte: "Comment exprimes-tu la joie ? Plutôt explosion ou sourire discret ?", texte_en: "How do you express joy? More of an explosion or a quiet smile?" },
       { slug: 'colere', type: 'text', texte: "Quand la colère monte, comment ça se voit chez toi ? Tu hausses le ton, tu te tais, tu pars marcher, tu ranges frénétiquement… ?", texte_en: "When anger rises, how does it show in you? Do you raise your voice, go quiet, go for a walk, tidy up frantically… ?" },
@@ -228,8 +240,20 @@ export const MODULES: ModuleInfo[] = [
     description: "Comment vous vous manifestez votre amour et votre désir — en privé comme en public.",
     description_en: 'How you show your love and desire to each other — in private and in public.',
     emoji: '🔥', free: false,
-    // Questions de fin de module : à personnaliser pour ce module.
-    conclusion: CONCLUSION_PAR_DEFAUT,
+    conclusion: {
+      apprentissage: {
+        label: "Quel serait votre rendez-vous de connexion idéal : quoi, où, à quelle fréquence ?",
+        placeholder: "Votre rendez-vous idéal…",
+        label_en: "What would your ideal connection date be: what, where, how often?",
+        placeholder_en: "Your ideal date…",
+      },
+      surprise: {
+        label: "Quel geste d'amour, dans le langage de l'autre plutôt que le tien, vas-tu lui offrir cette semaine ?",
+        placeholder: "Le geste que tu vas offrir…",
+        label_en: "What gesture of love, in your partner's language rather than yours, will you offer them this week?",
+        placeholder_en: "The gesture you will offer…",
+      },
+    },
     questions: [
       { slug: 'gestes_tendresse', type: 'text', texte: "Quels petits gestes de tendresse te font fondre ?", texte_en: "What small gestures of affection melt your heart?" },
       { slug: 'manifeste_amour', type: 'text', texte: "Comment montres-tu ton amour à l'autre au quotidien : des mots, des gestes, des attentions, du temps partagé, des coups de main, des cadeaux… ?", texte_en: "How do you show your love to your partner day to day: words, gestures, thoughtful acts, time together, helping out, gifts… ?" },
@@ -254,8 +278,20 @@ export const MODULES: ModuleInfo[] = [
     description: 'Comment vous vous disputez, comment vous vous réconciliez, ce que vous pourriez encore améliorer.',
     description_en: 'How you argue, how you make up, and what you could still improve.',
     emoji: '⚡', free: false,
-    // Questions de fin de module : à personnaliser pour ce module.
-    conclusion: CONCLUSION_PAR_DEFAUT,
+    conclusion: {
+      apprentissage: {
+        label: "Parmi vos sujets de dispute, lequel te semble négociable, et lequel te paraît pour l'instant non négociable ?",
+        placeholder: "Négociable, non négociable…",
+        label_en: "Among the things you argue about, which seems negotiable to you, and which seems non-negotiable for now?",
+        placeholder_en: "Negotiable, non-negotiable…",
+      },
+      surprise: {
+        label: "La prochaine fois que tu sentiras une dispute monter, qu'est-ce que tu feras différemment ?",
+        placeholder: "Ce que tu feras différemment…",
+        label_en: "Next time you feel an argument building, what will you do differently?",
+        placeholder_en: "What you will do differently…",
+      },
+    },
     questions: [
       { slug: 'sujet_dispute', type: 'text', texte: "À propos de quoi vous disputez-vous le plus souvent : argent, tâches, belle-famille, temps, écrans, retards… ?", texte_en: "What do you argue about most often: money, chores, in-laws, time, screens, lateness… ?" },
       { slug: 'non_dits_disputes', type: 'text', texte: "Reprends les sujets évités ou les non-dits repérés au module 6 : lesquels finissent le plus souvent en dispute ?", texte_en: "Go back to the avoided topics or unspoken issues you spotted in module 6: which ones most often end in an argument?" },
