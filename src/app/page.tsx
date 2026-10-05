@@ -14,9 +14,9 @@ import { createClient } from '@/lib/supabase/client'
 
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
-  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on conflict saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
+  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les disputes nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on arguments saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
   { texte: t("Notre pacte de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Pact is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'Inès & Rémi', lieu: 'Lyon' },
-  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'Sophie & Lucas', lieu: 'Bordeaux' },
+  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'Camille & Sacha', lieu: 'Bordeaux' },
 ]
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [

@@ -58,7 +58,7 @@ export const EN_CONTENT: Record<string, string> = {
   'offres.bac.tag': 'Your yearly date',
   'offres.bac.desc': 'Activate later',
   'offres.bac.avantages.0': 'Yearly reminder on your anniversary date',
-  'offres.bac.avantages.1': 'Review sheet generated to look back on your year together',
+  'offres.bac.avantages.1': 'A module to look back on your year together',
   'offres.bac.avantages.2': 'Redo all the modules of the initial program if you wish',
   'offres.bac.avantages.3': 'Cancel anytime',
   'offres.bac.cta': 'Later, in the app',
