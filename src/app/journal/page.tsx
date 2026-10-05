@@ -82,7 +82,8 @@ export default async function JournalPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {MODULES.map(moduleInfo => {
+          {/* Du plus récent au plus ancien : le pacte (module 9) en haut, le module 1 en bas. */}
+          {[...MODULES].sort((a, b) => b.n - a.n).map(moduleInfo => {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
             if (!modData) return null
 
