@@ -293,6 +293,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.constat.reveal.titre': 'What was missing: a regular date, just the two of you.',
   'home.constat.reveal.texte.0': 'YES BOX starts from a simple idea: a couple that lasts and thrives is something you choose, and something you nurture, gently.',
   'home.constat.reveal.texte.programme': "It's a playful, self-guided personal development program for every couple.",
+  'home.constat.reveal.texte.pause': "At last, a chance to put everyday life on pause and make time for your relationship: to see what works, strengthen it, and improve what can be improved.",
   'home.constat.reveal.texte.pacte': "At the end of the program, you write your couple's pact for the year ahead.",
   'home.constat.reveal.texte.2': "Every year, just like at work, an anniversary module helps you take stock, say what's been weighing on you and adjust your commitments.",
   'home.constat.reveal.texte.3': 'You never lose the thread, and frustrations never get the chance to settle in.',

@@ -234,6 +234,7 @@ export default function LandingPage() {
               <EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText>{' '}
               <EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText>
             </p>
+            <p><EditableText id="home.constat.reveal.texte.pause" multiline>C&apos;est enfin l&apos;occasion de mettre le quotidien en pause et de prendre du temps pour votre couple, pour voir ce qui marche, le renforcer et améliorer ce qui peut l&apos;être.</EditableText></p>
             <p>
               <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText>{' '}
               <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
