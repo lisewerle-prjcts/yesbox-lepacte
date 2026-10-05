@@ -1228,3 +1228,16 @@ create table if not exists public.notifications_module (
   primary key (module_id, destinataire_id, type)
 );
 alter table public.notifications_module enable row level security;
+
+-- ============================================================
+-- SIGNATURE DU PACTE ET RENDEZ-VOUS ANNUEL
+-- Le pacte se signe dès la fin du module 9. À la signature, le couple
+-- fixe la date de son rendez-vous annuel (entre 6 mois et 1 an plus
+-- tard, 1 an par défaut) : le module 10 se débloque à cette date.
+-- Écrit uniquement par le serveur (clé service) : aucun droit ajouté
+-- côté navigateur.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists pacte_signe_le timestamptz;
+alter table public.couples add column if not exists pacte_signe_par uuid references public.profiles(id) on delete set null;
+alter table public.couples add column if not exists rdv_annuel_le date;

@@ -10,7 +10,7 @@ import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { CoupleAbonnement, Module } from '@/types'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { peutAccederModule, estCompteResilie } from '@/lib/abonnement'
-import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
+import { ouvrirPremierModuleSiBesoin, ouvrirRdvAnnuelSiDate, MODULE_PACTE } from '@/lib/progression'
 import { hasAnsweredAll } from '@/lib/questions'
 import { ArrowRight } from 'lucide-react'
 import { creerCoupleSolo } from '@/lib/couple-join'
@@ -57,7 +57,10 @@ export default async function TableauDeBordPage({
     couple = coup
     coupleAbonnement = coupAbo
 
-    if (!estCompteResilie(coupleAbonnement) && await ouvrirPremierModuleSiBesoin(createAdminClient(), profile.couple_id)) {
+    const admin = createAdminClient()
+    const ouvert = !estCompteResilie(coupleAbonnement)
+      && ((await ouvrirPremierModuleSiBesoin(admin, profile.couple_id)) || (await ouvrirRdvAnnuelSiDate(admin, profile.couple_id)))
+    if (ouvert) {
       const { data: modsOuverts } = await supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at')
       modules = modsOuverts || []
     }
@@ -79,6 +82,8 @@ export default async function TableauDeBordPage({
 
   const done = modules.filter(m => m.revealed).length
   const pct = totalModuleCount ? Math.round((done / totalModuleCount) * 100) : 0
+  // Le pacte se signe dès la fin du module 9 (le module 10 vient un an plus tard).
+  const pacteASigner = modules.some(m => m.slug === MODULE_PACTE && m.revealed)
 
   function getModStatus(slug: string): 'done' | 'active' | 'paywall' | 'locked' {
     const mod = modules.find(m => m.slug === slug)
@@ -129,12 +134,12 @@ export default async function TableauDeBordPage({
           </div>
           <div className="bar sage"><i style={{ width: `${pct}%` }} /></div>
           <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-            <span className="text-sm font-semibold" style={{ color: pct === 100 ? 'var(--sage)' : 'var(--muted)' }}>
-              {pct === 100
+            <span className="text-sm font-semibold" style={{ color: pacteASigner ? 'var(--sage)' : 'var(--muted)' }}>
+              {pacteASigner
                 ? <EditableText id="dashboard.progression.complete">🎉 Votre pacte est prêt à être signé !</EditableText>
                 : <EditableText id="dashboard.progression.encours">Voir le détail de votre progression</EditableText>}
             </span>
-            <Link href="/pacte" className={pct === 100 ? 'btn-sage text-sm py-2' : 'btn-secondary text-sm py-2'}><EditableText id="dashboard.progression.voirpacte">Voir la progression</EditableText></Link>
+            <Link href="/pacte" className={pacteASigner ? 'btn-sage text-sm py-2' : 'btn-secondary text-sm py-2'}><EditableText id="dashboard.progression.voirpacte">Voir la progression</EditableText></Link>
           </div>
         </div>
       )}

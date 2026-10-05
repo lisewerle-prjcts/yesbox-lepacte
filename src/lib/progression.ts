@@ -5,6 +5,9 @@ import { getEffectiveModules } from '@/lib/modules-effective'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
+export const MODULE_PACTE = 'engagement'
+export const MODULE_RDV_ANNUEL = 'renouvellement'
+
 // Règles du jeu, appliquées côté serveur (le navigateur ne décide plus de
 // rien) et verrouillées en base (cf. supabase/schema.sql, v16) :
 //   - chacun·e répond seul·e ; les réponses de l'autre ne sont visibles
@@ -101,7 +104,9 @@ export async function revelerSiPret(admin: AdminClient, mod: ModuleCouple, ordre
 
   await admin.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('id', mod.id)
   const idx = ordreModules.indexOf(mod.slug)
-  if (idx >= 0 && idx < ordreModules.length - 1) {
+  // Le module 10 (rendez-vous annuel) ne suit pas directement : il se
+  // débloque à la date fixée lors de la signature du pacte.
+  if (idx >= 0 && idx < ordreModules.length - 1 && ordreModules[idx + 1] !== MODULE_RDV_ANNUEL) {
     await admin.from('modules').update({ statut: 'en_cours' })
       .eq('couple_id', mod.couple_id)
       .eq('slug', ordreModules[idx + 1])
@@ -121,5 +126,17 @@ export async function ouvrirPremierModuleSiBesoin(admin: AdminClient, coupleId: 
   if (!premier) return false
   const { data } = await admin.from('modules').update({ statut: 'en_cours' })
     .eq('couple_id', coupleId).eq('slug', premier).eq('statut', 'locked').select('id')
+  return !!data?.length
+}
+
+// Ouvre le module 10 (rendez-vous annuel) une fois arrivée la date fixée à
+// la signature du pacte. Renvoie true si le module a été ouvert.
+export async function ouvrirRdvAnnuelSiDate(admin: AdminClient, coupleId: string): Promise<boolean> {
+  const { data: couple } = await admin.from('couples').select('rdv_annuel_le').eq('id', coupleId).single()
+  if (!couple?.rdv_annuel_le) return false
+  const aujourdhui = new Date().toISOString().slice(0, 10)
+  if (couple.rdv_annuel_le > aujourdhui) return false
+  const { data } = await admin.from('modules').update({ statut: 'en_cours' })
+    .eq('couple_id', coupleId).eq('slug', MODULE_RDV_ANNUEL).eq('statut', 'locked').select('id')
   return !!data?.length
 }
