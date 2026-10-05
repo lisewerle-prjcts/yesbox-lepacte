@@ -40,7 +40,9 @@ export default async function PactePage() {
     .in('module_id', modules?.map((m: Module) => m.id) || [])
 
   const modulesTermines = modules?.filter((m: Module) => m.revealed) || []
-  const tousTermines = modulesTermines.length === MODULES.length
+  // Le pacte est prêt dès la fin du module 9 (le module 10, rendez-vous annuel,
+  // se fait un an plus tard).
+  const tousTermines = modulesTermines.some((m: Module) => m.slug === 'engagement')
 
   function getReponsesModule(moduleId: string, userId: string): Reponse[] {
     return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []

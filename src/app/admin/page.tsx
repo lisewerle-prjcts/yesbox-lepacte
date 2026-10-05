@@ -43,7 +43,7 @@ export default async function AdminHome() {
   const STATS = [
     { label: 'Utilisateurs', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/utilisateurs' },
     { label: 'Couples — parcours initial', value: couplesParcoursInitial, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Couples — parcours BAC', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
+    { label: 'Couples — parcours rendez-vous annuel', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
   ]
 
   return (

@@ -342,10 +342,10 @@ export const MODULES: ModuleInfo[] = [
     emoji: '📜', free: false,
     conclusion: {
       apprentissage: {
-        label: "Notre rendez-vous de Bilan : à quelle date aimerais-tu le fixer ? Votre anniversaire de couple ou dans 1 an ?",
-        placeholder: "La date de votre rendez-vous de Bilan…",
-        label_en: "Our yearly review date: when would you like to set it? Your anniversary as a couple, or one year from now?",
-        placeholder_en: "The date of your yearly review…",
+        label: "Notre rendez-vous annuel de couple : à quelle date aimerais-tu le fixer ? Votre anniversaire de couple ou dans 1 an ?",
+        placeholder: "La date de votre rendez-vous annuel…",
+        label_en: "Our yearly couple date: when would you like to set it? Your anniversary as a couple, or one year from now?",
+        placeholder_en: "When your yearly date will be…",
       },
       surprise: {
         label: "Qui l'organise ?",
@@ -368,7 +368,7 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'rituel_tete_a_tete', type: 'text', texte: "Notre rituel tête-à-tête : à quelle fréquence, sous quelle forme ?", texte_en: "Our one-on-one ritual: how often, in what form?" },
       { slug: 'engagements_personnels', type: 'text', texte: "Tes engagements personnels — Une chose que je m'engage à faire pour toi cette année. Et une chose à laquelle je renonce, ou que je m'engage à faire moins.", texte_en: "Your personal commitments — One thing I commit to doing for you this year. And one thing I give up, or commit to doing less." },
       { slug: 'recevoir', type: 'text', texte: "Ce que j'aimerais recevoir de toi cette année.", texte_en: "What I would like to receive from you this year." },
-      { slug: 'annee_reussie', type: 'text', texte: "Projette-toi dans un an, le jour de votre BAC : à quoi ressemblera une année réussie pour votre couple ? Qu'est-ce qui te ferait dire « c'était une belle année » ?", texte_en: "Picture yourself a year from now, on the day of your yearly review: what will a successful year look like for your relationship? What would make you say \"it was a great year\"?" },
+      { slug: 'annee_reussie', type: 'text', texte: "Projette-toi dans un an, le jour de votre rendez-vous annuel : à quoi ressemblera une année réussie pour votre couple ? Qu'est-ce qui te ferait dire « c'était une belle année » ?", texte_en: "Picture yourself a year from now, on the day of your yearly date: what will a successful year look like for your relationship? What would make you say \"it was a great year\"?" },
       { slug: 'promesse', type: 'text', texte: "Sceller le pacte — En une phrase, ta promesse à l'autre pour l'année à venir.", texte_en: "Sealing the pact — In one sentence, your promise to your partner for the year ahead." },
     ],
   },

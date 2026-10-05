@@ -32,8 +32,9 @@ export default async function JournalPage() {
   const MODULES = localizeModules(effectiveModules, locale)
 
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)
-  const modulesTermines = (modules || []).filter((m: Module) => m.statut === 'complete')
-  const tousTermines = modulesTermines.length === MODULES.length
+  // Le pacte se signe dès la fin du module 9 (le module 10, rendez-vous annuel,
+  // se fait un an plus tard).
+  const pacteTermine = (modules || []).some((m: Module) => m.slug === 'engagement' && m.revealed)
 
   function getConclusion(moduleSlug: string, userId: string, questionSlug: 'apprentissage' | 'surprise'): string {
     return entries?.find(e => e.module_slug === moduleSlug && e.user_id === userId && e.question_slug === questionSlug)?.valeur || ''
@@ -134,7 +135,7 @@ export default async function JournalPage() {
         </div>
       )}
 
-      {tousTermines && (
+      {pacteTermine && (
         <div className="card p-5 text-center" style={{ marginTop: 24, paddingTop: 40, paddingBottom: 40 }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>💍</div>
           <h2 className="font-serif font-bold" style={{ fontSize: 24, color: 'var(--ink)', marginBottom: 12 }}>
