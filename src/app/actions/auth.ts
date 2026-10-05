@@ -265,7 +265,10 @@ export async function verifierCodeMfa(code: string) {
   const { data: profile } = user
     ? await createAdminClient().from('profiles').select('is_admin').eq('id', user.id).single()
     : { data: null }
-  redirect(profile?.is_admin ? '/admin' : '/tableau-de-bord')
+  // Pas de redirect() ici : la session vient de passer au niveau aal2 et la
+  // page suivante, rendue dans la même requête, pouvait échouer (« This page
+  // couldn't load »). Le navigateur recharge la destination à neuf.
+  return { destination: profile?.is_admin ? '/admin' : '/tableau-de-bord' }
 }
 
 export async function verifierCodeRecuperationMfa(code: string) {
