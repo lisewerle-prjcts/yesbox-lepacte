@@ -14,9 +14,9 @@ import { createClient } from '@/lib/supabase/client'
 
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
-  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les conflits nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on conflict saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
+  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les disputes nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on arguments saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
   { texte: t("Notre pacte de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Pact is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'Inès & Rémi', lieu: 'Lyon' },
-  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'Sophie & Lucas', lieu: 'Bordeaux' },
+  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'Camille & Sacha', lieu: 'Bordeaux' },
 ]
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
@@ -234,9 +234,10 @@ export default function LandingPage() {
               <EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText>{' '}
               <EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText>
             </p>
+            <p><EditableText id="home.constat.reveal.texte.pause" multiline>C&apos;est enfin l&apos;occasion de mettre le quotidien en pause et de prendre du temps pour votre couple, pour voir ce qui marche, le renforcer et améliorer ce qui peut l&apos;être.</EditableText></p>
             <p>
               <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText>{' '}
-              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, comme en entreprise, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
+              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
             </p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
           </div>

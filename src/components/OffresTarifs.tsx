@@ -21,7 +21,7 @@ const ACCES_COMPLET = [
 ]
 const BAC = [
   'Rappel annuel à votre date anniversaire',
-  'Fiche bilan générée pour faire le point à deux sur votre année',
+  'Un module pour regarder votre année à deux',
   'Refaites tous les modules du parcours initial si vous le souhaitez',
   'Annulable à tout moment',
 ]

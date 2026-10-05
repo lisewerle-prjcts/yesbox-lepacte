@@ -336,7 +336,7 @@ export const MODULES: ModuleInfo[] = [
   {
     slug: 'engagement', n: 9,
     titre: 'Notre pacte de couple', titre_en: "Our Couple's Pact",
-    sousTitre: 'Vœux et engagements', sousTitre_en: 'Vows and commitments',
+    sousTitre: 'Socle et engagements', sousTitre_en: 'Foundation and commitments',
     description: "L'aboutissement : le chemin parcouru, ce qui fait votre socle, ce à quoi vous vous engagez. Ce module se conclut par l'écriture de votre pacte de couple, les promesses que vous vous faites pour l'année à venir.",
     description_en: "The culmination: the path you've traveled, what forms your foundation, what you commit to. This module ends with writing your couple's pact, the promises you make to each other for the year ahead.",
     emoji: '📜', free: false,
