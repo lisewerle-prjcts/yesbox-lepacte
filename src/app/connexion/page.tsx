@@ -69,6 +69,7 @@ export default function ConnexionPage() {
     const code = (formData.get('code') as string) || ''
     const result = await verifierCodeMfa(code)
     if (result?.error) setError(result.error)
+    else if (result?.destination) window.location.assign(result.destination)
   }
 
   async function handleRecoveryAction(formData: FormData) {
