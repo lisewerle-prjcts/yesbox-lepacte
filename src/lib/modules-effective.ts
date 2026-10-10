@@ -103,7 +103,8 @@ function applyMeta(moduleInfo: ModuleInfo, meta: ModuleMetaOverride | undefined)
     sousTitre: meta.sousTitre ?? moduleInfo.sousTitre,
     description: meta.description ?? moduleInfo.description,
     emoji: meta.emoji ?? moduleInfo.emoji,
-    n: meta.n ?? moduleInfo.n,
+    // La position des modules de base reste celle de MODULES (l'ordre affiché
+    // sur la page d'accueil) : un ancien `n` enregistré en base est ignoré.
   }
 }
 

@@ -608,7 +608,7 @@ function ModuleMetaEditor({
     if (kind === 'custom' && moduleId) {
       await adminUpdateModule(moduleId, { titre, sousTitre, description, emoji, gratuit, ordre: parseFloat(ordre) || initialOrdre })
     } else {
-      await adminSaveModuleMeta(slug, { titre, sousTitre, description, emoji, ordre: parseFloat(ordre) || initialOrdre })
+      await adminSaveModuleMeta(slug, { titre, sousTitre, description, emoji })
       setOverridden(true)
     }
     setSaving(false)
@@ -636,7 +636,7 @@ function ModuleMetaEditor({
   return (
     <div className="card p-5" style={{ borderColor: 'var(--brand-soft)' }}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold" style={{ fontSize: 15 }}>{kind === 'custom' ? 'Infos du module personnalisé' : 'Nom et position du module'}</h2>
+        <h2 className="font-semibold" style={{ fontSize: 15 }}>{kind === 'custom' ? 'Infos du module personnalisé' : 'Nom du module'}</h2>
         <div className="flex items-center gap-2">
           {kind === 'base' && overridden && <span className="tag-brand" style={{ fontSize: 11 }}>Modifié</span>}
           <span className="tag-sage" style={{ fontSize: 11 }}>{slug}</span>
@@ -662,10 +662,12 @@ function ModuleMetaEditor({
             <label className="flabel">Emoji</label>
             <input type="text" className="field" value={emoji} onChange={e => setEmoji(e.target.value)} />
           </div>
-          <div>
-            <label className="flabel">Position <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(ex : 2.5 pour entre M2 et M3)</span></label>
-            <input type="text" inputMode="decimal" className="field" value={ordre} onChange={e => setOrdre(e.target.value)} />
-          </div>
+          {kind === 'custom' && (
+            <div>
+              <label className="flabel">Position <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(ex : 2.5 pour entre M2 et M3)</span></label>
+              <input type="text" inputMode="decimal" className="field" value={ordre} onChange={e => setOrdre(e.target.value)} />
+            </div>
+          )}
           {kind === 'custom' && (
             <div className="flex items-end pb-2">
               <label className="flex items-center gap-2" style={{ fontSize: 13 }}>
