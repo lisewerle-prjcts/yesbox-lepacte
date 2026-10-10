@@ -103,16 +103,44 @@ export async function revelerSiPret(admin: AdminClient, mod: ModuleCouple, ordre
   if (!(membres ?? []).every(m => conclusionFaite(m.id))) return false
 
   await admin.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('id', mod.id)
-  const idx = ordreModules.indexOf(mod.slug)
-  // Le module 10 (rendez-vous annuel) ne suit pas directement : il se
-  // débloque à la date fixée lors de la signature du pacte.
-  if (idx >= 0 && idx < ordreModules.length - 1 && ordreModules[idx + 1] !== MODULE_RDV_ANNUEL) {
-    await admin.from('modules').update({ statut: 'en_cours' })
-      .eq('couple_id', mod.couple_id)
-      .eq('slug', ordreModules[idx + 1])
-      .eq('statut', 'locked')
-  }
+  await realignerProgression(admin, mod.couple_id, ordreModules)
   return true
+}
+
+// Remet la progression d'un couple dans l'ordre du parcours : le premier
+// module non révélé est ouvert, et tout autre module non révélé ouvert en
+// avance (ex. « Les disputes » débloqué avant « Émotions et communication »
+// quand l'ordre était faux) est reverrouillé. Les réponses déjà saisies sont
+// conservées et réapparaissent quand le module se rouvre. Le module 10
+// (rendez-vous annuel) n'est pas concerné : il s'ouvre à sa date.
+// Avec `ouvrir: false`, seuls les modules ouverts en avance sont
+// reverrouillés (l'ouverture reste faite par le tableau de bord, qui vérifie
+// d'abord que le compte n'est pas résilié).
+// Renvoie true si un module a changé de statut.
+export async function realignerProgression(
+  admin: AdminClient, coupleId: string, ordreModules?: string[], { ouvrir = true }: { ouvrir?: boolean } = {},
+): Promise<boolean> {
+  const ordre = (ordreModules ?? (await getEffectiveModules()).map(m => m.slug)).filter(slug => slug !== MODULE_RDV_ANNUEL)
+  const { data: mods } = await admin.from('modules').select('id, slug, statut, revealed').eq('couple_id', coupleId)
+  if (!mods?.length) return false
+
+  const parSlug = new Map(mods.map(m => [m.slug, m]))
+  const courant = ordre.find(slug => parSlug.has(slug) && !parSlug.get(slug)!.revealed)
+
+  const aOuvrir = ouvrir && courant && parSlug.get(courant)!.statut === 'locked' ? [parSlug.get(courant)!.id] : []
+  const aVerrouiller = ordre
+    .filter(slug => slug !== courant)
+    .map(slug => parSlug.get(slug))
+    .filter(m => m && !m.revealed && m.statut !== 'locked')
+    .map(m => m!.id)
+
+  if (aVerrouiller.length) {
+    await admin.from('modules').update({ statut: 'locked' }).in('id', aVerrouiller).eq('revealed', false)
+  }
+  if (aOuvrir.length) {
+    await admin.from('modules').update({ statut: 'en_cours' }).in('id', aOuvrir).eq('statut', 'locked')
+  }
+  return aOuvrir.length > 0 || aVerrouiller.length > 0
 }
 
 // Ouvre le premier module d'un couple dont aucun module n'est ouvert ni

@@ -10,7 +10,7 @@ import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { CoupleAbonnement, Module } from '@/types'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { peutAccederModule, estCompteResilie } from '@/lib/abonnement'
-import { ouvrirPremierModuleSiBesoin, ouvrirRdvAnnuelSiDate, MODULE_PACTE } from '@/lib/progression'
+import { realignerProgression, ouvrirRdvAnnuelSiDate, MODULE_PACTE } from '@/lib/progression'
 import { hasAnsweredAll } from '@/lib/questions'
 import { ArrowRight } from 'lucide-react'
 import { creerCoupleSolo } from '@/lib/couple-join'
@@ -58,8 +58,10 @@ export default async function TableauDeBordPage({
     coupleAbonnement = coupAbo
 
     const admin = createAdminClient()
-    const ouvert = !estCompteResilie(coupleAbonnement)
-      && ((await ouvrirPremierModuleSiBesoin(admin, profile.couple_id)) || (await ouvrirRdvAnnuelSiDate(admin, profile.couple_id)))
+    const resilie = estCompteResilie(coupleAbonnement)
+    const realigne = await realignerProgression(admin, profile.couple_id, undefined, { ouvrir: !resilie })
+    const rdvOuvert = !resilie && (await ouvrirRdvAnnuelSiDate(admin, profile.couple_id))
+    const ouvert = realigne || rdvOuvert
     if (ouvert) {
       const { data: modsOuverts } = await supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at')
       modules = modsOuverts || []

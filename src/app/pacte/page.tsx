@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { realignerProgression } from '@/lib/progression'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { localizeModules } from '@/lib/i18n/module-text'
@@ -28,6 +29,8 @@ export default async function PactePage() {
   if (!profile?.couple_id) {
     redirect('/tableau-de-bord')
   }
+
+  await realignerProgression(createAdminClient(), profile.couple_id, MODULES.map(m => m.slug), { ouvrir: false })
 
   const [{ data: modules }, { data: partner }] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
