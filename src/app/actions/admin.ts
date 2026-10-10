@@ -244,7 +244,7 @@ async function readModuleMeta(supabase: Awaited<ReturnType<typeof createClient>>
 }
 
 export async function adminSaveModuleMeta(moduleSlug: string, fields: {
-  titre?: string; sousTitre?: string; description?: string; emoji?: string; ordre?: number
+  titre?: string; sousTitre?: string; description?: string; emoji?: string
 }) {
   const supabase = await assertAdmin()
   if (!MODULES.some(m => m.slug === moduleSlug)) return { error: 'Module introuvable' }
@@ -255,7 +255,7 @@ export async function adminSaveModuleMeta(moduleSlug: string, fields: {
   if (fields.sousTitre !== undefined) next.sousTitre = fields.sousTitre.trim() || undefined
   if (fields.description !== undefined) next.description = fields.description.trim() || undefined
   if (fields.emoji !== undefined) next.emoji = fields.emoji.trim() || undefined
-  if (fields.ordre !== undefined) next.n = fields.ordre
+  delete next.n // la position des modules de base n'est plus modifiable
 
   const key = `${META_OVERRIDE_KEY_PREFIX}${moduleSlug}`
   await supabase.from('settings').upsert({ key, value: JSON.stringify(next) }, { onConflict: 'key' })
