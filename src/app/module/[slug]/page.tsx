@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { moduleDuCouple, etatReponses } from '@/lib/progression'
+import { moduleDuCouple, etatReponses, realignerProgression } from '@/lib/progression'
 import { getEffectiveModuleBySlug } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeModule } from '@/lib/i18n/module-text'
@@ -24,6 +24,9 @@ export default async function ModulePage({ params }: PageProps) {
 
   const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')
+
+  // Un module ouvert en avance sur le parcours est reverrouillé avant d'être lu.
+  await realignerProgression(createAdminClient(), profile.couple_id, undefined, { ouvrir: false })
 
   const { data: moduleData } = await supabase.from('modules').select('*').eq('couple_id', profile.couple_id).eq('slug', slug).single()
   if (!moduleData || moduleData.statut === 'locked') redirect('/tableau-de-bord')

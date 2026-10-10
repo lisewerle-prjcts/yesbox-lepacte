@@ -138,6 +138,15 @@ export async function getCustomModuleDefinitions(): Promise<CustomModuleDefiniti
   }))
 }
 
+// « L'intimité », « Intimité », « intimite » -> « intimite »
+export function titreNormalise(titre: string): string {
+  return titre
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/^(l['’]\s*|le\s+|la\s+|les\s+)/, '')
+    .replace(/[^a-z0-9]+/g, '')
+}
+
 export async function getEffectiveModules(): Promise<ModuleInfo[]> {
   const [overrides, customDefs, metaOverrides] = await Promise.all([
     getAllOverrides(),
@@ -146,7 +155,11 @@ export async function getEffectiveModules(): Promise<ModuleInfo[]> {
   ])
 
   const staticModules = MODULES.map(m => applyMeta(applyOverrides(m, overrides[m.slug]), metaOverrides[m.slug]))
-  const customModules = customDefs.map(def => applyOverrides(
+  // Un module personnalisé qui porte le même titre qu'un module de base (ex. un
+  // ancien module « Intimité » créé avant que L'intimité n'existe en dur) est
+  // un doublon : il n'entre pas dans le parcours des couples.
+  const titresBase = new Set(MODULES.map(m => titreNormalise(m.titre)))
+  const customModules = customDefs.filter(def => !titresBase.has(titreNormalise(def.titre))).map(def => applyOverrides(
     {
       slug: def.slug,
       n: def.ordre,
