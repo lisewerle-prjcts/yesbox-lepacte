@@ -290,6 +290,7 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'freins_intimite', type: 'text', texte: "Qu'est-ce qui freine parfois l'intimité entre vous : fatigue, rythme, enfants, écrans, stress… ?", texte_en: "What sometimes holds back intimacy between you: tiredness, schedules, children, screens, stress… ?" },
       { slug: 'sexualite_besoins_2', type: 'text', texte: "Te sens-tu à l'aise pour exprimer tes envies dans votre sexualité ?", texte_en: "Do you feel comfortable expressing your desires in your sex life together?" },
       { slug: 'faire_amour_changer', type: 'text', texte: "Qu'est-ce que vous aimez le moins aujourd'hui dans votre manière de faire l'amour ?", texte_en: "What do you like least today about the way you make love?" },
+      { slug: 'code_rapprochement', type: 'text', texte: "Par quel petit geste ou code pourrais-tu signifier à l'autre que tu as envie d'un rapprochement physique ?", texte_en: "What small gesture or signal could you use to let your partner know you'd like to be physically close?" },
       { slug: 'rituel_tendresse', type: 'text', texte: "Y a-t-il une envie, une nouveauté ou un petit rituel que tu aimerais proposer ?", texte_en: "Is there a wish, something new or a small ritual you'd like to suggest?" },
     ],
   },
