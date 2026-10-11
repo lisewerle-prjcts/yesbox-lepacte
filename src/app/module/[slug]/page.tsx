@@ -41,6 +41,9 @@ export default async function ModulePage({ params }: PageProps) {
   const mod = await moduleDuCouple(admin, user.id, moduleData.id)
   if (!mod) redirect('/tableau-de-bord')
   const etat = await etatReponses<Reponse>(admin, mod, user.id, moduleInfo.questions)
+  // Réponses partagées : plus rien à saisir, même si une question a été ajoutée
+  // au module depuis (elle ne pourrait plus être enregistrée).
+  if (etat.reponsesPartagees) redirect(`/module/${slug}/revelation`)
 
   return (
     <ModuleQuestions

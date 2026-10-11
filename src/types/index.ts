@@ -66,6 +66,7 @@ export interface Module {
   statut: ModuleStatut
   revealed: boolean
   revealed_at: string | null
+  reponses_partagees: boolean
   completed_at: string | null
   created_at: string
 }

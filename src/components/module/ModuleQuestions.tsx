@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
 import EditableText from '@/components/edit-mode/EditableText'
+import Alert from '@/components/ui/Alert'
 import { useT } from '@/components/i18n/LocaleContext'
 import { isQuestionAnswered, parseGrille, serializeGrille } from '@/lib/questions'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
@@ -38,6 +39,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, p
     return init
   })
   const [saving, setSaving] = useState(false)
+  const [erreur, setErreur] = useState<string | null>(null)
   // `moduleData.statut` est partagé par le couple : il passe à "complete" dès
   // que l'un·e des deux a fini, pas seulement la personne qui consulte cette
   // page. On se base sur SES propres réponses pour savoir si ELLE a terminé.
@@ -58,9 +60,15 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, p
 
   async function saveAndNext() {
     setSaving(true)
+    setErreur(null)
     const val = reponses[q.slug]
     if (isQuestionAnswered(q, val)) {
-      await sauvegarderReponse(moduleData.id, q.slug, val)
+      const res = await sauvegarderReponse(moduleData.id, q.slug, val)
+      if (res.error) {
+        setSaving(false)
+        setErreur(res.error)
+        return
+      }
     }
     setSaving(false)
 
@@ -68,7 +76,11 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, p
       setIdx(idx + 1)
     } else if (allAnswered) {
       startTransition(async () => {
-        await terminerModule(moduleData.id, moduleInfo.slug)
+        const res = await terminerModule(moduleData.id, moduleInfo.slug)
+        if (res.error) {
+          setErreur(res.error)
+          return
+        }
         setDone(true)
       })
     }
@@ -149,9 +161,11 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, p
         <QuestionInput q={q} value={reponses[q.slug] ?? ''} onChange={v => setReponses(prev => ({ ...prev, [q.slug]: v }))} />
       </div>
 
+      {erreur && <Alert type="error" message={erreur} className="mb-4" />}
+
       {/* Nav */}
       <div className="flex items-center justify-between">
-        <button onClick={() => setIdx(Math.max(0, idx - 1))} disabled={isFirst}
+        <button onClick={() => { setErreur(null); setIdx(Math.max(0, idx - 1)) }} disabled={isFirst}
           className="flex items-center gap-2 text-sm font-medium transition-colors"
           style={{ color: isFirst ? 'var(--line)' : 'var(--muted)' }}>
           <ArrowLeft className="w-4 h-4" /><EditableText id="module.precedent">Précédent</EditableText>
