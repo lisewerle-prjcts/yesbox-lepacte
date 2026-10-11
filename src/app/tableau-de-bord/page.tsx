@@ -157,8 +157,11 @@ export default async function TableauDeBordPage({
         const mesReponses = nextModData ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === user.id) : []
         const sesReponses = nextModData && partner ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === partner!.id) : []
         const monCompte = mesReponses.length
-        const jaiFini = hasAnsweredAll(next.questions, mesReponses)
-        const partenaireFini = hasAnsweredAll(next.questions, sesReponses)
+        // Réponses déjà partagées : le module est fini pour les deux, même si une
+        // question a été ajoutée depuis.
+        const reponsesVerrouillees = !!(nextModData?.reponses_partagees || nextModData?.revealed)
+        const jaiFini = reponsesVerrouillees || hasAnsweredAll(next.questions, mesReponses)
+        const partenaireFini = reponsesVerrouillees || hasAnsweredAll(next.questions, sesReponses)
         const enAttentePartenaire = jaiFini && !partenaireFini
 
         // Dès que j'ai fini, "voir"/"ouvrir la révélation" pointent vers la page de
