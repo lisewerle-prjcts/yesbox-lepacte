@@ -386,7 +386,7 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'moments_difficiles', type: 'text', texte: 'Quels moments ont été plus difficiles à vivre ?', texte_en: 'Which moments were harder to go through?' },
       { slug: 'changeriez', type: 'text', texte: 'Qu\'est-ce que vous changeriez ?', texte_en: 'What would you change?' },
       { slug: 'exprime_besoins_bac', type: 'text', texte: "Avez-vous pu exprimer vos besoins et attentes vis-à-vis de l'autre ?", texte_en: 'Were you able to express your needs and expectations to each other?' },
-      { slug: 'ajustements', type: 'text', texte: "Quels ajustements vous engagez-vous à faire pour l'autre ? Et l'autre, à quoi s'engage-t-iel pour vous ?", texte_en: 'What adjustments do you commit to making for your partner? And what does your partner commit to for you?' },
+      { slug: 'ajustements', type: 'text', texte: "Quels ajustements vous engagez-vous à faire pour l'autre ? Et à quoi l'autre s'engage pour vous ?", texte_en: 'What adjustments do you commit to making for your partner? And what does your partner commit to for you?' },
       { slug: 'projet_en_cours', type: 'text', texte: 'Avez-vous un projet en cours ? Qui fait quoi, quelles sont les avancées et les échéances ?', texte_en: "Do you have a project underway? Who's doing what, what's the progress, and what are the deadlines?" },
       { slug: 'nouveaux_projets', type: 'text', texte: "Voulez-vous lancer de nouveaux projets pour l'année à venir ? Qui va faire quoi, à quelle échéance ?", texte_en: 'Do you want to start new projects for the coming year? Who will do what, and by when?' },
       { slug: 'fierte_annee', type: 'text', texte: "De quoi êtes-vous fier·e cette année ?", texte_en: 'What are you proud of this year?' },
