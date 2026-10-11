@@ -291,7 +291,7 @@ export const MODULES: ModuleInfo[] = [
       { slug: 'sexualite_besoins_2', type: 'text', texte: "Te sens-tu à l'aise pour exprimer tes envies et tes limites dans votre sexualité ? Qu'est-ce qui rendrait ça plus facile ?", texte_en: "Do you feel comfortable expressing your desires and your limits in your sex life together? What would make it easier?" },
       { slug: 'echelle_intimite', type: 'text', texte: "Sur une échelle de 1 à 10, comment te sens-tu dans votre vie intime en ce moment ? Qu'est-ce qui la ferait gagner un point ?", texte_en: "On a scale of 1 to 10, how do you feel about your intimate life right now? What would raise it by one point?" },
       { slug: 'freins_intimite', type: 'text', texte: "Qu'est-ce qui freine parfois l'intimité entre vous : fatigue, rythme, enfants, écrans, stress… ?", texte_en: "What sometimes holds back intimacy between you: tiredness, schedules, children, screens, stress… ?" },
-      { slug: 'faire_amour_changer', type: 'text', texte: "Qu'est-ce que vous aimeriez changer dans votre manière de faire l'amour ?", texte_en: "What would you like to change in the way you make love?" },
+      { slug: 'faire_amour_changer', type: 'text', texte: "Qu'est-ce que vous aimez le moins aujourd'hui dans votre manière de faire l'amour ?", texte_en: "What do you like least today about the way you make love?" },
       { slug: 'rituel_tendresse', type: 'text', texte: "Y a-t-il une envie, une nouveauté ou un petit rituel que tu aimerais proposer ?", texte_en: "Is there a wish, something new or a small ritual you'd like to suggest?" },
     ],
   },
