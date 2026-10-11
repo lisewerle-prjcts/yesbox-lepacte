@@ -203,7 +203,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
               // Explication propre à chaque étape du parcours ; les modules non
               // listés (pacte, rendez-vous annuel, modules personnalisés) gardent
               // le texte général.
-              const debut = "Écrivez ici votre conclusion. Découvrez ensuite celle de l'autre. Elles seront toutes les deux compilées sur la page « Notre Pacte » : notez bien tout ce que vous voulez garder en mémoire au moment de rédiger votre pacte."
+              const debut = "Écris ici ta conclusion. Découvre ensuite celle de l'autre. Elles seront toutes les deux compilées sur la page « Notre Pacte » : note bien tout ce que tu veux garder en mémoire au moment de rédiger votre pacte."
               if (moduleInfo.slug === 'toi') {
                 return <EditableText id="revelation.conclusion.souscritre.premier" multiline>{`${debut} Une fois vos conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque.`}</EditableText>
               }
