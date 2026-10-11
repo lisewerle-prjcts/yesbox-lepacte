@@ -10,6 +10,9 @@ import { useT } from '@/components/i18n/LocaleContext'
 import GrilleComparaison from '@/components/module/GrilleComparaison'
 import { formatAnswer } from '@/lib/questions'
 import { conclusionDuModule } from '@/lib/modules-data'
+
+// Modules 2 à 7 : même explication avant la conclusion.
+const MODULES_CONCLUSION_STANDARD = ['nous', 'quotidien', 'projets', 'famille', 'communication', 'intimite']
 import type { ModuleInfo, Module, Reponse } from '@/types'
 
 interface ConclusionRow { question_slug: string; valeur: string | null }
@@ -196,7 +199,22 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <EditableText id="revelation.conclusion.titre">Ta conclusion, de ton côté</EditableText>
           </h2>
           <p style={{ fontSize: 14, color: 'var(--dark-muted)', marginBottom: 28, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
-            <EditableText id="revelation.conclusion.souscritre" multiline>Chacun·e écrit la sienne, sans regarder celle de l&apos;autre. Le module suivant se débloque quand vous deux avez inscrit un élément dans votre journal.</EditableText>
+            {(() => {
+              // Explication propre à chaque étape du parcours ; les modules non
+              // listés (pacte, rendez-vous annuel, modules personnalisés) gardent
+              // le texte général.
+              const debut = "Écris ici ta conclusion. Découvre ensuite celle de l'autre. Elles seront toutes les deux compilées sur la page « Notre Pacte » : note bien tout ce que tu veux garder en mémoire au moment de rédiger votre pacte."
+              if (moduleInfo.slug === 'toi') {
+                return <EditableText id="revelation.conclusion.souscritre.premier" multiline>{`${debut} Une fois vos conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque.`}</EditableText>
+              }
+              if (moduleInfo.slug === 'conflits') {
+                return <EditableText id="revelation.conclusion.souscritre.avantpacte" multiline>{`${debut} Il est maintenant temps de passer au module final, celui de votre pacte de couple.`}</EditableText>
+              }
+              if (MODULES_CONCLUSION_STANDARD.includes(moduleInfo.slug)) {
+                return <EditableText id="revelation.conclusion.souscritre.parcours" multiline>{`${debut} Une fois vos conclusions écrites, le module suivant se débloque.`}</EditableText>
+              }
+              return <EditableText id="revelation.conclusion.souscritre" multiline>Chacun·e écrit la sienne, sans regarder celle de l&apos;autre. Le module suivant se débloque quand vous deux avez inscrit un élément dans votre journal.</EditableText>
+            })()}
           </p>
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 20, textAlign: 'left', border: '1px solid var(--dark-line)' }}>

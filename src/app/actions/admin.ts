@@ -28,10 +28,14 @@ function generateTempPassword() {
   return pwd
 }
 
+const MODULE_INTROUVABLE = 'Module introuvable pour ce couple.'
+
 export async function adminUnlockModule(coupleId: string, slug: string) {
   await assertAdmin()
   const supabase = createAdminClient()
-  await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug)
+  const { data, error } = await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', slug).select('id')
+  if (error) return { error: error.message }
+  if (!data?.length) return { error: MODULE_INTROUVABLE }
   revalidatePath('/admin/couples')
   revalidatePath('/admin/actions')
   return { success: true }
@@ -40,7 +44,9 @@ export async function adminUnlockModule(coupleId: string, slug: string) {
 export async function adminLockModule(coupleId: string, slug: string) {
   await assertAdmin()
   const supabase = createAdminClient()
-  await supabase.from('modules').update({ statut: 'locked', revealed: false, revealed_at: null, reponses_partagees: false }).eq('couple_id', coupleId).eq('slug', slug)
+  const { data, error } = await supabase.from('modules').update({ statut: 'locked', revealed: false, revealed_at: null, reponses_partagees: false }).eq('couple_id', coupleId).eq('slug', slug).select('id')
+  if (error) return { error: error.message }
+  if (!data?.length) return { error: MODULE_INTROUVABLE }
   revalidatePath('/admin/couples')
   return { success: true }
 }
@@ -48,12 +54,15 @@ export async function adminLockModule(coupleId: string, slug: string) {
 export async function adminRevealModule(coupleId: string, slug: string) {
   await assertAdmin()
   const supabase = createAdminClient()
-  await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug)
+  const { data, error } = await supabase.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('couple_id', coupleId).eq('slug', slug).select('id')
+  if (error) return { error: error.message }
+  if (!data?.length) return { error: MODULE_INTROUVABLE }
   // Déverrouille le suivant
   const ordre = (await getEffectiveModules()).map(m => m.slug)
   const idx = ordre.indexOf(slug)
   if (idx >= 0 && idx < ordre.length - 1) {
-    await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idx + 1])
+    const { error: errSuivant } = await supabase.from('modules').update({ statut: 'en_cours' }).eq('couple_id', coupleId).eq('slug', ordre[idx + 1])
+    if (errSuivant) return { error: `Module révélé, mais le suivant n'a pas pu être ouvert : ${errSuivant.message}` }
   }
   revalidatePath('/admin/couples')
   return { success: true }
@@ -62,13 +71,18 @@ export async function adminRevealModule(coupleId: string, slug: string) {
 export async function adminResetModule(coupleId: string, slug: string) {
   await assertAdmin()
   const supabase = createAdminClient()
-  const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).single()
-  if (mod) {
-    await supabase.from('reponses').delete().eq('module_id', mod.id)
-    await supabase.from('journal_entries').delete().eq('couple_id', coupleId).eq('module_slug', slug)
+  const { data: mod } = await supabase.from('modules').select('id').eq('couple_id', coupleId).eq('slug', slug).maybeSingle()
+  if (!mod) return { error: MODULE_INTROUVABLE }
+  const etapes = [
+    () => supabase.from('reponses').delete().eq('module_id', mod.id),
+    () => supabase.from('journal_entries').delete().eq('couple_id', coupleId).eq('module_slug', slug),
     // Le module repart de zéro : les e-mails entre partenaires pourront repartir.
-    await supabase.from('notifications_module').delete().eq('module_id', mod.id)
-    await supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null, reponses_partagees: false }).eq('id', mod.id)
+    () => supabase.from('notifications_module').delete().eq('module_id', mod.id),
+    () => supabase.from('modules').update({ statut: 'en_cours', revealed: false, revealed_at: null, completed_at: null, reponses_partagees: false }).eq('id', mod.id),
+  ]
+  for (const etape of etapes) {
+    const { error } = await etape()
+    if (error) return { error: `Réinitialisation incomplète : ${error.message}` }
   }
   revalidatePath('/admin/couples')
   return { success: true }

@@ -6,6 +6,7 @@ import {
   adminUnlockModule, adminLockModule, adminRevealModule,
   adminResetModule, adminSendEmail,
 } from '@/app/actions/admin'
+import Alert from '@/components/ui/Alert'
 
 interface Couple { id: string; created_at: string; members: { prenom?: string; email: string }[] }
 interface Precommande { id: string; prenom: string; email: string }
@@ -25,6 +26,7 @@ export default function AdminActionsClient({
   const [selectedCouple, setSelectedCouple] = useState(defaultCoupleId || couples[0]?.id || '')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [done, setDone] = useState<Record<string, boolean>>({})
+  const [erreur, setErreur] = useState<string | null>(null)
 
   // Email custom
   const [emailTo, setEmailTo] = useState('')
@@ -32,10 +34,21 @@ export default function AdminActionsClient({
   const [emailBody, setEmailBody] = useState('')
   const [emailStatus, setEmailStatus] = useState<'idle'|'sending'|'sent'|'error'>('idle')
 
-  async function run(key: string, fn: () => Promise<{ success?: boolean; error?: string }>) {
+  async function run(key: string, fn: () => Promise<{ success?: boolean; error?: string }>, confirmation?: string) {
+    if (confirmation && !window.confirm(confirmation)) return
+    setErreur(null)
     setLoading(l => ({ ...l, [key]: true }))
-    await fn()
+    let res: { success?: boolean; error?: string }
+    try {
+      res = await fn()
+    } catch {
+      res = { error: "L'action a échoué. Recharge la page et réessaie." }
+    }
     setLoading(l => ({ ...l, [key]: false }))
+    if (res.error) {
+      setErreur(res.error)
+      return
+    }
     setDone(d => ({ ...d, [key]: true }))
     setTimeout(() => setDone(d => ({ ...d, [key]: false })), 2500)
   }
@@ -59,7 +72,7 @@ export default function AdminActionsClient({
         <select
           className="field"
           value={selectedCouple}
-          onChange={e => setSelectedCouple(e.target.value)}
+          onChange={e => { setSelectedCouple(e.target.value); setErreur(null) }}
         >
           {couples.map(c => (
             <option key={c.id} value={c.id}>
@@ -74,9 +87,11 @@ export default function AdminActionsClient({
         <div className="card p-5">
           <h2 className="font-semibold mb-1" style={{ fontSize: 15 }}>Modules — <em style={{ color: 'var(--brand)', fontStyle: 'normal' }}>{coupleLabel}</em></h2>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Déclenche manuellement les transitions de chaque module.</p>
+          {erreur && <Alert type="error" message={erreur} className="mb-4" />}
           <div className="space-y-3">
             {modules.map(({ slug, name }) => {
               const base = `${selectedCouple}-${slug}`
+              const confirmationReset = `Réinitialiser « ${name} » pour ${coupleLabel} ?\n\nLes réponses et les conclusions des deux personnes sur ce module seront définitivement supprimées.`
               return (
                 <div key={slug} className="surface p-3 flex items-center justify-between gap-3 flex-wrap">
                   <span style={{ fontSize: 13, fontWeight: 500 }}>{name}</span>
@@ -84,13 +99,13 @@ export default function AdminActionsClient({
                     {[
                       { key: `unlock-${base}`, icon: <Unlock className="w-3.5 h-3.5" />, label: 'Débloquer', fn: () => adminUnlockModule(selectedCouple, slug), color: 'var(--sage)' },
                       { key: `reveal-${base}`, icon: <Eye className="w-3.5 h-3.5" />, label: 'Révéler', fn: () => adminRevealModule(selectedCouple, slug), color: 'var(--brand)' },
-                      { key: `reset-${base}`, icon: <RotateCcw className="w-3.5 h-3.5" />, label: 'Réinitialiser', fn: () => adminResetModule(selectedCouple, slug), color: 'var(--muted)' },
+                      { key: `reset-${base}`, icon: <RotateCcw className="w-3.5 h-3.5" />, label: 'Réinitialiser', fn: () => adminResetModule(selectedCouple, slug), color: 'var(--muted)', confirmation: confirmationReset },
                       { key: `lock-${base}`, icon: <Lock className="w-3.5 h-3.5" />, label: 'Verrouiller', fn: () => adminLockModule(selectedCouple, slug), color: '#dc2626' },
                     ].map(action => (
                       <button
                         key={action.key}
                         disabled={loading[action.key]}
-                        onClick={() => run(action.key, action.fn)}
+                        onClick={() => run(action.key, action.fn, action.confirmation)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity"
                         style={{ background: 'var(--paper)', border: `1px solid var(--line)`, color: action.color, opacity: loading[action.key] ? 0.5 : 1 }}
                       >
