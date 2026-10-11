@@ -259,7 +259,7 @@ export const MODULES: ModuleInfo[] = [
   },
   {
     slug: 'intimite', n: 7,
-    titre: "L'intimité", titre_en: 'Intimacy',
+    titre: 'Tendresse et intimité', titre_en: 'Tenderness and Intimacy',
     sousTitre: 'Tendresse et désir', sousTitre_en: 'Tenderness and desire',
     description: "Comment vous vous manifestez votre amour et votre désir — en privé comme en public.",
     description_en: 'How you show your love and desire to each other — in private and in public.',
