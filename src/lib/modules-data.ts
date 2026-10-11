@@ -266,16 +266,16 @@ export const MODULES: ModuleInfo[] = [
     emoji: '🔥', free: false,
     conclusion: {
       apprentissage: {
-        label: "Qu'as-tu compris de la façon dont l'autre a besoin de recevoir l'amour ?",
-        placeholder: "Ce que tu as compris…",
-        label_en: "What did you understand about how your partner needs to receive love?",
-        placeholder_en: "What you understood…",
+        label: "Que retiens-tu des besoins de l'autre en termes de tendresse au quotidien ?",
+        placeholder: "Ce que tu retiens…",
+        label_en: "What do you take away about your partner's need for tenderness day to day?",
+        placeholder_en: "What you take away…",
       },
       surprise: {
-        label: "Dans votre intimité, qu'aimerais-tu préserver, et qu'aimerais-tu voir évoluer ?",
-        placeholder: "Ce que tu aimerais préserver, faire évoluer…",
-        label_en: "In your intimacy, what would you like to preserve, and what would you like to see evolve?",
-        placeholder_en: "What you would like to preserve, to evolve…",
+        label: "Que voulez-vous garder, arrêter ou changer dans vos rapports sexuels aujourd'hui ?",
+        placeholder: "Ce que vous voulez garder, arrêter ou changer…",
+        label_en: "What do you want to keep, stop or change in your sex life today?",
+        placeholder_en: "What you want to keep, stop or change…",
       },
     },
     questions: [
