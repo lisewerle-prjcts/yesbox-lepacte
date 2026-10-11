@@ -138,6 +138,9 @@ export async function getCustomModuleDefinitions(): Promise<CustomModuleDefiniti
   }))
 }
 
+// Titres portés autrefois par des modules de base, pour reconnaître les doublons.
+const ANCIENS_TITRES_BASE = ["L'intimité"]
+
 // « L'intimité », « Intimité », « intimite » -> « intimite »
 export function titreNormalise(titre: string): string {
   return titre
@@ -156,9 +159,10 @@ export async function getEffectiveModules(): Promise<ModuleInfo[]> {
 
   const staticModules = MODULES.map(m => applyMeta(applyOverrides(m, overrides[m.slug]), metaOverrides[m.slug]))
   // Un module personnalisé qui porte le même titre qu'un module de base (ex. un
-  // ancien module « Intimité » créé avant que L'intimité n'existe en dur) est
-  // un doublon : il n'entre pas dans le parcours des couples.
-  const titresBase = new Set(MODULES.map(m => titreNormalise(m.titre)))
+  // ancien module « Intimité » créé avant que Tendresse et intimité n'existe en
+  // dur) est un doublon : il n'entre pas dans le parcours des couples. Les
+  // anciens titres des modules de base comptent aussi.
+  const titresBase = new Set([...MODULES.map(m => m.titre), ...ANCIENS_TITRES_BASE].map(titreNormalise))
   const customModules = customDefs.filter(def => !titresBase.has(titreNormalise(def.titre))).map(def => applyOverrides(
     {
       slug: def.slug,
