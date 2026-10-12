@@ -330,7 +330,7 @@ export default function LandingPage() {
               <EditableText id="home.modules.duree" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
             </p>
             <p style={{ marginTop: 20, fontSize: 16, lineHeight: 1.6, color: 'var(--ink-2)' }}>
-              <EditableText id="home.modules.confidentialite" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
+              <EditableText id="home.modules.confidentialite" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux et sont chiffrées sur nos serveurs. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
             </p>
             <p style={{ marginTop: 8, fontSize: 16, lineHeight: 1.6, color: 'var(--ink-2)' }}>
               <EditableText id="home.modules.sansjugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>

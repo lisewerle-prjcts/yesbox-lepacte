@@ -168,8 +168,8 @@ export default async function Confidentialite() {
             <h2 className={h2} style={h2Style}>{t('Sécurité', 'Security')}</h2>
             <p>
               {t(
-                'Connexion chiffrée (HTTPS), mots de passe chiffrés, espace de chaque couple isolé par des règles d’accès en base de données, blocage temporaire après plusieurs échecs de connexion, et double authentification disponible pour l’administration.',
-                'Encrypted connection (HTTPS), encrypted passwords, each couple’s space isolated by database access rules, temporary lockout after several failed logins, and two-factor authentication available for administration.',
+                'Connexion chiffrée (HTTPS), mots de passe chiffrés, réponses aux modules, conclusions du journal et texte du pacte chiffrés sur nos serveurs (AES-256) avec une clé que seul le serveur du site détient, espace de chaque couple isolé par des règles d’accès en base de données, blocage temporaire après plusieurs échecs de connexion, et double authentification disponible pour l’administration.',
+                'Encrypted connection (HTTPS), encrypted passwords, module answers, journal conclusions and pact text encrypted on our servers (AES-256) with a key held only by the site’s server, each couple’s space isolated by database access rules, temporary lockout after several failed logins, and two-factor authentication available for administration.',
               )}
             </p>
           </section>
