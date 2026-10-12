@@ -15,6 +15,7 @@ import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, anniversaireDansBornes, saintValentinDansBornes } from '@/lib/rdv-annuel'
 import { BookOpen, UserPlus } from 'lucide-react'
 import type { Module } from '@/types'
+import { dechiffrer, dechiffrerLignes } from '@/lib/chiffrement'
 
 export const metadata = { title: 'Notre Pacte' }
 
@@ -44,6 +45,7 @@ export default async function JournalPage() {
   ])
   const offreAnnuelle = offreRdvAnnuel(coupleAbonnement, formule, !!signature?.pacte_signe_le)
   const MODULES = localizeModules(effectiveModules, locale)
+  const entriesClaires = dechiffrerLignes(entries as { module_slug: string; user_id: string; question_slug: string; valeur: string | null }[] | null)
 
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)
   // Le pacte se signe dès la fin du module 9 (le module 10, rendez-vous annuel,
@@ -54,7 +56,7 @@ export default async function JournalPage() {
   const bornesRdv = bornesRdvAnnuel()
 
   function getConclusion(moduleSlug: string, userId: string, questionSlug: 'apprentissage' | 'surprise'): string {
-    return entries?.find(e => e.module_slug === moduleSlug && e.user_id === userId && e.question_slug === questionSlug)?.valeur || ''
+    return entriesClaires.find(e => e.module_slug === moduleSlug && e.user_id === userId && e.question_slug === questionSlug)?.valeur || ''
   }
 
   const modifiePartPrenom = couple?.pacte_modifie_par === user.id
@@ -85,7 +87,7 @@ export default async function JournalPage() {
 
       {partner && revealedModules.length > 0 && (
         <PacteDocument
-          initialTexte={couple?.pacte_texte ?? ''}
+          initialTexte={dechiffrer(couple?.pacte_texte ?? null) ?? ''}
           modifiePar={modifiePartPrenom}
           modifieLe={couple?.pacte_modifie_le ?? null}
         />

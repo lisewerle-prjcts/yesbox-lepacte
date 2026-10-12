@@ -10,6 +10,7 @@ import { CheckCircle, Lock, Heart, ScrollText, ChevronRight, UserPlus } from 'lu
 import GrilleComparaison from '@/components/module/GrilleComparaison'
 import { formatAnswer, hasAnsweredAll } from '@/lib/questions'
 import type { Module, Reponse } from '@/types'
+import { dechiffrerLignes } from '@/lib/chiffrement'
 
 export default async function PactePage() {
   const supabase = await createClient()
@@ -42,13 +43,15 @@ export default async function PactePage() {
     .select('*')
     .in('module_id', modules?.map((m: Module) => m.id) || [])
 
+  const reponsesClaires = dechiffrerLignes(allReponses as Reponse[] | null)
+
   const modulesTermines = modules?.filter((m: Module) => m.revealed) || []
   // Le pacte est prêt dès la fin du module 9 (le module 10, rendez-vous annuel,
   // se fait un an plus tard).
   const tousTermines = modulesTermines.some((m: Module) => m.slug === 'engagement')
 
   function getReponsesModule(moduleId: string, userId: string): Reponse[] {
-    return allReponses?.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
+    return reponsesClaires.filter((r: Reponse) => r.module_id === moduleId && r.user_id === userId) || []
   }
 
   // "complete" ne veut dire que le/la premier·ère des deux a fini de répondre

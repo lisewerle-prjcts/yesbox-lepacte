@@ -3,8 +3,10 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { RETENTION_MOIS } from '@/lib/stripe'
 import { ajouterMois } from '@/lib/dates'
 import { supprimerCompte } from '@/lib/suppression-compte'
+import { chiffrerDonneesEnClair } from '@/lib/chiffrement-migration'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -16,6 +18,7 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //   2. Comptes jamais payés (gratuits ou jamais utilisés) : supprimés
 //      entièrement quand aucun membre ne s'est connecté depuis 18 mois.
 //   3. Pré-commandes (ancien formulaire) : effacées 18 mois après leur envoi.
+//   4. Chiffrement des contenus encore en clair (cf. src/lib/chiffrement.ts).
 export async function GET(req: Request) {
   // Refuse tout appel si CRON_SECRET n'est pas configuré : sans secret, la
   // route (qui efface des données) serait ouverte à n'importe qui.
@@ -29,7 +32,8 @@ export async function GET(req: Request) {
     const resilies = await cloreComptesPayantsExpires(admin)
     const inactifsSupprimes = await supprimerComptesGratuitsInactifs(admin)
     const precommandesSupprimees = await purgerPrecommandes(admin)
-    return NextResponse.json({ resilies, inactifsSupprimes, precommandesSupprimees })
+    const chiffres = await chiffrerDonneesEnClair(admin)
+    return NextResponse.json({ resilies, inactifsSupprimes, precommandesSupprimees, chiffres })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }

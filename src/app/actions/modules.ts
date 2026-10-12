@@ -12,6 +12,7 @@ import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { notifierPartenaire } from '@/lib/notifications-module'
 import { marquerActivite } from '@/lib/activite'
+import { chiffrer } from '@/lib/chiffrement'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
@@ -37,7 +38,7 @@ export async function sauvegarderReponse(moduleId: string, questionSlug: string,
   }
 
   const { error } = await supabase.from('reponses').upsert(
-    { module_id: moduleId, user_id: user.id, question_slug: questionSlug, valeur },
+    { module_id: moduleId, user_id: user.id, question_slug: questionSlug, valeur: chiffrer(valeur) },
     { onConflict: 'module_id,user_id,question_slug' }
   )
   if (error) return { error: error.message }

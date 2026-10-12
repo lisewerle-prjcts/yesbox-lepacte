@@ -11,6 +11,7 @@ import { supprimerCompte } from '@/lib/suppression-compte'
 import { consentementManquant } from '@/lib/consentement'
 import { encoderRestauration, decoderRestauration, type DonneesRestauration } from '@/lib/restauration'
 import { MODULE_RDV_ANNUEL } from '@/lib/progression'
+import { chiffrer, dechiffrer, dechiffrerLignes } from '@/lib/chiffrement'
 
 export async function updateMesInfos(prenom: string) {
   const supabase = await createClient()
@@ -138,7 +139,7 @@ export async function telechargerMesDonnees() {
   let restauration: DonneesRestauration | null = null
 
   if (moi.couple_id) {
-    const [{ data: couple }, { data: membres }, { data: modules }, { data: journal }, effectiveModules] = await Promise.all([
+    const [{ data: coupleBrut }, { data: membres }, { data: modules }, { data: journalBrut }, effectiveModules] = await Promise.all([
       supabase.from('couples').select('nom_couple, date_anniversaire, pacte_texte').eq('id', moi.couple_id).single(),
       supabase.from('profiles').select('id, prenom, email').eq('couple_id', moi.couple_id),
       supabase.from('modules').select('id, slug, statut, revealed, reponses_partagees').eq('couple_id', moi.couple_id),
@@ -146,9 +147,13 @@ export async function telechargerMesDonnees() {
       getEffectiveModules(),
     ])
     const moduleIds = (modules || []).map(m => m.id)
-    const { data: reponses } = moduleIds.length
+    const { data: reponsesBrutes } = moduleIds.length
       ? await supabase.from('reponses').select('module_id, user_id, question_slug, valeur').in('module_id', moduleIds)
-      : { data: [] }
+      : { data: [] as { module_id: string; user_id: string; question_slug: string; valeur: string | null }[] }
+    // Contenus chiffrés en base : l'export les donne en clair à la personne.
+    const reponses = dechiffrerLignes(reponsesBrutes)
+    const journal = dechiffrerLignes(journalBrut)
+    const couple = coupleBrut ? { ...coupleBrut, pacte_texte: dechiffrer(coupleBrut.pacte_texte) } : null
 
     // Moi d'abord, puis le ou la partenaire.
     const membresList = (membres || []).sort((a, b) => (a.id === user.id ? -1 : b.id === user.id ? 1 : 0))
@@ -345,12 +350,12 @@ export async function importerMesDonnees(fichier: string) {
   // Réponses : on ajoute celles qui manquent.
   const { data: existantes } = await admin.from('reponses').select('module_id, user_id, question_slug, valeur')
     .in('module_id', (modules ?? []).map(m => m.id))
-  const dejaLa = new Set((existantes ?? []).filter(r => r.valeur?.trim()).map(r => `${r.module_id}|${r.user_id}|${r.question_slug}`))
+  const dejaLa = new Set(dechiffrerLignes(existantes).filter(r => r.valeur?.trim()).map(r => `${r.module_id}|${r.user_id}|${r.question_slug}`))
   const reponsesAAjouter = donnees.reponses.flatMap(r => {
     const mod = moduleDe.get(r.module_slug)
     const userId = idDe.get(normaliser(r.email))
     if (!mod || !userId || !r.valeur?.trim() || dejaLa.has(`${mod.id}|${userId}|${r.question_slug}`)) return []
-    return [{ module_id: mod.id, user_id: userId, question_slug: r.question_slug, valeur: r.valeur }]
+    return [{ module_id: mod.id, user_id: userId, question_slug: r.question_slug, valeur: chiffrer(r.valeur) }]
   })
   if (reponsesAAjouter.length) {
     const { error } = await admin.from('reponses').upsert(reponsesAAjouter, { onConflict: 'module_id,user_id,question_slug' })
@@ -359,11 +364,11 @@ export async function importerMesDonnees(fichier: string) {
 
   // Conclusions du journal : idem.
   const { data: journalExistant } = await admin.from('journal_entries').select('module_slug, user_id, question_slug, valeur').eq('couple_id', coupleId)
-  const journalDejaLa = new Set((journalExistant ?? []).filter(j => j.valeur?.trim()).map(j => `${j.module_slug}|${j.user_id}|${j.question_slug}`))
+  const journalDejaLa = new Set(dechiffrerLignes(journalExistant).filter(j => j.valeur?.trim()).map(j => `${j.module_slug}|${j.user_id}|${j.question_slug}`))
   const journalAAjouter = donnees.journal.flatMap(j => {
     const userId = idDe.get(normaliser(j.email))
     if (!userId || !moduleDe.has(j.module_slug) || !j.valeur?.trim() || journalDejaLa.has(`${j.module_slug}|${userId}|${j.question_slug}`)) return []
-    return [{ couple_id: coupleId, module_slug: j.module_slug, user_id: userId, question_slug: j.question_slug, valeur: j.valeur }]
+    return [{ couple_id: coupleId, module_slug: j.module_slug, user_id: userId, question_slug: j.question_slug, valeur: chiffrer(j.valeur) }]
   })
   if (journalAAjouter.length) {
     const { error } = await admin.from('journal_entries').upsert(journalAAjouter, { onConflict: 'couple_id,module_slug,user_id,question_slug' })
@@ -404,7 +409,7 @@ export async function importerMesDonnees(fichier: string) {
   const champs: Record<string, string> = {}
   if (!couple?.nom_couple && donnees.couple.nom_couple) champs.nom_couple = donnees.couple.nom_couple
   if (!couple?.date_anniversaire && donnees.couple.date_anniversaire) champs.date_anniversaire = donnees.couple.date_anniversaire
-  if (coupleComplet && !couple?.pacte_texte?.trim() && donnees.couple.pacte_texte?.trim()) champs.pacte_texte = donnees.couple.pacte_texte
+  if (coupleComplet && !dechiffrer(couple?.pacte_texte ?? null)?.trim() && donnees.couple.pacte_texte?.trim()) champs.pacte_texte = chiffrer(donnees.couple.pacte_texte)
   if (Object.keys(champs).length) await admin.from('couples').update(champs).eq('id', coupleId)
   if (coupleComplet && donnees.couple.pacte_signe_le) {
     // Colonnes de signature : ignorées si elles n'existent pas encore en base.

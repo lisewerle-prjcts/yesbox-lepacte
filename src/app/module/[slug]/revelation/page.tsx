@@ -8,6 +8,7 @@ import RevelationClient from '@/components/module/RevelationClient'
 import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import type { Reponse } from '@/types'
+import { dechiffrerLignes } from '@/lib/chiffrement'
 
 interface PageProps { params: Promise<{ slug: string }> }
 
@@ -42,7 +43,7 @@ export default async function RevelationPage({ params }: PageProps) {
   const etat = await etatReponses<Reponse>(admin, mod, user.id, moduleInfo.questions)
   const partner = etat.partenaire
 
-  const [{ data: maConclusion }, { data: conclusionPartenaire }] = await Promise.all([
+  const [{ data: maConclusionBrute }, { data: conclusionPartenaireBrute }] = await Promise.all([
     supabase.from('journal_entries').select('question_slug, valeur')
       .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', user.id),
     partner
@@ -50,6 +51,8 @@ export default async function RevelationPage({ params }: PageProps) {
           .eq('couple_id', profile.couple_id).eq('module_slug', slug).eq('user_id', partner.id)
       : Promise.resolve({ data: [] as { question_slug: string; valeur: string | null }[] }),
   ])
+  const maConclusion = dechiffrerLignes(maConclusionBrute)
+  const conclusionPartenaire = dechiffrerLignes(conclusionPartenaireBrute)
   const conclusionFaite = (rows: { question_slug: string; valeur: string | null }[] | null) =>
     ['apprentissage', 'surprise'].every(q => (rows ?? []).some(c => c.question_slug === q && c.valeur?.trim()))
   const partenaireConclusionFaite = conclusionFaite(conclusionPartenaire)
