@@ -1341,3 +1341,15 @@ create table if not exists public.rappels_envoyes (
 );
 alter table public.rappels_envoyes enable row level security;
 -- Aucune policy : accessible uniquement via le service role (tâche planifiée).
+
+-- ============================================================
+-- LANGUE DES E-MAILS
+-- Langue choisie sur le site (français / anglais), mémorisée sur le profil
+-- pour écrire à chaque personne dans sa langue (e-mails de confirmation,
+-- bienvenue, étapes des modules, rappels). Écrite uniquement par le
+-- serveur (clé service).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.profiles add column if not exists langue text not null default 'fr'
+  check (langue in ('fr', 'en'));
+revoke update (langue) on public.profiles from authenticated;

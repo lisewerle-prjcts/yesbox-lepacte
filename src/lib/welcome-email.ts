@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
+import type { Locale } from '@/lib/i18n/locale'
+import { langueDuProfil } from '@/lib/i18n/langue-profil'
 
 export const WELCOME_EMAIL_DEFAULTS = {
   email_bienvenue_subject: 'Bienvenue sur YES BOX — voici ton code couple',
@@ -17,8 +19,26 @@ Elle pourra le saisir lors de son inscription, ou depuis son espace.
 L'équipe YES BOX`,
 }
 
+// Version anglaise (non modifiable depuis l'admin, qui édite la version
+// française).
+const WELCOME_EMAIL_EN = {
+  subject: 'Welcome to YES BOX — here is your couple code',
+  body: `Hello {prenom},
+
+Your YES BOX — Le Pacte account has been created!
+
+Here is your couple code, to share with the person you want to sign your pact with:
+
+{code}
+
+They can enter it when signing up, or from their account.
+
+See you soon,
+The YES BOX team`,
+}
+
 // Renvoie true si l'e-mail est parti, false sinon (envoi non configuré ou erreur).
-export async function sendWelcomeEmail(email: string, prenom: string, code: string): Promise<boolean> {
+export async function sendWelcomeEmail(email: string, prenom: string, code: string, locale: Locale = 'fr'): Promise<boolean> {
   if (!mailConfigure()) return false
 
   const admin = createAdminClient()
@@ -30,8 +50,8 @@ export async function sendWelcomeEmail(email: string, prenom: string, code: stri
   const map: Record<string, string> = {}
   settings?.forEach(s => { map[s.key] = s.value })
 
-  const subjectTemplate = map.email_bienvenue_subject ?? WELCOME_EMAIL_DEFAULTS.email_bienvenue_subject
-  const bodyTemplate = map.email_bienvenue_body ?? WELCOME_EMAIL_DEFAULTS.email_bienvenue_body
+  const subjectTemplate = locale === 'en' ? WELCOME_EMAIL_EN.subject : map.email_bienvenue_subject ?? WELCOME_EMAIL_DEFAULTS.email_bienvenue_subject
+  const bodyTemplate = locale === 'en' ? WELCOME_EMAIL_EN.body : map.email_bienvenue_body ?? WELCOME_EMAIL_DEFAULTS.email_bienvenue_body
 
   // Le prénom est saisi librement à l'inscription : on neutralise tout HTML
   // (sinon un « prénom » pourrait injecter un lien piégé dans un e-mail
@@ -84,5 +104,5 @@ export async function envoyerBienvenueSiEnAttente(userId: string) {
     .select('id')
   if (!marque?.length) return
 
-  await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
+  await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code, await langueDuProfil(admin, userId))
 }

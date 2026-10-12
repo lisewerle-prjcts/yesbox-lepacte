@@ -7,6 +7,8 @@ import { aAccesComplet, peutAccederModule } from '@/lib/abonnement'
 import { MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { ABONNEMENT_COLONNES } from '@/types'
 import type { CoupleAbonnement } from '@/types'
+import { t, type Locale } from '@/lib/i18n/locale'
+import { languesDesProfils } from '@/lib/i18n/langue-profil'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -42,9 +44,9 @@ function bouton(href: string, label: string) {
   return `<p style="margin:24px 0;"><a href="${href}" style="display:inline-block;background:#c5256e;color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${label}</a></p>`
 }
 
-function formaterDate(date: string) {
+function formaterDate(date: string, locale: Locale) {
   // Date AAAA-MM-JJ lue en UTC pour éviter un décalage d'un jour.
-  return new Date(`${date.slice(0, 10)}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  return new Date(`${date.slice(0, 10)}T12:00:00Z`).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 }
 
 // ---------------------------------------------------------------------------
@@ -66,26 +68,28 @@ export function verifierSignatureDesinscription(userId: string, signature: strin
   return attendue.length === recue.length && timingSafeEqual(attendue, recue)
 }
 
-function piedDePage(userId: string) {
-  const lien = `${appUrl()}/desinscription?u=${encodeURIComponent(userId)}&s=${signatureDesinscription(userId)}`
-  return `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">Tu reçois ce rappel parce que votre couple suit le parcours YES BOX. <a href="${lien}" style="color:#8a8580;">Ne plus recevoir ces rappels</a></p>`
+function piedDePage(userId: string, locale: Locale) {
+  const lien = `${appUrl()}/desinscription?u=${encodeURIComponent(userId)}&s=${signatureDesinscription(userId)}&l=${locale}`
+  return `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(locale, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <a href="${lien}" style="color:#8a8580;">${t(locale, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</a></p>`
 }
 
-interface Membre { id: string; prenom: string | null; email: string | null; rappels_email: boolean }
+interface Membre { id: string; prenom: string | null; email: string | null; rappels_email: boolean; langue: Locale }
 
 async function membresDuCouple(admin: AdminClient, coupleId: string): Promise<Membre[]> {
   const { data, error } = await admin.from('profiles').select('id, prenom, email, rappels_email').eq('couple_id', coupleId)
   if (error) throw new Error(error.message)
-  return (data ?? []) as Membre[]
+  const langues = await languesDesProfils(admin, (data ?? []).map(m => m.id))
+  return (data ?? []).map(m => ({ ...m, langue: langues.get(m.id) ?? 'fr' })) as Membre[]
 }
 
 async function envoyer(destinataire: Membre, subject: string, corps: string): Promise<boolean> {
   if (!destinataire.email || !destinataire.rappels_email) return false
-  const bonjour = p(`Bonjour${destinataire.prenom ? ` ${echapperHtml(destinataire.prenom)}` : ''},`)
+  const locale = destinataire.langue
+  const bonjour = p(`${t(locale, 'Bonjour', 'Hello')}${destinataire.prenom ? ` ${echapperHtml(destinataire.prenom)}` : ''},`)
   return envoyerMail({
     to: destinataire.email,
     subject: subject.replace(/[\r\n]+/g, ' '),
-    body: bonjour + corps + p('L’équipe YES BOX') + piedDePage(destinataire.id),
+    body: bonjour + corps + p(t(locale, 'L’équipe YES BOX', 'The YES BOX team')) + piedDePage(destinataire.id, locale),
   })
 }
 
@@ -98,34 +102,46 @@ type EtapeRelance =
   | { type: 'conclusion_a_ton_tour'; attendu: Membre; autre: Membre }
   | { type: 'a_vous_deux'; debrief: boolean }
 
-function contenuRelance(etape: EtapeRelance, destinataire: Membre, titreBrut: string, numero: number, total: number, href: string) {
-  const module = `« ${echapperHtml(titreBrut)} »`
+function contenuRelance(etape: EtapeRelance, locale: Locale, titreBrut: string, numero: number, total: number, href: string) {
+  const module = locale === 'en' ? `"${echapperHtml(titreBrut)}"` : `« ${echapperHtml(titreBrut)} »`
+  const moduleBrut = locale === 'en' ? `"${titreBrut}"` : `« ${titreBrut} »`
   if (etape.type === 'reponses_a_ton_tour' || etape.type === 'conclusion_a_ton_tour') {
-    const autreBrut = etape.autre.prenom || 'L’autre membre de votre couple'
+    const autreBrut = etape.autre.prenom || t(locale, 'L’autre membre de votre couple', 'The other member of your couple')
     const autre = echapperHtml(autreBrut)
+    const subject = t(locale, `${autreBrut} t'attend dans ${moduleBrut}`, `${autreBrut} is waiting for you in ${moduleBrut}`)
     if (etape.type === 'reponses_a_ton_tour') {
       return {
-        subject: `${autreBrut} t'attend dans « ${titreBrut} »`,
-        corps: p(`Votre parcours YES BOX est en pause depuis quelques jours. ${autre} a terminé ses réponses au module ${module} et attend les tiennes pour que vous puissiez les découvrir ensemble.`)
-          + p('Pas besoin d’y passer des heures : un moment au calme suffit. Tes réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre.')
-          + bouton(href, 'Reprendre le module'),
+        subject,
+        corps: p(t(locale,
+          `Votre parcours YES BOX est en pause depuis quelques jours. ${autre} a terminé ses réponses au module ${module} et attend les tiennes pour que vous puissiez les découvrir ensemble.`,
+          `Your YES BOX program has been on pause for a few days. ${autre} has finished their answers to the ${module} module and is waiting for yours so you can discover them together.`))
+          + p(t(locale,
+            'Pas besoin d’y passer des heures : un moment au calme suffit. Tes réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre.',
+            'No need to spend hours on it: a quiet moment is enough. Your answers stay hidden until you have both finished.'))
+          + bouton(href, t(locale, 'Reprendre le module', 'Resume the module')),
       }
     }
     return {
-      subject: `${autreBrut} t'attend dans « ${titreBrut} »`,
-      corps: p(`Votre parcours YES BOX est en pause depuis quelques jours. ${autre} a écrit sa conclusion du module ${module} et attend la tienne : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.`)
-        + p('Quelques lignes suffisent : ce que tu as appris, ce qui t’a surpris.')
-        + bouton(href, 'Écrire ma conclusion'),
+      subject,
+      corps: p(t(locale,
+        `Votre parcours YES BOX est en pause depuis quelques jours. ${autre} a écrit sa conclusion du module ${module} et attend la tienne : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.`,
+        `Your YES BOX program has been on pause for a few days. ${autre} has written their conclusion for the ${module} module and is waiting for yours: the next module will unlock as soon as both your conclusions are in the journal.`))
+        + p(t(locale, 'Quelques lignes suffisent : ce que tu as appris, ce qui t’a surpris.', 'A few lines are enough: what you learned, what surprised you.'))
+        + bouton(href, t(locale, 'Écrire ma conclusion', 'Write my conclusion')),
     }
   }
   return {
-    subject: `Votre parcours vous attend : « ${titreBrut} »`,
-    corps: p('Cela fait quelques jours que votre parcours YES BOX n’a pas avancé. Rien de grave : la vie va vite. Mais c’est justement pour ça que ces moments à deux comptent.')
-      + p(`Votre prochaine étape : ${etape.debrief ? 'découvrir vos réponses et écrire vos conclusions du' : 'le'} module <strong>${module}</strong> (${numero}/${total}).`)
+    subject: t(locale, `Votre parcours vous attend : ${moduleBrut}`, `Your program is waiting for you: ${moduleBrut}`),
+    corps: p(t(locale,
+      'Cela fait quelques jours que votre parcours YES BOX n’a pas avancé. Rien de grave : la vie va vite. Mais c’est justement pour ça que ces moments à deux comptent.',
+      'Your YES BOX program hasn’t moved forward for a few days. No big deal: life moves fast. But that’s exactly why these moments together matter.'))
       + p(etape.debrief
-        ? 'Une idée : choisissez dès maintenant un moment dans la semaine pour découvrir vos réponses ensemble.'
-        : 'Une idée : choisissez dès maintenant un créneau dans la semaine pour y répondre séparément, puis un autre pour découvrir vos réponses ensemble.')
-      + bouton(href, 'Reprendre notre parcours'),
+        ? t(locale, `Votre prochaine étape : découvrir vos réponses et écrire vos conclusions du module <strong>${module}</strong> (${numero}/${total}).`, `Your next step: discover your answers and write your conclusions for the <strong>${module}</strong> module (${numero}/${total}).`)
+        : t(locale, `Votre prochaine étape : le module <strong>${module}</strong> (${numero}/${total}).`, `Your next step: the <strong>${module}</strong> module (${numero}/${total}).`))
+      + p(etape.debrief
+        ? t(locale, 'Une idée : choisissez dès maintenant un moment dans la semaine pour découvrir vos réponses ensemble.', 'An idea: pick a moment this week right now to discover your answers together.')
+        : t(locale, 'Une idée : choisissez dès maintenant un créneau dans la semaine pour y répondre séparément, puis un autre pour découvrir vos réponses ensemble.', 'An idea: pick a slot this week right now to answer separately, then another one to discover your answers together.'))
+      + bouton(href, t(locale, 'Reprendre notre parcours', 'Resume our program')),
   }
 }
 
@@ -210,7 +226,8 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
 
       const destinataires = etape.type === 'a_vous_deux' ? membres : [etape.attendu]
       for (const d of destinataires) {
-        const { subject, corps } = contenuRelance(etape, d, info.titre, index + 1, modulesParcours.length, href)
+        const titre = d.langue === 'en' ? info.titre_en ?? info.titre : info.titre
+        const { subject, corps } = contenuRelance(etape, d.langue, titre, index + 1, modulesParcours.length, href)
         if (await envoyer(d, subject, corps)) envoyes++
       }
     } catch (e) {
@@ -309,6 +326,88 @@ const THEMES: ThemeMensuel[] = [
   },
 ]
 
+// Mêmes thèmes, même ordre, en anglais.
+const THEMES_EN: ThemeMensuel[] = [
+  {
+    subject: 'One month since you signed your pact 💍',
+    paragraphes: autre => [
+      `A month ago, ${autre} and you signed your pact. Well done: many couples never dare to put into words what truly matters to them as a pair.`,
+      'Your pact lives mostly in small everyday gestures. This month, just one question to ask each other:',
+      '<strong>"Which commitment in our pact did we keep best this month?"</strong>',
+    ],
+  },
+  {
+    subject: 'What if you said thank you?',
+    paragraphes: autre => [
+      `In your pact, you talked about gratitude. This month, a little challenge: tell ${autre} one specific thing you appreciated this week. Not a "thanks for everything", a real detail.`,
+      'It takes 30 seconds, and it’s often what we forget first.',
+    ],
+  },
+  {
+    subject: 'Is your foundation holding strong?',
+    paragraphes: () => [
+      'When writing your pact, you chose the 3 core principles of a happy couple… and of yours in particular.',
+      'This month, reread them together: <strong>which one have you lived the most these past weeks? Which one would you like to nurture more?</strong>',
+    ],
+  },
+  {
+    subject: 'A moment just for the two of you',
+    paragraphes: () => [
+      'Everyday life easily takes up all the space. This month, a simple challenge: <strong>set aside a screen-free evening, just the two of you</strong>.',
+      'No need for big plans: a meal, a walk, a conversation with no phone within reach.',
+    ],
+  },
+  {
+    subject: 'The disagreement of the month',
+    paragraphes: () => [
+      'When writing your pact, you sorted your disagreements: negotiable, not yet thought through, dealbreaker.',
+      'This month, pick <strong>one "negotiable" disagreement</strong> and take a calm moment to talk about it again. The goal isn’t to win, but to understand what matters to the other person.',
+    ],
+  },
+  {
+    subject: 'Halfway through your year',
+    paragraphes: () => [
+      'Your pact is already a few months old. It’s the right time to reread it together.',
+      '<strong>Is there a commitment to adjust, clarify, or a new one to add?</strong> A living pact is one that grows with you.',
+    ],
+  },
+  {
+    subject: 'The gesture that brings you closer',
+    paragraphes: () => [
+      'You chose a gesture or code to reconnect. This month, bring it to life: <strong>use it at least once a week</strong>.',
+      'These small signs are what keep your bond alive day to day.',
+    ],
+  },
+  {
+    subject: 'What has changed between you?',
+    paragraphes: () => [
+      'Since you started your program, things have shifted, even quietly.',
+      'This month, take a moment to tell each other: <strong>what is going better between you? What do you want to hold on to?</strong>',
+    ],
+  },
+  {
+    subject: 'Your shared dreams',
+    paragraphes: () => [
+      'A trip, a project, something you’ve been talking about for a long time?',
+      'This month, choose <strong>one shared project and move it forward by one step</strong>: a date, a booking, a first appointment.',
+    ],
+  },
+  {
+    subject: 'Taking care of yourself to take care of your couple',
+    paragraphes: () => [
+      'A strong couple is also two people who are doing well.',
+      'This month, ask yourselves separately, then share your answers: <strong>what do I need right now? What could the other person do to help me?</strong>',
+    ],
+  },
+  {
+    subject: 'Gratitude, once more',
+    paragraphes: autre => [
+      `This month, a small gesture: write a note to ${autre}. A few lines on paper, a message, it doesn’t matter.`,
+      'Tell them what you appreciate most in your relationship right now. It’s simple, and it stays with you for a long time.',
+    ],
+  },
+]
+
 // Nombre de mois entiers écoulés depuis la signature (même jour du mois).
 function moisDepuis(debut: Date, maintenant: Date) {
   let mois = (maintenant.getUTCFullYear() - debut.getUTCFullYear()) * 12 + (maintenant.getUTCMonth() - debut.getUTCMonth())
@@ -316,25 +415,31 @@ function moisDepuis(debut: Date, maintenant: Date) {
   return mois
 }
 
-function contenuMensuel(mois: number, autreBrut: string, rdvLe: string | null, joursAvantRdv: number | null) {
+function contenuMensuel(mois: number, autreBrut: string, rdvLe: string | null, joursAvantRdv: number | null, locale: Locale) {
   const autre = echapperHtml(autreBrut)
   const base = appUrl()
   if (rdvLe && joursAvantRdv !== null && joursAvantRdv > 0 && joursAvantRdv <= 31) {
-    const date = formaterDate(rdvLe)
+    const date = formaterDate(rdvLe, locale)
+    const pluriel = joursAvantRdv > 1 ? 's' : ''
     return {
-      subject: `Votre rendez-vous annuel approche : le ${date}`,
-      corps: p(`Dans ${joursAvantRdv} jour${joursAvantRdv > 1 ? 's' : ''}, c’est votre rendez-vous annuel. Le module « Notre rendez-vous annuel » s’ouvrira le ${date} : vous y regarderez ensemble votre année, ce qui a marché, ce qui a été dur, ce que vous voulez pour la suite.`)
-        + p('Vous aviez choisi ensemble qui l’organise : c’est peut-être le moment de réserver le lieu ou de bloquer la soirée !')
-        + bouton(`${base}/journal`, 'Voir notre pacte'),
+      subject: t(locale, `Votre rendez-vous annuel approche : le ${date}`, `Your yearly date is coming up: ${date}`),
+      corps: p(t(locale,
+        `Dans ${joursAvantRdv} jour${pluriel}, c’est votre rendez-vous annuel. Le module « Notre rendez-vous annuel » s’ouvrira le ${date} : vous y regarderez ensemble votre année, ce qui a marché, ce qui a été dur, ce que vous voulez pour la suite.`,
+        `In ${joursAvantRdv} day${pluriel}, it’s your yearly date. The "Our Yearly Date" module will open on ${date}: you’ll look back on your year together, what worked, what was hard, and what you want next.`))
+        + p(t(locale,
+          'Vous aviez choisi ensemble qui l’organise : c’est peut-être le moment de réserver le lieu ou de bloquer la soirée !',
+          'You chose together who would organize it: maybe it’s time to book the place or block the evening!'))
+        + bouton(`${base}/journal`, t(locale, 'Voir notre pacte', 'See our pact')),
     }
   }
-  const theme = THEMES[mois <= THEMES.length ? mois - 1 : 1 + ((mois - 2) % (THEMES.length - 1))]
+  const themes = locale === 'en' ? THEMES_EN : THEMES
+  const theme = themes[mois <= themes.length ? mois - 1 : 1 + ((mois - 2) % (themes.length - 1))]
   const rappelRdv = rdvLe && joursAvantRdv !== null && joursAvantRdv > 0
-    ? p(`<span style="font-size:13px;color:#8a8580;">Prochain rendez-vous annuel : le ${formaterDate(rdvLe)}.</span>`)
+    ? p(`<span style="font-size:13px;color:#8a8580;">${t(locale, `Prochain rendez-vous annuel : le ${formaterDate(rdvLe, locale)}.`, `Next yearly date: ${formaterDate(rdvLe, locale)}.`)}</span>`)
     : ''
   return {
     subject: theme.subject,
-    corps: theme.paragraphes(autre).map(p).join('') + bouton(`${base}/journal`, 'Relire notre pacte') + rappelRdv,
+    corps: theme.paragraphes(autre).map(p).join('') + bouton(`${base}/journal`, t(locale, 'Relire notre pacte', 'Reread our pact')) + rappelRdv,
   }
 }
 
@@ -374,7 +479,7 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
 
       for (const d of membres) {
         const autre = membres.find(m => m.id !== d.id)
-        const { subject, corps } = contenuMensuel(mois, autre?.prenom || 'l’autre membre de votre couple', rdvLe, joursAvantRdv)
+        const { subject, corps } = contenuMensuel(mois, autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple'), rdvLe, joursAvantRdv, d.langue)
         if (await envoyer(d, subject, corps)) envoyes++
       }
     } catch (e) {

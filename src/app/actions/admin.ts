@@ -10,6 +10,8 @@ import { assertAdmin } from '@/lib/admin-mail'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { sendWelcomeEmail, envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { renvoyerMailConfirmation } from '@/lib/confirmation-email'
+import { langueDuProfil } from '@/lib/i18n/langue-profil'
+import { t } from '@/lib/i18n/locale'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
 import type { QuestionType } from '@/types'
@@ -378,14 +380,15 @@ export async function adminResetAndSendPassword(userId: string) {
     return { success: true, password: newPassword, emailed: false }
   }
 
+  const langue = await langueDuProfil(admin, userId)
   const emailed = await envoyerMail({
     to: email,
-    subject: 'Ton nouveau mot de passe YES BOX',
+    subject: t(langue, 'Ton nouveau mot de passe YES BOX', 'Your new YES BOX password'),
     body: `
-      <p>Bonjour ${profile?.prenom || ''},</p>
-      <p>Voici ton nouveau mot de passe pour te connecter à ton espace YES BOX — Le Pacte :</p>
+      <p>${t(langue, 'Bonjour', 'Hello')} ${profile?.prenom || ''},</p>
+      <p>${t(langue, 'Voici ton nouveau mot de passe pour te connecter à ton espace YES BOX — Le Pacte :', 'Here is your new password to log in to your YES BOX — Le Pacte account:')}</p>
       <p style="font-family:monospace;font-size:20px;font-weight:700;background:#f7d9e6;color:#c5256e;padding:12px 20px;border-radius:10px;display:inline-block;letter-spacing:.05em;">${newPassword}</p>
-      <p>Connecte-toi puis change-le si tu le souhaites depuis ton espace.</p>
+      <p>${t(langue, 'Connecte-toi puis change-le si tu le souhaites depuis ton espace.', 'Log in, then change it from your account if you wish.')}</p>
     `,
   })
 
@@ -405,7 +408,7 @@ export async function adminRenvoyerBienvenue(userId: string) {
 
   if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
 
-  const envoye = await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code)
+  const envoye = await sendWelcomeEmail(profile.email, profile.prenom || '', couple.pairing_code, await langueDuProfil(admin, userId))
   if (!envoye) return { error: 'Échec de l\'envoi' }
   // Évite un second envoi automatique à la prochaine connexion.
   await admin.from('profiles').update({ email_bienvenue_envoye_le: new Date().toISOString() }).eq('id', userId).is('email_bienvenue_envoye_le', null)

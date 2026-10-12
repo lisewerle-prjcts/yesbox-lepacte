@@ -10,7 +10,8 @@ import { getRecoveryEmail } from '@/app/actions/security'
 import { notifySecurityEvent, notifierNouvelleInscription } from '@/lib/admin-mail'
 import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { gmailConfigure, envoyerMailConfirmation, renvoyerMailConfirmation, lienConfirmation } from '@/lib/confirmation-email'
-import { getLocale } from '@/lib/i18n/server'
+import { getLocale, getLocaleExplicite } from '@/lib/i18n/server'
+import { enregistrerLangueProfil } from '@/lib/i18n/langue-profil'
 import { t } from '@/lib/i18n/locale'
 import { z } from 'zod'
 import type { Locale } from '@/lib/i18n/locale'
@@ -69,7 +70,7 @@ export async function inscription(formData: FormData) {
   // Avec Gmail configuré, Supabase crée le compte et génère le lien sans
   // envoyer de mail : c'est nous qui l'envoyons (cf. lib/confirmation-email).
   const { data, error } = gmailConfigure()
-    ? await inscrireAvecNotreMail(email, password, prenom)
+    ? await inscrireAvecNotreMail(email, password, prenom, locale)
     : await supabase.auth.signUp({
         email,
         password,
@@ -96,6 +97,8 @@ export async function inscription(formData: FormData) {
       .from('profiles')
       .update({ prenom, age_minimum_certifie_le: maintenant, consentement_donnees_sensibles_le: maintenant })
       .eq('id', data.user.id)
+    // À part : si la colonne langue manque encore, le consentement est enregistré.
+    await enregistrerLangueProfil(createAdminClient(), data.user.id, locale)
 
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
@@ -134,7 +137,7 @@ export async function inscription(formData: FormData) {
   redirect('/tableau-de-bord')
 }
 
-async function inscrireAvecNotreMail(email: string, password: string, prenom: string) {
+async function inscrireAvecNotreMail(email: string, password: string, prenom: string, locale: Locale) {
   const { data, error } = await createAdminClient().auth.admin.generateLink({
     type: 'signup',
     email,
@@ -142,7 +145,7 @@ async function inscrireAvecNotreMail(email: string, password: string, prenom: st
     options: { data: { prenom } },
   })
   if (error || !data.user) return { data: { user: null, session: null }, error: error ?? new Error('Inscription impossible') }
-  const envoye = await envoyerMailConfirmation(email, prenom, lienConfirmation(data.properties.hashed_token, 'signup'))
+  const envoye = await envoyerMailConfirmation(email, prenom, lienConfirmation(data.properties.hashed_token, 'signup'), locale)
   // Le compte existe : même si l'envoi échoue, la personne pourra redemander
   // le mail depuis l'écran « Vérifie ta boîte mail ».
   if (!envoye) console.error('Envoi du mail de confirmation échoué pour', email)
@@ -202,6 +205,9 @@ export async function connexion(formData: FormData) {
   // navigateur (appli mail du téléphone…), /auth/callback échoue alors que
   // l'adresse est bien confirmée, et l'e-mail de bienvenue n'était jamais envoyé.
   const { data: { user: connecte } } = await supabase.auth.getUser()
+  // Langue choisie sur ce navigateur : les e-mails suivront.
+  const langueChoisie = await getLocaleExplicite()
+  if (connecte && langueChoisie) await enregistrerLangueProfil(createAdminClient(), connecte.id, langueChoisie)
   if (connecte) await envoyerBienvenueSiEnAttente(connecte.id)
 
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
