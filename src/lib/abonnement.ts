@@ -53,30 +53,40 @@ export function peutAccederModule(
   return aAccesComplet(couple)
 }
 
-// Formule de l'abonnement Stripe (mensuel / annuel). Lue à part : si la
-// colonne subscription_formule manque encore en base, le reste de la page
-// fonctionne (formule inconnue = traitée comme mensuelle, la seule formule
-// existant avant le rendez-vous annuel).
-export async function lireFormule(client: SupabaseClient, coupleId: string): Promise<'mensuel' | 'annuel' | null> {
-  const { data, error } = await client.from('couples').select('subscription_formule').eq('id', coupleId).maybeSingle()
-  if (error || !data) return null
-  return (data.subscription_formule as 'mensuel' | 'annuel' | null) ?? null
+// Formule de l'abonnement Stripe (mensuel / annuel) et date de bascule
+// programmée vers l'annuel. Lues à part : si les colonnes manquent encore en
+// base, le reste de la page fonctionne (formule inconnue = traitée comme
+// mensuelle, la seule formule existant avant le rendez-vous annuel).
+export interface FormuleCouple {
+  formule: 'mensuel' | 'annuel' | null
+  /** Fin du mois en cours, date à laquelle l'abonnement passe à 39 €/an. */
+  annuelPrevuLe: string | null
+}
+
+export async function lireFormule(client: SupabaseClient, coupleId: string): Promise<FormuleCouple> {
+  const { data, error } = await client.from('couples').select('subscription_formule, subscription_annuel_prevu_le').eq('id', coupleId).maybeSingle()
+  if (error || !data) return { formule: null, annuelPrevuLe: null }
+  return {
+    formule: (data.subscription_formule as FormuleCouple['formule']) ?? null,
+    annuelPrevuLe: (data.subscription_annuel_prevu_le as string | null) ?? null,
+  }
 }
 
 // Offre « Pacte – notre rendez-vous annuel » : proposée une fois le pacte
-// signé, sauf si elle est déjà active, si le compte est clos ou si le couple
-// bénéficie d'un accès gratuit sans abonnement payant.
+// signé, sauf si elle est déjà active ou programmée, si le compte est clos
+// ou si le couple bénéficie d'un accès gratuit sans abonnement payant.
 export function offreRdvAnnuel(
   couple: CoupleAbonnement | null | undefined,
-  formule: 'mensuel' | 'annuel' | null,
+  { formule, annuelPrevuLe }: FormuleCouple,
   pacteSigne: boolean
 ): { afficher: boolean; mensuelEnCours: boolean } {
   const payant = estAbonnementActif(couple)
   const annuelActif = payant && formule === 'annuel'
   const mensuelEnCours = payant && formule !== 'annuel'
   const gratuitSeul = !payant && aAccesGratuitActif(couple)
+  const dejaProgramme = mensuelEnCours && !!annuelPrevuLe
   return {
-    afficher: pacteSigne && !annuelActif && !gratuitSeul && !estCompteResilie(couple),
+    afficher: pacteSigne && !annuelActif && !dejaProgramme && !gratuitSeul && !estCompteResilie(couple),
     mensuelEnCours,
   }
 }

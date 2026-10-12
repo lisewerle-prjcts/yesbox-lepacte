@@ -19,13 +19,17 @@ async function trouverCoupleId(admin: ReturnType<typeof createAdminClient>, sub:
   return data?.id ?? null
 }
 
-// Formule (mensuel / annuel) répliquée à part : si la colonne
+// Formule (mensuel / annuel) et bascule annuelle programmée, répliquées à part : si la colonne
 // subscription_formule n'existe pas encore en base, la mise à jour du statut
 // d'abonnement (qui conditionne l'accès) passe quand même.
 async function enregistrerFormule(admin: ReturnType<typeof createAdminClient>, coupleId: string, sub: Stripe.Subscription) {
   const formule = formuleDuPrix(sub.items.data[0]?.price?.id)
   if (!formule) return
-  await admin.from('couples').update({ subscription_formule: formule }).eq('id', coupleId)
+  // Passage effectif à l'annuel (fin du mois payé, ou paiement direct) : la
+  // bascule programmée est accomplie.
+  await admin.from('couples').update(
+    formule === 'annuel' ? { subscription_formule: formule, subscription_annuel_prevu_le: null } : { subscription_formule: formule }
+  ).eq('id', coupleId)
 }
 
 export async function POST(req: Request) {
@@ -109,6 +113,7 @@ export async function POST(req: Request) {
         subscription_cancel_at_period_end: false,
         data_retention_until: ajouterMois(new Date(), RETENTION_MOIS),
       }).eq('id', coupleId)
+      await admin.from('couples').update({ subscription_annuel_prevu_le: null }).eq('id', coupleId)
       break
     }
 

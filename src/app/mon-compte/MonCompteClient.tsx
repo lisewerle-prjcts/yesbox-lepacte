@@ -6,7 +6,7 @@ import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, importerMesDonnees, supprimerMonCompte,
 } from '@/app/actions/compte'
-import { annulerAbonnement, reprendreAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
+import { annulerAbonnement, reprendreAbonnement, annulerBasculeAnnuelle, utiliserCodeGratuit } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
 import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
 import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
@@ -15,7 +15,7 @@ import Link from 'next/link'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, proposerAnnuel, codeParrainage, filleulsCount,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, codeParrainage, filleulsCount,
 }: {
   prenom: string
   email: string
@@ -24,6 +24,8 @@ export default function MonCompteClient({
   paired: boolean
   abonnement: CoupleAbonnement | null
   formule: 'mensuel' | 'annuel' | null
+  /** Bascule programmée vers le rendez-vous annuel (fin du mois en cours). */
+  annuelPrevuLe: string | null
   /** Pacte signé et abonnement mensuel en cours : proposer la bascule. */
   proposerAnnuel: boolean
   codeParrainage: string | null
@@ -40,7 +42,7 @@ export default function MonCompteClient({
       <div className="space-y-5">
         <MesInfosCard prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
-        <AbonnementCard abonnement={abonnement} formule={formule} proposerAnnuel={proposerAnnuel} />
+        <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} />
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <PasswordCard />
         <MesDonneesCard />
@@ -55,7 +57,7 @@ function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function AbonnementCard({ abonnement, formule, proposerAnnuel }: { abonnement: CoupleAbonnement | null; formule: 'mensuel' | 'annuel' | null; proposerAnnuel: boolean }) {
+function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: { abonnement: CoupleAbonnement | null; formule: 'mensuel' | 'annuel' | null; annuelPrevuLe: string | null; proposerAnnuel: boolean }) {
   const t = useT()
   const { locale } = useLocale()
   const [status, setStatus] = useState<SaveStatus>('idle')
@@ -71,6 +73,14 @@ function AbonnementCard({ abonnement, formule, proposerAnnuel }: { abonnement: C
     setError('')
     setStatus('saving')
     const res = await annulerAbonnement()
+    if (res.error) { setError(res.error); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  async function garderMensuel() {
+    setError('')
+    setStatus('saving')
+    const res = await annulerBasculeAnnuelle()
     if (res.error) { setError(res.error); setStatus('error'); return }
     setStatus('saved')
   }
@@ -119,6 +129,18 @@ function AbonnementCard({ abonnement, formule, proposerAnnuel }: { abonnement: C
               ? t('39€/an · résiliable à tout moment.', '€39/year · cancel anytime.')
               : t('29€/mois · résiliable à tout moment.', '€29/month · cancel anytime.')}
           </p>
+          {annuelPrevuLe && formule !== 'annuel' && !annuleAPeriodeFin && (
+            <div className="text-sm mb-4 p-3 rounded-lg" style={{ background: 'var(--brand-tint, #fdeef4)' }}>
+              <p className="text-gray-700 mb-2">
+                {t('Passage à « Pacte – notre rendez-vous annuel » prévu le', 'Switch to "Pact – our yearly date" scheduled on')}{' '}
+                <strong>{formatDate(annuelPrevuLe, locale)}</strong>
+                {t(' : 39€ seront prélevés ce jour-là, pour 1 an d’accès.', ': €39 will be charged that day, for 1 year of access.')}
+              </p>
+              <button onClick={garderMensuel} disabled={status === 'saving'} className="btn-ghost text-sm py-1 px-3">
+                {t('Rester au mensuel', 'Stay on monthly')}
+              </button>
+            </div>
+          )}
           {proposerAnnuel && (
             <p className="text-sm mb-4">
               <Link href="/journal#rdv-annuel-offre" className="text-magenta font-semibold">

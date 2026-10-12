@@ -165,7 +165,7 @@ export default async function JournalPage() {
       )}
 
       {/* Une fois le pacte signé : proposer « Pacte – notre rendez-vous annuel ». */}
-      {offreAnnuelle.afficher && <OffreRdvAnnuel mensuelEnCours={offreAnnuelle.mensuelEnCours} />}
+      {offreAnnuelle.afficher && <OffreRdvAnnuel mensuelEnCours={offreAnnuelle.mensuelEnCours} finPeriode={coupleAbonnement?.subscription_current_period_end ?? null} />}
     </div>
   )
 }

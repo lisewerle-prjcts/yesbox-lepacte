@@ -1246,15 +1246,19 @@ alter table public.couples add column if not exists rdv_annuel_le date;
 -- PACTE – NOTRE RENDEZ-VOUS ANNUEL (abonnement annuel, 39 €/an)
 -- Proposé une fois le pacte signé. Formule de l'abonnement Stripe en
 -- cours (mensuel / annuel), répliquée par le webhook Stripe et l'action
--- passerAuRendezVousAnnuel. Écrite uniquement par le serveur (clé
+-- passerAuRendezVousAnnuel. Un couple au mensuel valide la bascule, qui
+-- a lieu à la fin du mois déjà payé (planning d'abonnement Stripe). Écrite uniquement par le serveur (clé
 -- service). Les abonnements existants sont tous mensuels.
 -- Idempotent : peut être relancé sans risque.
 -- ============================================================
 alter table public.couples add column if not exists subscription_formule text
   check (subscription_formule in ('mensuel', 'annuel'));
+-- Bascule programmée du mensuel vers l'annuel : date de fin du mois déjà
+-- payé, à laquelle Stripe prélève les 39 € (null une fois la bascule faite).
+alter table public.couples add column if not exists subscription_annuel_prevu_le timestamptz;
 update public.couples set subscription_formule = 'mensuel'
   where subscription_formule is null and stripe_subscription_id is not null;
-revoke update (subscription_formule) on public.couples from authenticated;
+revoke update (subscription_formule, subscription_annuel_prevu_le) on public.couples from authenticated;
 
 -- Le transfert d'abonnement au pairage emporte aussi la formule.
 create or replace function public.migrer_abonnement_solo_vers_couple(p_ancien_couple_id uuid, p_nouveau_couple_id uuid)
@@ -1282,6 +1286,7 @@ begin
       subscription_cancel_at_period_end = v_ancien.subscription_cancel_at_period_end,
       subscription_canceled_at = v_ancien.subscription_canceled_at,
       subscription_formule = v_ancien.subscription_formule,
+      subscription_annuel_prevu_le = v_ancien.subscription_annuel_prevu_le,
       data_retention_until = v_ancien.data_retention_until
     where id = p_nouveau_couple_id;
   end if;

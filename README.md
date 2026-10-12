@@ -80,9 +80,10 @@ CRON_SECRET=...
   module 1 gratuit (`/abonnement`), payé et géré via Stripe Checkout.
 - Offre « Pacte – notre rendez-vous annuel » (39 €/an), proposée une fois le
   pacte signé (page Notre Pacte, `/abonnement`, lien depuis `/mon-compte`).
-  Un abonnement mensuel en cours est basculé sur le prix annuel (nouvelle
-  période d'un an dès maintenant, temps non utilisé du mois déduit, carte
-  déjà enregistrée) ; sinon, paiement via Stripe Checkout. Résiliable à
+  Un couple au mensuel valide la bascule : elle est programmée (planning
+  d'abonnement Stripe) à la fin du mois déjà payé, où les 39 € sont prélevés
+  sur la carte enregistrée ; « Rester au mensuel » (Mon compte) l'annule.
+  Sans abonnement en cours, paiement immédiat via Stripe Checkout. Résiliable à
   tout moment : l'accès reste ouvert jusqu'au dernier jour de l'année payée.
   Dans Stripe, activer l'e-mail de rappel avant renouvellement des
   abonnements (promis dans les conditions d'utilisation).

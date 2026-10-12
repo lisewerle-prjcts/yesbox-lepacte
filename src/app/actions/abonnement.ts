@@ -71,12 +71,12 @@ export async function demarrerAbonnement() {
 
 // Bascule vers « Pacte – notre rendez-vous annuel » (39 €/an), proposée une
 // fois le pacte signé. Deux cas :
-//   - abonnement Stripe en cours (mensuel) : on remplace son prix par le prix
-//     annuel. Stripe démarre une nouvelle période d'un an dès maintenant,
-//     déduit le temps non utilisé du mois en cours et prélève la différence
-//     sur la carte déjà enregistrée ; un éventuel arrêt du renouvellement
-//     demandé sur le mensuel est levé ;
-//   - pas d'abonnement Stripe en cours : nouveau paiement via Stripe Checkout.
+//   - abonnement mensuel Stripe en cours : le couple valide la bascule, qui
+//     est programmée (subscription schedule) à la fin du mois déjà payé.
+//     Rien ne change d'ici là ; à cette date, les 39 € sont prélevés sur la
+//     carte enregistrée et une période d'un an commence. Un éventuel arrêt
+//     du renouvellement demandé sur le mensuel est levé ;
+//   - pas d'abonnement Stripe en cours : paiement immédiat via Stripe Checkout.
 // Dans les deux cas, l'accès vaut pour 1 an, résiliable à tout moment depuis
 // Mon compte (l'accès reste ouvert jusqu'au dernier jour payé).
 export async function passerAuRendezVousAnnuel() {
@@ -104,35 +104,56 @@ export async function passerAuRendezVousAnnuel() {
 
   try {
     if (couple.stripe_subscription_id && estAbonnementActif(couple)) {
-      const actuel = await stripe.subscriptions.retrieve(couple.stripe_subscription_id)
+      let actuel = await stripe.subscriptions.retrieve(couple.stripe_subscription_id)
       const item = actuel.items.data[0]
       if (!item) return { error: t(locale, 'Abonnement Stripe introuvable', 'Stripe subscription not found') }
       if (item.price.id === PRIX_ABONNEMENT_ANNUEL_ID) {
         return { error: t(locale, 'Votre rendez-vous annuel est déjà actif.', 'Your yearly date is already active.') }
       }
+      if (actuel.schedule) {
+        return { error: t(locale, 'Le passage au rendez-vous annuel est déjà programmé.', 'The switch to the yearly date is already scheduled.') }
+      }
 
-      const subscription = await stripe.subscriptions.update(actuel.id, {
-        items: [{ id: item.id, price: PRIX_ABONNEMENT_ANNUEL_ID }],
-        billing_cycle_anchor: 'now',
-        proration_behavior: 'always_invoice',
-        // Paiement refusé : rien n'est modifié, le mensuel continue.
-        payment_behavior: 'error_if_incomplete',
-        cancel_at_period_end: false,
+      // Un planning ne peut pas reprendre un abonnement dont l'arrêt est
+      // demandé : la bascule vaut reprise du renouvellement.
+      if (actuel.cancel_at_period_end) {
+        actuel = await stripe.subscriptions.update(actuel.id, { cancel_at_period_end: false })
+      }
+
+      const schedule = await stripe.subscriptionSchedules.create({ from_subscription: actuel.id })
+      const phaseEnCours = schedule.phases[0]
+      // Échec de la programmation : on libère le planning, le mensuel
+      // continue sans changement et le couple peut réessayer.
+      await stripe.subscriptionSchedules.update(schedule.id, {
+        end_behavior: 'release',
+        metadata: { couple_id: ctx.coupleId, formule: 'annuel' },
+        phases: [
+          {
+            items: [{ price: item.price.id, quantity: 1 }],
+            start_date: phaseEnCours.start_date,
+            end_date: phaseEnCours.end_date,
+          },
+          {
+            items: [{ price: PRIX_ABONNEMENT_ANNUEL_ID, quantity: 1 }],
+            duration: { interval: 'year', interval_count: 1 },
+            proration_behavior: 'none',
+          },
+        ],
+      }).catch(async err => {
+        await stripe.subscriptionSchedules.release(schedule.id).catch(() => {})
+        throw err
       })
-      const periodEnd = subscription.items.data[0]?.current_period_end
 
+      const basculeLe = new Date(phaseEnCours.end_date * 1000).toISOString()
       await admin.from('couples').update({
-        subscription_status: 'actif',
-        subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : couple.subscription_current_period_end,
         subscription_cancel_at_period_end: false,
         subscription_canceled_at: null,
       }).eq('id', ctx.coupleId)
-      await admin.from('couples').update({ subscription_formule: 'annuel' }).eq('id', ctx.coupleId)
+      await admin.from('couples').update({ subscription_annuel_prevu_le: basculeLe }).eq('id', ctx.coupleId)
 
       revalidatePath('/mon-compte')
       revalidatePath('/journal')
-      revalidatePath('/tableau-de-bord')
-      return { success: true }
+      return { success: true, basculeLe }
     }
 
     let customerId = couple.stripe_customer_id
@@ -163,6 +184,38 @@ export async function passerAuRendezVousAnnuel() {
   }
 }
 
+// Annule la bascule programmée vers le rendez-vous annuel : le planning
+// Stripe est libéré, l'abonnement mensuel continue comme avant.
+export async function annulerBasculeAnnuelle() {
+  const locale = await getLocale()
+  const ctx = await getMonCoupleId()
+  if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+
+  const admin = createAdminClient()
+  const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', ctx.coupleId).single()
+  if (!couple?.stripe_subscription_id) return { error: t(locale, 'Aucun abonnement en cours', 'No subscription in progress') }
+
+  try {
+    await libererPlanning(couple.stripe_subscription_id)
+    await admin.from('couples').update({ subscription_annuel_prevu_le: null }).eq('id', ctx.coupleId)
+    revalidatePath('/mon-compte')
+    revalidatePath('/journal')
+    return { success: true }
+  } catch (err) {
+    return { error: t(locale, `Erreur Stripe : ${(err as Error).message}`, `Stripe error: ${(err as Error).message}`) }
+  }
+}
+
+// Libère le planning Stripe éventuellement attaché à l'abonnement (bascule
+// annuelle programmée) : l'abonnement reste tel quel, sans changement prévu.
+async function libererPlanning(subscriptionId: string) {
+  const stripe = getStripe()
+  const sub = await stripe.subscriptions.retrieve(subscriptionId)
+  if (!sub.schedule) return
+  const scheduleId = typeof sub.schedule === 'string' ? sub.schedule : sub.schedule.id
+  await stripe.subscriptionSchedules.release(scheduleId)
+}
+
 export async function annulerAbonnement() {
   const locale = await getLocale()
   const ctx = await getMonCoupleId()
@@ -174,8 +227,11 @@ export async function annulerAbonnement() {
 
   const stripe = getStripe()
   try {
+    // Arrêter le renouvellement annule aussi une bascule annuelle programmée.
+    await libererPlanning(couple.stripe_subscription_id)
     const subscription = await stripe.subscriptions.update(couple.stripe_subscription_id, { cancel_at_period_end: true })
 
+    await admin.from('couples').update({ subscription_annuel_prevu_le: null }).eq('id', ctx.coupleId)
     await admin.from('couples').update({
       subscription_cancel_at_period_end: true,
       subscription_canceled_at: new Date().toISOString(),

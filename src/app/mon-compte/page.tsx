@@ -21,6 +21,7 @@ export default async function MonComptePage() {
   let coupleAbonnement: CoupleAbonnement | null = null
   let coupleParrainage: CoupleParrainage | null = null
   let formule: 'mensuel' | 'annuel' | null = null
+  let annuelPrevuLe: string | null = null
   let proposerAnnuel = false
   let filleulsCount = 0
   let pairingCode: string | null = null
@@ -34,7 +35,8 @@ export default async function MonComptePage() {
       lireFormule(supabase, profile.couple_id),
       supabase.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).maybeSingle(),
     ])
-    formule = formuleLue
+    formule = formuleLue.formule
+    annuelPrevuLe = formuleLue.annuelPrevuLe
     const offre = offreRdvAnnuel(coupAbo, formuleLue, !!signature?.pacte_signe_le)
     proposerAnnuel = offre.afficher && offre.mensuelEnCours
     couple = coup
@@ -60,6 +62,7 @@ export default async function MonComptePage() {
       paired={paired}
       abonnement={coupleAbonnement}
       formule={formule}
+      annuelPrevuLe={annuelPrevuLe}
       proposerAnnuel={proposerAnnuel}
       codeParrainage={coupleParrainage?.code_parrainage ?? null}
       filleulsCount={filleulsCount}

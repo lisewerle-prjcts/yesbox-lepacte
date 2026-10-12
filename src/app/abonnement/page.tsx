@@ -20,7 +20,7 @@ export default async function AbonnementPage() {
   // Pacte signé (parcours initial terminé) : c'est le rendez-vous annuel qui
   // est proposé, plus l'abonnement mensuel.
   const { data: signature } = await supabase.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).maybeSingle()
-  if (signature?.pacte_signe_le && !estCompteResilie(couple)) return <OffreRdvAnnuel mensuelEnCours={false} />
+  if (signature?.pacte_signe_le && !estCompteResilie(couple)) return <OffreRdvAnnuel mensuelEnCours={false} finPeriode={null} />
 
   return <AbonnementClient compteResilie={estCompteResilie(couple)} />
 }
