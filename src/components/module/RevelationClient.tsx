@@ -221,6 +221,11 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
               <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.label`}>{conclusion.apprentissage.label}</EditableText>
             </label>
+            {conclusion.apprentissage.aide && (
+              <p style={{ fontSize: 12.5, lineHeight: 1.6, color: 'var(--dark-muted)', opacity: .85, marginTop: -4, marginBottom: 12 }}>
+                <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.aide`} multiline>{conclusion.apprentissage.aide}</EditableText>
+              </p>
+            )}
             <textarea
               value={apprentissage}
               onChange={e => { setApprentissage(e.target.value); setSaved(false) }}
@@ -235,6 +240,11 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)', display: 'block', marginBottom: 10 }}>
               <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.label`}>{conclusion.surprise.label}</EditableText>
             </label>
+            {conclusion.surprise.aide && (
+              <p style={{ fontSize: 12.5, lineHeight: 1.6, color: 'var(--dark-muted)', opacity: .85, marginTop: -4, marginBottom: 12 }}>
+                <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.aide`} multiline>{conclusion.surprise.aide}</EditableText>
+              </p>
+            )}
             <textarea
               value={surprise}
               onChange={e => { setSurprise(e.target.value); setSaved(false) }}

@@ -139,6 +139,9 @@ export interface ConclusionTexte {
   placeholder: string
   label_en?: string
   placeholder_en?: string
+  /** Texte d'aide affiché sous l'intitulé (optionnel). */
+  aide?: string
+  aide_en?: string
 }
 
 export interface ModuleInfo {
