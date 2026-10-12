@@ -1241,3 +1241,61 @@ alter table public.notifications_module enable row level security;
 alter table public.couples add column if not exists pacte_signe_le timestamptz;
 alter table public.couples add column if not exists pacte_signe_par uuid references public.profiles(id) on delete set null;
 alter table public.couples add column if not exists rdv_annuel_le date;
+
+-- ============================================================
+-- PACTE – NOTRE RENDEZ-VOUS ANNUEL (abonnement annuel, 19 €/an)
+-- Proposé une fois le pacte signé. Formule de l'abonnement Stripe en
+-- cours (mensuel / annuel), répliquée par le webhook Stripe et l'action
+-- passerAuRendezVousAnnuel. Un couple au mensuel valide la bascule, qui
+-- a lieu à la fin du mois déjà payé (planning d'abonnement Stripe). Écrite uniquement par le serveur (clé
+-- service). Les abonnements existants sont tous mensuels.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists subscription_formule text
+  check (subscription_formule in ('mensuel', 'annuel'));
+-- Bascule programmée du mensuel vers l'annuel : date de fin du mois déjà
+-- payé, à laquelle Stripe prélève les 19 € (null une fois la bascule faite).
+alter table public.couples add column if not exists subscription_annuel_prevu_le timestamptz;
+update public.couples set subscription_formule = 'mensuel'
+  where subscription_formule is null and stripe_subscription_id is not null;
+revoke update (subscription_formule, subscription_annuel_prevu_le) on public.couples from authenticated;
+
+-- Le transfert d'abonnement au pairage emporte aussi la formule.
+create or replace function public.migrer_abonnement_solo_vers_couple(p_ancien_couple_id uuid, p_nouveau_couple_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_ancien public.couples;
+  v_nouveau public.couples;
+begin
+  if p_ancien_couple_id is null or p_ancien_couple_id = p_nouveau_couple_id then
+    return;
+  end if;
+
+  select * into v_ancien from public.couples where id = p_ancien_couple_id;
+  select * into v_nouveau from public.couples where id = p_nouveau_couple_id;
+  if v_ancien.id is null or v_nouveau.id is null then
+    return;
+  end if;
+
+  if v_ancien.stripe_subscription_id is not null and v_nouveau.stripe_subscription_id is null then
+    update public.couples set
+      stripe_customer_id = v_ancien.stripe_customer_id,
+      stripe_subscription_id = v_ancien.stripe_subscription_id,
+      subscription_status = v_ancien.subscription_status,
+      subscription_current_period_end = v_ancien.subscription_current_period_end,
+      subscription_cancel_at_period_end = v_ancien.subscription_cancel_at_period_end,
+      subscription_canceled_at = v_ancien.subscription_canceled_at,
+      subscription_formule = v_ancien.subscription_formule,
+      subscription_annuel_prevu_le = v_ancien.subscription_annuel_prevu_le,
+      data_retention_until = v_ancien.data_retention_until
+    where id = p_nouveau_couple_id;
+  end if;
+
+  if v_ancien.acces_gratuit_expire_le is not null
+     and (v_nouveau.acces_gratuit_expire_le is null or v_ancien.acces_gratuit_expire_le > v_nouveau.acces_gratuit_expire_le) then
+    update public.couples set acces_gratuit_expire_le = v_ancien.acces_gratuit_expire_le where id = p_nouveau_couple_id;
+  end if;
+end;
+$$;
+revoke execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) to service_role;
