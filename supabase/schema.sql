@@ -1299,3 +1299,45 @@ end;
 $$;
 revoke execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) from public, anon, authenticated;
 grant execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) to service_role;
+
+-- ============================================================
+-- E-MAILS DE RAPPEL YES BOX
+--   1. Relance après 10 jours sans avancer dans le parcours (puis une
+--      seconde à 20 jours, pas plus) : couples.derniere_activite_le est
+--      mise à jour à chaque réponse ou conclusion enregistrée, et
+--      couples.relances_inactivite compte les relances envoyées depuis
+--      (remis à 0 dès que le couple avance), au moins 10 jours d'écart
+--      entre deux relances (derniere_relance_le).
+--   2. Une fois le pacte signé : un e-mail par mois pour faire vivre les
+--      engagements (table rappels_envoyes : jamais deux fois le même mois).
+-- Chaque membre peut refuser ces rappels (profiles.rappels_email), depuis
+-- Mon compte ou le lien de désinscription en bas de chaque e-mail.
+-- Écrits uniquement par le serveur (clé service).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists derniere_activite_le timestamptz;
+alter table public.couples add column if not exists relances_inactivite integer not null default 0;
+alter table public.couples add column if not exists derniere_relance_le timestamptz;
+alter table public.profiles add column if not exists rappels_email boolean not null default true;
+revoke update (derniere_activite_le, relances_inactivite, derniere_relance_le) on public.couples from authenticated;
+revoke update (rappels_email) on public.profiles from authenticated;
+
+-- Dernière activité connue des couples existants : dernière réponse,
+-- conclusion ou révélation, sinon création du couple.
+update public.couples c set derniere_activite_le = greatest(
+  c.created_at,
+  (select max(greatest(r.created_at, r.updated_at)) from public.reponses r join public.modules m on m.id = r.module_id where m.couple_id = c.id),
+  (select max(greatest(j.created_at, j.updated_at)) from public.journal_entries j where j.couple_id = c.id),
+  (select max(m.revealed_at) from public.modules m where m.couple_id = c.id)
+)
+where c.derniere_activite_le is null;
+
+create table if not exists public.rappels_envoyes (
+  couple_id uuid not null references public.couples(id) on delete cascade,
+  type text not null check (type in ('mensuel')),
+  cle text not null,
+  envoye_le timestamptz not null default now(),
+  primary key (couple_id, type, cle)
+);
+alter table public.rappels_envoyes enable row level security;
+-- Aucune policy : accessible uniquement via le service role (tâche planifiée).

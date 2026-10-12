@@ -100,6 +100,23 @@ CRON_SECRET=...
   l'abonnement ne peut plus être réactivé sur ce couple, il faut recommencer
   avec un nouveau compte.
 
+## E-mails de rappel
+
+Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.
+`vercel.json`, protégée par `CRON_SECRET`), contenus dans
+`src/lib/rappels-email.ts` :
+
+- **Parcours en pause** : relance quand le couple n'a enregistré ni réponse
+  ni conclusion depuis 10 jours, puis une seconde à 20 jours, pas plus. À la
+  personne attendue si l'autre a fini, sinon aux deux. Pas de relance si
+  l'accès au module en cours n'est pas ouvert (abonnement terminé).
+- **Après la signature du pacte** : un e-mail par mois (thème différent
+  chaque mois), et l'annonce du rendez-vous annuel dans le mois qui le
+  précède. Arrêtés quand l'accès est terminé.
+- Désinscription : case dans Mon compte, ou lien signé en bas de chaque
+  e-mail (`/desinscription`). Signature : `RAPPELS_SECRET` si définie,
+  sinon `CRON_SECRET`.
+
 ### Accès gratuits (testeurs) et parrainage
 
 - **Codes testeurs** : `/admin/codes` permet de créer un code (durée en

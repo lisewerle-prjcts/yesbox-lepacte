@@ -23,18 +23,22 @@ export default async function MonComptePage() {
   let formule: 'mensuel' | 'annuel' | null = null
   let annuelPrevuLe: string | null = null
   let proposerAnnuel = false
+  let rappelsEmail = true
   let filleulsCount = 0
   let pairingCode: string | null = null
   let paired = false
   if (profile?.couple_id) {
-    const [{ data: coup }, { data: coupAbo }, { data: coupParr }, inviteData, formuleLue, { data: signature }] = await Promise.all([
+    const [{ data: coup }, { data: coupAbo }, { data: coupParr }, inviteData, formuleLue, { data: signature }, { data: prefs }] = await Promise.all([
       supabase.from('couples').select('nom_couple').eq('id', profile.couple_id).single(),
       supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
       supabase.from('couples').select(PARRAINAGE_COLONNES).eq('id', profile.couple_id).single(),
       getInviteLink(),
       lireFormule(supabase, profile.couple_id),
       supabase.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).maybeSingle(),
+      // Requête à part : si la colonne manque encore en base, la page s'affiche.
+      supabase.from('profiles').select('rappels_email').eq('id', user.id).maybeSingle(),
     ])
+    rappelsEmail = prefs?.rappels_email ?? true
     formule = formuleLue.formule
     annuelPrevuLe = formuleLue.annuelPrevuLe
     const offre = offreRdvAnnuel(coupAbo, formuleLue, !!signature?.pacte_signe_le)
@@ -66,6 +70,7 @@ export default async function MonComptePage() {
       proposerAnnuel={proposerAnnuel}
       codeParrainage={coupleParrainage?.code_parrainage ?? null}
       filleulsCount={filleulsCount}
+      rappelsEmail={rappelsEmail}
     />
   )
 }

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2 } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, importerMesDonnees, supprimerMonCompte,
 } from '@/app/actions/compte'
+import { changerRappelsEmail } from '@/app/actions/rappels'
 import { annulerAbonnement, reprendreAbonnement, annulerBasculeAnnuelle, utiliserCodeGratuit } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
 import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
@@ -15,7 +16,7 @@ import Link from 'next/link'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, codeParrainage, filleulsCount,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, codeParrainage, filleulsCount, rappelsEmail,
 }: {
   prenom: string
   email: string
@@ -30,6 +31,7 @@ export default function MonCompteClient({
   proposerAnnuel: boolean
   codeParrainage: string | null
   filleulsCount: number
+  rappelsEmail: boolean
 }) {
   const t = useT()
   return (
@@ -44,6 +46,7 @@ export default function MonCompteClient({
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} />
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
+        <RappelsCard actifInitial={rappelsEmail} />
         <PasswordCard />
         <MesDonneesCard />
         <ImporterDonneesCard />
@@ -55,6 +58,41 @@ export default function MonCompteClient({
 
 function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function RappelsCard({ actifInitial }: { actifInitial: boolean }) {
+  const t = useT()
+  const [actif, setActif] = useState(actifInitial)
+  const [status, setStatus] = useState<SaveStatus>('idle')
+  const [error, setError] = useState('')
+
+  async function basculer(valeur: boolean) {
+    setError('')
+    setStatus('saving')
+    setActif(valeur)
+    const res = await changerRappelsEmail(valeur)
+    if (res.error) { setError(res.error); setActif(!valeur); setStatus('error'); return }
+    setStatus('saved')
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Mail className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('E-mails de rappel', 'Reminder emails')}</h2>
+      </div>
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input type="checkbox" checked={actif} disabled={status === 'saving'} onChange={e => basculer(e.target.checked)} className="mt-1" />
+        <span className="text-sm text-gray-600">
+          {t(
+            'Recevoir les rappels YES BOX : quand votre parcours est en pause depuis 10 jours, puis chaque mois une fois votre pacte signé.',
+            'Receive YES BOX reminders: when your program has been paused for 10 days, then every month once your pact is signed.'
+          )}
+        </span>
+      </label>
+      {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+    </div>
+  )
 }
 
 function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: { abonnement: CoupleAbonnement | null; formule: 'mensuel' | 'annuel' | null; annuelPrevuLe: string | null; proposerAnnuel: boolean }) {

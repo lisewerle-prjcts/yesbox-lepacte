@@ -9,6 +9,7 @@ import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
 import { moduleDuCouple, revelerSiPret } from '@/lib/progression'
 import { notifierPartenaire } from '@/lib/notifications-module'
+import { marquerActivite } from '@/lib/activite'
 
 // Chaque partenaire écrit sa conclusion de son côté, en 2 questions
 // ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"), une fois que les
@@ -44,6 +45,7 @@ export async function sauvegarderConclusion(
     .from('journal_entries')
     .upsert(rows, { onConflict: 'couple_id,module_slug,user_id,question_slug' })
   if (error) return { error: error.message }
+  after(() => marquerActivite(admin, mod.couple_id))
 
   const modules = await getEffectiveModules()
   const ordre = modules.map(m => m.slug)
