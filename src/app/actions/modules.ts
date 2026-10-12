@@ -69,7 +69,7 @@ export async function terminerModule(moduleId: string, moduleSlug: string) {
   // Prévient l'autre par e-mail (après la réponse, sans la ralentir) : à son
   // tour de répondre, ou réponses désormais visibles pour le débrief.
   after(() => notifierPartenaire(etat.reponsesPartagees ? 'reponses_partagees' : 'reponses_a_ton_tour', {
-    moduleId: mod.id, moduleSlug: mod.slug, moduleTitre: moduleInfo.titre, coupleId: mod.couple_id, auteurId: user.id,
+    moduleId: mod.id, moduleSlug: mod.slug, moduleTitre: moduleInfo.titre, moduleTitreEn: moduleInfo.titre_en, coupleId: mod.couple_id, auteurId: user.id,
   }))
 
   revalidatePath('/tableau-de-bord')

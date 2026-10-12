@@ -46,9 +46,13 @@ export async function demarrerAbonnement() {
       const customer = await stripe.customers.create({
         email: ctx.email,
         metadata: { couple_id: ctx.coupleId },
+        preferred_locales: [locale],
       })
       customerId = customer.id
       await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', ctx.coupleId)
+    } else {
+      // Langue des e-mails Stripe (reçus, rappels de renouvellement).
+      await stripe.customers.update(customerId, { preferred_locales: [locale] }).catch(() => {})
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -60,6 +64,8 @@ export async function demarrerAbonnement() {
       subscription_data: { metadata: { couple_id: ctx.coupleId } },
       metadata: { couple_id: ctx.coupleId },
       allow_promotion_codes: true,
+      // Page de paiement dans la langue du site.
+      locale,
     })
 
     if (!session.url) return { error: t(locale, 'Impossible de créer la session de paiement', 'Could not create the checkout session') }
@@ -161,9 +167,13 @@ export async function passerAuRendezVousAnnuel() {
       const customer = await stripe.customers.create({
         email: ctx.email,
         metadata: { couple_id: ctx.coupleId },
+        preferred_locales: [locale],
       })
       customerId = customer.id
       await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', ctx.coupleId)
+    } else {
+      // Langue des e-mails Stripe (reçus, rappels de renouvellement).
+      await stripe.customers.update(customerId, { preferred_locales: [locale] }).catch(() => {})
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -175,6 +185,8 @@ export async function passerAuRendezVousAnnuel() {
       subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel' } },
       metadata: { couple_id: ctx.coupleId, formule: 'annuel' },
       allow_promotion_codes: true,
+      // Page de paiement dans la langue du site.
+      locale,
     })
 
     if (!session.url) return { error: t(locale, 'Impossible de créer la session de paiement', 'Could not create the checkout session') }

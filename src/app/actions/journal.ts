@@ -57,6 +57,7 @@ export async function sauvegarderConclusion(
     moduleId: mod.id,
     moduleSlug: mod.slug,
     moduleTitre: modules.find(m => m.slug === mod.slug)?.titre ?? mod.slug,
+    moduleTitreEn: modules.find(m => m.slug === mod.slug)?.titre_en,
     coupleId: mod.couple_id,
     auteurId: user.id,
     dernierModule: ordre.indexOf(mod.slug) === ordre.length - 1,

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { LOCALE_COOKIE, t, type Locale } from '@/lib/i18n/locale'
+import { memoriserLangue } from '@/app/actions/langue'
 
 interface LocaleContextValue {
   locale: Locale
@@ -24,6 +25,8 @@ export function LocaleProvider({
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next)
     document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; SameSite=Lax`
+    // Pour les e-mails : la langue suit la personne, pas seulement ce navigateur.
+    void memoriserLangue(next).catch(() => {})
     router.refresh()
   }, [router])
 

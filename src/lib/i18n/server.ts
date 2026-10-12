@@ -11,3 +11,10 @@ export async function getLocale(): Promise<Locale> {
 export function getT(locale: Locale) {
   return (fr: string, en: string) => t(locale, fr, en)
 }
+
+/** Langue choisie explicitement sur ce navigateur (cookie posé), sinon null. */
+export async function getLocaleExplicite(): Promise<Locale | null> {
+  const store = await cookies()
+  const value = store.get(LOCALE_COOKIE)?.value
+  return isLocale(value) ? value : null
+}
