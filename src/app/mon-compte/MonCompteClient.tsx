@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail, Languages } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, importerMesDonnees, supprimerMonCompte,
 } from '@/app/actions/compte'
 import { changerRappelsEmail } from '@/app/actions/rappels'
+import { memoriserLangue } from '@/app/actions/langue'
 import { annulerAbonnement, reprendreAbonnement, annulerBasculeAnnuelle, utiliserCodeGratuit } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
 import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
@@ -16,7 +17,7 @@ import Link from 'next/link'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, codeParrainage, filleulsCount, rappelsEmail,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, codeParrainage, filleulsCount, rappelsEmail, langue,
 }: {
   prenom: string
   email: string
@@ -32,6 +33,8 @@ export default function MonCompteClient({
   codeParrainage: string | null
   filleulsCount: number
   rappelsEmail: boolean
+  /** Langue préférée enregistrée sur le profil (site et e-mails). */
+  langue: 'fr' | 'en'
 }) {
   const t = useT()
   return (
@@ -46,6 +49,7 @@ export default function MonCompteClient({
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} />
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
+        <LangueCard langueInitiale={langue} />
         <RappelsCard actifInitial={rappelsEmail} />
         <PasswordCard />
         <MesDonneesCard />
@@ -58,6 +62,43 @@ export default function MonCompteClient({
 
 function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function LangueCard({ langueInitiale }: { langueInitiale: 'fr' | 'en' }) {
+  const t = useT()
+  const { setLocale } = useLocale()
+  const [langue, setLangue] = useState(langueInitiale)
+  const [status, setStatus] = useState<SaveStatus>('idle')
+
+  async function choisir(next: 'fr' | 'en') {
+    if (next === langue) return
+    setStatus('saving')
+    setLangue(next)
+    await memoriserLangue(next)
+    // Bascule aussi le site dans cette langue.
+    setLocale(next)
+    setStatus('saved')
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Languages className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Langue préférée', 'Preferred language')}</h2>
+      </div>
+      <div role="radiogroup" className="flex flex-col gap-2">
+        {([['fr', 'Français'], ['en', 'English']] as const).map(([code, libelle]) => (
+          <label key={code} className="flex items-center gap-3 cursor-pointer text-sm text-gray-700">
+            <input type="radio" name="langue" checked={langue === code} disabled={status === 'saving'} onChange={() => choisir(code)} />
+            {libelle}
+          </label>
+        ))}
+      </div>
+      <p className="text-xs text-gray-400 mt-3">
+        {t('Langue du site et des e-mails que YES BOX t’envoie.', 'Language of the site and of the emails YES BOX sends you.')}
+      </p>
+    </div>
+  )
 }
 
 function RappelsCard({ actifInitial }: { actifInitial: boolean }) {

@@ -24,6 +24,7 @@ export default async function MonComptePage() {
   let annuelPrevuLe: string | null = null
   let proposerAnnuel = false
   let rappelsEmail = true
+  let langue: 'fr' | 'en' = 'fr'
   let filleulsCount = 0
   let pairingCode: string | null = null
   let paired = false
@@ -39,6 +40,9 @@ export default async function MonComptePage() {
       supabase.from('profiles').select('rappels_email').eq('id', user.id).maybeSingle(),
     ])
     rappelsEmail = prefs?.rappels_email ?? true
+    // Requête à part, comme ci-dessus.
+    const { data: profilLangue } = await supabase.from('profiles').select('langue').eq('id', user.id).maybeSingle()
+    langue = profilLangue?.langue === 'en' ? 'en' : 'fr'
     formule = formuleLue.formule
     annuelPrevuLe = formuleLue.annuelPrevuLe
     const offre = offreRdvAnnuel(coupAbo, formuleLue, !!signature?.pacte_signe_le)
@@ -71,6 +75,7 @@ export default async function MonComptePage() {
       codeParrainage={coupleParrainage?.code_parrainage ?? null}
       filleulsCount={filleulsCount}
       rappelsEmail={rappelsEmail}
+      langue={langue}
     />
   )
 }
