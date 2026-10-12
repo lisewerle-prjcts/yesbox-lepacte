@@ -11,8 +11,9 @@ import { notifySecurityEvent, notifierNouvelleInscription } from '@/lib/admin-ma
 import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { gmailConfigure, envoyerMailConfirmation, renvoyerMailConfirmation, lienConfirmation } from '@/lib/confirmation-email'
 import { getLocale, getLocaleExplicite } from '@/lib/i18n/server'
-import { enregistrerLangueProfil } from '@/lib/i18n/langue-profil'
-import { t } from '@/lib/i18n/locale'
+import { enregistrerLangueProfil, langueDuProfil } from '@/lib/i18n/langue-profil'
+import { cookies } from 'next/headers'
+import { t, DEFAULT_LOCALE, LOCALE_COOKIE } from '@/lib/i18n/locale'
 import { z } from 'zod'
 import type { Locale } from '@/lib/i18n/locale'
 
@@ -208,6 +209,14 @@ export async function connexion(formData: FormData) {
   // Langue choisie sur ce navigateur : les e-mails suivront.
   const langueChoisie = await getLocaleExplicite()
   if (connecte && langueChoisie) await enregistrerLangueProfil(createAdminClient(), connecte.id, langueChoisie)
+  // Nouveau navigateur (aucune langue choisie) : le site reprend la langue
+  // préférée du profil (Mon compte).
+  if (connecte && !langueChoisie) {
+    const langueProfil = await langueDuProfil(createAdminClient(), connecte.id)
+    if (langueProfil !== DEFAULT_LOCALE) {
+      ;(await cookies()).set(LOCALE_COOKIE, langueProfil, { path: '/', maxAge: 31536000, sameSite: 'lax' })
+    }
+  }
   if (connecte) await envoyerBienvenueSiEnAttente(connecte.id)
 
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
