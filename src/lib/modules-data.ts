@@ -341,10 +341,12 @@ export const MODULES: ModuleInfo[] = [
     emoji: '📜', free: false,
     conclusion: {
       apprentissage: {
-        label: "Notre rendez-vous annuel de couple : à quelle date aimerais-tu le fixer ? Votre anniversaire de couple ou dans 1 an ?",
+        label: "Notre rendez-vous annuel de couple : à quelle date aimerais-tu le fixer ?",
         placeholder: "La date de votre rendez-vous annuel…",
-        label_en: "Our yearly couple date: when would you like to set it? Your anniversary as a couple, or one year from now?",
+        aide: "Vous pouvez par exemple opter pour une date internationale comme la Saint-Valentin. Vous pouvez aussi choisir une date qui vous appartient : un anniversaire de rencontre, de mariage… ou encore simplement vous donner rendez-vous dans un an. Attention à laisser au moins 6 mois (et au plus 1 an) entre la fin du programme et la date du rendez-vous annuel.",
+        label_en: "Our yearly couple date: when would you like to set it?",
         placeholder_en: "When your yearly date will be…",
+        aide_en: "For example, you could choose an international date like Valentine's Day. You could also pick a date that belongs to you: the anniversary of when you met, your wedding anniversary… or simply arrange to meet again in one year. Make sure to leave at least 6 months (and at most 1 year) between the end of the program and your yearly date.",
       },
       surprise: {
         label: "Qui l'organise ?",
