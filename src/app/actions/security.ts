@@ -3,15 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { assertAdmin, notifySecurityEvent } from '@/lib/admin-mail'
 import { createAdminClient } from '@/lib/supabase/server'
-import type { createClient } from '@/lib/supabase/server'
 import { generateRecoveryCode, hashRecoveryCode } from '@/lib/recovery-codes'
+import { getRecoveryEmail, RECOVERY_EMAIL_KEY_PREFIX } from '@/lib/recovery-email'
 
-const RECOVERY_EMAIL_KEY_PREFIX = 'admin_recovery_email::'
-
-export async function getRecoveryEmail(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase.from('settings').select('value').eq('key', `${RECOVERY_EMAIL_KEY_PREFIX}${userId}`).single()
-  return data?.value ?? null
-}
 
 export async function setRecoveryEmail(email: string) {
   const supabase = await assertAdmin({ sansMfaActivee: true })
