@@ -31,7 +31,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.individuelles.titre">Réponses individuelles</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.individuelles.texte" multiline>Chaque membre répond seul aux questions de chaque module. Aucun des deux ne peut voir les réponses de l&apos;autre avant que le module ne soit marqué « révélé ».</EditableText>
+              <EditableText id="regles.individuelles.texte.v2" multiline>Chaque membre répond de son côté aux questions de chaque module. Personne ne peut voir les réponses de l&apos;autre avant que les deux membres du couple aient terminé les leurs.</EditableText>
             </p>
           </li>
           <li>
@@ -39,7 +39,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.revelation.titre">La révélation</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.revelation.texte" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, vous êtes invités à ajouter un élément dans votre journal : ce que vous avez appris avec le module, ce qui vous a ému·e et ce qui vous a étonné·e. Une fois le journal rempli, et si vous êtes à jour de votre abonnement, le module suivant se débloque.</EditableText>
+              <EditableText id="regles.revelation.texte.v2" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque.</EditableText>
             </p>
           </li>
           <li>
@@ -48,6 +48,17 @@ export default function ReglesDuJeuPage() {
             </p>
             <p style={{ color: 'var(--muted)' }}>
               <EditableText id="regles.duree.texte" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler (réponses chacun·e de son côté, révélation, puis quelques notes dans le journal). Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
+            </p>
+          </li>
+          <li>
+            <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              <EditableText id="regles.sansjugement.titre">Entre vous deux, sans jugement</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)' }}>
+              <EditableText id="regles.sansjugement.lecture" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)', marginTop: 8 }}>
+              <EditableText id="regles.sansjugement.jugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>
             </p>
           </li>
           <li>
@@ -63,7 +74,23 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.pacte.titre">Le pacte de couple</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.pacte.texte" multiline>Écrit à deux à la fin du programme, il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. Chaque année, à votre date anniversaire, votre rendez-vous annuel vous permet de le relire ensemble et de le faire évoluer avec vous.</EditableText>
+              <EditableText id="regles.pacte.texte.v2" multiline>Écrit à deux à la fin du parcours initial (module 9), il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. En le signant, vous choisissez la date de votre rendez-vous annuel, entre 6 mois et 1 an plus tard : dans un an, à la Saint-Valentin ou à une date qui vous est propre. Ce jour-là, le module « Notre rendez-vous annuel » s&apos;ouvre pour le relire ensemble et le faire évoluer avec vous.</EditableText>
+            </p>
+          </li>
+          <li>
+            <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              <EditableText id="regles.abonnementannuel.titre">Pacte – notre rendez-vous annuel</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)' }}>
+              <EditableText id="regles.abonnementannuel.texte" multiline>Une fois votre pacte signé, l&apos;abonnement mensuel peut laisser la place à l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an). La bascule a lieu à la fin du mois déjà payé. Il donne accès au module « Notre rendez-vous annuel » et à tous les modules si vous souhaitez les refaire. Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
+            </p>
+          </li>
+          <li>
+            <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              <EditableText id="regles.rappels.titre">E-mails de rappel</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)' }}>
+              <EditableText id="regles.rappels.texte" multiline>Si votre parcours est en pause depuis 10 jours, YES BOX vous envoie un petit rappel (deux au maximum). Une fois votre pacte signé, vous recevez chaque mois un e-mail pour faire vivre vos engagements. Vous pouvez désactiver ces rappels à tout moment dans MON COMPTE, où vous choisissez aussi la langue du site et des e-mails.</EditableText>
             </p>
           </li>
           <li>
