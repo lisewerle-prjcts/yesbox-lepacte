@@ -15,7 +15,7 @@ import Link from 'next/link'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, codeParrainage, filleulsCount,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, proposerAnnuel, codeParrainage, filleulsCount,
 }: {
   prenom: string
   email: string
@@ -23,6 +23,9 @@ export default function MonCompteClient({
   pairingCode: string | null
   paired: boolean
   abonnement: CoupleAbonnement | null
+  formule: 'mensuel' | 'annuel' | null
+  /** Pacte signé et abonnement mensuel en cours : proposer la bascule. */
+  proposerAnnuel: boolean
   codeParrainage: string | null
   filleulsCount: number
 }) {
@@ -37,7 +40,7 @@ export default function MonCompteClient({
       <div className="space-y-5">
         <MesInfosCard prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
-        <AbonnementCard abonnement={abonnement} />
+        <AbonnementCard abonnement={abonnement} formule={formule} proposerAnnuel={proposerAnnuel} />
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <PasswordCard />
         <MesDonneesCard />
@@ -52,7 +55,7 @@ function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function AbonnementCard({ abonnement }: { abonnement: CoupleAbonnement | null }) {
+function AbonnementCard({ abonnement, formule, proposerAnnuel }: { abonnement: CoupleAbonnement | null; formule: 'mensuel' | 'annuel' | null; proposerAnnuel: boolean }) {
   const t = useT()
   const { locale } = useLocale()
   const [status, setStatus] = useState<SaveStatus>('idle')
@@ -99,6 +102,9 @@ function AbonnementCard({ abonnement }: { abonnement: CoupleAbonnement | null })
         </div>
       ) : actif ? (
         <>
+          {formule === 'annuel' && (
+            <p className="text-sm font-semibold text-gray-900 mb-1">{t('Pacte – notre rendez-vous annuel', 'Pact – our yearly date')}</p>
+          )}
           <p className="text-sm text-gray-600 mb-1">
             {annuleAPeriodeFin
               ? t('Résilié — accès actif jusqu’au', 'Canceled — access active until')
@@ -109,8 +115,17 @@ function AbonnementCard({ abonnement }: { abonnement: CoupleAbonnement | null })
           <p className="text-xs text-gray-400 mb-4">
             {annuleAPeriodeFin
               ? t('Après cette date, seules les parties déjà réalisées restent consultables.', 'After this date, only the parts you already completed remain viewable.')
+              : formule === 'annuel'
+              ? t('39€/an · résiliable à tout moment.', '€39/year · cancel anytime.')
               : t('29€/mois · résiliable à tout moment.', '€29/month · cancel anytime.')}
           </p>
+          {proposerAnnuel && (
+            <p className="text-sm mb-4">
+              <Link href="/journal#rdv-annuel-offre" className="text-magenta font-semibold">
+                {t('Votre pacte est signé : passer au rendez-vous annuel (39€/an)', 'Your pact is signed: switch to the yearly date (€39/year)')}
+              </Link>
+            </p>
+          )}
           {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
           {annuleAPeriodeFin ? (
             <button onClick={reprendre} disabled={status === 'saving'} className="btn-secondary text-sm py-2 px-4">

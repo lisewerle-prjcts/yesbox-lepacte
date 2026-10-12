@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
-import { getStripe, PRIX_ABONNEMENT_MENSUEL_ID } from '@/lib/stripe'
+import { getStripe, PRIX_ABONNEMENT_MENSUEL_ID, PRIX_ABONNEMENT_ANNUEL_ID } from '@/lib/stripe'
 import { estAbonnementActif, estCompteResilie } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 
@@ -59,6 +59,100 @@ export async function demarrerAbonnement() {
       cancel_url: `${appUrl}/abonnement?abonnement=annule`,
       subscription_data: { metadata: { couple_id: ctx.coupleId } },
       metadata: { couple_id: ctx.coupleId },
+      allow_promotion_codes: true,
+    })
+
+    if (!session.url) return { error: t(locale, 'Impossible de créer la session de paiement', 'Could not create the checkout session') }
+    return { url: session.url }
+  } catch (err) {
+    return { error: t(locale, `Erreur Stripe : ${(err as Error).message}`, `Stripe error: ${(err as Error).message}`) }
+  }
+}
+
+// Bascule vers « Pacte – notre rendez-vous annuel » (39 €/an), proposée une
+// fois le pacte signé. Deux cas :
+//   - abonnement Stripe en cours (mensuel) : on remplace son prix par le prix
+//     annuel. Stripe démarre une nouvelle période d'un an dès maintenant,
+//     déduit le temps non utilisé du mois en cours et prélève la différence
+//     sur la carte déjà enregistrée ; un éventuel arrêt du renouvellement
+//     demandé sur le mensuel est levé ;
+//   - pas d'abonnement Stripe en cours : nouveau paiement via Stripe Checkout.
+// Dans les deux cas, l'accès vaut pour 1 an, résiliable à tout moment depuis
+// Mon compte (l'accès reste ouvert jusqu'au dernier jour payé).
+export async function passerAuRendezVousAnnuel() {
+  const locale = await getLocale()
+  const ctx = await getMonCoupleId()
+  if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+  if (!PRIX_ABONNEMENT_ANNUEL_ID) return { error: t(locale, "Le rendez-vous annuel n'est pas encore configuré (STRIPE_PRICE_ID_ABONNEMENT_ANNUEL manquant).", 'The yearly date is not configured yet (missing STRIPE_PRICE_ID_ABONNEMENT_ANNUEL).') }
+
+  const admin = createAdminClient()
+  const [{ data: couple }, { data: signature }] = await Promise.all([
+    admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', ctx.coupleId).single(),
+    admin.from('couples').select('pacte_signe_le').eq('id', ctx.coupleId).single(),
+  ])
+  if (!couple) return { error: t(locale, 'Couple introuvable', 'Couple not found') }
+  if (!signature?.pacte_signe_le) return { error: t(locale, 'Le rendez-vous annuel se propose une fois votre pacte signé.', 'The yearly date is available once your pact is signed.') }
+  if (estCompteResilie(couple)) {
+    return { error: t(locale,
+      "Ce compte a été résilié après 18 mois d'inactivité de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
+      'This account was closed after 18 months without an active subscription: the subscription cannot be reactivated on this space. You need to start over with a new account.'
+    ) }
+  }
+
+  const stripe = getStripe()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+  try {
+    if (couple.stripe_subscription_id && estAbonnementActif(couple)) {
+      const actuel = await stripe.subscriptions.retrieve(couple.stripe_subscription_id)
+      const item = actuel.items.data[0]
+      if (!item) return { error: t(locale, 'Abonnement Stripe introuvable', 'Stripe subscription not found') }
+      if (item.price.id === PRIX_ABONNEMENT_ANNUEL_ID) {
+        return { error: t(locale, 'Votre rendez-vous annuel est déjà actif.', 'Your yearly date is already active.') }
+      }
+
+      const subscription = await stripe.subscriptions.update(actuel.id, {
+        items: [{ id: item.id, price: PRIX_ABONNEMENT_ANNUEL_ID }],
+        billing_cycle_anchor: 'now',
+        proration_behavior: 'always_invoice',
+        // Paiement refusé : rien n'est modifié, le mensuel continue.
+        payment_behavior: 'error_if_incomplete',
+        cancel_at_period_end: false,
+      })
+      const periodEnd = subscription.items.data[0]?.current_period_end
+
+      await admin.from('couples').update({
+        subscription_status: 'actif',
+        subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : couple.subscription_current_period_end,
+        subscription_cancel_at_period_end: false,
+        subscription_canceled_at: null,
+      }).eq('id', ctx.coupleId)
+      await admin.from('couples').update({ subscription_formule: 'annuel' }).eq('id', ctx.coupleId)
+
+      revalidatePath('/mon-compte')
+      revalidatePath('/journal')
+      revalidatePath('/tableau-de-bord')
+      return { success: true }
+    }
+
+    let customerId = couple.stripe_customer_id
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: ctx.email,
+        metadata: { couple_id: ctx.coupleId },
+      })
+      customerId = customer.id
+      await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', ctx.coupleId)
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: PRIX_ABONNEMENT_ANNUEL_ID, quantity: 1 }],
+      success_url: `${appUrl}/mon-compte?abonnement=succes`,
+      cancel_url: `${appUrl}/journal?abonnement=annule`,
+      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel' } },
+      metadata: { couple_id: ctx.coupleId, formule: 'annuel' },
       allow_promotion_codes: true,
     })
 

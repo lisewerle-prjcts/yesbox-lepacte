@@ -64,10 +64,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Abonnement mensuel (Stripe)
+# Abonnements (Stripe)
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_ID_ABONNEMENT_MENSUEL=price_...
+# « Pacte – notre rendez-vous annuel » : prix récurrent annuel à 39 €
+STRIPE_PRICE_ID_ABONNEMENT_ANNUEL=price_...
 # Optionnel : sécurise la tâche planifiée de clôture des comptes après 13 mois
 CRON_SECRET=...
 ```
@@ -76,6 +78,14 @@ CRON_SECRET=...
 
 - Offre : abonnement mensuel (29 €/mois), proposé aux couples à la fin du
   module 1 gratuit (`/abonnement`), payé et géré via Stripe Checkout.
+- Offre « Pacte – notre rendez-vous annuel » (39 €/an), proposée une fois le
+  pacte signé (page Notre Pacte, `/abonnement`, lien depuis `/mon-compte`).
+  Un abonnement mensuel en cours est basculé sur le prix annuel (nouvelle
+  période d'un an dès maintenant, temps non utilisé du mois déduit, carte
+  déjà enregistrée) ; sinon, paiement via Stripe Checkout. Résiliable à
+  tout moment : l'accès reste ouvert jusqu'au dernier jour de l'année payée.
+  Dans Stripe, activer l'e-mail de rappel avant renouvellement des
+  abonnements (promis dans les conditions d'utilisation).
 - Webhook Stripe à configurer sur `POST /api/webhooks/stripe` (événements
   `checkout.session.completed`, `customer.subscription.updated`,
   `customer.subscription.deleted`).

@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getInviteLink } from '@/app/actions/couple'
 import { ABONNEMENT_COLONNES, PARRAINAGE_COLONNES } from '@/types'
 import type { CoupleAbonnement, CoupleParrainage } from '@/types'
+import { lireFormule, offreRdvAnnuel } from '@/lib/abonnement'
 import MonCompteClient from './MonCompteClient'
 
 export default async function MonComptePage() {
@@ -19,16 +20,23 @@ export default async function MonComptePage() {
   let couple: { nom_couple: string | null } | null = null
   let coupleAbonnement: CoupleAbonnement | null = null
   let coupleParrainage: CoupleParrainage | null = null
+  let formule: 'mensuel' | 'annuel' | null = null
+  let proposerAnnuel = false
   let filleulsCount = 0
   let pairingCode: string | null = null
   let paired = false
   if (profile?.couple_id) {
-    const [{ data: coup }, { data: coupAbo }, { data: coupParr }, inviteData] = await Promise.all([
+    const [{ data: coup }, { data: coupAbo }, { data: coupParr }, inviteData, formuleLue, { data: signature }] = await Promise.all([
       supabase.from('couples').select('nom_couple').eq('id', profile.couple_id).single(),
       supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
       supabase.from('couples').select(PARRAINAGE_COLONNES).eq('id', profile.couple_id).single(),
       getInviteLink(),
+      lireFormule(supabase, profile.couple_id),
+      supabase.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).maybeSingle(),
     ])
+    formule = formuleLue
+    const offre = offreRdvAnnuel(coupAbo, formuleLue, !!signature?.pacte_signe_le)
+    proposerAnnuel = offre.afficher && offre.mensuelEnCours
     couple = coup
     coupleAbonnement = coupAbo
     coupleParrainage = coupParr
@@ -51,6 +59,8 @@ export default async function MonComptePage() {
       pairingCode={pairingCode}
       paired={paired}
       abonnement={coupleAbonnement}
+      formule={formule}
+      proposerAnnuel={proposerAnnuel}
       codeParrainage={coupleParrainage?.code_parrainage ?? null}
       filleulsCount={filleulsCount}
     />

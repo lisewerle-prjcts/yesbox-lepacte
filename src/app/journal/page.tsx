@@ -8,6 +8,9 @@ import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
 import SignaturePacte from './SignaturePacte'
+import OffreRdvAnnuel from '@/components/OffreRdvAnnuel'
+import { lireFormule, offreRdvAnnuel } from '@/lib/abonnement'
+import { ABONNEMENT_COLONNES } from '@/types'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, anniversaireDansBornes } from '@/lib/rdv-annuel'
 import { BookOpen, UserPlus } from 'lucide-react'
@@ -35,6 +38,11 @@ export default async function JournalPage() {
     supabase.from('couples').select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single(),
     getEffectiveModules(),
   ])
+  const [{ data: coupleAbonnement }, formule] = await Promise.all([
+    supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
+    lireFormule(supabase, profile.couple_id),
+  ])
+  const offreAnnuelle = offreRdvAnnuel(coupleAbonnement, formule, !!signature?.pacte_signe_le)
   const MODULES = localizeModules(effectiveModules, locale)
 
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)
@@ -155,6 +163,9 @@ export default async function JournalPage() {
           anniversaire={anniversaireDansBornes(signature?.date_anniversaire ?? null)}
         />
       )}
+
+      {/* Une fois le pacte signé : proposer « Pacte – notre rendez-vous annuel ». */}
+      {offreAnnuelle.afficher && <OffreRdvAnnuel mensuelEnCours={offreAnnuelle.mensuelEnCours} />}
     </div>
   )
 }

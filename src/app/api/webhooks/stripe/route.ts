@@ -1,15 +1,31 @@
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
-import { getStripe, RETENTION_MOIS } from '@/lib/stripe'
+import { getStripe, formuleDuPrix, RETENTION_MOIS } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { ajouterMois } from '@/lib/dates'
 
 export const runtime = 'nodejs'
 
 async function trouverCoupleId(admin: ReturnType<typeof createAdminClient>, sub: Stripe.Subscription): Promise<string | null> {
-  if (sub.metadata?.couple_id) return sub.metadata.couple_id
+  if (sub.metadata?.couple_id) {
+    // Un événement tardif sur un ancien abonnement (ex. mensuel terminé,
+    // remplacé depuis par le rendez-vous annuel) ne doit pas écraser
+    // l'abonnement en cours du couple.
+    const { data } = await admin.from('couples').select('stripe_subscription_id').eq('id', sub.metadata.couple_id).maybeSingle()
+    if (data?.stripe_subscription_id && data.stripe_subscription_id !== sub.id) return null
+    return sub.metadata.couple_id
+  }
   const { data } = await admin.from('couples').select('id').eq('stripe_subscription_id', sub.id).maybeSingle()
   return data?.id ?? null
+}
+
+// Formule (mensuel / annuel) répliquée à part : si la colonne
+// subscription_formule n'existe pas encore en base, la mise à jour du statut
+// d'abonnement (qui conditionne l'accès) passe quand même.
+async function enregistrerFormule(admin: ReturnType<typeof createAdminClient>, coupleId: string, sub: Stripe.Subscription) {
+  const formule = formuleDuPrix(sub.items.data[0]?.price?.id)
+  if (!formule) return
+  await admin.from('couples').update({ subscription_formule: formule }).eq('id', coupleId)
 }
 
 export async function POST(req: Request) {
@@ -57,6 +73,7 @@ export async function POST(req: Request) {
         subscription_canceled_at: null,
         data_retention_until: null,
       }).eq('id', coupleId)
+      await enregistrerFormule(admin, coupleId, subscription)
       break
     }
 
@@ -75,6 +92,7 @@ export async function POST(req: Request) {
         subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
         subscription_cancel_at_period_end: subscription.cancel_at_period_end,
       }).eq('id', coupleId)
+      await enregistrerFormule(admin, coupleId, subscription)
       break
     }
 

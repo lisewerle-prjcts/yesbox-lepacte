@@ -1,4 +1,5 @@
 import type { CoupleAbonnement, Module, ModuleInfo } from '@/types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Accès payant (Stripe) actif : la période en cours n'est pas terminée,
 // même si une résiliation a été demandée (cancel_at_period_end) — l'accès
@@ -50,4 +51,32 @@ export function peutAccederModule(
   if (moduleInfo.free) return true
   if (moduleData?.revealed) return true
   return aAccesComplet(couple)
+}
+
+// Formule de l'abonnement Stripe (mensuel / annuel). Lue à part : si la
+// colonne subscription_formule manque encore en base, le reste de la page
+// fonctionne (formule inconnue = traitée comme mensuelle, la seule formule
+// existant avant le rendez-vous annuel).
+export async function lireFormule(client: SupabaseClient, coupleId: string): Promise<'mensuel' | 'annuel' | null> {
+  const { data, error } = await client.from('couples').select('subscription_formule').eq('id', coupleId).maybeSingle()
+  if (error || !data) return null
+  return (data.subscription_formule as 'mensuel' | 'annuel' | null) ?? null
+}
+
+// Offre « Pacte – notre rendez-vous annuel » : proposée une fois le pacte
+// signé, sauf si elle est déjà active, si le compte est clos ou si le couple
+// bénéficie d'un accès gratuit sans abonnement payant.
+export function offreRdvAnnuel(
+  couple: CoupleAbonnement | null | undefined,
+  formule: 'mensuel' | 'annuel' | null,
+  pacteSigne: boolean
+): { afficher: boolean; mensuelEnCours: boolean } {
+  const payant = estAbonnementActif(couple)
+  const annuelActif = payant && formule === 'annuel'
+  const mensuelEnCours = payant && formule !== 'annuel'
+  const gratuitSeul = !payant && aAccesGratuitActif(couple)
+  return {
+    afficher: pacteSigne && !annuelActif && !gratuitSeul && !estCompteResilie(couple),
+    mensuelEnCours,
+  }
 }

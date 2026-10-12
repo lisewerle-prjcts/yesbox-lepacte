@@ -31,6 +31,8 @@ export interface Couple {
   subscription_current_period_end: string | null
   subscription_cancel_at_period_end: boolean
   subscription_canceled_at: string | null
+  /** Formule Stripe en cours (null = inconnue, traitée comme mensuelle). */
+  subscription_formule?: 'mensuel' | 'annuel' | null
   data_retention_until: string | null
   compte_resilie_le: string | null
   acces_gratuit_expire_le: string | null
