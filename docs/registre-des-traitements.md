@@ -55,7 +55,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Destinataires | Uniquement les deux membres du couple (réponses du ou de la partenaire visibles après la révélation). L'administration n'a pas accès au contenu |
 | Transferts hors UE | Non pour le stockage (Supabase, Irlande) ; éventuel accès d'assistance encadré par CCT |
 | Durée de conservation | Identique à la fiche 1. Retrait du consentement : suppression du compte |
-| Mesures de sécurité | Identiques à la fiche 1 ; aucun export ni affichage du contenu dans l'espace admin ; export réservé à la personne concernée (« Mes données ») |
+| Mesures de sécurité | Identiques à la fiche 1 ; contenus (réponses, conclusions, texte du pacte) chiffrés par l'application en AES-256-GCM avant stockage, clé détenue uniquement par le serveur ; aucun export ni affichage du contenu dans l'espace admin ; export réservé à la personne concernée (« Mes données ») |
 | Analyse d'impact (AIPD) | Recommandée compte tenu des données sensibles — outil gratuit PIA de la CNIL |
 
 ## Fiche 3 — Abonnement, paiement et facturation

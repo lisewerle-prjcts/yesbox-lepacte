@@ -2,6 +2,7 @@ import type { createAdminClient } from '@/lib/supabase/server'
 import type { ModuleInfo } from '@/types'
 import { hasAnsweredAll } from '@/lib/questions'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { dechiffrerLignes } from '@/lib/chiffrement'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -63,7 +64,7 @@ export async function etatReponses<R extends ReponseBrute = ReponseBrute>(
     admin.from('reponses').select('*').eq('module_id', mod.id),
   ])
   const partenaire = (membres ?? []).find(m => m.id !== userId) ?? null
-  const toutes = (reponses ?? []) as R[]
+  const toutes = dechiffrerLignes(reponses) as R[]
   const mesReponses = toutes.filter(r => r.user_id === userId)
   const sesReponses = partenaire ? toutes.filter(r => r.user_id === partenaire.id) : []
 
@@ -97,8 +98,9 @@ export async function revelerSiPret(admin: AdminClient, mod: ModuleCouple, ordre
     admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', mod.couple_id).eq('module_slug', mod.slug),
   ])
   if ((membres ?? []).length < 2) return false
+  const conclusionsClaires = dechiffrerLignes(conclusions)
   const conclusionFaite = (uid: string) => ['apprentissage', 'surprise'].every(slug =>
-    (conclusions ?? []).some(c => c.user_id === uid && c.question_slug === slug && c.valeur?.trim())
+    conclusionsClaires.some(c => c.user_id === uid && c.question_slug === slug && c.valeur?.trim())
   )
   if (!(membres ?? []).every(m => conclusionFaite(m.id))) return false
 

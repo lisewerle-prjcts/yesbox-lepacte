@@ -15,6 +15,7 @@ import { hasAnsweredAll } from '@/lib/questions'
 import { ArrowRight } from 'lucide-react'
 import { creerCoupleSolo } from '@/lib/couple-join'
 import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
+import { dechiffrerLignes } from '@/lib/chiffrement'
 
 export default async function TableauDeBordPage({
   searchParams,
@@ -73,7 +74,7 @@ export default async function TableauDeBordPage({
       .from('reponses')
       .select('module_id, user_id, question_slug, valeur')
       .in('module_id', modules.map(m => m.id))
-    reponses = reps || []
+    reponses = dechiffrerLignes(reps)
   }
 
   const locale = await getLocale()

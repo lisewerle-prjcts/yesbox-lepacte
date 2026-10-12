@@ -9,6 +9,7 @@ import { ABONNEMENT_COLONNES } from '@/types'
 import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
+import { dechiffrerLignes } from '@/lib/chiffrement'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -191,7 +192,8 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
       const slug = encodeURIComponent(info.slug)
       if (!mod.reponses_partagees) {
         const { data: reponses } = await admin.from('reponses').select('user_id, question_slug, valeur').eq('module_id', mod.id)
-        const fini = (m: Membre) => hasAnsweredAll(info.questions, (reponses ?? []).filter(r => r.user_id === m.id))
+        const reponsesClaires = dechiffrerLignes(reponses)
+        const fini = (m: Membre) => hasAnsweredAll(info.questions, reponsesClaires.filter(r => r.user_id === m.id))
         const [a, b] = membres
         href = `${base}/module/${slug}`
         if (fini(a) !== fini(b)) {
@@ -203,8 +205,9 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
         }
       } else {
         const { data: conclusions } = await admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', couple.id).eq('module_slug', info.slug)
+        const conclusionsClaires = dechiffrerLignes(conclusions)
         const conclusionFaite = (m: Membre) => ['apprentissage', 'surprise'].every(q =>
-          (conclusions ?? []).some(c => c.user_id === m.id && c.question_slug === q && c.valeur?.trim())
+          conclusionsClaires.some(c => c.user_id === m.id && c.question_slug === q && c.valeur?.trim())
         )
         const [a, b] = membres
         href = `${base}/module/${slug}/revelation`

@@ -8,6 +8,7 @@ import { consentementManquant } from '@/lib/consentement'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
+import { chiffrer } from '@/lib/chiffrement'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -91,7 +92,7 @@ export async function enregistrerPacteTexte(texte: string) {
 
   const { error } = await supabase
     .from('couples')
-    .update({ pacte_texte: texte, pacte_modifie_par: user.id, pacte_modifie_le: new Date().toISOString() })
+    .update({ pacte_texte: chiffrer(texte), pacte_modifie_par: user.id, pacte_modifie_le: new Date().toISOString() })
     .eq('id', profile.couple_id)
 
   if (error) return { error: error.message }

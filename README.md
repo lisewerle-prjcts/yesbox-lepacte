@@ -100,6 +100,19 @@ CRON_SECRET=...
   l'abonnement ne peut plus être réactivé sur ce couple, il faut recommencer
   avec un nouveau compte.
 
+## Chiffrement des contenus
+
+Les réponses aux modules, les conclusions du journal et le texte du pacte
+sont chiffrés (AES-256-GCM) par le serveur avant d'être enregistrés : en
+base, ils apparaissent sous la forme `enc:v1:…` (cf. `src/lib/chiffrement.ts`).
+
+- Clé : variable `DONNEES_CLE_CHIFFREMENT` (au moins 32 caractères
+  aléatoires), identique dans tous les environnements reliés à la même base.
+- **Sans cette clé, les contenus chiffrés sont définitivement perdus** : la
+  conserver dans un gestionnaire de mots de passe, ne jamais la changer.
+- Les contenus enregistrés avant la mise en place sont chiffrés chaque nuit
+  par `GET /api/cron/purger-comptes-expires` (réponse : `chiffres`).
+
 ## E-mails de rappel
 
 Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.

@@ -10,6 +10,7 @@ import { consentementManquant } from '@/lib/consentement'
 import { moduleDuCouple, revelerSiPret } from '@/lib/progression'
 import { notifierPartenaire } from '@/lib/notifications-module'
 import { marquerActivite } from '@/lib/activite'
+import { chiffrer } from '@/lib/chiffrement'
 
 // Chaque partenaire écrit sa conclusion de son côté, en 2 questions
 // ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"), une fois que les
@@ -38,8 +39,8 @@ export async function sauvegarderConclusion(
   }
 
   const rows = [
-    { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'apprentissage', valeur: apprentissage },
-    { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'surprise', valeur: surprise },
+    { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'apprentissage', valeur: chiffrer(apprentissage) },
+    { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'surprise', valeur: chiffrer(surprise) },
   ]
   const { error } = await supabase
     .from('journal_entries')
