@@ -36,6 +36,9 @@ export const EN_CONTENT: Record<string, string> = {
   'pacte.signature.titre': 'Sign your Pact',
   'pacte.signature.texte': "By signing, you commit to honoring the values and agreements you've explored together.",
   'pacte.signature.cta': 'Sign our Pact',
+  'pacte.rdv.option.unan': 'One year from today',
+  'pacte.rdv.option.saintvalentin': "On Valentine's Day",
+  'pacte.rdv.option.perso': 'On a date that means something to you',
 
   // src/app/tarifs/page.tsx
   'tarifs.nav.seconnecter': 'Log in',
