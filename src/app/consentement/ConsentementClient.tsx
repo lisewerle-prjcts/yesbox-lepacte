@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Lock } from 'lucide-react'
 import { useFormStatus } from 'react-dom'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
@@ -56,6 +57,12 @@ export default function ConsentementClient({ prenom }: { prenom: string }) {
           {error && <Alert type="error" message={error} className="mb-5" />}
 
           <form action={handleAction} className="space-y-5">
+          <div className="flex items-start gap-3 p-3 rounded-lg" style={{ background: 'var(--brand-tint, #fdeef4)' }}>
+            <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--brand)' }} />
+            <p className="text-sm" style={{ color: 'var(--ink-2)' }}>
+              <EditableText id="inscription.chiffrement" multiline>Toutes vos réponses aux questions de ce programme ne sont visibles que par vous deux et sont chiffrées sur nos serveurs. Ni l&apos;équipe YES BOX ni aucune intelligence artificielle n&apos;y a accès.</EditableText>
+            </p>
+          </div>
             <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" name="age_minimum" required className="mt-1 flex-shrink-0" />
               <span className="text-sm text-gray-600">

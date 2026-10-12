@@ -55,7 +55,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.sansjugement.titre">Entre vous deux, sans jugement</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.sansjugement.lecture" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
+              <EditableText id="regles.sansjugement.lecture" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux et sont chiffrées sur nos serveurs. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
             </p>
             <p style={{ color: 'var(--muted)', marginTop: 8 }}>
               <EditableText id="regles.sansjugement.jugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>
