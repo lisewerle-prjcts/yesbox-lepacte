@@ -306,6 +306,8 @@ export const EN_CONTENT: Record<string, string> = {
   'home.modules.title.line1': 'Nine modules to lay the groundwork.',
   'home.modules.title.line2': 'A tenth to make it last.',
   'home.modules.duree': 'Each module has between 10 and 15 questions. Together, plan for 30 to 60 minutes, depending on the conversations they spark. In all, that means setting aside 9 short evenings.',
+  'home.modules.confidentialite': 'No one else reads your answers: they stay visible only to the two of you. You can download them at any time, and delete them when you leave the program.',
+  'home.modules.sansjugement': 'And no judgment: no therapist and no artificial intelligence analyzes what you write. Just questions to help you talk to each other.',
   'home.modules.infos.prefix': 'For more information, read the',
   'home.modules.infos.link': 'legal notice',
   'home.pacte.eyebrow': '— Our ritual',
