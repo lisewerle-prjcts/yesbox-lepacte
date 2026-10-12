@@ -77,7 +77,7 @@ export default function OffresTarifs({ onInscription }: { onInscription: () => v
       <div className="card p-6 flex flex-col gap-4">
         <div className="tag-brand self-start"><EditableText id="offres.bac.tag">Votre rendez-vous annuel</EditableText></div>
         <div>
-          <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>39 <small style={{ fontSize: 20 }}>{t('€/an', '€/year')}</small></div>
+          <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>{t('€/an', '€/year')}</small></div>
           <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="offres.bac.desc">À activer plus tard</EditableText></div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />

@@ -126,7 +126,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
             {annuleAPeriodeFin
               ? t('Après cette date, seules les parties déjà réalisées restent consultables.', 'After this date, only the parts you already completed remain viewable.')
               : formule === 'annuel'
-              ? t('39€/an · résiliable à tout moment.', '€39/year · cancel anytime.')
+              ? t('19€/an · résiliable à tout moment.', '€19/year · cancel anytime.')
               : t('29€/mois · résiliable à tout moment.', '€29/month · cancel anytime.')}
           </p>
           {annuelPrevuLe && formule !== 'annuel' && !annuleAPeriodeFin && (
@@ -134,7 +134,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
               <p className="text-gray-700 mb-2">
                 {t('Passage à « Pacte – notre rendez-vous annuel » prévu le', 'Switch to "Pact – our yearly date" scheduled on')}{' '}
                 <strong>{formatDate(annuelPrevuLe, locale)}</strong>
-                {t(' : 39€ seront prélevés ce jour-là, pour 1 an d’accès.', ': €39 will be charged that day, for 1 year of access.')}
+                {t(' : 19€ seront prélevés ce jour-là, pour 1 an d’accès.', ': €19 will be charged that day, for 1 year of access.')}
               </p>
               <button onClick={garderMensuel} disabled={status === 'saving'} className="btn-ghost text-sm py-1 px-3">
                 {t('Rester au mensuel', 'Stay on monthly')}
@@ -144,7 +144,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
           {proposerAnnuel && (
             <p className="text-sm mb-4">
               <Link href="/journal#rdv-annuel-offre" className="text-magenta font-semibold">
-                {t('Votre pacte est signé : passer au rendez-vous annuel (39€/an)', 'Your pact is signed: switch to the yearly date (€39/year)')}
+                {t('Votre pacte est signé : passer au rendez-vous annuel (19€/an)', 'Your pact is signed: switch to the yearly date (€19/year)')}
               </Link>
             </p>
           )}

@@ -69,11 +69,11 @@ export async function demarrerAbonnement() {
   }
 }
 
-// Bascule vers « Pacte – notre rendez-vous annuel » (39 €/an), proposée une
+// Bascule vers « Pacte – notre rendez-vous annuel » (19 €/an), proposée une
 // fois le pacte signé. Deux cas :
 //   - abonnement mensuel Stripe en cours : le couple valide la bascule, qui
 //     est programmée (subscription schedule) à la fin du mois déjà payé.
-//     Rien ne change d'ici là ; à cette date, les 39 € sont prélevés sur la
+//     Rien ne change d'ici là ; à cette date, les 19 € sont prélevés sur la
 //     carte enregistrée et une période d'un an commence. Un éventuel arrêt
 //     du renouvellement demandé sur le mensuel est levé ;
 //   - pas d'abonnement Stripe en cours : paiement immédiat via Stripe Checkout.

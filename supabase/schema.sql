@@ -1243,7 +1243,7 @@ alter table public.couples add column if not exists pacte_signe_par uuid referen
 alter table public.couples add column if not exists rdv_annuel_le date;
 
 -- ============================================================
--- PACTE – NOTRE RENDEZ-VOUS ANNUEL (abonnement annuel, 39 €/an)
+-- PACTE – NOTRE RENDEZ-VOUS ANNUEL (abonnement annuel, 19 €/an)
 -- Proposé une fois le pacte signé. Formule de l'abonnement Stripe en
 -- cours (mensuel / annuel), répliquée par le webhook Stripe et l'action
 -- passerAuRendezVousAnnuel. Un couple au mensuel valide la bascule, qui
@@ -1254,7 +1254,7 @@ alter table public.couples add column if not exists rdv_annuel_le date;
 alter table public.couples add column if not exists subscription_formule text
   check (subscription_formule in ('mensuel', 'annuel'));
 -- Bascule programmée du mensuel vers l'annuel : date de fin du mois déjà
--- payé, à laquelle Stripe prélève les 39 € (null une fois la bascule faite).
+-- payé, à laquelle Stripe prélève les 19 € (null une fois la bascule faite).
 alter table public.couples add column if not exists subscription_annuel_prevu_le timestamptz;
 update public.couples set subscription_formule = 'mensuel'
   where subscription_formule is null and stripe_subscription_id is not null;

@@ -59,7 +59,7 @@ export function peutAccederModule(
 // mensuelle, la seule formule existant avant le rendez-vous annuel).
 export interface FormuleCouple {
   formule: 'mensuel' | 'annuel' | null
-  /** Fin du mois en cours, date à laquelle l'abonnement passe à 39 €/an. */
+  /** Fin du mois en cours, date à laquelle l'abonnement passe à 19 €/an. */
   annuelPrevuLe: string | null
 }
 

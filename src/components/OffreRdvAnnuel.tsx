@@ -19,11 +19,11 @@ const AVANTAGES_EN = [
   'Cancel anytime: access stays open until the last day',
 ]
 
-// Offre « Pacte – notre rendez-vous annuel » (39 €/an), proposée une fois le
+// Offre « Pacte – notre rendez-vous annuel » (19 €/an), proposée une fois le
 // pacte signé (page Notre Pacte, page Abonnement).
 // mensuelEnCours : un abonnement mensuel Stripe est en cours — le couple
 // valide alors la bascule, qui a lieu à la fin du mois déjà payé (finPeriode) :
-// les 39 € sont prélevés ce jour-là sur la carte déjà enregistrée.
+// les 19 € sont prélevés ce jour-là sur la carte déjà enregistrée.
 
 function formaterDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -63,7 +63,7 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
         <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('C’est noté !', 'All set!')}</p>
         <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
           {basculeLe
-            ? t(`Le ${formaterDate(basculeLe, locale)}, votre abonnement passe à « Pacte – notre rendez-vous annuel » (39 €/an). D’ici là, rien ne change. Vous pouvez revenir sur ce choix depuis Mon compte.`, `On ${formaterDate(basculeLe, locale)}, your subscription switches to "Pact – our yearly date" (€39/year). Until then, nothing changes. You can undo this from My Account.`)
+            ? t(`Le ${formaterDate(basculeLe, locale)}, votre abonnement passe à « Pacte – notre rendez-vous annuel » (19 €/an). D’ici là, rien ne change. Vous pouvez revenir sur ce choix depuis Mon compte.`, `On ${formaterDate(basculeLe, locale)}, your subscription switches to "Pact – our yearly date" (€19/year). Until then, nothing changes. You can undo this from My Account.`)
             : t('Le passage au rendez-vous annuel est programmé à la fin de votre mois en cours.', 'The switch to the yearly date is scheduled for the end of your current month.')}
         </p>
       </div>
@@ -81,7 +81,7 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
           : t('Votre parcours initial est terminé : gardez votre rendez-vous annuel à deux.', 'Your initial program is complete: keep your yearly date together.')}
       </p>
       <div className="mb-4">
-        <div className="font-fraunces font-bold" style={{ fontSize: 40, color: 'white' }}>39 <small style={{ fontSize: 18 }}>{t('€/an', '€/year')}</small></div>
+        <div className="font-fraunces font-bold" style={{ fontSize: 40, color: 'white' }}>19 <small style={{ fontSize: 18 }}>{t('€/an', '€/year')}</small></div>
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>{t('accès pendant 1 an · résiliable à tout moment', '1 year of access · cancel anytime')}</div>
       </div>
       <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)', marginBottom: 16 }} />
@@ -98,11 +98,11 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
         <p className="mb-4" style={{ fontSize: 13, color: 'white', background: 'rgba(0,0,0,.15)', padding: '10px 12px', borderRadius: 8 }}>
           {t(
             finPeriode
-              ? `Rien ne change jusqu’à la fin de votre mois déjà payé. Le ${formaterDate(finPeriode, locale)}, votre abonnement mensuel s’arrête et passe à 39 €/an, prélevés ce jour-là sur la carte déjà enregistrée, pour 1 an d’accès.`
-              : 'Rien ne change jusqu’à la fin de votre mois déjà payé. À cette date, votre abonnement mensuel s’arrête et passe à 39 €/an, prélevés sur la carte déjà enregistrée, pour 1 an d’accès.',
+              ? `Rien ne change jusqu’à la fin de votre mois déjà payé. Le ${formaterDate(finPeriode, locale)}, votre abonnement mensuel s’arrête et passe à 19 €/an, prélevés ce jour-là sur la carte déjà enregistrée, pour 1 an d’accès.`
+              : 'Rien ne change jusqu’à la fin de votre mois déjà payé. À cette date, votre abonnement mensuel s’arrête et passe à 19 €/an, prélevés sur la carte déjà enregistrée, pour 1 an d’accès.',
             finPeriode
-              ? `Nothing changes until the end of the month you already paid for. On ${formaterDate(finPeriode, locale)}, your monthly subscription ends and switches to €39/year, charged that day to the card on file, for 1 year of access.`
-              : 'Nothing changes until the end of the month you already paid for. On that date, your monthly subscription ends and switches to €39/year, charged to the card on file, for 1 year of access.'
+              ? `Nothing changes until the end of the month you already paid for. On ${formaterDate(finPeriode, locale)}, your monthly subscription ends and switches to €19/year, charged that day to the card on file, for 1 year of access.`
+              : 'Nothing changes until the end of the month you already paid for. On that date, your monthly subscription ends and switches to €19/year, charged to the card on file, for 1 year of access.'
           )}
         </p>
       )}
@@ -118,8 +118,8 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
         {loading
           ? t('Un instant…', 'One moment…')
           : mensuelEnCours && confirmer
-          ? t('Je valide : passer à 39 €/an à la fin du mois', 'Confirm: switch to €39/year at the end of the month')
-          : <>{t('Activer notre rendez-vous annuel — 39 €/an', 'Activate our yearly date — €39/year')} <ArrowRight className="w-4 h-4" /></>}
+          ? t('Je valide : passer à 19 €/an à la fin du mois', 'Confirm: switch to €19/year at the end of the month')
+          : <>{t('Activer notre rendez-vous annuel — 19 €/an', 'Activate our yearly date — €19/year')} <ArrowRight className="w-4 h-4" /></>}
       </button>
       <p className="text-center mt-3" style={{ fontSize: 11, color: 'rgba(255,255,255,.6)' }}>
         {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte', 'Secure payment via Stripe · cancel anytime from My Account')}

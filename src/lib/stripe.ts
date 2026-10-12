@@ -12,7 +12,7 @@ export function getStripe(): Stripe {
 }
 
 export const PRIX_ABONNEMENT_MENSUEL_ID = process.env.STRIPE_PRICE_ID_ABONNEMENT_MENSUEL
-// « Pacte – notre rendez-vous annuel » (39 €/an), proposé une fois le pacte
+// « Pacte – notre rendez-vous annuel » (19 €/an), proposé une fois le pacte
 // signé : accès complet pour 1 an, renouvelable, résiliable à tout moment.
 export const PRIX_ABONNEMENT_ANNUEL_ID = process.env.STRIPE_PRICE_ID_ABONNEMENT_ANNUEL
 

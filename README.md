@@ -68,7 +68,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_ID_ABONNEMENT_MENSUEL=price_...
-# « Pacte – notre rendez-vous annuel » : prix récurrent annuel à 39 €
+# « Pacte – notre rendez-vous annuel » : prix récurrent annuel à 19 €
 STRIPE_PRICE_ID_ABONNEMENT_ANNUEL=price_...
 # Optionnel : sécurise la tâche planifiée de clôture des comptes après 13 mois
 CRON_SECRET=...
@@ -78,10 +78,10 @@ CRON_SECRET=...
 
 - Offre : abonnement mensuel (29 €/mois), proposé aux couples à la fin du
   module 1 gratuit (`/abonnement`), payé et géré via Stripe Checkout.
-- Offre « Pacte – notre rendez-vous annuel » (39 €/an), proposée une fois le
+- Offre « Pacte – notre rendez-vous annuel » (19 €/an), proposée une fois le
   pacte signé (page Notre Pacte, `/abonnement`, lien depuis `/mon-compte`).
   Un couple au mensuel valide la bascule : elle est programmée (planning
-  d'abonnement Stripe) à la fin du mois déjà payé, où les 39 € sont prélevés
+  d'abonnement Stripe) à la fin du mois déjà payé, où les 19 € sont prélevés
   sur la carte enregistrée ; « Rester au mensuel » (Mon compte) l'annule.
   Sans abonnement en cours, paiement immédiat via Stripe Checkout. Résiliable à
   tout moment : l'accès reste ouvert jusqu'au dernier jour de l'année payée.
