@@ -11,6 +11,7 @@ import { moduleDuCouple, etatReponses } from '@/lib/progression'
 import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { notifierPartenaire } from '@/lib/notifications-module'
+import { marquerActivite } from '@/lib/activite'
 
 export async function sauvegarderReponse(moduleId: string, questionSlug: string, valeur: string) {
   const supabase = await createClient()
@@ -40,6 +41,7 @@ export async function sauvegarderReponse(moduleId: string, questionSlug: string,
     { onConflict: 'module_id,user_id,question_slug' }
   )
   if (error) return { error: error.message }
+  after(() => marquerActivite(admin, mod.couple_id))
   return { success: true }
 }
 

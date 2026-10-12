@@ -26,6 +26,8 @@ export default async function Confidentialite() {
       t('Exécution du contrat, et obligation légale de conservation des pièces comptables (art. 6.1.b et 6.1.c RGPD)', 'Performance of the contract, and the legal obligation to keep accounting records (GDPR art. 6.1.b and 6.1.c)')],
     [t('Envoyer les e-mails de service (confirmation d’inscription, bienvenue, mot de passe, sécurité)', 'Sending service emails (sign-up confirmation, welcome, password, security)'),
       t('Exécution du contrat (art. 6.1.b RGPD)', 'Performance of the contract (GDPR art. 6.1.b)')],
+    [t('Envoyer des rappels pour accompagner votre parcours (parcours en pause depuis 10 jours, e-mail mensuel une fois le pacte signé), désactivables depuis Mon compte ou en bas de chaque e-mail', 'Sending reminders to support your program (program paused for 10 days, monthly email once the pact is signed), which you can turn off from My Account or at the bottom of each email'),
+      t('Exécution du contrat et intérêt légitime à vous accompagner dans le programme (art. 6.1.b et 6.1.f RGPD)', 'Performance of the contract and legitimate interest in supporting you through the program (GDPR art. 6.1.b and 6.1.f)')],
     [t('Sécuriser le service (limitation des tentatives de connexion, prévention des abus)', 'Securing the service (limiting login attempts, preventing abuse)'),
       t('Intérêt légitime à protéger le service et vos données (art. 6.1.f RGPD)', 'Legitimate interest in protecting the service and your data (GDPR art. 6.1.f)')],
     [t('Traiter les pré-commandes reçues avant l’ouverture du programme', 'Handling pre-orders received before the program opened'),
