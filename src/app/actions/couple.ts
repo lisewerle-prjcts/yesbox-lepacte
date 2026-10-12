@@ -7,7 +7,7 @@ import { t } from '@/lib/i18n/locale'
 import { consentementManquant } from '@/lib/consentement'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
-import { bornesRdvAnnuel } from '@/lib/rdv-annuel'
+import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -160,7 +160,7 @@ export async function signerPacte(dateRdvAnnuel: string) {
   if (rdv && (rdv.statut !== 'locked' || rdv.revealed)) return { error: t(locale, 'Votre rendez-vous annuel est déjà ouvert.', 'Your yearly date is already open.') }
 
   const { min, max } = bornesRdvAnnuel()
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRdvAnnuel) || dateRdvAnnuel < min || dateRdvAnnuel > max) {
+  if (!estDateValide(dateRdvAnnuel) || dateRdvAnnuel < min || dateRdvAnnuel > max) {
     return { error: t(locale, 'Choisis une date entre 6 mois et 1 an à partir d’aujourd’hui.', 'Pick a date between 6 months and 1 year from today.') }
   }
 

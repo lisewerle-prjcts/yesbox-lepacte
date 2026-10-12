@@ -12,7 +12,7 @@ import OffreRdvAnnuel from '@/components/OffreRdvAnnuel'
 import { lireFormule, offreRdvAnnuel } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
-import { bornesRdvAnnuel, anniversaireDansBornes } from '@/lib/rdv-annuel'
+import { bornesRdvAnnuel, anniversaireDansBornes, saintValentinDansBornes } from '@/lib/rdv-annuel'
 import { BookOpen, UserPlus } from 'lucide-react'
 import type { Module } from '@/types'
 
@@ -161,6 +161,7 @@ export default async function JournalPage() {
           max={bornesRdv.max}
           parDefaut={bornesRdv.parDefaut}
           anniversaire={anniversaireDansBornes(signature?.date_anniversaire ?? null)}
+          saintValentin={saintValentinDansBornes()}
         />
       )}
 
