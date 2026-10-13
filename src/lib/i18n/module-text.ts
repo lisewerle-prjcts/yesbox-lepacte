@@ -13,6 +13,7 @@ export function localizeQuestion(q: Question, locale: Locale): Question {
     lignes: q.lignes_en ?? q.lignes,
     labelMin: q.labelMin_en ?? q.labelMin,
     labelMax: q.labelMax_en ?? q.labelMax,
+    autre: q.autre_en ?? q.autre,
   }
 }
 

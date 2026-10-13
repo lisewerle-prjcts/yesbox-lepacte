@@ -124,6 +124,11 @@ export interface Question {
   max?: number
   labelMin?: string
   labelMax?: string
+  /**
+   * Type "choix_multiple" : libellé d'un champ libre affiché sous les cases
+   * ("Autre : …"), rempli en plus ou à la place des cases cochées.
+   */
+  autre?: string
   /** Traduction anglaise US par défaut de `texte` (contenu statique des modules). */
   texte_en?: string
   hint_en?: string
@@ -131,6 +136,7 @@ export interface Question {
   lignes_en?: string[]
   labelMin_en?: string
   labelMax_en?: string
+  autre_en?: string
 }
 
 /** Libellés d'une question de fin de module (affichée à la révélation et dans le journal). */

@@ -7,8 +7,8 @@ import { sauvegarderReponse, terminerModule } from '@/app/actions/modules'
 import EditableText from '@/components/edit-mode/EditableText'
 import Alert from '@/components/ui/Alert'
 import { useT } from '@/components/i18n/LocaleContext'
-import { isQuestionAnswered, parseGrille, serializeGrille } from '@/lib/questions'
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { isQuestionAnswered, parseChoixMultiple, parseGrille, serializeChoixMultiple, serializeGrille } from '@/lib/questions'
+import { ArrowLeft, ArrowRight, Check, CheckCircle } from 'lucide-react'
 import type { ModuleInfo, Module, Reponse, Question } from '@/types'
 
 interface Props {
@@ -155,7 +155,7 @@ export default function ModuleQuestions({ moduleInfo, moduleData, mesReponses, p
       {/* Question card */}
       <div className="card p-7 mb-5 slide-up" key={q.slug}>
         <div className="eyebrow mb-4">{t('Question', 'Question')} {String(idx + 1).padStart(2, '0')}</div>
-        <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 24 }}>
+        <h2 className="font-serif" style={{ fontSize: 'clamp(19px, 3vw, 24px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 24, whiteSpace: 'pre-line' }}>
           {q.texte}
         </h2>
         <QuestionInput q={q} value={reponses[q.slug] ?? ''} onChange={v => setReponses(prev => ({ ...prev, [q.slug]: v }))} />
@@ -204,27 +204,49 @@ function QuestionInput({ q, value, onChange }: { q: Question; value: string; onC
     )
   }
 
-  if ((q.type === 'choix' || q.type === 'choix_multiple') && q.options) {
-    const isMulti = q.type === 'choix_multiple'
-    const selected: (string | number)[] = isMulti
-      ? (value ? value.split('||') : [])
-      : [value]
-
+  if (q.type === 'choix_multiple' && q.options) {
+    const { choix, autre } = parseChoixMultiple(value)
     return (
       <div className="flex flex-col gap-2.5">
         {q.options.map((opt, i) => {
-          const isOn = isMulti ? selected.includes(String(i)) : value === String(i)
+          const isOn = choix.includes(i)
           return (
-            <button key={i} type="button" onClick={() => {
-              if (isMulti) {
-                const arr = selected.map(String)
-                const si = String(i)
-                const next = arr.includes(si) ? arr.filter(x => x !== si) : [...arr, si]
-                onChange(next.join('||'))
-              } else {
-                onChange(String(i))
-              }
+            <button key={i} type="button" aria-pressed={isOn} onClick={() => {
+              const next = isOn ? choix.filter(x => x !== i) : [...choix, i].sort((a, b) => a - b)
+              onChange(serializeChoixMultiple({ choix: next, autre }))
             }}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-sm font-medium"
+              style={{
+                background: isOn ? 'var(--brand-tint)' : 'var(--cream)',
+                border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--line)'}`,
+                color: isOn ? 'var(--brand)' : 'var(--ink)',
+              }}>
+              <span className="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
+                style={{ borderColor: isOn ? 'var(--brand)' : 'var(--muted-2)', background: isOn ? 'var(--brand)' : 'transparent' }}>
+                {isOn && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+              </span>
+              {opt}
+            </button>
+          )
+        })}
+        {q.autre && (
+          <label className="flex flex-col gap-2 mt-2">
+            <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{q.autre}</span>
+            <textarea value={autre} onChange={e => onChange(serializeChoixMultiple({ choix, autre: e.target.value }))}
+              placeholder={t('Écris ce qui te vient…', 'Write down what comes to mind…')} rows={3} className="field" />
+          </label>
+        )}
+      </div>
+    )
+  }
+
+  if (q.type === 'choix' && q.options) {
+    return (
+      <div className="flex flex-col gap-2.5">
+        {q.options.map((opt, i) => {
+          const isOn = value === String(i)
+          return (
+            <button key={i} type="button" onClick={() => onChange(String(i))}
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-sm font-medium"
               style={{
                 background: isOn ? 'var(--brand-tint)' : 'var(--cream)',
