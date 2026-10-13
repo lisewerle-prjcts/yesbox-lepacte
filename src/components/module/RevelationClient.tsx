@@ -124,7 +124,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             if (q.type === 'grille') {
               return (
                 <div key={q.slug}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{q.texte}</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14, whiteSpace: 'pre-line' }}>{q.texte}</p>
                   <GrilleComparaison
                     q={q}
                     maValeur={myMap[q.slug]}
@@ -147,7 +147,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
             return (
               <div key={q.slug}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14 }}>{q.texte}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14, whiteSpace: 'pre-line' }}>{q.texte}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: '1px solid var(--dark-line)' }}>
                     <div className="flex items-center gap-2 mb-3">

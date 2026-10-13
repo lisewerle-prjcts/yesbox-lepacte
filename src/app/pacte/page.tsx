@@ -224,7 +224,7 @@ export default async function PactePage() {
                   if (question.type === 'grille') {
                     return (
                       <div key={question.slug}>
-                        <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{question.texte}</p>
+                        <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10, whiteSpace: 'pre-line' }}>{question.texte}</p>
                         <GrilleComparaison
                           q={question}
                           maValeur={maReponse?.valeur}
@@ -241,7 +241,7 @@ export default async function PactePage() {
 
                   return (
                     <div key={question.slug}>
-                      <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>{question.texte}</p>
+                      <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10, whiteSpace: 'pre-line' }}>{question.texte}</p>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="surface p-3" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
                           <p className="font-semibold" style={{ fontSize: 11, color: 'var(--brand)', marginBottom: 4 }}>

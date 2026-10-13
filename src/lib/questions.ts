@@ -23,12 +23,45 @@ export function serializeGrille(grille: Record<number, number>): string {
   return JSON.stringify(grille)
 }
 
+/**
+ * Réponse à une question "choix_multiple" : les index des cases cochées et,
+ * si la question a un champ "autre", le texte libre. Stockée en JSON quand il y
+ * a un texte libre, sinon sous l'ancienne forme "0||2". Une ancienne réponse en
+ * texte libre (question passée de "text" à "choix_multiple") est reprise comme
+ * texte "autre".
+ */
+export interface ChoixMultiple { choix: number[]; autre: string }
+
+export function parseChoixMultiple(val: string | null | undefined): ChoixMultiple {
+  if (!val) return { choix: [], autre: '' }
+  if (val.startsWith('{')) {
+    try {
+      const raw = JSON.parse(val)
+      return {
+        choix: Array.isArray(raw?.choix) ? raw.choix.filter((n: unknown) => typeof n === 'number') : [],
+        autre: typeof raw?.autre === 'string' ? raw.autre : '',
+      }
+    } catch { /* texte libre commençant par "{" */ }
+  }
+  if (/^\d+(\|\|\d+)*$/.test(val)) return { choix: val.split('||').map(Number), autre: '' }
+  return { choix: [], autre: val }
+}
+
+export function serializeChoixMultiple({ choix, autre }: ChoixMultiple): string {
+  if (autre) return JSON.stringify({ choix, autre })
+  return choix.join('||')
+}
+
 /** Une question est répondue quand sa valeur est non vide ; une grille, quand chaque ligne est cochée. */
 export function isQuestionAnswered(q: Question, val: string | null | undefined): boolean {
   if (val === undefined || val === null || val === '') return false
   if (q.type === 'grille') {
     const grille = parseGrille(val)
     return (q.lignes ?? []).every((_, i) => grille[i] !== undefined)
+  }
+  if (q.type === 'choix_multiple') {
+    const { choix, autre } = parseChoixMultiple(val)
+    return choix.length > 0 || autre.trim() !== ''
   }
   return true
 }
@@ -58,7 +91,10 @@ export function formatAnswer(q: Question, val: string | null | undefined): strin
   if (val === undefined || val === null || val === '') return null
   if (q.type === 'choix' && q.options) return q.options[parseInt(val)] ?? val
   if (q.type === 'choix_multiple' && q.options) {
-    return val.split('||').map(i => q.options![parseInt(i)]).filter(Boolean).join(', ') || val
+    const { choix, autre } = parseChoixMultiple(val)
+    const libelles = choix.map(i => q.options![i]).filter(Boolean)
+    if (autre.trim()) libelles.push(autre.trim())
+    return libelles.join(', ') || null
   }
   if (q.type === 'echelle') return `${val} / ${q.max ?? 10}`
   if (q.type === 'grille') return formatGrille(q, val)
