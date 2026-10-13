@@ -4,7 +4,8 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getInviteLink } from '@/app/actions/couple'
 import { getLocale, getT } from '@/lib/i18n/server'
-import { localizeModules } from '@/lib/i18n/module-text'
+import { localizeModule, localizeModules } from '@/lib/i18n/module-text'
+import { MODULES } from '@/lib/modules-data'
 import EditableText from '@/components/edit-mode/EditableText'
 import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { CoupleAbonnement, Module } from '@/types'
@@ -153,6 +154,10 @@ export default async function TableauDeBordPage({
         if (nextIdx === -1) return null
         const next = effectiveModules[nextIdx]
         const titre = next.titre
+        // Même description que sur la page d'accueil (texte de référence du
+        // module de base), pour ne pas afficher une ancienne version.
+        const moduleBase = MODULES.find(m => m.slug === next.slug)
+        const description = moduleBase ? localizeModule(moduleBase, locale).description : next.description
 
         const nextModData = modules.find(m => m.slug === next.slug)
         const mesReponses = nextModData ? reponses.filter(r => r.module_id === nextModData.id && r.user_id === user.id) : []
@@ -179,7 +184,7 @@ export default async function TableauDeBordPage({
             <div style={{ flex: 1, minWidth: 200 }}>
               <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.prochaineetape.label">PROCHAINE ÉTAPE</EditableText> · MODULE {String(nextIdx + 1).padStart(2, '0')}</p>
               <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>{titre}</p>
-              <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{next.description}</EditableText></p>
+              <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{description}</EditableText></p>
             </div>
             <Link href={abonnementRequis ? '/abonnement' : href} className="btn-brand">
               {abonnementRequis
