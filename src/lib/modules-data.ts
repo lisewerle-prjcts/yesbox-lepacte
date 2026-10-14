@@ -378,7 +378,7 @@ export const MODULES: ModuleInfo[] = [
       },
     },
     questions: [
-      { slug: 'chemin_parcouru', type: 'text', texte: "Regarder le chemin — Relis ton journal et vos réponses de bilan : qu'est-ce qui a déjà changé entre vous depuis le début du programme ?", texte_en: "Looking back on the path — Reread your journal and your end-of-module answers: what has already changed between you since the start of the program?" },
+      { slug: 'chemin_parcouru', type: 'text', texte: "Pour commencer, rends-toi dans l'onglet NOTRE PACTE et relis vos réponses de bilan, puis reviens ici et indique le module avec lequel tu as le plus appris sur l'autre.", texte_en: "To begin, go to the OUR PACT tab and reread your end-of-module answers, then come back here and tell us which module taught you the most about your partner." },
       { slug: 'gratitude', type: 'text', texte: "À quel sujet éprouves-tu de la gratitude envers l'autre ?", texte_en: "What are you grateful to your partner for?" },
       { slug: 'socle', type: 'text', texte: "Votre socle — Selon toi, quels sont les 3 principes de base d'un couple heureux… et du vôtre en particulier ?", texte_en: "Your foundation — In your view, what are the 3 core principles of a happy couple… and of yours in particular?" },
       { slug: 'sens_engager', type: 'text', texte: "Que veut dire pour toi « s'engager » ?", texte_en: "What does \"committing\" mean to you?" },
