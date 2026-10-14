@@ -33,6 +33,7 @@ export const EN_CONTENT: Record<string, string> = {
   // src/app/journal/page.tsx
   'journal.titre': 'Our Pact',
   'journal.souscritre': 'Your takeaways after each reveal',
+  'journal.pacte.attente': 'Your pact will appear here once you have completed the program.',
   'journal.nonpaire.texte': 'Your journal and your Pact fill in once both of your accounts are paired.',
   'journal.nonpaire.cta': 'Find my couple code',
   'journal.vide.titre': 'No entries yet',
