@@ -89,7 +89,8 @@ export function hasAnsweredAll(questions: Question[], reponses: { question_slug:
 /** Réponse lisible (choix → libellé, échelle → "x / max", grille → résumé texte). */
 export function formatAnswer(q: Question, val: string | null | undefined): string | null {
   if (val === undefined || val === null || val === '') return null
-  if (q.type === 'choix' && q.options) return q.options[parseInt(val)] ?? val
+  // Une ancienne réponse en texte libre (question passée de "text" à "choix") reste affichée telle quelle.
+  if (q.type === 'choix' && q.options) return /^\d+$/.test(val) ? q.options[Number(val)] ?? val : val
   if (q.type === 'choix_multiple' && q.options) {
     const { choix, autre } = parseChoixMultiple(val)
     const libelles = choix.map(i => q.options![i]).filter(Boolean)
