@@ -6,19 +6,23 @@ const NOCES: Record<number, string> = {
   11: 'corail', 12: 'soie', 13: 'muguet', 14: 'plomb', 15: 'cristal',
   16: 'saphir', 17: 'rose', 18: 'turquoise', 19: 'cretonne', 20: 'porcelaine',
   21: 'opale', 22: 'bronze', 23: 'béryl', 24: 'satin', 25: 'argent',
-  30: 'perle', 35: 'rubis', 40: 'émeraude', 45: 'vermeil', 50: 'or',
+  26: 'jade', 27: 'acajou', 28: 'nickel', 29: 'velours', 30: 'perle',
+  31: 'basane', 32: 'cuivre', 33: 'porphyre', 34: 'ambre', 35: 'rubis',
+  36: 'mousseline', 37: 'papier', 38: 'mercure', 39: 'crêpe', 40: 'émeraude',
+  41: 'fer', 42: 'nacre', 43: 'flanelle', 44: 'topaze', 45: 'vermeil',
+  46: 'lavande', 47: 'cachemire', 48: 'améthyste', 49: 'cèdre', 50: 'or',
   55: 'orchidée', 60: 'diamant', 65: 'fer', 70: 'platine', 75: 'albâtre', 80: 'chêne',
 }
 
-const ANNEES_CONNUES = Object.keys(NOCES).map(Number).sort((a, b) => a - b)
-
-function findMatiere(years: number): string {
-  return NOCES[years] || NOCES[[...ANNEES_CONNUES].reverse().find(y => y <= years) ?? 1]
+// Nom des noces pour ce nombre d'années exactement (null s'il n'y en a pas
+// dans la liste : on n'affiche pas celui d'une autre année).
+function findMatiere(years: number): string | null {
+  return NOCES[years] ?? null
 }
 
 export interface AnniversaireCouple {
   years: number
-  matiere: string
+  matiere: string | null
   date: Date
 }
 
