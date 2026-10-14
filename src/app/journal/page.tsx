@@ -4,6 +4,7 @@ import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { localizeModules } from '@/lib/i18n/module-text'
 import { conclusionDuModule } from '@/lib/modules-data'
+import { formatConclusion } from '@/lib/questions'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
 import PacteDocument from './PacteDocument'
@@ -111,8 +112,8 @@ export default async function JournalPage() {
             const questions = (['apprentissage', 'surprise'] as const).map(slug => ({
               slug,
               label: conclusion[slug].label,
-              moi: getConclusion(moduleInfo.slug, user.id, slug),
-              autre: partner ? getConclusion(moduleInfo.slug, partner.id, slug) : '',
+              moi: formatConclusion(conclusion[slug], getConclusion(moduleInfo.slug, user.id, slug)),
+              autre: partner ? formatConclusion(conclusion[slug], getConclusion(moduleInfo.slug, partner.id, slug)) : '',
             }))
 
             return (

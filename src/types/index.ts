@@ -148,6 +148,15 @@ export interface ConclusionTexte {
   /** Texte d'aide affiché sous l'intitulé (optionnel). */
   aide?: string
   aide_en?: string
+  /**
+   * Cases à cocher à la place du texte libre (comme une question "choix_multiple") ;
+   * la réponse est stockée au même format (voir `serializeChoixMultiple`).
+   */
+  options?: string[]
+  options_en?: string[]
+  /** Avec `options` : libellé d'un champ libre affiché sous les cases ("Autre : …"). */
+  autre?: string
+  autre_en?: string
 }
 
 export interface ModuleInfo {

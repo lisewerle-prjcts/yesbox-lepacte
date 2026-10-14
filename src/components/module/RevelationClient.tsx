@@ -3,17 +3,17 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle } from 'lucide-react'
 import { sauvegarderConclusion } from '@/app/actions/journal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import GrilleComparaison from '@/components/module/GrilleComparaison'
-import { formatAnswer } from '@/lib/questions'
+import { formatAnswer, isConclusionAnswered, parseChoixMultiple, serializeChoixMultiple } from '@/lib/questions'
 import { conclusionDuModule } from '@/lib/modules-data'
 
 // Modules 2 à 7 : même explication avant la conclusion.
 const MODULES_CONCLUSION_STANDARD = ['nous', 'quotidien', 'projets', 'famille', 'communication', 'intimite']
-import type { ModuleInfo, Module, Reponse } from '@/types'
+import type { ConclusionTexte, ModuleInfo, Module, Reponse } from '@/types'
 
 interface ConclusionRow { question_slug: string; valeur: string | null }
 
@@ -33,6 +33,50 @@ interface Props {
 
 function getConclusion(rows: ConclusionRow[], slug: 'apprentissage' | 'surprise'): string {
   return rows.find(r => r.question_slug === slug)?.valeur ?? ''
+}
+
+const styleChamp = { width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical' as const, fontFamily: 'inherit' }
+
+// Réponse à une question de conclusion : texte libre, ou cases à cocher
+// (+ champ « autre ») quand la question a des options.
+function ChampConclusion({ c, value, onChange, disabled }: { c: ConclusionTexte; value: string; onChange: (v: string) => void; disabled: boolean }) {
+  if (!c.options) {
+    return <textarea value={value} onChange={e => onChange(e.target.value)} disabled={disabled} placeholder={c.placeholder} rows={3}
+      style={{ ...styleChamp, opacity: disabled ? .8 : 1 }} />
+  }
+  const { choix, autre } = parseChoixMultiple(value)
+  return (
+    <div className="flex flex-col gap-2.5" style={{ opacity: disabled ? .8 : 1 }}>
+      {c.options.map((opt, i) => {
+        const isOn = choix.includes(i)
+        return (
+          <button key={i} type="button" aria-pressed={isOn} disabled={disabled} onClick={() => {
+            const next = isOn ? choix.filter(x => x !== i) : [...choix, i].sort((a, b) => a - b)
+            onChange(serializeChoixMultiple({ choix: next, autre }))
+          }}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-sm font-medium"
+            style={{
+              background: 'var(--dark)',
+              border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--dark-line)'}`,
+              color: 'var(--dark-paper)',
+            }}>
+            <span className="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
+              style={{ borderColor: isOn ? 'var(--brand)' : 'var(--dark-muted)', background: isOn ? 'var(--brand)' : 'transparent' }}>
+              {isOn && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+            </span>
+            {opt}
+          </button>
+        )
+      })}
+      {c.autre && (
+        <label className="flex flex-col gap-2 mt-2">
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark-muted)' }}>{c.autre}</span>
+          <textarea value={autre} onChange={e => onChange(serializeChoixMultiple({ choix, autre: e.target.value }))}
+            disabled={disabled} rows={3} style={styleChamp} />
+        </label>
+      )}
+    </div>
+  )
 }
 
 export default function RevelationClient({ moduleInfo, moduleData, mesReponses, reponsesPartner, reponsesPartagees, myName, partnerName, coupleId, maConclusion, partenaireConclusionFaite }: Props) {
@@ -61,7 +105,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
   const partnerConclusionDone = partenaireConclusionFaite
 
-  const canSave = apprentissage.trim().length > 0 && surprise.trim().length > 0
+  const canSave = isConclusionAnswered(conclusion.apprentissage, apprentissage) && isConclusionAnswered(conclusion.surprise, surprise)
 
   // Ma conclusion est enregistrée, celle de l'autre pas encore (ou le module
   // n'est pas encore scellé) : on rafraîchit régulièrement pour que le bouton
@@ -226,14 +270,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.aide`} multiline>{conclusion.apprentissage.aide}</EditableText>
               </p>
             )}
-            <textarea
-              value={apprentissage}
-              onChange={e => { setApprentissage(e.target.value); setSaved(false) }}
-              disabled={revealed}
-              placeholder={conclusion.apprentissage.placeholder}
-              rows={3}
-              style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
-            />
+            <ChampConclusion c={conclusion.apprentissage} value={apprentissage} onChange={v => { setApprentissage(v); setSaved(false) }} disabled={revealed} />
           </div>
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 28, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
@@ -245,14 +282,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.aide`} multiline>{conclusion.surprise.aide}</EditableText>
               </p>
             )}
-            <textarea
-              value={surprise}
-              onChange={e => { setSurprise(e.target.value); setSaved(false) }}
-              disabled={revealed}
-              placeholder={conclusion.surprise.placeholder}
-              rows={3}
-              style={{ width: '100%', background: 'var(--dark)', border: '1.5px solid var(--dark-line)', borderRadius: 'var(--r-sm)', padding: '12px 16px', color: 'var(--dark-paper)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', opacity: revealed ? .8 : 1 }}
-            />
+            <ChampConclusion c={conclusion.surprise} value={surprise} onChange={v => { setSurprise(v); setSaved(false) }} disabled={revealed} />
           </div>
 
           {revealed ? (
