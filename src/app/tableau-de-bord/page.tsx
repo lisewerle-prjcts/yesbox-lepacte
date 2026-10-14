@@ -11,9 +11,9 @@ import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
 import type { CoupleAbonnement, Module } from '@/types'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { peutAccederModule, estCompteResilie } from '@/lib/abonnement'
-import { realignerProgression, ouvrirRdvAnnuelSiDate, MODULE_PACTE } from '@/lib/progression'
+import { realignerProgression, ouvrirRdvAnnuelSiDate, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { hasAnsweredAll } from '@/lib/questions'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, CalendarHeart } from 'lucide-react'
 import { creerCoupleSolo } from '@/lib/couple-join'
 import { envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { dechiffrerLignes } from '@/lib/chiffrement'
@@ -44,16 +44,20 @@ export default async function TableauDeBordPage({
   let modules: Module[] = []
   let partner: { prenom: string | null; email: string; id: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
+  let signature: { pacte_signe_le: string | null; rdv_annuel_le: string | null } | null = null
   let coupleAbonnement: CoupleAbonnement | null = null
   let reponses: { module_id: string; user_id: string; question_slug: string; valeur: string | null }[] = []
 
   if (profile?.couple_id) {
-    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }] = await Promise.all([
+    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }, { data: sig }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
       supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
       supabase.from('couples').select('nom_couple, date_anniversaire').eq('id', profile.couple_id).single(),
       supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
+      // Requête à part : si les colonnes de signature manquent en base, le reste s'affiche.
+      supabase.from('couples').select('pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).maybeSingle(),
     ])
+    signature = sig
     modules = mods || []
     partner = part
     couple = coup
@@ -88,6 +92,9 @@ export default async function TableauDeBordPage({
   const pct = totalModuleCount ? Math.round((done / totalModuleCount) * 100) : 0
   // Le pacte se signe dès la fin du module 9 (le module 10 vient un an plus tard).
   const pacteASigner = modules.some(m => m.slug === MODULE_PACTE && m.revealed)
+  const pacteSigne = !!signature?.pacte_signe_le
+  const rdvLe = pacteSigne ? signature?.rdv_annuel_le ?? null : null
+  const rdvVerrouille = modules.find(m => m.slug === MODULE_RDV_ANNUEL)?.statut === 'locked'
 
   function getModStatus(slug: string): 'done' | 'active' | 'paywall' | 'locked' {
     const mod = modules.find(m => m.slug === slug)
@@ -139,12 +146,29 @@ export default async function TableauDeBordPage({
           <div className="bar sage"><i style={{ width: `${pct}%` }} /></div>
           <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
             <span className="text-sm font-semibold" style={{ color: pacteASigner ? 'var(--sage)' : 'var(--muted)' }}>
-              {pacteASigner
+              {pacteSigne
+                ? <EditableText id="dashboard.progression.signe">🎉 Votre pacte est signé !</EditableText>
+                : pacteASigner
                 ? <EditableText id="dashboard.progression.complete">🎉 Votre pacte est prêt à être signé !</EditableText>
                 : <EditableText id="dashboard.progression.encours">Voir le détail de votre progression</EditableText>}
             </span>
             <Link href="/pacte" className={pacteASigner ? 'btn-sage text-sm py-2' : 'btn-secondary text-sm py-2'}><EditableText id="dashboard.progression.voirpacte">Voir la progression</EditableText></Link>
           </div>
+        </div>
+      )}
+
+      {/* Date du bilan annuel, choisie à la signature du pacte (tant que le module 10 n'est pas ouvert) */}
+      {profile?.couple_id && rdvLe && rdvVerrouille && (
+        <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
+          <CalendarHeart className="w-8 h-8" style={{ color: 'var(--brand)', flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.rdv.label">VOTRE BILAN ANNUEL DE COUPLE</EditableText></p>
+            <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>
+              {new Date(`${rdvLe}T12:00:00Z`).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="pacte.rdv.attente" multiline>Le module « Notre rendez-vous annuel » se débloquera à cette date.</EditableText></p>
+          </div>
+          <Link href="/journal" className="btn-secondary text-sm py-2"><EditableText id="dashboard.rdv.voirpacte">Voir notre pacte</EditableText></Link>
         </div>
       )}
 

@@ -14,7 +14,7 @@ import { lireFormule, offreRdvAnnuel } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, anniversaireDansBornes, saintValentinDansBornes } from '@/lib/rdv-annuel'
-import { BookOpen, UserPlus } from 'lucide-react'
+import { BookOpen, PenLine, UserPlus } from 'lucide-react'
 import type { Module } from '@/types'
 import { dechiffrer, dechiffrerLignes } from '@/lib/chiffrement'
 
@@ -86,7 +86,17 @@ export default async function JournalPage() {
         </div>
       )}
 
-      {partner && revealedModules.length > 0 && (
+      {partner && !pacteTermine && (
+        <div className="card p-5 mb-6 flex items-center gap-3" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
+          <PenLine className="w-5 h-5" style={{ color: 'var(--brand)', flexShrink: 0 }} />
+          <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
+            <EditableText id="journal.pacte.attente" multiline>Votre pacte s&apos;affichera ici quand vous aurez terminé le programme.</EditableText>
+          </p>
+        </div>
+      )}
+
+      {/* Le pacte s'écrit à la fin du programme ; un texte déjà commencé reste visible. */}
+      {partner && (pacteTermine || !!couple?.pacte_texte) && (
         <PacteDocument
           initialTexte={dechiffrer(couple?.pacte_texte ?? null) ?? ''}
           modifiePar={modifiePartPrenom}
@@ -106,7 +116,8 @@ export default async function JournalPage() {
           {/* Du plus récent au plus ancien : le pacte (module 9) en haut, le module 1 en bas. */}
           {[...MODULES].sort((a, b) => b.n - a.n).map(moduleInfo => {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
-            if (!modData) return null
+            // Le module 9 se termine par la signature du pacte, sans conclusion.
+            if (!modData || moduleInfo.slug === MODULE_PACTE) return null
 
             const conclusion = conclusionDuModule(moduleInfo)
             const questions = (['apprentissage', 'surprise'] as const).map(slug => ({

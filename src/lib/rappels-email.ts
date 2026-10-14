@@ -4,7 +4,7 @@ import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { hasAnsweredAll } from '@/lib/questions'
 import { aAccesComplet, peutAccederModule } from '@/lib/abonnement'
-import { MODULE_RDV_ANNUEL } from '@/lib/progression'
+import { MODULE_RDV_ANNUEL, MODULE_PACTE, entreesDeFin } from '@/lib/progression'
 import { ABONNEMENT_COLONNES } from '@/types'
 import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
@@ -103,7 +103,7 @@ type EtapeRelance =
   | { type: 'conclusion_a_ton_tour'; attendu: Membre; autre: Membre }
   | { type: 'a_vous_deux'; debrief: boolean }
 
-function contenuRelance(etape: EtapeRelance, locale: Locale, titreBrut: string, numero: number, total: number, href: string) {
+function contenuRelance(etape: EtapeRelance, locale: Locale, titreBrut: string, numero: number, total: number, href: string, pacte = false) {
   const module = locale === 'en' ? `"${echapperHtml(titreBrut)}"` : `« ${echapperHtml(titreBrut)} »`
   const moduleBrut = locale === 'en' ? `"${titreBrut}"` : `« ${titreBrut} »`
   if (etape.type === 'reponses_a_ton_tour' || etape.type === 'conclusion_a_ton_tour') {
@@ -122,12 +122,21 @@ function contenuRelance(etape: EtapeRelance, locale: Locale, titreBrut: string, 
           + bouton(href, t(locale, 'Reprendre le module', 'Resume the module')),
       }
     }
+    if (pacte) {
+      return {
+        subject,
+        corps: p(t(locale,
+          `Votre parcours YES BOX est en pause depuis quelques jours. ${autre} a signé votre pacte et attend ta signature pour clore le programme.`,
+          `Your YES BOX program has been on pause for a few days. ${autre} has signed your pact and is waiting for your signature to complete the program.`))
+          + bouton(href, t(locale, 'Signer notre pacte', 'Sign our pact')),
+      }
+    }
     return {
       subject,
       corps: p(t(locale,
         `Votre parcours YES BOX est en pause depuis quelques jours. ${autre} a écrit sa conclusion du module ${module} et attend la tienne : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.`,
         `Your YES BOX program has been on pause for a few days. ${autre} has written their conclusion for the ${module} module and is waiting for yours: the next module will unlock as soon as both your conclusions are in the journal.`))
-        + p(t(locale, 'Quelques lignes suffisent : ce que tu as appris, ce qui t’a surpris.', 'A few lines are enough: what you learned, what surprised you.'))
+        + p(t(locale, 'Quelques lignes suffisent : ce que tu as appris, ce qui t’a surpris·e.', 'A few lines are enough: what you learned, what surprised you.'))
         + bouton(href, t(locale, 'Écrire ma conclusion', 'Write my conclusion')),
     }
   }
@@ -137,7 +146,9 @@ function contenuRelance(etape: EtapeRelance, locale: Locale, titreBrut: string, 
       'Cela fait quelques jours que votre parcours YES BOX n’a pas avancé. Rien de grave : la vie va vite. Mais c’est justement pour ça que ces moments à deux comptent.',
       'Your YES BOX program hasn’t moved forward for a few days. No big deal: life moves fast. But that’s exactly why these moments together matter.'))
       + p(etape.debrief
-        ? t(locale, `Votre prochaine étape : découvrir vos réponses et écrire vos conclusions du module <strong>${module}</strong> (${numero}/${total}).`, `Your next step: discover your answers and write your conclusions for the <strong>${module}</strong> module (${numero}/${total}).`)
+        ? (pacte
+          ? t(locale, `Votre prochaine étape : découvrir vos réponses du module <strong>${module}</strong> (${numero}/${total}) et signer votre pacte.`, `Your next step: discover your answers for the <strong>${module}</strong> module (${numero}/${total}) and sign your pact.`)
+          : t(locale, `Votre prochaine étape : découvrir vos réponses et écrire vos conclusions du module <strong>${module}</strong> (${numero}/${total}).`, `Your next step: discover your answers and write your conclusions for the <strong>${module}</strong> module (${numero}/${total}).`))
         : t(locale, `Votre prochaine étape : le module <strong>${module}</strong> (${numero}/${total}).`, `Your next step: the <strong>${module}</strong> module (${numero}/${total}).`))
       + p(etape.debrief
         ? t(locale, 'Une idée : choisissez dès maintenant un moment dans la semaine pour découvrir vos réponses ensemble.', 'An idea: pick a moment this week right now to discover your answers together.')
@@ -206,7 +217,7 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
       } else {
         const { data: conclusions } = await admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', couple.id).eq('module_slug', info.slug)
         const conclusionsClaires = dechiffrerLignes(conclusions)
-        const conclusionFaite = (m: Membre) => ['apprentissage', 'surprise'].every(q =>
+        const conclusionFaite = (m: Membre) => entreesDeFin(info.slug).every(q =>
           conclusionsClaires.some(c => c.user_id === m.id && c.question_slug === q && c.valeur?.trim())
         )
         const [a, b] = membres
@@ -230,7 +241,7 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
       const destinataires = etape.type === 'a_vous_deux' ? membres : [etape.attendu]
       for (const d of destinataires) {
         const titre = d.langue === 'en' ? info.titre_en ?? info.titre : info.titre
-        const { subject, corps } = contenuRelance(etape, d.langue, titre, index + 1, modulesParcours.length, href)
+        const { subject, corps } = contenuRelance(etape, d.langue, titre, index + 1, modulesParcours.length, href, info.slug === MODULE_PACTE)
         if (await envoyer(d, subject, corps)) envoyes++
       }
     } catch (e) {

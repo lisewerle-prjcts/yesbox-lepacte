@@ -10,7 +10,7 @@ import { formatAnswer, formatConclusion } from '@/lib/questions'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { consentementManquant } from '@/lib/consentement'
 import { encoderRestauration, decoderRestauration, type DonneesRestauration } from '@/lib/restauration'
-import { MODULE_RDV_ANNUEL } from '@/lib/progression'
+import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { chiffrer, dechiffrer, dechiffrerLignes } from '@/lib/chiffrement'
 
 export async function updateMesInfos(prenom: string) {
@@ -188,7 +188,8 @@ export async function telechargerMesDonnees() {
         lines.push('')
       }
       const conclusion = conclusionDuModule(modInfo)
-      for (const membre of visibles) {
+      // Le module 9 se termine par la signature du pacte, sans conclusion.
+      for (const membre of modInfo.slug === MODULE_PACTE ? [] : visibles) {
         const entrees = (journal || []).filter(j => j.module_slug === modInfo.slug && j.user_id === membre.id)
         const appris = formatConclusion(conclusion.apprentissage, entrees.find(j => j.question_slug === 'apprentissage')?.valeur).trim()
         const surpris = formatConclusion(conclusion.surprise, entrees.find(j => j.question_slug === 'surprise')?.valeur).trim()

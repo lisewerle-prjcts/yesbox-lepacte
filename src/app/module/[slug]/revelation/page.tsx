@@ -1,10 +1,12 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { moduleDuCouple, etatReponses, revelerSiPret } from '@/lib/progression'
+import { moduleDuCouple, etatReponses, revelerSiPret, entreesDeFin, MODULE_PACTE } from '@/lib/progression'
 import { getEffectiveModuleBySlug, getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeModule } from '@/lib/i18n/module-text'
 import RevelationClient from '@/components/module/RevelationClient'
+import RevelationPacte from '@/components/module/RevelationPacte'
+import { bornesRdvAnnuel, anniversaireDansBornes, saintValentinDansBornes } from '@/lib/rdv-annuel'
 import { peutAccederModule } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import type { Reponse } from '@/types'
@@ -54,7 +56,7 @@ export default async function RevelationPage({ params }: PageProps) {
   const maConclusion = dechiffrerLignes(maConclusionBrute)
   const conclusionPartenaire = dechiffrerLignes(conclusionPartenaireBrute)
   const conclusionFaite = (rows: { question_slug: string; valeur: string | null }[] | null) =>
-    ['apprentissage', 'surprise'].every(q => (rows ?? []).some(c => c.question_slug === q && c.valeur?.trim()))
+    entreesDeFin(slug).every(q => (rows ?? []).some(c => c.question_slug === q && c.valeur?.trim()))
   const partenaireConclusionFaite = conclusionFaite(conclusionPartenaire)
 
   // Filet de sécurité : les deux conclusions sont écrites mais le module n'a
@@ -64,6 +66,33 @@ export default async function RevelationPage({ params }: PageProps) {
   if (!revealed && etat.reponsesPartagees && partenaireConclusionFaite && conclusionFaite(maConclusion)) {
     const ordre = (await getEffectiveModules()).map(m => m.slug)
     revealed = await revelerSiPret(admin, { ...mod, reponses_partagees: true }, ordre)
+  }
+
+  if (slug === MODULE_PACTE) {
+    const { data: couple } = await admin.from('couples')
+      .select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single()
+    const bornes = bornesRdvAnnuel()
+    return (
+      <RevelationPacte
+        moduleInfo={moduleInfo}
+        moduleId={moduleData.id}
+        mesReponses={etat.mesReponses}
+        reponsesPartner={etat.reponsesPartenaire}
+        reponsesPartagees={etat.reponsesPartagees}
+        revealed={revealed}
+        myName={profile.prenom}
+        partnerName={partner?.prenom || null}
+        jaiSigne={conclusionFaite(maConclusion)}
+        partenaireASigne={partenaireConclusionFaite}
+        signeLe={couple?.pacte_signe_le ?? null}
+        rdvLe={couple?.rdv_annuel_le ?? null}
+        bornes={{
+          ...bornes,
+          anniversaire: anniversaireDansBornes(couple?.date_anniversaire ?? null),
+          saintValentin: saintValentinDansBornes(),
+        }}
+      />
+    )
   }
 
   return (
