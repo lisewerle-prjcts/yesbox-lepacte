@@ -16,7 +16,7 @@ export const MODULE_RDV_ANNUEL = 'renouvellement'
 //     (modules.reponses_partagees) ;
 //   - à partir de là, les réponses ne sont plus modifiables ;
 //   - le module est révélé (et le suivant débloqué) quand les deux ont
-//     écrit leur conclusion.
+//     écrit leur conclusion ; le module 9 (pacte), quand les deux l'ont signé.
 
 export interface ModuleCouple {
   id: string
@@ -25,6 +25,12 @@ export interface ModuleCouple {
   statut: string
   revealed: boolean
   reponses_partagees: boolean
+}
+
+// Entrées du journal qui terminent un module pour une personne : les deux
+// questions de conclusion, ou la signature pour le module du pacte.
+export function entreesDeFin(slug: string): string[] {
+  return slug === MODULE_PACTE ? ['signature'] : ['apprentissage', 'surprise']
 }
 
 interface ReponseBrute { module_id: string; user_id: string; question_slug: string; valeur: string | null }
@@ -88,7 +94,7 @@ export async function etatReponses<R extends ReponseBrute = ReponseBrute>(
 }
 
 // Révèle le module et débloque le suivant, uniquement si les deux ont
-// répondu à tout ET écrit leur conclusion.
+// répondu à tout ET écrit leur conclusion (signé, pour le pacte).
 export async function revelerSiPret(admin: AdminClient, mod: ModuleCouple, ordreModules: string[]): Promise<boolean> {
   if (mod.revealed) return true
   if (!mod.reponses_partagees) return false
@@ -99,12 +105,17 @@ export async function revelerSiPret(admin: AdminClient, mod: ModuleCouple, ordre
   ])
   if ((membres ?? []).length < 2) return false
   const conclusionsClaires = dechiffrerLignes(conclusions)
-  const conclusionFaite = (uid: string) => ['apprentissage', 'surprise'].every(slug =>
+  const conclusionFaite = (uid: string) => entreesDeFin(mod.slug).every(slug =>
     conclusionsClaires.some(c => c.user_id === uid && c.question_slug === slug && c.valeur?.trim())
   )
   if (!(membres ?? []).every(m => conclusionFaite(m.id))) return false
 
-  await admin.from('modules').update({ revealed: true, revealed_at: new Date().toISOString() }).eq('id', mod.id)
+  const maintenant = new Date().toISOString()
+  await admin.from('modules').update({ revealed: true, revealed_at: maintenant }).eq('id', mod.id)
+  // Pacte signé par les deux : il est daté du jour de la seconde signature.
+  if (mod.slug === MODULE_PACTE) {
+    await admin.from('couples').update({ pacte_signe_le: maintenant }).eq('id', mod.couple_id).is('pacte_signe_le', null)
+  }
   await realignerProgression(admin, mod.couple_id, ordreModules)
   return true
 }

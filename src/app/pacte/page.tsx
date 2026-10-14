@@ -147,11 +147,11 @@ export default async function PactePage() {
           <div className="flex items-center gap-3 mb-2">
             <Heart className="w-6 h-6" />
             <h2 className="font-serif font-bold" style={{ fontSize: 20 }}>
-              <EditableText id="pacte.pret.titre">Votre Pacte est prêt !</EditableText>
+              <EditableText id="pacte.termine.titre">Votre Pacte est signé !</EditableText>
             </h2>
           </div>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,.85)' }}>
-            <EditableText id="pacte.pret.texte" multiline>Vous avez répondu à toutes les questions. Explorez vos alignements ci-dessous, puis rendez-vous sur Notre Pacte pour le signer ensemble.</EditableText>
+            <EditableText id="pacte.termine.texte" multiline>Vous avez terminé le programme. Explorez vos alignements ci-dessous et retrouvez votre pacte dans l&apos;onglet Notre Pacte.</EditableText>
           </p>
         </div>
       ) : (

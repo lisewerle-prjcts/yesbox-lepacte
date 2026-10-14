@@ -116,7 +116,8 @@ export default async function JournalPage() {
           {/* Du plus récent au plus ancien : le pacte (module 9) en haut, le module 1 en bas. */}
           {[...MODULES].sort((a, b) => b.n - a.n).map(moduleInfo => {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
-            if (!modData) return null
+            // Le module 9 se termine par la signature du pacte, sans conclusion.
+            if (!modData || moduleInfo.slug === MODULE_PACTE) return null
 
             const conclusion = conclusionDuModule(moduleInfo)
             const questions = (['apprentissage', 'surprise'] as const).map(slug => ({

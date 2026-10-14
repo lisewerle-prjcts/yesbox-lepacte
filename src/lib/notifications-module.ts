@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { t, type Locale } from '@/lib/i18n/locale'
+import { MODULE_PACTE } from '@/lib/progression'
 import { langueDuProfil } from '@/lib/i18n/langue-profil'
 
 // E-mails envoyés à l'autre membre du couple à chaque étape d'un module :
@@ -72,6 +73,15 @@ function contenu(type: TypeNotification, auteurBrut: string, destinataireBrut: s
           + bouton(`${base}/module/${slug}/revelation`, t(locale, 'Découvrir nos réponses', 'Discover our answers')),
       }
     case 'journal_a_ton_tour':
+      if (slugBrut === MODULE_PACTE) {
+        return {
+          subject: t(locale, `${auteurBrut} a signé votre pacte`, `${auteurBrut} signed your pact`),
+          body: bonjour
+            + p(t(locale, `${auteur} vient de signer votre pacte de couple.`, `${auteur} just signed your couple's pact.`))
+            + p(t(locale, `À ton tour de le signer : le programme sera terminé dès que vos deux signatures seront posées.`, `Your turn to sign it: the program will be complete as soon as you have both signed.`))
+            + bouton(`${base}/module/${slug}/revelation`, t(locale, 'Signer notre pacte', 'Sign our pact')),
+        }
+      }
       return {
         subject: t(locale, `${auteurBrut} a écrit sa conclusion du module ${moduleBrut}`, `${auteurBrut} wrote their conclusion for the ${moduleBrut} module`),
         body: bonjour
@@ -80,6 +90,15 @@ function contenu(type: TypeNotification, auteurBrut: string, destinataireBrut: s
           + bouton(`${base}/module/${slug}/revelation`, t(locale, 'Écrire ma conclusion', 'Write my conclusion')),
       }
     case 'journal_complet':
+      if (slugBrut === MODULE_PACTE) {
+        return {
+          subject: t(locale, 'Votre pacte est signé', 'Your pact is signed'),
+          body: bonjour
+            + p(t(locale, `${auteur} vient de signer à son tour : votre pacte de couple porte vos deux signatures.`, `${auteur} just signed too: your couple's pact now bears both your signatures.`))
+            + p(t(locale, `Bravo pour tout ce chemin parcouru ensemble ! Retrouvez la date de votre rendez-vous annuel sur votre tableau de bord.`, `Congratulations on everything you've been through together! You'll find the date of your yearly date on your dashboard.`))
+            + bouton(`${base}/tableau-de-bord`, t(locale, 'Voir notre tableau de bord', 'See our dashboard')),
+        }
+      }
       return {
         subject: dernierModule
           ? t(locale, `Module ${moduleBrut} scellé`, `${moduleBrut} module sealed`)

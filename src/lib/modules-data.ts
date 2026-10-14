@@ -272,10 +272,10 @@ export const MODULES: ModuleInfo[] = [
         placeholder_en: "What you take away…",
       },
       surprise: {
-        label: "Que voulez-vous garder, arrêter ou changer dans vos rapports sexuels aujourd'hui ?",
-        placeholder: "Ce que vous voulez garder, arrêter ou changer…",
-        label_en: "What do you want to keep, stop or change in your sex life today?",
-        placeholder_en: "What you want to keep, stop or change…",
+        label: "Que voulez-vous maintenir, arrêter ou changer dans vos rapports intimes aujourd'hui ?",
+        placeholder: "Ce que vous voulez maintenir, arrêter ou changer…",
+        label_en: "What do you want to maintain, stop or change in your intimate life today?",
+        placeholder_en: "What you want to maintain, stop or change…",
       },
     },
     questions: [
@@ -361,22 +361,7 @@ export const MODULES: ModuleInfo[] = [
     description: "L'aboutissement : le chemin parcouru, ce qui fait votre socle, ce à quoi vous vous engagez. Ce module se conclut par l'écriture de votre pacte de couple, les promesses que vous vous faites pour l'année à venir.",
     description_en: "The culmination: the path you've traveled, what forms your foundation, what you commit to. This module ends with writing your couple's pact, the promises you make to each other for the year ahead.",
     emoji: '📜', free: false,
-    conclusion: {
-      apprentissage: {
-        label: "Notre rendez-vous annuel de couple : à quelle date voulez-vous le fixer ?",
-        placeholder: "La date de votre rendez-vous annuel…",
-        aide: "Vous pouvez par exemple opter pour une date internationale comme la Saint-Valentin. Vous pouvez aussi choisir une date qui vous appartient : un anniversaire de rencontre, de mariage… ou encore simplement vous donner rendez-vous dans un an. Attention à laisser au moins 6 mois (et au plus 1 an) entre la fin du programme et la date du rendez-vous annuel.",
-        label_en: "Our yearly couple date: when do you want to set it?",
-        placeholder_en: "When your yearly date will be…",
-        aide_en: "For example, you could choose an international date like Valentine's Day. You could also pick a date that belongs to you: the anniversary of when you met, your wedding anniversary… or simply arrange to meet again in one year. Make sure to leave at least 6 months (and at most 1 year) between the end of the program and your yearly date.",
-      },
-      surprise: {
-        label: "Qui l'organise ?",
-        placeholder: "Qui organise ce rendez-vous…",
-        label_en: "Who will organize it?",
-        placeholder_en: "Who will organize this date…",
-      },
-    },
+    // Pas de questions de fin : le module se termine par la signature du pacte.
     questions: [
       {
         slug: 'chemin_parcouru', type: 'choix_multiple',
