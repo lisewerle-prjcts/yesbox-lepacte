@@ -52,21 +52,19 @@ export default function ReglesDuJeuPage() {
           </li>
           <li>
             <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-              <EditableText id="regles.sansjugement.titre">Entre vous deux, sans jugement</EditableText>
-            </p>
-            <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.sansjugement.lecture" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux et sont chiffrées sur nos serveurs. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
-            </p>
-            <p style={{ color: 'var(--muted)', marginTop: 8 }}>
-              <EditableText id="regles.sansjugement.jugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>
-            </p>
-          </li>
-          <li>
-            <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>
               <EditableText id="regles.confidentialite.titre">Confidentialité</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.confidentialite.texte" multiline>Les réponses restent strictement privées entre les deux membres du couple ; elles ne sont jamais partagées à des tiers. Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part, 18 mois après la fin de votre abonnement ou votre dernière connexion, vos comptes sont supprimés et vos réponses sont effacées de manière permanente.</EditableText>
+              <EditableText id="regles.confidentialite.intro" multiline>Les modules sont réalisés entre vous deux, sans jugement.</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)', marginTop: 8 }}>
+              <EditableText id="regles.confidentialite.lecture" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux et sont chiffrées sur nos serveurs. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)', marginTop: 8 }}>
+              <EditableText id="regles.confidentialite.jugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>
+            </p>
+            <p style={{ color: 'var(--muted)', marginTop: 8 }}>
+              <EditableText id="regles.confidentialite.texte.v2" multiline>Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part, 18 mois après la fin de votre abonnement ou votre dernière connexion, vos comptes sont supprimés et vos réponses sont effacées de manière permanente.</EditableText>
             </p>
           </li>
           <li>
