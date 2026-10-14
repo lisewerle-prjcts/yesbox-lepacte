@@ -120,9 +120,10 @@ export default function VotreCoupleCard({
               </p>
               <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
                 <strong>{anniversaireActuel.years}</strong>{t(
-                  ` an${anniversaireActuel.years > 1 ? 's' : ''} — noces de `,
-                  `-year${anniversaireActuel.years > 1 ? 's' : ''} anniversary — `
-                )}<strong>{anniversaireActuel.matiere}</strong>
+                  ` an${anniversaireActuel.years > 1 ? 's' : ''}`,
+                  `-year${anniversaireActuel.years > 1 ? 's' : ''} anniversary`
+                )}
+                {anniversaireActuel.matiere && <> — {t('noces de ', '')}<strong>{anniversaireActuel.matiere}</strong></>}
               </p>
             </div>
           )}
@@ -133,9 +134,13 @@ export default function VotreCoupleCard({
               </p>
               <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
                 {t(
-                  `Le ${prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} — noces de `,
+                  `Le ${prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} — `,
                   `On ${prochainAnniversaire.date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} — `
-                )}<strong>{prochainAnniversaire.matiere}</strong>
+                )}<strong>{prochainAnniversaire.years}</strong>{t(
+                  ` an${prochainAnniversaire.years > 1 ? 's' : ''}`,
+                  `-year${prochainAnniversaire.years > 1 ? 's' : ''} anniversary`
+                )}
+                {prochainAnniversaire.matiere && <>{t(', noces de ', ' — ')}<strong>{prochainAnniversaire.matiere}</strong></>}
               </p>
             </div>
           )}
