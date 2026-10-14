@@ -48,5 +48,7 @@ function localizeConclusion(c: ConclusionTexte): ConclusionTexte {
     label: c.label_en ?? c.label,
     placeholder: c.placeholder_en ?? c.placeholder,
     aide: c.aide_en ?? c.aide,
+    options: c.options_en ?? c.options,
+    autre: c.autre_en ?? c.autre,
   }
 }

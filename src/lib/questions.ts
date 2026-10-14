@@ -1,4 +1,4 @@
-import type { Question } from '@/types'
+import type { ConclusionTexte, Question } from '@/types'
 
 /**
  * Réponse à une question de type "grille" : un objet JSON { indexLigne: indexColonne },
@@ -121,4 +121,21 @@ export function cleColonne(q: Question, colonne: number, estPremierePersonne: bo
     return designePremiere ? 'p1' : 'p2'
   }
   return `c${colonne}`
+}
+
+/** Une réponse de conclusion est complète : texte non vide, ou au moins une case / le champ « autre » rempli. */
+export function isConclusionAnswered(c: ConclusionTexte, val: string | null | undefined): boolean {
+  if (!c.options) return !!val?.trim()
+  const { choix, autre } = parseChoixMultiple(val)
+  return choix.length > 0 || autre.trim() !== ''
+}
+
+/** Réponse de conclusion lisible : avec des cases à cocher, la liste des libellés cochés. */
+export function formatConclusion(c: ConclusionTexte, val: string | null | undefined): string {
+  if (!val) return ''
+  if (!c.options) return val
+  const { choix, autre } = parseChoixMultiple(val)
+  const libelles = choix.map(i => c.options![i]).filter(Boolean)
+  if (autre.trim()) libelles.push(autre.trim())
+  return libelles.join(', ')
 }

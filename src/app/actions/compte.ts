@@ -6,7 +6,7 @@ import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { conclusionDuModule } from '@/lib/modules-data'
-import { formatAnswer } from '@/lib/questions'
+import { formatAnswer, formatConclusion } from '@/lib/questions'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { consentementManquant } from '@/lib/consentement'
 import { encoderRestauration, decoderRestauration, type DonneesRestauration } from '@/lib/restauration'
@@ -190,8 +190,8 @@ export async function telechargerMesDonnees() {
       const conclusion = conclusionDuModule(modInfo)
       for (const membre of visibles) {
         const entrees = (journal || []).filter(j => j.module_slug === modInfo.slug && j.user_id === membre.id)
-        const appris = entrees.find(j => j.question_slug === 'apprentissage')?.valeur?.trim()
-        const surpris = entrees.find(j => j.question_slug === 'surprise')?.valeur?.trim()
+        const appris = formatConclusion(conclusion.apprentissage, entrees.find(j => j.question_slug === 'apprentissage')?.valeur).trim()
+        const surpris = formatConclusion(conclusion.surprise, entrees.find(j => j.question_slug === 'surprise')?.valeur).trim()
         if (appris || surpris) {
           lines.push(`  ${nomDe(membre)} — ${conclusion.apprentissage.label} ${appris || '—'}`)
           lines.push(`  ${nomDe(membre)} — ${conclusion.surprise.label} ${surpris || '—'}`)
