@@ -4,11 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
-import { consentementManquant } from '@/lib/consentement'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
-import { chiffrer } from '@/lib/chiffrement'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -80,26 +78,6 @@ export async function rejoindrePartenaireParCode(formData: FormData) {
   return result
 }
 
-export async function enregistrerPacteTexte(texte: string) {
-  const supabase = await createClient()
-  const locale = await getLocale()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
-  if (await consentementManquant(supabase, user.id)) return { error: t(locale, 'Ton consentement est nécessaire pour enregistrer tes réponses.', 'Your consent is required to save your answers.') }
-
-  const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
-  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
-
-  const { error } = await supabase
-    .from('couples')
-    .update({ pacte_texte: chiffrer(texte), pacte_modifie_par: user.id, pacte_modifie_le: new Date().toISOString() })
-    .eq('id', profile.couple_id)
-
-  if (error) return { error: error.message }
-  revalidatePath('/pacte')
-  return { success: true }
-}
-
 export async function getInviteLink() {
   const supabase = await createClient()
   const locale = await getLocale()
@@ -162,7 +140,7 @@ export async function signerPacte(dateRdvAnnuel: string) {
 
   const { min, max } = bornesRdvAnnuel()
   if (!estDateValide(dateRdvAnnuel) || dateRdvAnnuel < min || dateRdvAnnuel > max) {
-    return { error: t(locale, 'Choisis une date entre 6 mois et 1 an à partir d’aujourd’hui.', 'Pick a date between 6 months and 1 year from today.') }
+    return { error: t(locale, 'Choisis une date entre 6 et 18 mois à partir d’aujourd’hui.', 'Pick a date between 6 and 18 months from today.') }
   }
 
   const { error } = await admin.from('couples').update({

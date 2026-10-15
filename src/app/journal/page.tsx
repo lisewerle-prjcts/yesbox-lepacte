@@ -1,22 +1,21 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { localizeModules } from '@/lib/i18n/module-text'
 import { conclusionDuModule } from '@/lib/modules-data'
-import { formatConclusion } from '@/lib/questions'
+import { formatAnswer, formatConclusion } from '@/lib/questions'
 import Link from 'next/link'
 import EditableText from '@/components/edit-mode/EditableText'
-import PacteDocument from './PacteDocument'
 import SignaturePacte from './SignaturePacte'
 import OffreRdvAnnuel from '@/components/OffreRdvAnnuel'
 import { lireFormule, offreRdvAnnuel } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, anniversaireDansBornes, saintValentinDansBornes } from '@/lib/rdv-annuel'
-import { BookOpen, PenLine, UserPlus } from 'lucide-react'
+import { BookOpen, PartyPopper, PenLine, UserPlus } from 'lucide-react'
 import type { Module } from '@/types'
-import { dechiffrer, dechiffrerLignes } from '@/lib/chiffrement'
+import { dechiffrerLignes } from '@/lib/chiffrement'
 
 export const metadata = { title: 'Notre Pacte' }
 
@@ -30,11 +29,10 @@ export default async function JournalPage() {
 
   const locale = await getLocale()
   const t = getT(locale)
-  const [{ data: modules }, { data: entries }, { data: partner }, { data: couple }, { data: signature }, effectiveModules] = await Promise.all([
+  const [{ data: modules }, { data: entries }, { data: partner }, { data: signature }, effectiveModules] = await Promise.all([
     supabase.from('modules').select('*').eq('couple_id', profile.couple_id),
     supabase.from('journal_entries').select('*').eq('couple_id', profile.couple_id),
     supabase.from('profiles').select('prenom, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
-    supabase.from('couples').select('pacte_texte, pacte_modifie_le, pacte_modifie_par').eq('id', profile.couple_id).single(),
     // Requête à part : si les colonnes de signature manquent en base, le
     // texte du pacte s'affiche quand même.
     supabase.from('couples').select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single(),
@@ -51,18 +49,25 @@ export default async function JournalPage() {
   const revealedModules = (modules || []).filter((m: Module) => m.revealed)
   // Le pacte se signe dès la fin du module 9 (le module 10, rendez-vous annuel,
   // se fait un an plus tard).
-  const pacteTermine = (modules || []).some((m: Module) => m.slug === MODULE_PACTE && m.revealed)
+  const modulePacte = (modules || []).find((m: Module) => m.slug === MODULE_PACTE)
+  const pacteTermine = !!modulePacte?.revealed
   const moduleRdv = (modules || []).find((m: Module) => m.slug === MODULE_RDV_ANNUEL)
   const rdvOuvert = !!moduleRdv && (moduleRdv.statut !== 'locked' || moduleRdv.revealed)
   const bornesRdv = bornesRdvAnnuel()
 
+  // Réponses du module 9 (le pacte), affichées comme les conclusions des
+  // autres modules une fois le pacte signé par les deux.
+  const { data: reponsesPacteBrutes } = pacteTermine && modulePacte
+    ? await createAdminClient().from('reponses').select('user_id, question_slug, valeur').eq('module_id', modulePacte.id)
+    : { data: [] as { user_id: string; question_slug: string; valeur: string | null }[] }
+  const reponsesPacte = dechiffrerLignes(reponsesPacteBrutes)
+  function getReponsePacte(userId: string, questionSlug: string): string | undefined {
+    return reponsesPacte.find(r => r.user_id === userId && r.question_slug === questionSlug)?.valeur ?? undefined
+  }
+
   function getConclusion(moduleSlug: string, userId: string, questionSlug: 'apprentissage' | 'surprise'): string {
     return entriesClaires.find(e => e.module_slug === moduleSlug && e.user_id === userId && e.question_slug === questionSlug)?.valeur || ''
   }
-
-  const modifiePartPrenom = couple?.pacte_modifie_par === user.id
-    ? (profile.prenom || t('Toi', 'You'))
-    : (couple?.pacte_modifie_par ? (partner?.prenom || t('Ton/ta partenaire', 'Your partner')) : null)
 
   return (
     <div className="fade" style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -95,13 +100,23 @@ export default async function JournalPage() {
         </div>
       )}
 
-      {/* Le pacte s'écrit à la fin du programme ; un texte déjà commencé reste visible. */}
-      {partner && (pacteTermine || !!couple?.pacte_texte) && (
-        <PacteDocument
-          initialTexte={dechiffrer(couple?.pacte_texte ?? null) ?? ''}
-          modifiePar={modifiePartPrenom}
-          modifieLe={couple?.pacte_modifie_le ?? null}
-        />
+      {partner && pacteTermine && (
+        <div className="card p-6 mb-6" style={{ background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <PartyPopper className="w-5 h-5" style={{ color: 'var(--brand)', flexShrink: 0 }} />
+            <h2 className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>
+              <EditableText id="journal.parcours.termine.titre">Parcours initial terminé</EditableText>
+            </h2>
+          </div>
+          <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.65 }}>
+            <EditableText id="journal.parcours.termine.texte" multiline>Vous avez terminé le parcours initial. Vous pouvez désormais basculer en abonnement annuel, pour recevoir régulièrement de petits messages et continuer à renforcer votre couple jusqu’à la date de rendez-vous que vous avez fixée. Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce moment comme il se doit. À bientôt, et prenez soin de vous et de votre couple.</EditableText>
+          </p>
+          {offreAnnuelle.afficher && (
+            <a href="#rdv-annuel-offre" className="btn-brand text-sm py-2" style={{ marginTop: 16, display: 'inline-flex' }}>
+              <EditableText id="journal.parcours.termine.cta">Passer à l’abonnement annuel</EditableText>
+            </a>
+          )}
+        </div>
       )}
 
       {revealedModules.length === 0 ? (
@@ -116,16 +131,28 @@ export default async function JournalPage() {
           {/* Du plus récent au plus ancien : le pacte (module 9) en haut, le module 1 en bas. */}
           {[...MODULES].sort((a, b) => b.n - a.n).map(moduleInfo => {
             const modData = revealedModules.find(m => m.slug === moduleInfo.slug)
-            // Le module 9 se termine par la signature du pacte, sans conclusion.
-            if (!modData || moduleInfo.slug === MODULE_PACTE) return null
+            if (!modData) return null
 
-            const conclusion = conclusionDuModule(moduleInfo)
-            const questions = (['apprentissage', 'surprise'] as const).map(slug => ({
-              slug,
-              label: conclusion[slug].label,
-              moi: formatConclusion(conclusion[slug], getConclusion(moduleInfo.slug, user.id, slug)),
-              autre: partner ? formatConclusion(conclusion[slug], getConclusion(moduleInfo.slug, partner.id, slug)) : '',
-            }))
+            // Le module 9 se termine par la signature du pacte, sans conclusion :
+            // on y reprend ses réponses, question par question.
+            const questions = moduleInfo.slug === MODULE_PACTE
+              ? moduleInfo.questions.map(q => ({
+                  slug: q.slug,
+                  label: q.texte,
+                  editableId: null as string | null,
+                  moi: formatAnswer(q, getReponsePacte(user.id, q.slug)) ?? '—',
+                  autre: partner ? formatAnswer(q, getReponsePacte(partner.id, q.slug)) ?? '—' : '',
+                }))
+              : (() => {
+                  const conclusion = conclusionDuModule(moduleInfo)
+                  return (['apprentissage', 'surprise'] as const).map(slug => ({
+                    slug: slug as string,
+                    label: conclusion[slug].label,
+                    editableId: `revelation.conclusion.${moduleInfo.slug}.${slug}.label` as string | null,
+                    moi: formatConclusion(conclusion[slug], getConclusion(moduleInfo.slug, user.id, slug)),
+                    autre: partner ? formatConclusion(conclusion[slug], getConclusion(moduleInfo.slug, partner.id, slug)) : '',
+                  }))
+                })()
 
             return (
               <section key={moduleInfo.slug} className="card p-6" aria-labelledby={`journal-${moduleInfo.slug}`}>
@@ -142,18 +169,18 @@ export default async function JournalPage() {
                 <div className="flex flex-col gap-5">
                   {questions.map(q => (
                     <div key={q.slug}>
-                      <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-2)', lineHeight: 1.4, marginBottom: 10 }}>
-                        <EditableText id={`revelation.conclusion.${moduleInfo.slug}.${q.slug}.label`}>{q.label}</EditableText>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-2)', lineHeight: 1.4, marginBottom: 10, whiteSpace: 'pre-line' }}>
+                        {q.editableId ? <EditableText id={q.editableId}>{q.label}</EditableText> : q.label}
                       </h3>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px', borderLeft: '3px solid var(--brand)' }}>
                           <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 4 }}>{profile.prenom || t('Toi', 'You')}</p>
-                          <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {q.moi} »</p>
+                          <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-line' }}>« {q.moi} »</p>
                         </div>
                         {partner && (
                           <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px' }}>
                             <p className="font-semibold" style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 4 }}>{partner.prenom || t('Partenaire', 'Partner')}</p>
-                            <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic' }}>« {q.autre} »</p>
+                            <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-line' }}>« {q.autre} »</p>
                           </div>
                         )}
                       </div>

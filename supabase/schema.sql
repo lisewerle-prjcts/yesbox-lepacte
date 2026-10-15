@@ -1353,3 +1353,15 @@ alter table public.rappels_envoyes enable row level security;
 alter table public.profiles add column if not exists langue text not null default 'fr'
   check (langue in ('fr', 'en'));
 revoke update (langue) on public.profiles from authenticated;
+
+-- ============================================================
+-- PROPOSITION DE L'ABONNEMENT ANNUEL
+-- Une fois le pacte signé, 5 jours avant la fin du mois payé, un e-mail
+-- propose de passer de l'abonnement mensuel à « Pacte – notre rendez-vous
+-- annuel » (une seule fois par fin de mois : rappels_envoyes, type
+-- 'bascule_annuelle', clé = date de fin de période).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle'));

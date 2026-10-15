@@ -126,6 +126,12 @@ Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.
 - **Après la signature du pacte** : un e-mail par mois (thème différent
   chaque mois), et l'annonce du rendez-vous annuel dans le mois qui le
   précède. Arrêtés quand l'accès est terminé.
+- **Passage à l'abonnement annuel** : une fois le pacte signé, 5 jours avant
+  la fin du mois payé, proposition de basculer de l'abonnement mensuel vers
+  « Pacte – notre rendez-vous annuel » (lien vers l'offre de la page Notre
+  Pacte, bascule programmée dans Stripe). Une seule fois par fin de mois,
+  pas d'envoi si la bascule est déjà programmée. Nécessite le dernier bloc de
+  `supabase/schema.sql`.
 - Désinscription : case dans Mon compte, ou lien signé en bas de chaque
   e-mail (`/desinscription`). Signature : `RAPPELS_SECRET` si définie,
   sinon `CRON_SECRET`.

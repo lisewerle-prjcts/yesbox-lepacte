@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Heart, CalendarHeart } from 'lucide-react'
 import { signerPacte } from '@/app/actions/couple'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
@@ -57,7 +58,7 @@ export default function SignaturePacte({
 
   return (
     <div className="card p-5 text-center" style={{ marginTop: 24, paddingTop: 40, paddingBottom: 40 }}>
-      <div style={{ fontSize: 40, marginBottom: 16 }}>💍</div>
+      <Image src="/logo-yesbox.svg" alt="" width={56} height={56} style={{ margin: '0 auto 16px' }} />
       <h2 className="font-serif font-bold" style={{ fontSize: 24, color: 'var(--ink)', marginBottom: 12 }}>
         {signe
           ? <EditableText id="pacte.signe.titre">Votre Pacte est signé</EditableText>
