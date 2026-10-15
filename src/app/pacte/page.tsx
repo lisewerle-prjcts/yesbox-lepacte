@@ -195,7 +195,7 @@ export default async function PactePage() {
                     </div>
                   </div>
                   <Link href={jaiFini ? `/module/${moduleInfo.slug}/revelation` : `/module/${moduleInfo.slug}`} className="btn-brand text-sm py-1.5" style={{ marginLeft: 'auto' }}>
-                    {partenaireFini
+                    {jaiFini && partenaireFini
                       ? <EditableText id="pacte.ouvrirrevelation">Ouvrir la révélation</EditableText>
                       : jaiFini
                       ? <EditableText id="pacte.voir">Voir</EditableText>
