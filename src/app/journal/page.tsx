@@ -111,11 +111,9 @@ export default async function JournalPage() {
           <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.65 }}>
             <EditableText id="journal.parcours.termine.texte" multiline>Vous avez terminé le parcours initial. Vous pouvez désormais basculer en abonnement annuel, pour recevoir régulièrement de petits messages et continuer à renforcer votre couple jusqu’à la date de rendez-vous que vous avez fixée. Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce moment comme il se doit. À bientôt, et prenez soin de vous et de votre couple.</EditableText>
           </p>
-          {offreAnnuelle.afficher && (
-            <a href="#rdv-annuel-offre" className="btn-brand text-sm py-2" style={{ marginTop: 16, display: 'inline-flex' }}>
-              <EditableText id="journal.parcours.termine.cta">Passer à l’abonnement annuel</EditableText>
-            </a>
-          )}
+          <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.6, marginTop: 12 }}>
+            <EditableText id="journal.parcours.termine.rappel" multiline>Vous recevrez un message 5 jours avant la fin de votre abonnement mensuel pour basculer en abonnement annuel.</EditableText>
+          </p>
         </div>
       )}
 

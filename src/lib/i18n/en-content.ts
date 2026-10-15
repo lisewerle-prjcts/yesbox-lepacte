@@ -35,7 +35,7 @@ export const EN_CONTENT: Record<string, string> = {
   'journal.souscritre': 'Your takeaways after each reveal',
   'journal.parcours.termine.titre': 'Initial program complete',
   'journal.parcours.termine.texte': "You've completed the initial program. You can now switch to the yearly subscription to receive little messages regularly and keep strengthening your relationship until the date you set for your yearly date. On that day, a special module will be waiting for you, and we'll guide you ahead of time so you can prepare for it properly. See you soon, and take care of yourselves and of your relationship.",
-  'journal.parcours.termine.cta': 'Switch to the yearly subscription',
+  'journal.parcours.termine.rappel': 'You will receive a message 5 days before the end of your monthly subscription so you can switch to the yearly subscription.',
   'journal.pacte.attente': 'Your pact will appear here once you have completed the program.',
   'journal.nonpaire.texte': 'Your journal and your Pact fill in once both of your accounts are paired.',
   'journal.nonpaire.cta': 'Find my couple code',
