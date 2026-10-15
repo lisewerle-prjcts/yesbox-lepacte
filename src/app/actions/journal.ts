@@ -93,7 +93,7 @@ export async function signerPacteModule(moduleId: string, dateRdvAnnuel: string)
 
   const { min, max } = bornesRdvAnnuel()
   if (!estDateValide(dateRdvAnnuel) || dateRdvAnnuel < min || dateRdvAnnuel > max) {
-    return { error: t(locale, 'Choisis une date entre 6 mois et 1 an à partir d’aujourd’hui.', 'Pick a date between 6 months and 1 year from today.') }
+    return { error: t(locale, 'Choisis une date entre 6 et 18 mois à partir d’aujourd’hui.', 'Pick a date between 6 and 18 months from today.') }
   }
 
   const maintenant = new Date().toISOString()

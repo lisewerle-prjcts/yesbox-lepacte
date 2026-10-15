@@ -3,12 +3,13 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, CalendarHeart, CheckCircle, Heart } from 'lucide-react'
 import { signerPacteModule } from '@/app/actions/journal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import ChoixDateRdv, { formaterDate, type BornesRdv } from '@/components/pacte/ChoixDateRdv'
-import { formatAnswer } from '@/lib/questions'
+import ReponsesCoteACote from '@/components/module/ReponsesCoteACote'
 import type { ModuleInfo, Reponse } from '@/types'
 
 interface Props {
@@ -28,8 +29,8 @@ interface Props {
   bornes: BornesRdv
 }
 
-// Module 9 : pas de conclusion. Les réponses de chacun·e s'affichent dans un
-// encadré, puis les deux signent le pacte (et choisissent la date du
+// Module 9 : pas de conclusion. Les réponses s'affichent côte à côte, question
+// par question, puis les deux signent le pacte (et choisissent la date du
 // rendez-vous annuel). Quand les deux ont signé, le module est terminé.
 export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, reponsesPartner, reponsesPartagees, revealed, myName, partnerName, jaiSigne, partenaireASigne, signeLe, rdvLe, bornes }: Props) {
   const router = useRouter()
@@ -66,25 +67,10 @@ export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, rep
     })
   }
 
-  function Encadre({ nom, reponses, accent }: { nom: string; reponses: Reponse[]; accent: boolean }) {
-    const map: Record<string, string> = {}
-    reponses.forEach(r => { if (r.valeur) map[r.question_slug] = r.valeur })
-    return (
-      <section style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, border: '1px solid var(--dark-line)', borderLeft: accent ? '3px solid var(--brand)' : '1px solid var(--dark-line)' }}>
-        <h2 className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--dark-paper)', marginBottom: 18 }}>{nom}</h2>
-        <div className="flex flex-col gap-5">
-          {moduleInfo.questions.map(q => (
-            <div key={q.slug}>
-              <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--dark-muted)', lineHeight: 1.5, marginBottom: 6, whiteSpace: 'pre-line' }}>{q.texte}</p>
-              <p style={{ fontSize: 15, color: 'var(--dark-paper)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                {formatAnswer(q, map[q.slug]) ?? <span style={{ color: 'var(--dark-muted)' }}>—</span>}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-    )
-  }
+  const myMap: Record<string, string> = {}
+  mesReponses.forEach(r => { if (r.valeur) myMap[r.question_slug] = r.valeur })
+  const partnerMap: Record<string, string> = {}
+  reponsesPartner.forEach(r => { if (r.valeur) partnerMap[r.question_slug] = r.valeur })
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--dark)', fontFamily: 'var(--font-geist)' }}>
@@ -110,9 +96,11 @@ export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, rep
           </p>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <Encadre nom={myName || t('Toi', 'You')} reponses={mesReponses} accent />
-          {reponsesPartagees && <Encadre nom={nomPartenaire} reponses={reponsesPartner} accent={false} />}
+        <div className="flex flex-col gap-8">
+          {moduleInfo.questions.map(q => (
+            <ReponsesCoteACote key={q.slug} q={q} maValeur={myMap[q.slug]} valeurAutre={partnerMap[q.slug]}
+              myName={myName} partnerName={partnerName} reponsesPartagees={reponsesPartagees} />
+          ))}
         </div>
 
         {!reponsesPartagees ? (
@@ -132,7 +120,7 @@ export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, rep
           </div>
         ) : (
           <div className="card text-center mt-14" style={{ padding: '40px 24px' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>💍</div>
+            <Image src="/logo-yesbox.svg" alt="" width={56} height={56} style={{ margin: '0 auto 16px' }} />
             <h2 className="font-serif font-bold" style={{ fontSize: 26, color: 'var(--ink)', marginBottom: 12 }}>
               {revealed
                 ? <EditableText id="pacte.signe.titre">Votre Pacte est signé</EditableText>

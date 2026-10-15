@@ -72,7 +72,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.pacte.titre">Le pacte de couple</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.pacte.texte.v2" multiline>Écrit à deux à la fin du parcours initial (module 9), il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. En le signant, vous choisissez la date de votre rendez-vous annuel, entre 6 mois et 1 an plus tard : dans un an, à la Saint-Valentin ou à une date qui vous est propre. Ce jour-là, le module « Notre rendez-vous annuel » s&apos;ouvre pour le relire ensemble et le faire évoluer avec vous.</EditableText>
+              <EditableText id="regles.pacte.texte.v3" multiline>Écrit à deux à la fin du parcours initial (module 9), il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. En le signant, vous choisissez la date de votre rendez-vous annuel, idéalement un an plus tard (entre 6 et 18 mois) : dans un an, à la Saint-Valentin ou à une date qui vous est propre. Ce jour-là, le module « Notre rendez-vous annuel » s&apos;ouvre pour le relire ensemble et le faire évoluer avec vous.</EditableText>
             </p>
           </li>
           <li>

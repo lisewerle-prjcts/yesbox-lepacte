@@ -8,7 +8,8 @@ import { sauvegarderConclusion } from '@/app/actions/journal'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import GrilleComparaison from '@/components/module/GrilleComparaison'
-import { formatAnswer, isConclusionAnswered, parseChoixMultiple, serializeChoixMultiple } from '@/lib/questions'
+import ReponsesCoteACote from '@/components/module/ReponsesCoteACote'
+import { isConclusionAnswered, parseChoixMultiple, serializeChoixMultiple } from '@/lib/questions'
 import { conclusionDuModule } from '@/lib/modules-data'
 
 // Modules 2 à 7 : même explication avant la conclusion.
@@ -186,35 +187,9 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
               )
             }
 
-            const myFmt = formatAnswer(q, myMap[q.slug])
-            const partnerFmt = formatAnswer(q, partnerMap[q.slug])
-
             return (
-              <div key={q.slug}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--dark-muted)', marginBottom: 14, whiteSpace: 'pre-line' }}>{q.texte}</p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: '1px solid var(--dark-line)' }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="av av-c" style={{ width: 26, height: 26, fontSize: 11 }}>{(myName || t('M', 'Y'))[0]}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{myName || t('Toi', 'You')}</span>
-                    </div>
-                    <p style={{ fontSize: 14, color: myFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: myFmt ? 'normal' : 'italic', lineHeight: 1.6 }}>
-                      {myFmt || t('— pas de réponse —', '— no answer yet —')}
-                    </p>
-                  </div>
-                  <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: '16px 18px', border: '1px solid var(--dark-line)' }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="av av-a" style={{ width: 26, height: 26, fontSize: 11 }}>{(partnerName || t('P', 'P'))[0]}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dark-muted)' }}>{partnerName || t('Partenaire', 'Partner')}</span>
-                    </div>
-                    <p style={{ fontSize: 14, color: partnerFmt ? 'var(--dark-paper)' : 'var(--dark-muted)', fontStyle: partnerFmt ? 'normal' : 'italic', lineHeight: 1.6 }}>
-                      {partnerFmt || (reponsesPartagees
-                        ? t('— pas de réponse —', '— no answer yet —')
-                        : t('Visible quand vous aurez tous les deux répondu', 'Visible once you have both answered'))}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <ReponsesCoteACote key={q.slug} q={q} maValeur={myMap[q.slug]} valeurAutre={partnerMap[q.slug]}
+                myName={myName} partnerName={partnerName} reponsesPartagees={reponsesPartagees} />
             )
           })}
         </div>

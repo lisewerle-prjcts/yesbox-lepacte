@@ -1,5 +1,5 @@
 // Bornes de la date du rendez-vous annuel (déblocage du module 10), fixée
-// à la signature du pacte : entre 6 mois et 1 an plus tard, 1 an par défaut.
+// à la signature du pacte : entre 6 et 18 mois plus tard, 1 an par défaut.
 // Dates au format AAAA-MM-JJ.
 
 function ajouterMois(depuis: Date, mois: number): string {
@@ -10,7 +10,7 @@ function ajouterMois(depuis: Date, mois: number): string {
 export function bornesRdvAnnuel(depuis: Date = new Date()) {
   return {
     min: ajouterMois(depuis, 6),
-    max: ajouterMois(depuis, 12),
+    max: ajouterMois(depuis, 18),
     parDefaut: ajouterMois(depuis, 12),
   }
 }
@@ -24,7 +24,7 @@ export function estDateValide(date: string): boolean {
 }
 
 // Prochaine occurrence d'un jour / mois comprise entre min et max (AAAA-MM-JJ),
-// sinon null : la fenêtre ne couvre que 6 mois, une date sur deux n'y tombe pas.
+// sinon null (la plus proche quand la fenêtre de 12 mois contient deux dates possibles).
 export function prochaineDateDansBornes(mois: number, jour: number, min: string, max: string): string | null {
   if (!Number.isInteger(mois) || !Number.isInteger(jour) || mois < 1 || mois > 12 || jour < 1 || jour > 31) return null
   const anneeMin = Number(min.slice(0, 4))

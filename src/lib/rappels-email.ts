@@ -3,7 +3,7 @@ import type { createAdminClient } from '@/lib/supabase/server'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { hasAnsweredAll } from '@/lib/questions'
-import { aAccesComplet, peutAccederModule } from '@/lib/abonnement'
+import { aAccesComplet, offreRdvAnnuel, peutAccederModule } from '@/lib/abonnement'
 import { MODULE_RDV_ANNUEL, MODULE_PACTE, entreesDeFin } from '@/lib/progression'
 import { ABONNEMENT_COLONNES } from '@/types'
 import type { CoupleAbonnement } from '@/types'
@@ -18,7 +18,11 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //   1. relance quand un couple n'a pas avancé dans son parcours depuis
 //      10 jours (puis une seconde à 20 jours, pas plus) ;
 //   2. une fois le pacte signé, un e-mail par mois pour faire vivre les
-//      engagements, et l'annonce du rendez-vous annuel un mois avant.
+//      engagements, et l'annonce du rendez-vous annuel un mois avant ;
+//   3. une fois le pacte signé, 5 jours avant la fin du mois payé, la
+//      proposition de passer de l'abonnement mensuel à l'abonnement annuel
+//      (« Pacte – notre rendez-vous annuel », bascule Stripe programmée
+//      depuis la page Notre Pacte).
 // Uniquement pour les couples dont l'accès est en cours (les relances après
 // résiliation viendront plus tard). Chaque membre peut refuser ces rappels
 // (profiles.rappels_email) : lien en bas de chaque e-mail ou Mon compte.
@@ -498,6 +502,82 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
       }
     } catch (e) {
       console.error(`[rappels] e-mail mensuel du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
+
+// ---------------------------------------------------------------------------
+// 3. Proposition de passer à l'abonnement annuel, 5 jours avant la fin du mois
+// ---------------------------------------------------------------------------
+
+const BASCULE_ANNUELLE_JOURS_AVANT = 5
+
+function contenuBasculeAnnuelle(finPeriode: string, rdvLe: string | null, locale: Locale) {
+  const date = formaterDate(finPeriode, locale)
+  const rdv = rdvLe
+    ? t(locale, `, le ${formaterDate(rdvLe, locale)}`, `, on ${formaterDate(rdvLe, locale)}`)
+    : ''
+  return {
+    subject: t(locale, 'Continuez l’aventure avec l’abonnement annuel', 'Keep going with the yearly subscription'),
+    corps: p(t(locale,
+      `Votre parcours initial est terminé, bravo ! Votre mois d’abonnement en cours se termine le ${date}.`,
+      `You've completed the initial program, well done! Your current month of subscription ends on ${date}.`))
+      + p(t(locale,
+        `Pour continuer à faire vivre votre pacte, passez à l’abonnement annuel « Pacte – notre rendez-vous annuel » : <strong>19 € par an</strong>. Vous recevrez régulièrement de petits messages pour continuer à renforcer votre couple, et le module « Notre rendez-vous annuel » s’ouvrira à la date que vous avez fixée${rdv}.`,
+        `To keep your pact alive, switch to the "Pact – our yearly date" yearly subscription: <strong>€19 per year</strong>. You'll receive little messages regularly to keep strengthening your relationship, and the "Our Yearly Date" module will open on the date you set${rdv}.`))
+      + p(t(locale,
+        `Rien ne change d’ici là : la bascule a lieu le ${date}, et les 19 € sont prélevés ce jour-là sur la carte déjà enregistrée. Résiliable à tout moment depuis Mon compte.`,
+        `Nothing changes until then: the switch happens on ${date}, and the €19 is charged that day to the card already on file. Cancel anytime from My Account.`))
+      + bouton(`${appUrl()}/journal#rdv-annuel-offre`, t(locale, 'Passer à l’abonnement annuel', 'Switch to the yearly subscription')),
+  }
+}
+
+export async function envoyerPropositionsAnnuel(admin: AdminClient): Promise<number> {
+  const maintenant = new Date()
+  const aujourdhui = Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())
+  const limite = new Date(aujourdhui + (BASCULE_ANNUELLE_JOURS_AVANT + 1) * JOUR).toISOString()
+  const { data: couples, error } = await admin
+    .from('couples')
+    .select(`${ABONNEMENT_COLONNES}, pacte_signe_le, rdv_annuel_le, subscription_formule, subscription_annuel_prevu_le`)
+    .not('pacte_signe_le', 'is', null)
+    .is('compte_resilie_le', null)
+    .eq('subscription_status', 'actif')
+    .gt('subscription_current_period_end', maintenant.toISOString())
+    .lt('subscription_current_period_end', limite)
+  if (error) throw new Error(error.message)
+
+  let envoyes = 0
+  for (const couple of couples ?? []) {
+    try {
+      const finPeriode = couple.subscription_current_period_end as string
+      const joursAvantFin = Math.ceil((new Date(finPeriode).getTime() - aujourdhui) / JOUR)
+      if (joursAvantFin < 1 || joursAvantFin > BASCULE_ANNUELLE_JOURS_AVANT) continue
+      // Uniquement un abonnement mensuel en cours, sans bascule déjà programmée.
+      const offre = offreRdvAnnuel(couple as CoupleAbonnement, {
+        formule: (couple.subscription_formule as 'mensuel' | 'annuel' | null) ?? null,
+        annuelPrevuLe: (couple.subscription_annuel_prevu_le as string | null) ?? null,
+      }, true)
+      if (!offre.afficher || !offre.mensuelEnCours) continue
+
+      const membres = await membresDuCouple(admin, couple.id)
+      if (!membres.some(m => m.rappels_email && m.email)) continue
+
+      // Une seule proposition par fin de mois.
+      const { data: reserve, error: reserveError } = await admin
+        .from('rappels_envoyes')
+        .upsert({ couple_id: couple.id, type: 'bascule_annuelle', cle: finPeriode.slice(0, 10) }, { onConflict: 'couple_id,type,cle', ignoreDuplicates: true })
+        .select('couple_id')
+      if (reserveError) throw new Error(reserveError.message)
+      if (!reserve?.length) continue
+
+      const rdvLe = (couple.rdv_annuel_le as string | null) ?? null
+      for (const d of membres) {
+        const { subject, corps } = contenuBasculeAnnuelle(finPeriode, rdvLe, d.langue)
+        if (await envoyer(d, subject, corps)) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] proposition annuelle du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes

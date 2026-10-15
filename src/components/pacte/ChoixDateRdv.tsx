@@ -48,7 +48,7 @@ export default function ChoixDateRdv({ bornes, rdvLe, onDate }: { bornes: Bornes
         <span id="rdv-annuel-label"><EditableText id="pacte.rdv.label">La date de votre rendez-vous annuel</EditableText></span>
       </p>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 12 }}>
-        <EditableText id="pacte.rdv.aide.options" multiline>Le module « Notre rendez-vous annuel » se débloquera ce jour-là, entre 6 mois et 1 an après la signature. Choisissez ensemble la date qui vous ressemble :</EditableText>
+        <EditableText id="pacte.rdv.aide.options.v2" multiline>Le module « Notre rendez-vous annuel » se débloquera ce jour-là. Idéalement, choisissez une date dans un an ; elle peut aussi tomber entre 6 et 18 mois à partir d’aujourd’hui :</EditableText>
       </p>
       <div role="radiogroup" aria-labelledby="rdv-annuel-label" className="space-y-2">
         <label className="flex items-start gap-3 cursor-pointer card p-3" style={{ borderColor: option === 'un_an' ? 'var(--brand)' : undefined }}>
@@ -65,7 +65,7 @@ export default function ChoixDateRdv({ bornes, rdvLe, onDate }: { bornes: Bornes
             <span style={{ display: 'block', fontSize: 12.5, color: 'var(--muted)' }}>
               {saintValentin
                 ? t(`le ${formaterDate(saintValentin, locale)}`, `on ${formaterDate(saintValentin, locale)}`)
-                : t('pas de 14 février entre 6 mois et 1 an d’ici', 'no February 14 between 6 months and 1 year from now')}
+                : t('pas de 14 février entre 6 et 18 mois d’ici', 'no February 14 between 6 and 18 months from now')}
             </span>
           </span>
         </label>
