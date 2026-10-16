@@ -111,7 +111,7 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
 
       {error && <p className="text-sm mb-4" style={{ color: '#fff', background: 'rgba(0,0,0,.2)', padding: '8px 12px', borderRadius: 8 }}>{error}</p>}
 
-      {!mensuelEnCours && <CaseRetractation coche={renonciation} onChange={setRenonciation} clair />}
+      {!mensuelEnCours && <CaseRetractation onChange={setRenonciation} clair />}
 
       <button
         onClick={mensuelEnCours && !confirmer ? () => setConfirmer(true) : basculer}

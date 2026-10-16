@@ -10,15 +10,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-// Médiateur de la consommation choisi par YES BOX (obligatoire pour la
-// vente en ligne aux particuliers, art. L612-1 du Code de la consommation).
-// TODO : renseigner le médiateur retenu avant la mise en ligne.
-const MEDIATEUR = {
-  nom: '[NOM DU MÉDIATEUR À COMPLÉTER]',
-  adresse: '[ADRESSE POSTALE À COMPLÉTER]',
-  site: '[SITE INTERNET À COMPLÉTER]',
-}
-
+// Médiateur de la consommation (art. L612-1 du Code de la consommation).
+// TODO : remplacer les champs entre crochets par le médiateur retenu.
 export default async function Cgv() {
   const t = getT(await getLocale())
   return (
@@ -141,8 +134,8 @@ export default async function Cgv() {
             </p>
             <p className="mt-2">
               {t(
-                'L’accès aux modules payants étant immédiat, vous pouvez demander à commencer le programme avant la fin de ce délai : en cochant la case « J’ai lu et j’accepte les CGV » avant le paiement, vous demandez l’accès immédiat et reconnaissez perdre votre droit de rétractation dès que cet accès vous est ouvert (article L221-28 du Code de la consommation).',
-                'Since access to the paid modules is immediate, you can ask to start the program before this period ends: by ticking the box “I have read and accept the terms of sale” before payment, you request immediate access and acknowledge that you lose your right of withdrawal as soon as this access is granted (article L221-28 of the French Consumer Code).'
+                'L’accès aux modules payants étant immédiat, vous pouvez demander à commencer le programme avant la fin de ce délai : en cochant la case « Je demande l’accès immédiat et renonce à mon droit de rétractation dès cet accès » avant le paiement, vous demandez l’accès immédiat et reconnaissez perdre votre droit de rétractation dès que cet accès vous est ouvert (article L221-28 du Code de la consommation).',
+                'Since access to the paid modules is immediate, you can ask to start the program before this period ends: by ticking the box “I request immediate access and waive my right of withdrawal as of that access” before payment, you request immediate access and acknowledge that you lose your right of withdrawal as soon as this access is granted (article L221-28 of the French Consumer Code).'
               )}
             </p>
             <p className="mt-2">
@@ -189,21 +182,16 @@ export default async function Cgv() {
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>{t('9. Médiation de la consommation', '9. Consumer mediation')}</h2>
             <p>
               {t(
-                'En cas de litige, écrivez-nous d’abord à lise.yesbox@gmail.com : nous cherchons toujours une solution amiable. Si votre réclamation écrite n’a pas abouti, vous pouvez recourir gratuitement au médiateur de la consommation :',
-                'In case of a dispute, please write to us first at lise.yesbox@gmail.com: we always look for an amicable solution. If your written complaint is not resolved, you can refer the matter free of charge to the consumer mediator:'
+                'Conformément aux articles L.612-1 et suivants du Code de la consommation, en cas de litige non résolu après réclamation écrite adressée à YES BOX, vous pouvez recourir gratuitement au médiateur de la consommation suivant : [NOM DU MÉDIATEUR], [adresse postale], [site internet / formulaire de saisine]. La saisine du médiateur est possible dans un délai d’un an à compter de votre réclamation écrite auprès de YES BOX.',
+                'In accordance with articles L.612-1 et seq. of the French Consumer Code, if a dispute is not resolved after a written complaint to YES BOX, you can refer it free of charge to the following consumer mediator: [MEDIATOR NAME], [postal address], [website / referral form]. You can refer the matter to the mediator within one year of your written complaint to YES BOX.'
               )}
             </p>
-            <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
-              <li>{MEDIATEUR.nom}</li>
-              <li>{MEDIATEUR.adresse}</li>
-              <li>{MEDIATEUR.site}</li>
-            </ul>
           </section>
           <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}>{t('10. Droit applicable et litiges', '10. Governing law and disputes')}</h2>
             <p>
               {t(
-                'Les présentes CGV sont soumises au droit français. En cas de litige, nous cherchons d’abord une solution amiable, puis, le cas échéant, par la médiation. À défaut, vous pouvez saisir la juridiction du lieu où vous demeuriez au moment de la souscription ou de la survenance du fait dommageable.',
+                'Les présentes CGV sont soumises au droit français. En cas de litige, nous cherchons d’abord une solution amiable, puis, le cas échéant, une solution par la médiation. À défaut, vous pouvez saisir la juridiction du lieu où vous demeuriez au moment de la souscription ou de la survenance du fait dommageable.',
                 'These terms are governed by French law. In case of a dispute, we first look for an amicable solution, then, where appropriate, mediation. Failing that, you can refer the matter to the court of the place where you lived when you subscribed or when the harmful event occurred.'
               )}
             </p>

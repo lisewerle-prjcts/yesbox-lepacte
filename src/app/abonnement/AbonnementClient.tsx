@@ -77,7 +77,7 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           ))}
         </div>
         {error && <p className="text-sm mb-4" style={{ color: '#fff', background: 'rgba(0,0,0,.2)', padding: '8px 12px', borderRadius: 8 }}>{error}</p>}
-        {!compteResilie && <CaseRetractation coche={renonciation} onChange={setRenonciation} clair />}
+        {!compteResilie && <CaseRetractation onChange={setRenonciation} clair />}
         <button
           onClick={souscrire}
           disabled={loading || compteResilie || !renonciation}

@@ -19,14 +19,14 @@ async function getMonCoupleId() {
 }
 
 const ERREUR_RENONCIATION = {
-  fr: 'Coche la case pour accepter les CGV avant de payer.',
-  en: 'Tick the box to accept the terms of sale before paying.',
+  fr: 'Coche les deux cases avant de payer.',
+  en: 'Tick both boxes before paying.',
 }
 
-// renonciationRetractation : case « J'ai lu et j'accepte les CGV » cochée
-// avant le paiement. Les CGV précisent qu'elle vaut demande d'accès immédiat
-// aux modules et renonciation au droit de rétractation dès cet accès (date
-// conservée dans les métadonnées Stripe).
+// renonciationRetractation : cases « J'ai lu et j'accepte les CGV » et « Je
+// demande l'accès immédiat et renonce à mon droit de rétractation dès cet
+// accès » cochées avant le paiement (date conservée dans les métadonnées
+// Stripe).
 export async function demarrerAbonnement(renonciationRetractation: boolean) {
   const locale = await getLocale()
   if (!renonciationRetractation) return { error: t(locale, ERREUR_RENONCIATION.fr, ERREUR_RENONCIATION.en) }
@@ -72,8 +72,8 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
       line_items: [{ price: PRIX_ABONNEMENT_MENSUEL_ID, quantity: 1 }],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/abonnement?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString() } },
-      metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString() },
+      subscription_data: { metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() } },
+      metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() },
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,
@@ -155,8 +155,8 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
       line_items: [{ price: PRIX_ABONNEMENT_ANNUEL_ID, quantity: 1 }],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/journal?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString() } },
-      metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString() },
+      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() } },
+      metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() },
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,
