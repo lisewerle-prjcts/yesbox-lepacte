@@ -79,7 +79,7 @@ export default async function JournalPage() {
         </div>
         <div>
           <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink)' }}><EditableText id="journal.titre">Notre Pacte</EditableText></h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre">Vos conclusions après chaque révélation</EditableText></p>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre.v2" multiline>Les réponses finales de chaque module, et vos réponses au module 9, qui constituent votre pacte. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText></p>
         </div>
       </div>
 
@@ -178,6 +178,11 @@ export default async function JournalPage() {
                         <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px', borderLeft: '3px solid var(--brand)' }}>
                           <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 4 }}>{profile.prenom || t('Toi', 'You')}</p>
                           <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-line' }}>« {q.moi} »</p>
+                          {moduleInfo.slug !== MODULE_PACTE && (
+                            <Link href={`/module/${moduleInfo.slug}/revelation#conclusion`} className="inline-flex items-center gap-1 mt-2" style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 600 }}>
+                              <PenLine className="w-3 h-3" /> <EditableText id="journal.conclusion.modifier">Compléter ma réponse</EditableText>
+                            </Link>
+                          )}
                         </div>
                         {partner && (
                           <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px' }}>

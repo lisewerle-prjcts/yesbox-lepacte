@@ -79,6 +79,9 @@ export default async function PactePage() {
             ? <EditableText id="pacte.souscritre.complet" multiline>Votre pacte est complet — découvrez vos réponses et alignements.</EditableText>
             : t(`${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} terminé${modulesTermines.length > 1 ? 's' : ''} sur ${MODULES.length}`, `${modulesTermines.length} module${modulesTermines.length > 1 ? 's' : ''} completed out of ${MODULES.length}`)}
         </p>
+        <p style={{ color: 'var(--muted)', fontSize: 13.5, marginTop: 6, lineHeight: 1.6 }}>
+          <EditableText id="pacte.explication" multiline>Vos réponses aux questions de chaque module apparaissent ici au fur et à mesure. Les réponses finales de chaque module et votre pacte se trouvent dans NOTRE PACTE.</EditableText>
+        </p>
       </div>
 
       {!partner && (
