@@ -321,7 +321,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.constat.titre': "A couple doesn't break up in a day.",
   'home.constat.texte.0': 'It breaks up through small things that never get said.',
   'home.constat.texte.1': "A frustration you keep to yourself, a topic you avoid, an argument you never quite finish.",
-  'home.constat.texte.2': 'One by one, they weigh nothing. Piled up over the years, they end up weighing on everything.',
+  'home.constat.texte.2.v2': 'Piled up over the years, they end up weighing too much.',
   'home.constat.chiffre.n': '45 %',
   'home.constat.chiffre.l': 'of marriages end in divorce (Insee, 2022).',
   'home.constat.options.titre': 'And when things get stuck, what do we do?',
