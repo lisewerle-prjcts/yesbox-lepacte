@@ -44,10 +44,17 @@ export async function sauvegarderConclusion(
     { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'apprentissage', valeur: chiffrer(apprentissage) },
     { couple_id: mod.couple_id, module_slug: mod.slug, user_id: user.id, question_slug: 'surprise', valeur: chiffrer(surprise) },
   ]
-  const { error } = await supabase
+  // Module déjà scellé : les règles de sécurité de la base refusent toute
+  // modification d'une conclusion (sans erreur, 0 ligne modifiée). Le
+  // serveur a vérifié que le module est celui du couple et que les lignes
+  // sont celles de la personne connectée : on écrit avec la clé service.
+  const client = mod.revealed ? admin : supabase
+  const { data: ecrites, error } = await client
     .from('journal_entries')
     .upsert(rows, { onConflict: 'couple_id,module_slug,user_id,question_slug' })
+    .select('question_slug')
   if (error) return { error: error.message }
+  if ((ecrites ?? []).length < rows.length) return { error: t(locale, 'Ta conclusion n’a pas pu être enregistrée. Réessaie.', 'Your conclusion could not be saved. Please try again.') }
   after(() => marquerActivite(admin, mod.couple_id))
 
   // Module déjà scellé : chacun·e peut compléter sa conclusion après coup
