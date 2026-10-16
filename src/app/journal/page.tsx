@@ -43,6 +43,8 @@ export default async function JournalPage() {
     lireFormule(supabase, profile.couple_id),
   ])
   const offreAnnuelle = offreRdvAnnuel(coupleAbonnement, formule, !!signature?.pacte_signe_le)
+  // Bascule vers l'abonnement annuel programmée d'office à la signature.
+  const basculeProgrammee = offreAnnuelle.mensuelEnCours && !!formule.annuelPrevuLe
   const MODULES = localizeModules(effectiveModules, locale)
   const entriesClaires = dechiffrerLignes(entries as { module_slug: string; user_id: string; question_slug: string; valeur: string | null }[] | null)
 
@@ -77,7 +79,7 @@ export default async function JournalPage() {
         </div>
         <div>
           <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink)' }}><EditableText id="journal.titre">Notre Pacte</EditableText></h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre">Vos conclusions après chaque révélation</EditableText></p>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre.v2" multiline>Les réponses finales de chaque module, et vos réponses au module 9, qui constituent votre pacte. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText></p>
         </div>
       </div>
 
@@ -109,11 +111,13 @@ export default async function JournalPage() {
             </h2>
           </div>
           <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.65 }}>
-            <EditableText id="journal.parcours.termine.texte" multiline>Vous avez terminé le parcours initial. Vous pouvez désormais basculer en abonnement annuel, pour recevoir régulièrement de petits messages et continuer à renforcer votre couple jusqu’à la date de rendez-vous que vous avez fixée. Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce moment comme il se doit. À bientôt, et prenez soin de vous et de votre couple.</EditableText>
+            <EditableText id="journal.parcours.termine.texte.v2" multiline>Bravo pour tout ce chemin parcouru ensemble ! Vous recevrez des messages régulièrement tout au long de l’année (2 par mois maximum) pour continuer à renforcer votre couple, jusqu’à la date de rendez-vous que vous avez fixée. Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce moment comme il se doit. À bientôt, et prenez soin de vous et de votre couple.</EditableText>
           </p>
-          <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.6, marginTop: 12 }}>
-            <EditableText id="journal.parcours.termine.rappel" multiline>Vous recevrez un message 5 jours avant la fin de votre abonnement mensuel pour basculer en abonnement annuel.</EditableText>
-          </p>
+          {basculeProgrammee && (
+            <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.6, marginTop: 12 }}>
+              <EditableText id="journal.parcours.termine.bascule" multiline>À la fin de votre mois d’abonnement, vous passerez automatiquement à l’abonnement annuel (19 €/an), sans démarche de votre part. Vous recevrez un e-mail quelques jours avant, et vous pouvez annuler ce passage depuis Mon compte.</EditableText>
+            </p>
+          )}
         </div>
       )}
 
@@ -174,6 +178,11 @@ export default async function JournalPage() {
                         <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px', borderLeft: '3px solid var(--brand)' }}>
                           <p className="font-semibold" style={{ fontSize: 12, color: 'var(--brand)', marginBottom: 4 }}>{profile.prenom || t('Toi', 'You')}</p>
                           <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-line' }}>« {q.moi} »</p>
+                          {moduleInfo.slug !== MODULE_PACTE && (
+                            <Link href={`/module/${moduleInfo.slug}/revelation#conclusion`} className="inline-flex items-center gap-1 mt-2" style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 600 }}>
+                              <PenLine className="w-3 h-3" /> <EditableText id="journal.conclusion.modifier">Compléter ma réponse</EditableText>
+                            </Link>
+                          )}
                         </div>
                         {partner && (
                           <div style={{ background: 'var(--cream)', borderRadius: 'var(--r-sm)', padding: '12px 16px' }}>

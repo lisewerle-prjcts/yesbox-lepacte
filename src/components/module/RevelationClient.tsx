@@ -91,6 +91,9 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   // (rafraîchi par router.refresh) couvre celle qui attendait l'autre.
   const [revealedLocal, setRevealed] = useState(false)
   const revealed = moduleData.revealed || revealedLocal
+  // Module scellé : la conclusion reste modifiable, `modifiee` signale des
+  // changements pas encore enregistrés.
+  const [modifiee, setModifiee] = useState(false)
 
   const myMap: Record<string, string> = {}
   mesReponses.forEach(r => { if (r.valeur) myMap[r.question_slug] = r.valeur })
@@ -131,6 +134,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
       const result = await sauvegarderConclusion(coupleId, moduleData.id, moduleInfo.slug, apprentissage, surprise)
       if (result.success) {
         setSaved(true)
+        setModifiee(false)
         if (result.sealed) setRevealed(true)
         router.refresh()
       }
@@ -212,7 +216,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             </div>
           </div>
         ) : (
-        <div className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
+        <div id="conclusion" className="text-center mt-14" style={{ borderTop: '1px solid var(--dark-line)', paddingTop: 48 }}>
           <div className="eyebrow justify-center mb-3" style={{ color: 'var(--dark-muted)' }}><EditableText id="revelation.conclusion.eyebrow">Pour clore ce module</EditableText></div>
           <h2 className="font-serif mb-2" style={{ fontSize: 28, fontWeight: 700, color: 'var(--dark-paper)' }}>
             <EditableText id="revelation.conclusion.titre">Ta conclusion, de ton côté</EditableText>
@@ -245,7 +249,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 <EditableText id={`revelation.conclusion.${moduleInfo.slug}.apprentissage.aide`} multiline>{conclusion.apprentissage.aide}</EditableText>
               </p>
             )}
-            <ChampConclusion c={conclusion.apprentissage} value={apprentissage} onChange={v => { setApprentissage(v); setSaved(false) }} disabled={revealed} />
+            <ChampConclusion c={conclusion.apprentissage} value={apprentissage} onChange={v => { setApprentissage(v); setSaved(false); setModifiee(true) }} disabled={false} />
           </div>
 
           <div style={{ background: 'var(--dark-2)', borderRadius: 'var(--r)', padding: 24, marginBottom: 28, textAlign: 'left', border: '1px solid var(--dark-line)' }}>
@@ -257,15 +261,30 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
                 <EditableText id={`revelation.conclusion.${moduleInfo.slug}.surprise.aide`} multiline>{conclusion.surprise.aide}</EditableText>
               </p>
             )}
-            <ChampConclusion c={conclusion.surprise} value={surprise} onChange={v => { setSurprise(v); setSaved(false) }} disabled={revealed} />
+            <ChampConclusion c={conclusion.surprise} value={surprise} onChange={v => { setSurprise(v); setSaved(false); setModifiee(true) }} disabled={false} />
           </div>
 
           {revealed ? (
             <>
-              <div className="flex items-center justify-center gap-2 mb-6" style={{ color: 'var(--sage)' }}>
-                <CheckCircle className="w-5 h-5" />
-                <span style={{ fontSize: 14, fontWeight: 600 }}><EditableText id="revelation.conclusion.scelle">Module scellé — vos deux conclusions sont dans le journal</EditableText></span>
-              </div>
+              {modifiee ? (
+                <div className="mb-6">
+                  <button onClick={enregistrer} disabled={!canSave || isPending} className="btn-brand lg" style={{ opacity: canSave ? 1 : .5 }}>
+                    {isPending
+                      ? <EditableText id="revelation.conclusion.enregistrement">Enregistrement…</EditableText>
+                      : <EditableText id="revelation.conclusion.modifier">Enregistrer mes modifications</EditableText>}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 mb-2" style={{ color: 'var(--sage)' }}>
+                  <CheckCircle className="w-5 h-5" />
+                  <span style={{ fontSize: 14, fontWeight: 600 }}><EditableText id="revelation.conclusion.scelle">Module scellé — vos deux conclusions sont dans le journal</EditableText></span>
+                </div>
+              )}
+              {!modifiee && (
+                <p className="mb-6" style={{ fontSize: 12.5, color: 'var(--dark-muted)' }}>
+                  <EditableText id="revelation.conclusion.modifiable" multiline>Envie d’ajouter quelque chose après en avoir parlé ? Tu peux compléter ta conclusion à tout moment.</EditableText>
+                </p>
+              )}
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/journal" className="btn-ghost" style={{ borderColor: 'var(--dark-line)', color: 'var(--dark-paper)' }}>
                   <EditableText id="revelation.journal.voir">Voir le journal</EditableText>

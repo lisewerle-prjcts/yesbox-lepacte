@@ -39,7 +39,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.revelation.titre">La révélation</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.revelation.texte.v2" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque.</EditableText>
+              <EditableText id="regles.revelation.texte.v3" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque. Vos réponses aux questions de chaque module se retrouvent au fur et à mesure dans PROGRESSION ; les réponses finales de chaque module et vos réponses au module 9, qui constituent votre pacte, se trouvent dans NOTRE PACTE. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText>
             </p>
           </li>
           <li>

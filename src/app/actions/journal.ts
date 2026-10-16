@@ -17,7 +17,8 @@ import { programmerBasculeAnnuelle } from '@/lib/bascule-annuelle'
 // Chaque partenaire écrit sa conclusion de son côté, en 2 questions
 // ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"), une fois que les
 // deux ont répondu à toutes les questions. Quand les deux conclusions sont
-// écrites, le module est révélé et le suivant se débloque.
+// écrites, le module est révélé et le suivant se débloque. Une fois le
+// module scellé, chacun·e peut encore modifier sa propre conclusion.
 // `_coupleId` est ignoré : le couple est déduit du module, côté serveur.
 export async function sauvegarderConclusion(
   _coupleId: string,
@@ -35,8 +36,7 @@ export async function sauvegarderConclusion(
   const admin = createAdminClient()
   const mod = await moduleDuCouple(admin, user.id, moduleId)
   if (!mod || mod.slug !== moduleSlug) return { error: t(locale, 'Module introuvable', 'Module not found') }
-  if (mod.revealed) return { error: t(locale, 'Ce module est déjà révélé.', 'This module has already been revealed.') }
-  if (!mod.reponses_partagees) {
+  if (!mod.reponses_partagees && !mod.revealed) {
     return { error: t(locale, 'Vous devez d’abord avoir tous les deux répondu à toutes les questions.', 'You both need to answer every question first.') }
   }
 
@@ -49,6 +49,14 @@ export async function sauvegarderConclusion(
     .upsert(rows, { onConflict: 'couple_id,module_slug,user_id,question_slug' })
   if (error) return { error: error.message }
   after(() => marquerActivite(admin, mod.couple_id))
+
+  // Module déjà scellé : chacun·e peut compléter sa conclusion après coup
+  // (ex. après en avoir discuté), sans nouvel e-mail à l'autre.
+  if (mod.revealed) {
+    revalidatePath('/journal')
+    revalidatePath(`/module/${moduleSlug}/revelation`)
+    return { success: true, sealed: true }
+  }
 
   const modules = await getEffectiveModules()
   const ordre = modules.map(m => m.slug)
