@@ -235,7 +235,7 @@ export default function LandingPage() {
             <div className="space-y-3" style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)' }}>
               <p><EditableText id="home.constat.texte.0" multiline>Il se sépare à force de petites choses jamais dites.</EditableText></p>
               <p><EditableText id="home.constat.texte.1" multiline>Une frustration qu&apos;on garde pour soi, un sujet qu&apos;on évite, une dispute qu&apos;on ne termine jamais vraiment.</EditableText></p>
-              <p><EditableText id="home.constat.texte.2" multiline>Une à une, elles ne pèsent rien. Accumulées pendant des années, elles finissent par tout peser.</EditableText></p>
+              <p><EditableText id="home.constat.texte.2.v2" multiline>Accumulées pendant des années, elles finissent par trop peser.</EditableText></p>
             </div>
             <div className="card p-6 flex gap-5 items-center mt-8">
               <div className="font-serif font-bold flex-shrink-0" style={{ fontSize: 36, color: 'var(--brand)', lineHeight: 1 }}><EditableText id="home.constat.chiffre.n">45 %</EditableText></div>
