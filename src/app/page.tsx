@@ -140,12 +140,12 @@ export default function LandingPage() {
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <p className="font-serif italic text-2xl md:text-3xl max-w-3xl mx-auto mb-4" style={{ color: 'var(--ink-2)', textWrap: 'balance' }}>
-          <EditableText id="home.hero.intro.phrase" multiline>Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText>
-        </p>
-        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
+        <div className="text-base md:text-lg max-w-2xl mx-auto mb-4 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
           <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
         </div>
+        <p className="font-serif italic text-2xl md:text-3xl max-w-3xl mx-auto mb-10" style={{ color: 'var(--ink-2)', textWrap: 'balance' }}>
+          <EditableText id="home.hero.intro.phrase" multiline>Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText>
+        </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             <EditableText id="home.hero.cta.primary">Inscription au module 1 — Gratuit</EditableText> <ArrowRight className="w-4 h-4" />
@@ -230,14 +230,14 @@ export default function LandingPage() {
             <EditableText id="home.constat.reveal.titre" as="em" style={{ color: 'var(--brand)' }}>Il manquait un rendez-vous régulier, à deux.</EditableText>
           </h3>
           <div className="space-y-4 mx-auto" style={{ maxWidth: 620, fontSize: 15.5, lineHeight: 1.75, color: 'var(--muted)', textWrap: 'balance' }}>
+            <p><EditableText id="home.constat.reveal.texte.0.v2" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, régulièrement, en douceur.</EditableText></p>
             <p>
-              <EditableText id="home.constat.reveal.texte.0" multiline>YES BOX part d&apos;une idée simple : un couple qui tient et qui s&apos;épanouit, ça se choisit, et ça se travaille, en douceur.</EditableText>{' '}
-              <EditableText id="home.constat.reveal.texte.programme" multiline>C&apos;est un programme de développement personnel ludique pour tous les couples, à faire en autonomie.</EditableText>
+              <EditableText id="home.constat.reveal.texte.programme.v2" multiline>YES BOX, c&apos;est un programme de développement personnel pour tous les couples, à faire en autonomie.</EditableText>{' '}
+              <EditableText id="home.constat.reveal.texte.pause" multiline>C&apos;est enfin l&apos;occasion de mettre le quotidien en pause et de prendre du temps pour votre couple, pour voir ce qui marche, le renforcer et améliorer ce qui peut l&apos;être.</EditableText>
             </p>
-            <p><EditableText id="home.constat.reveal.texte.pause" multiline>C&apos;est enfin l&apos;occasion de mettre le quotidien en pause et de prendre du temps pour votre couple, pour voir ce qui marche, le renforcer et améliorer ce qui peut l&apos;être.</EditableText></p>
             <p>
-              <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText>{' '}
-              <EditableText id="home.constat.reveal.texte.2" multiline>Chaque année, un module anniversaire vous aide à faire le bilan, à dire ce qui a pesé et à ajuster vos engagements.</EditableText>
+              <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText><br />
+              <EditableText id="home.constat.reveal.texte.bilan" multiline>Chaque année, un module de Bilan vous aide à regarder l&apos;année passée, à vous dire ce qui a fonctionné, ce qui a pesé et à ajuster vos engagements.</EditableText>
             </p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
           </div>
