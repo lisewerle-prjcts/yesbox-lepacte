@@ -126,8 +126,8 @@ function RappelsCard({ actifInitial }: { actifInitial: boolean }) {
         <input type="checkbox" checked={actif} disabled={status === 'saving'} onChange={e => basculer(e.target.checked)} className="mt-1" />
         <span className="text-sm text-gray-600">
           {t(
-            'Recevoir les rappels YES BOX : quand votre parcours est en pause depuis 10 jours, puis chaque mois une fois votre pacte signé.',
-            'Receive YES BOX reminders: when your program has been paused for 10 days, then every month once your pact is signed.'
+            'Recevoir les rappels YES BOX : quand votre parcours est en pause depuis 10 jours, puis tous les mois une fois votre pacte signé (2 par mois maximum).',
+            'Receive YES BOX reminders: when your program has been paused for 10 days, then every month once your pact is signed (2 per month at most).'
           )}
         </span>
       </label>

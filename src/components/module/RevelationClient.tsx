@@ -94,6 +94,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
   // Module scellé : la conclusion reste modifiable, `modifiee` signale des
   // changements pas encore enregistrés.
   const [modifiee, setModifiee] = useState(false)
+  const [erreur, setErreur] = useState<string | null>(null)
 
   const myMap: Record<string, string> = {}
   mesReponses.forEach(r => { if (r.valeur) myMap[r.question_slug] = r.valeur })
@@ -130,8 +131,10 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
 
   async function enregistrer() {
     if (!canSave) return
+    setErreur(null)
     startTransition(async () => {
       const result = await sauvegarderConclusion(coupleId, moduleData.id, moduleInfo.slug, apprentissage, surprise)
+      if ('error' in result && result.error) setErreur(result.error)
       if (result.success) {
         setSaved(true)
         setModifiee(false)
@@ -264,6 +267,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
             <ChampConclusion c={conclusion.surprise} value={surprise} onChange={v => { setSurprise(v); setSaved(false); setModifiee(true) }} disabled={false} />
           </div>
 
+          {erreur && <p className="mb-4" style={{ fontSize: 13, color: '#f5a3a3' }}>{erreur}</p>}
           {revealed ? (
             <>
               {modifiee ? (
