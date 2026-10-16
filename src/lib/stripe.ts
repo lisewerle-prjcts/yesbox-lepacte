@@ -28,4 +28,4 @@ export function formuleDuPrix(priceId: string | null | undefined): FormuleAbonne
 
 // Durée de conservation des données après la fin de l'accès payé (résiliation
 // ou échéance non renouvelée), avant clôture définitive du compte.
-export const RETENTION_MOIS = 18
+export const RETENTION_MOIS = 12

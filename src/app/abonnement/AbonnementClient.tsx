@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Check, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useT } from '@/components/i18n/LocaleContext'
 import { demarrerAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
+import CaseRetractation from '@/components/CaseRetractation'
 
 const FEATURES = [
   "L'ensemble des modules du parcours initial (hors rendez-vous annuels)",
@@ -23,11 +24,12 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
   const t = useT()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [renonciation, setRenonciation] = useState(false)
 
   async function souscrire() {
     setError(null)
     setLoading(true)
-    const res = await demarrerAbonnement()
+    const res = await demarrerAbonnement(renonciation)
     if (res.error) {
       setError(res.error)
       setLoading(false)
@@ -53,8 +55,8 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
-              "Ce compte a été résilié après 18 mois sans abonnement actif : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
-              'This account was closed after 18 months without an active subscription: it can no longer be reactivated here — you need to start over with a new account.'
+              "Ce compte a été clos 1 an après la fin de l'abonnement : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
+              'This account was closed 1 year after the subscription ended: it can no longer be reactivated here — you need to start over with a new account.'
             )}
           </p>
         </div>
@@ -75,16 +77,17 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           ))}
         </div>
         {error && <p className="text-sm mb-4" style={{ color: '#fff', background: 'rgba(0,0,0,.2)', padding: '8px 12px', borderRadius: 8 }}>{error}</p>}
+        {!compteResilie && <CaseRetractation coche={renonciation} onChange={setRenonciation} clair />}
         <button
           onClick={souscrire}
-          disabled={loading || compteResilie}
+          disabled={loading || compteResilie || !renonciation}
           className="w-full flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg"
-          style={{ background: 'white', color: 'var(--brand, #d63e7a)', fontSize: 14, opacity: compteResilie ? 0.5 : 1 }}
+          style={{ background: 'white', color: 'var(--brand, #d63e7a)', fontSize: 14, opacity: compteResilie || !renonciation ? 0.5 : 1 }}
         >
           {loading ? t('Redirection…', 'Redirecting…') : <>{t('S’abonner — 29€/mois', 'Subscribe — €29/month')} <ArrowRight className="w-4 h-4" /></>}
         </button>
         <p className="text-center mt-3" style={{ fontSize: 11, color: 'rgba(255,255,255,.6)' }}>
-          {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte', 'Secure payment via Stripe · cancel anytime from My Account')}
+          {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte · TVA non applicable, art. 293 B du CGI', 'Secure payment via Stripe · cancel anytime from My Account · VAT not applicable, art. 293 B of the French tax code')}
         </p>
       </div>
 

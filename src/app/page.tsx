@@ -14,9 +14,9 @@ import { createClient } from '@/lib/supabase/client'
 
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
-  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les disputes nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on arguments saved us."), prenom: 'Marie & Tom', lieu: 'Paris' },
-  { texte: t("Notre pacte de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Pact is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'Inès & Rémi', lieu: 'Lyon' },
-  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'Camille & Sacha', lieu: 'Bordeaux' },
+  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les disputes nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on arguments saved us."), prenom: 'xxx & xxx', lieu: 'Paris' },
+  { texte: t("Notre pacte de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Pact is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'xxx & xxx', lieu: 'Lyon' },
+  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'xxx & xxx', lieu: 'Bordeaux' },
 ]
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
@@ -32,12 +32,40 @@ const NAV_LINKS = (t: (fr: string, en: string) => string) => [
   { href: '#forwhom', key: 'forwhom', label: t('Pour qui', "Who it's for") },
   { href: '#modules', key: 'modules', label: t('Les modules', 'The modules') },
   { href: '#tarifs', key: 'tarifs', label: t('Tarifs', 'Pricing') },
+  { href: '#faq', key: 'faq', label: t('FAQ', 'FAQ') },
 ]
 
 const OPTIONS = (t: (fr: string, en: string) => string) => [
   { titre: t('On ne dit rien', 'We say nothing'), desc: t("C'est gratuit… sur le moment. Les non-dits, eux, s'accumulent.", 'It costs nothing… in the moment. But the things left unsaid keep piling up.') },
   { titre: t('On achète un livre', 'We buy a book'), desc: t('Environ 20 €, souvent lu par un seul des deux membres du couple, et il faut tout transposer soi-même dans sa propre histoire.', "Around €20, often read by only one of the two partners, and you have to translate it all into your own story yourselves.") },
   { titre: t('On consulte', 'We see a therapist'), desc: t("C'est indispensable quand ça va vraiment mal. Il faut compter 80 à 150 € la séance, sur plusieurs mois. Tout le monde n'a pas envie de se confier à une personne extérieure dès le départ.", "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.") },
+]
+
+const ETAPES = (t: (fr: string, en: string) => string) => [
+  { titre: t('Chacun·e répond de son côté', 'You each answer on your own'), desc: t("Sur votre téléphone ou votre ordinateur, vous répondez aux questions du module, à votre rythme. Personne ne voit les réponses de l'autre.", "On your phone or computer, you answer the module's questions at your own pace. Neither of you sees the other's answers.") },
+  { titre: t('Vous découvrez vos réponses ensemble', 'You discover your answers together'), desc: t("Une fois vos deux réponses enregistrées, la révélation s'ouvre : vous les lisez côte à côte et vous en parlez.", 'Once both your answers are in, the reveal opens: you read them side by side and talk about them.') },
+  { titre: t('Vous écrivez votre pacte', 'You write your pact'), desc: t('Au bout des 9 modules, vous rédigez et signez votre pacte de couple, et vous choisissez la date de votre rendez-vous annuel.', 'After the 9 modules, you write and sign your couple’s pact, and choose the date of your yearly date.') },
+]
+
+// Une question tirée de chaque module, affichée dans la liste des modules.
+const EXEMPLES_QUESTIONS: Record<string, [string, string]> = {
+  toi: ['Quelle est ta définition du bonheur ?', 'What is your definition of happiness?'],
+  nous: ['Quel est le moment où tu as su que « c’était du sérieux » ?', 'When did you know it was "serious"?'],
+  quotidien: ['Quel est le geste ou l’attention qui te touche le plus, au quotidien, de la part de l’autre ?', 'What gesture or thoughtful act from your partner touches you most in everyday life?'],
+  projets: ['Imagine la maison de tes rêves et décris-la.', 'Picture your dream home and describe it.'],
+  famille: ['Quelles traditions familiales aimerais-tu garder… et lesquelles aimerais-tu inventer rien qu’à vous deux ?', 'Which family traditions would you like to keep… and which would you like to invent just for the two of you?'],
+  communication: ['Y a-t-il un besoin que tu aimerais que l’autre devine… et que tu n’as peut-être jamais vraiment formulé ?', 'Is there a need you wish your partner would guess… and that you may never really have put into words?'],
+  intimite: ['Quels petits gestes de tendresse te font fondre ?', 'What small gestures of affection melt your heart?'],
+  conflits: ['En dispute, quelle image te ressemble le plus : volcan, iceberg, salle d’audience, porte qui claque, table de négociation ?', 'In an argument, which image fits you best: volcano, iceberg, courtroom, slammed door, negotiating table?'],
+  engagement: ['Quel pourrait être le mot-clé de votre année à venir ?', 'What could be the keyword for your year ahead?'],
+}
+
+const FAQ = (t: (fr: string, en: string) => string) => [
+  { q: t('Et si mon ou ma partenaire n’est pas partant·e ?', "What if my partner isn't keen?"), r: t("Commencez par le module 1 : il est gratuit, léger et ludique, et c'est souvent la meilleure façon de donner envie. Depuis votre espace, vous pouvez lui envoyer une invitation par e-mail quand vous le souhaitez. YES BOX se vit à deux : personne n'est obligé·e de rien.", "Start with module 1: it's free, light and playful, and it's often the best way to spark interest. From your space, you can send them an email invitation whenever you like. YES BOX is something you do together: nobody has to do anything.") },
+  { q: t('Combien de temps ça prend ?', 'How long does it take?'), r: t('Comptez 30 à 60 minutes à deux par module, selon les discussions qui en découlent. Vous avancez à votre rythme : un module par semaine, ou plusieurs si vous en avez envie.', 'Allow 30 to 60 minutes together per module, depending on the conversations it sparks. You go at your own pace: one module a week, or more if you feel like it.') },
+  { q: t('Qui peut lire nos réponses ?', 'Who can read our answers?'), r: t("Vous deux, et personne d'autre. Vos réponses sont chiffrées sur nos serveurs, et l'équipe YES BOX n'y a pas accès. Aucun·e thérapeute ni aucune intelligence artificielle ne les analyse.", 'Just the two of you. Your answers are encrypted on our servers, and the YES BOX team has no access to them. No therapist and no artificial intelligence analyzes them.') },
+  { q: t('Et si une réponse fait mal ?', 'What if an answer hurts?'), r: t("Ça peut arriver : certaines questions touchent à des sujets sensibles. Prenez le temps d'en parler, sans vous presser, et revenez-y plus tard si besoin. YES BOX n'est pas une thérapie : si une discussion révèle une souffrance profonde, n'hésitez pas à vous faire accompagner par un·e professionnel·le.", "It can happen: some questions touch on sensitive topics. Take time to talk about it, without rushing, and come back to it later if needed. YES BOX is not therapy: if a conversation reveals deep pain, don't hesitate to get support from a professional.") },
+  { q: t('Peut-on arrêter quand on veut ?', 'Can we stop whenever we want?'), r: t("Oui. L'abonnement est sans engagement et se résilie en un clic depuis Mon compte. L'accès reste ouvert jusqu'à la fin de la période déjà payée.", 'Yes. The subscription has no commitment and can be cancelled in one click from My Account. Access stays open until the end of the period already paid for.') },
 ]
 
 const PACTE_LIST = (t: (fr: string, en: string) => string) => [
@@ -73,6 +101,8 @@ export default function LandingPage() {
   const pacteList = PACTE_LIST(t)
   const pacteRows = PACTE_ROWS(t)
   const temoignagesList = TEMOIGNAGES(t)
+  const etapes = ETAPES(t)
+  const faq = FAQ(t)
 
   return (
     <div className="min-h-screen">
@@ -146,7 +176,7 @@ export default function LandingPage() {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
-            <EditableText id="home.hero.cta.primary">Inscription au module 1 — Gratuit</EditableText> <ArrowRight className="w-4 h-4" />
+            <EditableText id="home.hero.cta.primary.v2">Commencer gratuitement à deux</EditableText> <ArrowRight className="w-4 h-4" />
           </button>
           <a href="#modules" className="btn-ghost lg">
             <EditableText id="home.hero.cta.secondary">Voir le programme</EditableText>
@@ -154,8 +184,25 @@ export default function LandingPage() {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
           {/* Identifiants fixes : nouveaux ids pour les badges dont le texte a changé. */}
-          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sansjugement', '✦ Sans thérapeute, sans jugement'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
+          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sansjugement', '✦ Sans thérapeute, sans jugement'], ['sanscb', '✦ Sans carte bancaire pour commencer'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
             <span key={i}><EditableText id={`home.hero.badges.${i}`}>{badge}</EditableText></span>
+          ))}
+        </div>
+      </section>
+
+      {/* COMMENT ÇA MARCHE */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div className="text-center mb-10">
+          <div className="eyebrow justify-center mb-3"><EditableText id="home.etapes.eyebrow">Comment ça marche</EditableText></div>
+          <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.etapes.titre">Trois étapes, à votre rythme.</EditableText></h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-5">
+          {etapes.map((e, i) => (
+            <div key={i} className="card p-6">
+              <div className="font-serif font-bold mb-2" style={{ fontSize: 32, color: 'var(--brand)', lineHeight: 1 }}>{i + 1}</div>
+              <h3 className="font-semibold mb-1.5" style={{ fontSize: 16, color: 'var(--ink)' }}><EditableText id={`home.etapes.${i}.titre`}>{e.titre}</EditableText></h3>
+              <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.etapes.${i}.desc`} multiline>{e.desc}</EditableText></p>
+            </div>
           ))}
         </div>
       </section>
@@ -235,7 +282,7 @@ export default function LandingPage() {
             </p>
             <p>
               <EditableText id="home.constat.reveal.texte.pacte" multiline>À la fin du programme, vous écrivez votre pacte de couple, pour l&apos;année qui vient.</EditableText><br />
-              <EditableText id="home.constat.reveal.texte.bilan" multiline>Chaque année, un module de Bilan vous aide à regarder l&apos;année passée, à vous dire ce qui a fonctionné, ce qui a pesé et à ajuster vos engagements.</EditableText>
+              <EditableText id="home.constat.reveal.texte.bilan.v2" multiline>Chaque année, le module « Notre rendez-vous annuel » vous aide à regarder l&apos;année passée, à vous dire ce qui a fonctionné, ce qui a pesé et à ajuster vos engagements.</EditableText>
             </p>
             <p><EditableText id="home.constat.reveal.texte.3" multiline>Vous ne perdez jamais le fil, et les frustrations n&apos;ont pas le temps de s&apos;installer.</EditableText></p>
           </div>
@@ -317,6 +364,11 @@ export default function LandingPage() {
                     <span style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${m.slug}.sousTitre`}>{m.sousTitre}</EditableText></span>
                   </div>
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
+                  {EXEMPLES_QUESTIONS[m.slug] && (
+                    <p className="font-serif" style={{ fontSize: 14, color: 'var(--ink-2)', fontStyle: 'italic', marginTop: 6 }}>
+                      « <EditableText id={`module.${m.slug}.exemple`} multiline>{t(...EXEMPLES_QUESTIONS[m.slug])}</EditableText> »
+                    </p>
+                  )}
                 </div>
                 {m.free && <span className="tag-sage flex-shrink-0">{t('Gratuit', 'Free')}</span>}
                 {m.n === 10 && <span className="tag-muted flex-shrink-0">{t('Annuel', 'Yearly')}</span>}
@@ -325,7 +377,7 @@ export default function LandingPage() {
           </div>
           <div className="text-center" style={{ maxWidth: 680, margin: '40px auto 0', fontSize: 14.5, lineHeight: 1.7, color: 'var(--muted)' }}>
             <p>
-              <EditableText id="home.modules.duree" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
+              <EditableText id="home.modules.duree.v2" multiline>Chaque module compte une dizaine de questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
             </p>
             <p style={{ marginTop: 20, fontSize: 16, lineHeight: 1.6, color: 'var(--ink-2)' }}>
               <EditableText id="home.modules.confidentialite" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux et sont chiffrées sur nos serveurs. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>
@@ -345,8 +397,9 @@ export default function LandingPage() {
       <section className="py-20" style={{ background: 'var(--cream-2)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
-            <div className="eyebrow justify-center mb-3"><EditableText id="home.temoignages.eyebrow.v2">Ces couples ont signé leur pacte</EditableText></div>
-            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title.v2">Ce que ça a vraiment changé pour eux.</EditableText></h2>
+            <div className="eyebrow justify-center mb-3"><EditableText id="home.temoignages.eyebrow.v3">Exemples de témoignages</EditableText></div>
+            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title.v3">Ce que YES BOX peut changer pour un couple.</EditableText></h2>
+            <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}><EditableText id="home.temoignages.avertissement" multiline>Témoignages générés par IA, à titre d&apos;illustration, en attendant ceux de nos premiers couples.</EditableText></p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {temoignagesList.map((item, i) => (
@@ -356,7 +409,7 @@ export default function LandingPage() {
                   &laquo; <EditableText id={`home.temoignages.${i}.texte`} multiline>{item.texte}</EditableText> &raquo;
                 </blockquote>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom`}>{item.prenom}</EditableText></div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom.v2`}>{item.prenom}</EditableText></div>
                   <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}><EditableText id={`home.temoignages.${i}.lieu`}>{item.lieu}</EditableText></div>
                 </div>
               </div>
@@ -378,6 +431,24 @@ export default function LandingPage() {
             </p>
           </div>
           <OffresTarifs onInscription={() => setModalOpen(true)} />
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-20" style={{ background: 'var(--cream-2)' }}>
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <div className="eyebrow justify-center mb-3"><EditableText id="home.faq.eyebrow">Questions fréquentes</EditableText></div>
+            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.faq.titre">Vous vous demandez peut-être…</EditableText></h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {faq.map((item, i) => (
+              <details key={i} className="card p-5">
+                <summary className="font-semibold cursor-pointer" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`home.faq.${i}.q`}>{item.q}</EditableText></summary>
+                <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, marginTop: 10 }}><EditableText id={`home.faq.${i}.r`} multiline>{item.r}</EditableText></p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -411,7 +482,6 @@ export default function LandingPage() {
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.tarifs">Tarifs</EditableText></Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.mentions">Mentions légales</EditableText></Link>
             <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.confidentialite">Confidentialité</EditableText></Link>
-            <Link href="/admin" style={{ color: 'rgba(255,255,255,.35)', fontSize: 12 }}>Admin</Link>
           </div>
         </div>
       </footer>

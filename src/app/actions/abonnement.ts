@@ -18,8 +18,17 @@ async function getMonCoupleId() {
   return { coupleId: profile.couple_id as string, email: profile.email as string, userId: user.id }
 }
 
-export async function demarrerAbonnement() {
+const ERREUR_RENONCIATION = {
+  fr: 'Coche la case pour demander l’accès immédiat aux modules avant de payer.',
+  en: 'Tick the box to request immediate access to the modules before paying.',
+}
+
+// renonciationRetractation : la personne demande l'accès immédiat aux
+// modules et renonce à son droit de rétractation de 14 jours dès cet accès
+// (case cochée avant le paiement, date conservée dans les métadonnées Stripe).
+export async function demarrerAbonnement(renonciationRetractation: boolean) {
   const locale = await getLocale()
+  if (!renonciationRetractation) return { error: t(locale, ERREUR_RENONCIATION.fr, ERREUR_RENONCIATION.en) }
   const ctx = await getMonCoupleId()
   if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
   if (!PRIX_ABONNEMENT_MENSUEL_ID) return { error: t(locale, "L'abonnement n'est pas encore configuré (STRIPE_PRICE_ID_ABONNEMENT_MENSUEL manquant).", 'Subscriptions are not configured yet (missing STRIPE_PRICE_ID_ABONNEMENT_MENSUEL).') }
@@ -30,8 +39,8 @@ export async function demarrerAbonnement() {
 
   if (estCompteResilie(couple)) {
     return { error: t(locale,
-      "Ce compte a été résilié après 18 mois d'inactivité de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
-      'This account was closed after 18 months without an active subscription: the subscription cannot be reactivated on this space. You need to start over with a new account.'
+      "Ce compte a été clos 1 an après la fin de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
+      'This account was closed 1 year after the subscription ended: the subscription cannot be reactivated on this space. You need to start over with a new account.'
     ) }
   }
   if (estAbonnementActif(couple)) {
@@ -62,8 +71,8 @@ export async function demarrerAbonnement() {
       line_items: [{ price: PRIX_ABONNEMENT_MENSUEL_ID, quantity: 1 }],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/abonnement?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId } },
-      metadata: { couple_id: ctx.coupleId },
+      subscription_data: { metadata: { couple_id: ctx.coupleId, renonciation_retractation: new Date().toISOString() } },
+      metadata: { couple_id: ctx.coupleId, renonciation_retractation: new Date().toISOString() },
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,
@@ -86,7 +95,7 @@ export async function demarrerAbonnement() {
 //   - pas d'abonnement Stripe en cours : paiement immédiat via Stripe Checkout.
 // Dans les deux cas, l'accès vaut pour 1 an, résiliable à tout moment depuis
 // Mon compte (l'accès reste ouvert jusqu'au dernier jour payé).
-export async function passerAuRendezVousAnnuel() {
+export async function passerAuRendezVousAnnuel(renonciationRetractation = false) {
   const locale = await getLocale()
   const ctx = await getMonCoupleId()
   if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
@@ -101,8 +110,8 @@ export async function passerAuRendezVousAnnuel() {
   if (!signature?.pacte_signe_le) return { error: t(locale, 'Le rendez-vous annuel se propose une fois votre pacte signé.', 'The yearly date is available once your pact is signed.') }
   if (estCompteResilie(couple)) {
     return { error: t(locale,
-      "Ce compte a été résilié après 18 mois d'inactivité de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
-      'This account was closed after 18 months without an active subscription: the subscription cannot be reactivated on this space. You need to start over with a new account.'
+      "Ce compte a été clos 1 an après la fin de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
+      'This account was closed 1 year after the subscription ended: the subscription cannot be reactivated on this space. You need to start over with a new account.'
     ) }
   }
 
@@ -121,6 +130,9 @@ export async function passerAuRendezVousAnnuel() {
       revalidatePath('/journal')
       return { success: true, basculeLe: res.basculeLe }
     }
+
+    // Paiement immédiat : accès immédiat demandé, case cochée avant le paiement.
+    if (!renonciationRetractation) return { error: t(locale, ERREUR_RENONCIATION.fr, ERREUR_RENONCIATION.en) }
 
     let customerId = couple.stripe_customer_id
     if (!customerId) {
@@ -142,8 +154,8 @@ export async function passerAuRendezVousAnnuel() {
       line_items: [{ price: PRIX_ABONNEMENT_ANNUEL_ID, quantity: 1 }],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/journal?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel' } },
-      metadata: { couple_id: ctx.coupleId, formule: 'annuel' },
+      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel', renonciation_retractation: new Date().toISOString() } },
+      metadata: { couple_id: ctx.coupleId, formule: 'annuel', renonciation_retractation: new Date().toISOString() },
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,

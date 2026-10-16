@@ -11,13 +11,13 @@ export const maxDuration = 60
 type AdminClient = ReturnType<typeof createAdminClient>
 
 // Tâche planifiée quotidienne (voir vercel.json) appliquant les durées de
-// conservation annoncées dans la politique de confidentialité (18 mois) :
-//   1. Comptes payants : 18 mois après la fin de l'accès payé
+// conservation annoncées dans la politique de confidentialité (1 an) :
+//   1. Comptes payants : 1 an après la fin de l'accès payé
 //      (data_retention_until), le compte est clos définitivement — réponses,
 //      journal et pacte effacés, abonnement non réactivable.
 //   2. Comptes jamais payés (gratuits ou jamais utilisés) : supprimés
-//      entièrement quand aucun membre ne s'est connecté depuis 18 mois.
-//   3. Pré-commandes (ancien formulaire) : effacées 18 mois après leur envoi.
+//      entièrement quand aucun membre ne s'est connecté depuis 1 an.
+//   3. Pré-commandes (ancien formulaire) : effacées 1 an après leur envoi.
 //   4. Chiffrement des contenus encore en clair (cf. src/lib/chiffrement.ts).
 export async function GET(req: Request) {
   // Refuse tout appel si CRON_SECRET n'est pas configuré : sans secret, la

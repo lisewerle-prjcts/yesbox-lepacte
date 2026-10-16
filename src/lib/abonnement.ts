@@ -28,10 +28,10 @@ export function aAccesComplet(couple: CoupleAbonnement | null | undefined): bool
   return estAbonnementActif(couple) || aAccesGratuitActif(couple)
 }
 
-// Le compte est définitivement clos (18 mois sans accès payé écoulés) :
+// Le compte est définitivement clos (1 an sans accès payé écoulé) :
 // plus aucune réactivation possible sur ce couple, il faut repartir de zéro.
 // Calculé à la volée à partir de data_retention_until (le webhook la pose à
-// la fin de l'accès + 18 mois) — compte_resilie_le n'est posé qu'une fois la
+// la fin de l'accès + 1 an) — compte_resilie_le n'est posé qu'une fois la
 // tâche planifiée passée, mais le calcul ci-dessous est déjà vrai avant.
 export function estCompteResilie(couple: CoupleAbonnement | null | undefined): boolean {
   if (!couple) return false

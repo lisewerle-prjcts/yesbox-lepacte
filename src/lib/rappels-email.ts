@@ -22,7 +22,9 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //   3. une fois le pacte signé, 5 jours avant la fin du mois payé, la
 //      proposition de passer de l'abonnement mensuel à l'abonnement annuel
 //      (« Pacte – notre rendez-vous annuel », bascule Stripe programmée
-//      depuis la page Notre Pacte).
+//      depuis la page Notre Pacte) ;
+//   4. avant l'effacement des données (1 an après la fin de l'accès payé),
+//      un avertissement 2 mois, 1 mois, 1 semaine et la veille.
 // Uniquement pour les couples dont l'accès est en cours (les relances après
 // résiliation viendront plus tard). Chaque membre peut refuser ces rappels
 // (profiles.rappels_email) : lien en bas de chaque e-mail ou Mon compte.
@@ -614,4 +616,86 @@ export async function envoyerPropositionsAnnuel(admin: AdminClient): Promise<num
 
 export function rappelsConfigures() {
   return mailConfigure()
+}
+
+// ---------------------------------------------------------------------------
+// 4. Avertissements avant l'effacement des données (fin de l'accès payé + 1 an)
+// ---------------------------------------------------------------------------
+
+// Jours avant l'effacement : 2 mois, 1 mois, 1 semaine, la veille.
+const AVERTISSEMENTS_EFFACEMENT_JOURS = [60, 30, 7, 1]
+
+function contenuAvertissementEffacement(effacementLe: string, jours: number, locale: Locale) {
+  const date = formaterDate(effacementLe, locale)
+  const quand = jours <= 1
+    ? t(locale, 'demain', 'tomorrow')
+    : t(locale, `le ${date}`, `on ${date}`)
+  return {
+    subject: jours <= 1
+      ? t(locale, 'Vos données YES BOX seront effacées demain', 'Your YES BOX data will be deleted tomorrow')
+      : t(locale, `Vos données YES BOX seront effacées le ${date}`, `Your YES BOX data will be deleted on ${date}`),
+    corps: p(t(locale,
+      `Votre abonnement YES BOX a pris fin il y a bientôt un an. Sans action de votre part, vos données (réponses, conclusions et pacte) seront effacées ${quand}.`,
+      `Your YES BOX subscription ended almost a year ago. Unless you take action, your data (answers, conclusions and pact) will be deleted ${quand}.`))
+      + p(t(locale,
+        'Vous pouvez vous rendre sur le site YES BOX et télécharger vos données complètes dans la rubrique Mon compte.',
+        'You can go to the YES BOX website and download all your data from the My Account section.'))
+      + bouton(`${appUrl()}/mon-compte`, t(locale, 'Télécharger nos données', 'Download our data')),
+  }
+}
+
+// E-mail de service (obligation d'information avant effacement) : envoyé à
+// chaque membre, même si les rappels sont désactivés.
+async function envoyerAvisService(destinataire: Membre, subject: string, corps: string): Promise<boolean> {
+  if (!destinataire.email) return false
+  const locale = destinataire.langue
+  const bonjour = p(`${t(locale, 'Bonjour', 'Hello')}${destinataire.prenom ? ` ${echapperHtml(destinataire.prenom)}` : ''},`)
+  return envoyerMail({
+    to: destinataire.email,
+    subject: subject.replace(/[\r\n]+/g, ' '),
+    body: bonjour + corps + p(t(locale, 'L’équipe YES BOX', 'The YES BOX team')),
+  })
+}
+
+export async function envoyerAvertissementsEffacement(admin: AdminClient): Promise<number> {
+  const maintenant = new Date()
+  const aujourdhui = Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())
+  const limite = new Date(aujourdhui + (AVERTISSEMENTS_EFFACEMENT_JOURS[0] + 1) * JOUR).toISOString()
+  const { data: couples, error } = await admin
+    .from('couples')
+    .select('id, data_retention_until')
+    .is('compte_resilie_le', null)
+    .not('data_retention_until', 'is', null)
+    .gt('data_retention_until', maintenant.toISOString())
+    .lt('data_retention_until', limite)
+  if (error) throw new Error(error.message)
+
+  let envoyes = 0
+  for (const couple of couples ?? []) {
+    try {
+      const effacementLe = couple.data_retention_until as string
+      const joursAvant = Math.ceil((new Date(effacementLe).getTime() - aujourdhui) / JOUR)
+      // Palier le plus proche atteint (un palier manqué n'est pas rattrapé
+      // en plus du suivant).
+      const palier = [...AVERTISSEMENTS_EFFACEMENT_JOURS].reverse().find(j => joursAvant <= j)
+      if (!palier) continue
+
+      // Un seul envoi par palier et par date d'effacement (si l'abonnement
+      // est repris puis arrêté à nouveau, la date change et tout repart).
+      const { data: reserve, error: reserveError } = await admin
+        .from('rappels_envoyes')
+        .upsert({ couple_id: couple.id, type: 'effacement_donnees', cle: `${effacementLe.slice(0, 10)}:${palier}` }, { onConflict: 'couple_id,type,cle', ignoreDuplicates: true })
+        .select('couple_id')
+      if (reserveError) throw new Error(reserveError.message)
+      if (!reserve?.length) continue
+
+      for (const d of await membresDuCouple(admin, couple.id)) {
+        const { subject, corps } = contenuAvertissementEffacement(effacementLe, joursAvant, d.langue)
+        if (await envoyerAvisService(d, subject, corps)) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] avertissement d'effacement du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
 }

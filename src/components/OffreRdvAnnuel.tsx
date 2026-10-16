@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Check, ArrowRight, CalendarHeart } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import { passerAuRendezVousAnnuel } from '@/app/actions/abonnement'
+import CaseRetractation from '@/components/CaseRetractation'
 
 const AVANTAGES = [
   'Votre module « Notre rendez-vous annuel » à la date choisie',
@@ -37,11 +38,12 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [basculeLe, setBasculeLe] = useState<string | null>(null)
+  const [renonciation, setRenonciation] = useState(false)
 
   async function basculer() {
     setError(null)
     setLoading(true)
-    const res = await passerAuRendezVousAnnuel()
+    const res = await passerAuRendezVousAnnuel(renonciation)
     if (res.error) {
       setError(res.error)
       setLoading(false)
@@ -109,9 +111,11 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
 
       {error && <p className="text-sm mb-4" style={{ color: '#fff', background: 'rgba(0,0,0,.2)', padding: '8px 12px', borderRadius: 8 }}>{error}</p>}
 
+      {!mensuelEnCours && <CaseRetractation coche={renonciation} onChange={setRenonciation} clair />}
+
       <button
         onClick={mensuelEnCours && !confirmer ? () => setConfirmer(true) : basculer}
-        disabled={loading}
+        disabled={loading || (!mensuelEnCours && !renonciation)}
         className="w-full flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg"
         style={{ background: 'white', color: 'var(--brand, #d63e7a)', fontSize: 14 }}
       >
@@ -122,7 +126,7 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
           : <>{t('Activer notre rendez-vous annuel — 19 €/an', 'Activate our yearly date — €19/year')} <ArrowRight className="w-4 h-4" /></>}
       </button>
       <p className="text-center mt-3" style={{ fontSize: 11, color: 'rgba(255,255,255,.6)' }}>
-        {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte', 'Secure payment via Stripe · cancel anytime from My Account')}
+        {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte · TVA non applicable, art. 293 B du CGI', 'Secure payment via Stripe · cancel anytime from My Account · VAT not applicable, art. 293 B of the French tax code')}
       </p>
     </div>
   )
