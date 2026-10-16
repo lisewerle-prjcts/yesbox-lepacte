@@ -49,8 +49,8 @@ export default function InscriptionPage() {
 
         <p className="text-center text-xs text-gray-400 mt-6">
           <EditableText id="inscription.cgu.prefix">En créant un compte, tu acceptes nos</EditableText>{' '}
-          <Link href="/mentions-legales" className="text-magenta hover:underline">
-            <EditableText id="inscription.cgu.lien">conditions d&apos;utilisation</EditableText>
+          <Link href="/cgv" className="text-magenta hover:underline">
+            <EditableText id="inscription.cgu.lien.v2">conditions générales</EditableText>
           </Link>.
         </p>
       </div>

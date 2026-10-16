@@ -19,13 +19,14 @@ async function getMonCoupleId() {
 }
 
 const ERREUR_RENONCIATION = {
-  fr: 'Coche la case pour demander l’accès immédiat aux modules avant de payer.',
-  en: 'Tick the box to request immediate access to the modules before paying.',
+  fr: 'Coche la case pour accepter les CGV avant de payer.',
+  en: 'Tick the box to accept the terms of sale before paying.',
 }
 
-// renonciationRetractation : la personne demande l'accès immédiat aux
-// modules et renonce à son droit de rétractation de 14 jours dès cet accès
-// (case cochée avant le paiement, date conservée dans les métadonnées Stripe).
+// renonciationRetractation : case « J'ai lu et j'accepte les CGV » cochée
+// avant le paiement. Les CGV précisent qu'elle vaut demande d'accès immédiat
+// aux modules et renonciation au droit de rétractation dès cet accès (date
+// conservée dans les métadonnées Stripe).
 export async function demarrerAbonnement(renonciationRetractation: boolean) {
   const locale = await getLocale()
   if (!renonciationRetractation) return { error: t(locale, ERREUR_RENONCIATION.fr, ERREUR_RENONCIATION.en) }
@@ -71,8 +72,8 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
       line_items: [{ price: PRIX_ABONNEMENT_MENSUEL_ID, quantity: 1 }],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/abonnement?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId, renonciation_retractation: new Date().toISOString() } },
-      metadata: { couple_id: ctx.coupleId, renonciation_retractation: new Date().toISOString() },
+      subscription_data: { metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString() } },
+      metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString() },
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,
@@ -131,7 +132,7 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
       return { success: true, basculeLe: res.basculeLe }
     }
 
-    // Paiement immédiat : accès immédiat demandé, case cochée avant le paiement.
+    // Paiement immédiat : CGV acceptées (accès immédiat demandé) avant le paiement.
     if (!renonciationRetractation) return { error: t(locale, ERREUR_RENONCIATION.fr, ERREUR_RENONCIATION.en) }
 
     let customerId = couple.stripe_customer_id
@@ -154,8 +155,8 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
       line_items: [{ price: PRIX_ABONNEMENT_ANNUEL_ID, quantity: 1 }],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/journal?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel', renonciation_retractation: new Date().toISOString() } },
-      metadata: { couple_id: ctx.coupleId, formule: 'annuel', renonciation_retractation: new Date().toISOString() },
+      subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString() } },
+      metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString() },
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,

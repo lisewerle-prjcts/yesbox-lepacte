@@ -182,7 +182,8 @@ export default async function Confidentialite() {
 
           <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}>
             {t('Dernière mise à jour : septembre 2026. Voir aussi les', 'Last updated: September 2026. See also the')}{' '}
-            <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}>{t('mentions légales', 'legal notice')}</Link>.
+            <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}>{t('mentions légales', 'legal notice')}</Link>{t(' et les ', ' and the ')}
+            <Link href="/cgv" style={{ color: 'var(--brand)' }}>{t('conditions générales de vente', 'terms of sale')}</Link>.
           </p>
         </div>
       </main>

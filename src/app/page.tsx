@@ -387,7 +387,7 @@ export default function LandingPage() {
             </p>
             <p style={{ marginTop: 20 }}>
               <EditableText id="home.modules.infos.prefix">Pour plus d&apos;informations, lire les</EditableText>{' '}
-              <Link href="/mentions-legales" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link">mentions légales</EditableText></Link>.
+              <Link href="/cgv" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link.v2">conditions générales de vente</EditableText></Link>.
             </p>
           </div>
         </div>
@@ -481,6 +481,7 @@ export default function LandingPage() {
             <button onClick={() => setModalOpen(true)} style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.inscription">Inscription</EditableText></button>
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.tarifs">Tarifs</EditableText></Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.mentions">Mentions légales</EditableText></Link>
+            <Link href="/cgv" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.cgv">CGV</EditableText></Link>
             <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.confidentialite">Confidentialité</EditableText></Link>
           </div>
         </div>
