@@ -158,8 +158,8 @@ export default function LandingPage() {
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
         <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
-          <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
-          <p><EditableText id="home.hero.intro.phrase" multiline>Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
+          <p><EditableText id="home.hero.intro.programme" multiline>YES BOX est un programme de développement personnel pour les couples. Avec des modules simples à faire à son rythme, depuis la maison et sans jugement (pas d&apos;analyse IA, ni de conseil de tierce personne). L&apos;objectif : prendre soin de sa relation, échanger à deux et renouveler ses engagements en conscience, chaque année.</EditableText></p>
+          <p><EditableText id="home.hero.intro.questions" multiline>Des questions simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire. Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, en douceur.</EditableText></p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
@@ -171,7 +171,7 @@ export default function LandingPage() {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
           {/* Identifiants fixes : nouveaux ids pour les badges dont le texte a changé. */}
-          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sansjugement', '✦ Sans thérapeute, sans jugement'], ['sanscb', '✦ Sans carte bancaire pour commencer'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
+          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sanscb', '✦ Sans carte bancaire pour commencer'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
             <span key={i}><EditableText id={`home.hero.badges.${i}`}>{badge}</EditableText></span>
           ))}
         </div>
