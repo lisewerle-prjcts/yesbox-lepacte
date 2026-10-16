@@ -94,6 +94,7 @@ export default async function MentionsLegales() {
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>{t('Nom commercial :', 'Trade name:')} YES BOX</li>
               <li>{t('Édité par :', 'Published by:')} Lise YESSOUROUR</li>
+              <li>{t('SIREN :', 'Company number (SIREN):')} 514 073 691 — {t('RCS Versailles', 'Versailles Trade and Companies Register (RCS)')}</li>
               <li>{t('Adresse :', 'Address:')} 15 résidence des Charmilles, 78590 Noisy-le-Roi, France</li>
               <li>{t('Responsable de la publication :', 'Publication director:')} Lise YESSOUROUR</li>
               <li>{t('Adresse e-mail :', 'Email address:')} <a href="mailto:lise.yesbox@gmail.com" style={{ color: 'var(--brand)' }}>lise.yesbox@gmail.com</a></li>
