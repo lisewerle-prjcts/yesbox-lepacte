@@ -47,19 +47,6 @@ const ETAPES = (t: (fr: string, en: string) => string) => [
   { titre: t('Vous écrivez votre pacte', 'You write your pact'), desc: t('Au bout des 9 modules, vous rédigez et signez votre pacte de couple, et vous choisissez la date de votre rendez-vous annuel.', 'After the 9 modules, you write and sign your couple’s pact, and choose the date of your yearly date.') },
 ]
 
-// Une question tirée de chaque module, affichée dans la liste des modules.
-const EXEMPLES_QUESTIONS: Record<string, [string, string]> = {
-  toi: ['Quelle est ta définition du bonheur ?', 'What is your definition of happiness?'],
-  nous: ['Quel est le moment où tu as su que « c’était du sérieux » ?', 'When did you know it was "serious"?'],
-  quotidien: ['Quel est le geste ou l’attention qui te touche le plus, au quotidien, de la part de l’autre ?', 'What gesture or thoughtful act from your partner touches you most in everyday life?'],
-  projets: ['Imagine la maison de tes rêves et décris-la.', 'Picture your dream home and describe it.'],
-  famille: ['Quelles traditions familiales aimerais-tu garder… et lesquelles aimerais-tu inventer rien qu’à vous deux ?', 'Which family traditions would you like to keep… and which would you like to invent just for the two of you?'],
-  communication: ['Y a-t-il un besoin que tu aimerais que l’autre devine… et que tu n’as peut-être jamais vraiment formulé ?', 'Is there a need you wish your partner would guess… and that you may never really have put into words?'],
-  intimite: ['Quels petits gestes de tendresse te font fondre ?', 'What small gestures of affection melt your heart?'],
-  conflits: ['En dispute, quelle image te ressemble le plus : volcan, iceberg, salle d’audience, porte qui claque, table de négociation ?', 'In an argument, which image fits you best: volcano, iceberg, courtroom, slammed door, negotiating table?'],
-  engagement: ['Quel pourrait être le mot-clé de votre année à venir ?', 'What could be the keyword for your year ahead?'],
-}
-
 const FAQ = (t: (fr: string, en: string) => string) => [
   { q: t('Et si mon ou ma partenaire n’est pas partant·e ?', "What if my partner isn't keen?"), r: t("Commencez par le module 1 : il est gratuit, léger et ludique, et c'est souvent la meilleure façon de donner envie. Depuis votre espace, vous pouvez lui envoyer une invitation par e-mail quand vous le souhaitez. YES BOX se vit à deux : personne n'est obligé·e de rien.", "Start with module 1: it's free, light and playful, and it's often the best way to spark interest. From your space, you can send them an email invitation whenever you like. YES BOX is something you do together: nobody has to do anything.") },
   { q: t('Combien de temps ça prend ?', 'How long does it take?'), r: t('Comptez 30 à 60 minutes à deux par module, selon les discussions qui en découlent. Vous avancez à votre rythme : un module par semaine, ou plusieurs si vous en avez envie.', 'Allow 30 to 60 minutes together per module, depending on the conversations it sparks. You go at your own pace: one module a week, or more if you feel like it.') },
@@ -364,11 +351,6 @@ export default function LandingPage() {
                     <span style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${m.slug}.sousTitre`}>{m.sousTitre}</EditableText></span>
                   </div>
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
-                  {EXEMPLES_QUESTIONS[m.slug] && (
-                    <p className="font-serif" style={{ fontSize: 14, color: 'var(--ink-2)', fontStyle: 'italic', marginTop: 6 }}>
-                      « <EditableText id={`module.${m.slug}.exemple`} multiline>{t(...EXEMPLES_QUESTIONS[m.slug])}</EditableText> »
-                    </p>
-                  )}
                 </div>
                 {m.free && <span className="tag-sage flex-shrink-0">{t('Gratuit', 'Free')}</span>}
                 {m.n === 10 && <span className="tag-muted flex-shrink-0">{t('Annuel', 'Yearly')}</span>}
