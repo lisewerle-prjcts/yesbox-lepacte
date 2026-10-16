@@ -136,7 +136,7 @@ export default async function MentionsLegales() {
           <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.responsabilite.titre">Responsabilité</EditableText></h2>
             <p>
-              <EditableText id="mentions.responsabilite.texte" multiline>YES BOX est un programme d&apos;accompagnement pour couples et ne constitue en aucun cas une thérapie de couple, un conseil juridique ou une médiation professionnelle. L&apos;utilisateur reste seul responsable de l&apos;usage qu&apos;il fait du programme.</EditableText>
+              <EditableText id="mentions.responsabilite.texte.v2" multiline>YES BOX est un programme d&apos;accompagnement pour couples et ne constitue en aucun cas une thérapie de couple, un conseil juridique ou une médiation professionnelle. La personne qui utilise le programme en reste seule responsable.</EditableText>
             </p>
           </section>
 

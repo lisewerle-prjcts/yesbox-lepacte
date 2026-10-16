@@ -251,7 +251,7 @@ export const EN_CONTENT: Record<string, string> = {
   'mentions.propriete.titre': 'Intellectual Property',
   'mentions.propriete.texte': 'All content on the site (text, visuals, structure, concept) is the exclusive property of YES BOX. Any reproduction, even partial, is prohibited without prior written permission.',
   'mentions.responsabilite.titre': 'Liability',
-  'mentions.responsabilite.texte': 'YES BOX is a guided program for couples and is not, under any circumstances, couples therapy, legal advice, or professional mediation. Users remain solely responsible for how they use the program.',
+  'mentions.responsabilite.texte.v2': 'YES BOX is a guided program for couples and is not, under any circumstances, couples therapy, legal advice, or professional mediation. Users remain solely responsible for how they use the program.',
   'mentions.conditions.titre': 'Terms of Use & Pricing',
   'mentions.conditions.intro': 'Use of YES BOX — Le Pacte is subject to the following terms, which apply to both members of a couple:',
   'mentions.regles.titre': 'The Rules',
