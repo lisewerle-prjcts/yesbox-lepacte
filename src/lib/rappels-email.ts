@@ -533,6 +533,28 @@ function contenuBasculeAnnuelle(finPeriode: string, rdvLe: string | null, locale
   }
 }
 
+// Bascule déjà programmée : on prévient avant le prélèvement, sans rien
+// demander au couple.
+function contenuBasculeProgrammee(finPeriode: string, rdvLe: string | null, locale: Locale) {
+  const date = formaterDate(finPeriode, locale)
+  const rdv = rdvLe
+    ? t(locale, `, le ${formaterDate(rdvLe, locale)}`, `, on ${formaterDate(rdvLe, locale)}`)
+    : ''
+  return {
+    subject: t(locale, 'Votre abonnement annuel commence bientôt', 'Your yearly subscription starts soon'),
+    corps: p(t(locale,
+      `Votre mois d’abonnement en cours se termine le ${date}. Ce jour-là, vous passerez automatiquement à l’abonnement annuel « Pacte – notre rendez-vous annuel » : <strong>19 € par an</strong>, prélevés sur la carte déjà enregistrée. Vous n’avez rien à faire.`,
+      `Your current month of subscription ends on ${date}. That day, you'll automatically switch to the "Pact – our yearly date" yearly subscription: <strong>€19 per year</strong>, charged to the card already on file. There's nothing for you to do.`))
+      + p(t(locale,
+        `Vous continuerez à recevoir de petits messages pour renforcer votre couple, et le module « Notre rendez-vous annuel » s’ouvrira à la date que vous avez fixée${rdv}.`,
+        `You'll keep receiving little messages to strengthen your relationship, and the "Our Yearly Date" module will open on the date you set${rdv}.`))
+      + p(t(locale,
+        `Si vous préférez ne pas continuer, vous pouvez annuler ce passage ou résilier à tout moment depuis Mon compte.`,
+        `If you'd rather not continue, you can cancel this switch or your subscription anytime from My Account.`))
+      + bouton(`${appUrl()}/mon-compte`, t(locale, 'Mon compte', 'My Account')),
+  }
+}
+
 export async function envoyerPropositionsAnnuel(admin: AdminClient): Promise<number> {
   const maintenant = new Date()
   const aujourdhui = Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())
@@ -553,12 +575,17 @@ export async function envoyerPropositionsAnnuel(admin: AdminClient): Promise<num
       const finPeriode = couple.subscription_current_period_end as string
       const joursAvantFin = Math.ceil((new Date(finPeriode).getTime() - aujourdhui) / JOUR)
       if (joursAvantFin < 1 || joursAvantFin > BASCULE_ANNUELLE_JOURS_AVANT) continue
-      // Uniquement un abonnement mensuel en cours, sans bascule déjà programmée.
+      // Uniquement un abonnement mensuel en cours : proposition si la bascule
+      // n'est pas programmée, simple information (rien à faire) si elle
+      // l'est déjà (programmée d'office à la signature du pacte).
+      const annuelPrevuLe = (couple.subscription_annuel_prevu_le as string | null) ?? null
       const offre = offreRdvAnnuel(couple as CoupleAbonnement, {
         formule: (couple.subscription_formule as 'mensuel' | 'annuel' | null) ?? null,
-        annuelPrevuLe: (couple.subscription_annuel_prevu_le as string | null) ?? null,
+        annuelPrevuLe,
       }, true)
-      if (!offre.afficher || !offre.mensuelEnCours) continue
+      if (!offre.mensuelEnCours) continue
+      const dejaProgrammee = !!annuelPrevuLe
+      if (!dejaProgrammee && !offre.afficher) continue
 
       const membres = await membresDuCouple(admin, couple.id)
       if (!membres.some(m => m.rappels_email && m.email)) continue
@@ -573,7 +600,9 @@ export async function envoyerPropositionsAnnuel(admin: AdminClient): Promise<num
 
       const rdvLe = (couple.rdv_annuel_le as string | null) ?? null
       for (const d of membres) {
-        const { subject, corps } = contenuBasculeAnnuelle(finPeriode, rdvLe, d.langue)
+        const { subject, corps } = dejaProgrammee
+          ? contenuBasculeProgrammee(finPeriode, rdvLe, d.langue)
+          : contenuBasculeAnnuelle(finPeriode, rdvLe, d.langue)
         if (await envoyer(d, subject, corps)) envoyes++
       }
     } catch (e) {

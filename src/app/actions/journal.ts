@@ -12,6 +12,7 @@ import { notifierPartenaire } from '@/lib/notifications-module'
 import { marquerActivite } from '@/lib/activite'
 import { chiffrer } from '@/lib/chiffrement'
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
+import { programmerBasculeAnnuelle } from '@/lib/bascule-annuelle'
 
 // Chaque partenaire écrit sa conclusion de son côté, en 2 questions
 // ("qu'as-tu appris ?" / "qu'est-ce qui t'a surpris ?"), une fois que les
@@ -116,15 +117,31 @@ export async function signerPacteModule(moduleId: string, dateRdvAnnuel: string)
       .eq('id', mod.couple_id).is('pacte_signe_par', null)
   }
 
-  after(() => notifierPartenaire(sealed ? 'journal_complet' : 'journal_a_ton_tour', {
-    moduleId: mod.id,
-    moduleSlug: mod.slug,
-    moduleTitre: modules.find(m => m.slug === mod.slug)?.titre ?? mod.slug,
-    moduleTitreEn: modules.find(m => m.slug === mod.slug)?.titre_en,
-    coupleId: mod.couple_id,
-    auteurId: user.id,
-    dernierModule: true,
-  }))
+  after(async () => {
+    // Pacte signé par les deux : l'abonnement mensuel passe d'office au
+    // rendez-vous annuel à la fin du mois déjà payé, sans manipulation du
+    // couple (annulable depuis Mon compte). Un échec n'empêche pas l'e-mail :
+    // l'offre reste alors proposée sur la page Notre Pacte.
+    let basculeAnnuelleLe: string | undefined
+    if (sealed) {
+      try {
+        const res = await programmerBasculeAnnuelle(admin, mod.couple_id)
+        if ('basculeLe' in res) basculeAnnuelleLe = res.basculeLe
+      } catch (e) {
+        console.error(`[bascule annuelle] couple ${mod.couple_id} : ${e instanceof Error ? e.message : String(e)}`)
+      }
+    }
+    await notifierPartenaire(sealed ? 'journal_complet' : 'journal_a_ton_tour', {
+      moduleId: mod.id,
+      moduleSlug: mod.slug,
+      moduleTitre: modules.find(m => m.slug === mod.slug)?.titre ?? mod.slug,
+      moduleTitreEn: modules.find(m => m.slug === mod.slug)?.titre_en,
+      coupleId: mod.couple_id,
+      auteurId: user.id,
+      dernierModule: true,
+      basculeAnnuelleLe,
+    })
+  })
 
   revalidatePath('/journal')
   revalidatePath('/tableau-de-bord')

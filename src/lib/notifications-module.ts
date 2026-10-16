@@ -25,6 +25,8 @@ interface Contexte {
   auteurId: string
   // journal_complet : le module scellé était le dernier.
   dernierModule?: boolean
+  // Pacte signé : date de la bascule programmée vers l'abonnement annuel.
+  basculeAnnuelleLe?: string
 }
 
 function appUrl() {
@@ -40,13 +42,17 @@ function echapperHtml(texte: string) {
     .replace(/'/g, '&#39;')
 }
 
+function formaterDate(iso: string, locale: Locale) {
+  return new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' })
+}
+
 function bouton(href: string, label: string) {
   return `<p style="margin:24px 0;"><a href="${href}" style="display:inline-block;background:#c5256e;color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${label}</a></p>`
 }
 
 // Prénoms et titre arrivent bruts : échappés dans le corps HTML (un prénom
 // est saisi librement), laissés tels quels dans l'objet (texte brut).
-function contenu(type: TypeNotification, auteurBrut: string, destinataireBrut: string, titreBrut: string, slugBrut: string, dernierModule: boolean, locale: Locale) {
+function contenu(type: TypeNotification, auteurBrut: string, destinataireBrut: string, titreBrut: string, slugBrut: string, dernierModule: boolean, locale: Locale, basculeAnnuelleLe?: string) {
   const base = appUrl()
   const slug = encodeURIComponent(slugBrut)
   const auteur = echapperHtml(auteurBrut)
@@ -95,7 +101,13 @@ function contenu(type: TypeNotification, auteurBrut: string, destinataireBrut: s
           subject: t(locale, 'Votre pacte est signé', 'Your pact is signed'),
           body: bonjour
             + p(t(locale, `${auteur} vient de signer à son tour : votre pacte de couple porte vos deux signatures.`, `${auteur} just signed too: your couple's pact now bears both your signatures.`))
-            + p(t(locale, `Bravo pour tout ce chemin parcouru ensemble ! Retrouvez la date de votre rendez-vous annuel sur votre tableau de bord.`, `Congratulations on everything you've been through together! You'll find the date of your yearly date on your dashboard.`))
+            + p(t(locale, `Bravo pour tout ce chemin parcouru ensemble !`, `Congratulations on everything you've been through together!`))
+            + p((basculeAnnuelleLe
+              ? t(locale, `À la fin de votre mois d'abonnement, le ${formaterDate(basculeAnnuelleLe, locale)}, vous passerez automatiquement à l'abonnement annuel (19 €/an, résiliable à tout moment depuis Mon compte). `, `At the end of your month of subscription, on ${formaterDate(basculeAnnuelleLe, locale)}, you'll automatically switch to the yearly subscription (€19/year, cancel anytime from My Account). `)
+              : '')
+              + t(locale, `Vous recevrez des messages régulièrement tout au long de l'année (2 par mois maximum) pour continuer à renforcer votre couple, jusqu'à la date de rendez-vous que vous avez fixée.`, `You'll receive messages regularly throughout the year (2 per month at most) to keep strengthening your relationship, until the date you set for your yearly date.`))
+            + p(t(locale, `Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce rendez-vous comme il se doit. Retrouvez la date de votre rendez-vous annuel sur votre tableau de bord.`, `On that day, a special module will be waiting for you, and we'll guide you beforehand so you can prepare for it properly. You'll find the date of your yearly date on your dashboard.`))
+            + p(t(locale, `À bientôt, et prenez soin de vous et de votre couple.`, `See you soon, and take care of yourselves and your relationship.`))
             + bouton(`${base}/tableau-de-bord`, t(locale, 'Voir notre tableau de bord', 'See our dashboard')),
         }
       }
@@ -135,7 +147,7 @@ export async function notifierPartenaire(type: TypeNotification, ctx: Contexte):
 
     const locale = await langueDuProfil(admin, destinataire.id)
     const titre = locale === 'en' ? ctx.moduleTitreEn ?? ctx.moduleTitre : ctx.moduleTitre
-    const { subject, body } = contenu(type, auteur.prenom || t(locale, 'Ton binôme', 'Your partner'), destinataire.prenom || '', titre, ctx.moduleSlug, !!ctx.dernierModule, locale)
+    const { subject, body } = contenu(type, auteur.prenom || t(locale, 'Ton binôme', 'Your partner'), destinataire.prenom || '', titre, ctx.moduleSlug, !!ctx.dernierModule, locale, ctx.basculeAnnuelleLe)
     await envoyerMail({ to: destinataire.email, subject: subject.replace(/[\r\n]+/g, ' '), body })
   } catch (e) {
     console.error(`[notifications] ${type} : ${e instanceof Error ? e.message : String(e)}`)
