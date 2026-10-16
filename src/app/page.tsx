@@ -42,7 +42,7 @@ const OPTIONS = (t: (fr: string, en: string) => string) => [
 ]
 
 const ETAPES = (t: (fr: string, en: string) => string) => [
-  { titre: t('Chacun·e répond de son côté', 'You each answer on your own'), desc: t("Sur votre téléphone ou votre ordinateur, vous répondez aux questions du module, à votre rythme. Personne ne voit les réponses de l'autre.", "On your phone or computer, you answer the module's questions at your own pace. Neither of you sees the other's answers.") },
+  { titre: t('Chacun·e répond de son côté', 'You each answer on your own'), desc: t("Sur votre téléphone ou votre ordinateur, vous répondez aux questions du module, à votre rythme. Vous ne voyez pas les réponses de l'autre.", "On your phone or computer, you answer the module's questions at your own pace. You can't see each other's answers.") },
   { titre: t('Vous découvrez vos réponses ensemble', 'You discover your answers together'), desc: t("Une fois vos deux réponses enregistrées, la révélation s'ouvre : vous les lisez côte à côte et vous en parlez.", 'Once both your answers are in, the reveal opens: you read them side by side and talk about them.') },
   { titre: t('Vous écrivez votre pacte', 'You write your pact'), desc: t('Au bout des 9 modules, vous rédigez et signez votre pacte de couple, et vous choisissez la date de votre rendez-vous annuel.', 'After the 9 modules, you write and sign your couple’s pact, and choose the date of your yearly date.') },
 ]
