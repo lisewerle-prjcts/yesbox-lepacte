@@ -171,7 +171,7 @@ export default function LandingPage() {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm" style={{ color: 'var(--muted)' }}>
           {/* Identifiants fixes : nouveaux ids pour les badges dont le texte a changé. */}
-          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sansjugement', '✦ Sans thérapeute, sans jugement'], ['sanscb', '✦ Sans carte bancaire pour commencer'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
+          {([['gratuit', '✦ Module 1 entièrement gratuit pour vous deux'], ['sanscb', '✦ Sans carte bancaire pour commencer'], [3, '✦ Résiliable à tout moment']] as const).map(([i, badge]) => (
             <span key={i}><EditableText id={`home.hero.badges.${i}`}>{badge}</EditableText></span>
           ))}
         </div>
