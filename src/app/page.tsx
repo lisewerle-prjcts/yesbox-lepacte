@@ -140,12 +140,10 @@ export default function LandingPage() {
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <div className="text-base md:text-lg max-w-2xl mx-auto mb-4 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
+        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
           <p><EditableText id="home.hero.intro.1" multiline>Des modules simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire.</EditableText></p>
+          <p><EditableText id="home.hero.intro.phrase" multiline>Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText></p>
         </div>
-        <p className="font-serif italic text-2xl md:text-3xl max-w-3xl mx-auto mb-10" style={{ color: 'var(--ink-2)', textWrap: 'balance' }}>
-          <EditableText id="home.hero.intro.phrase" multiline>Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, sans thérapeute et sans pression.</EditableText>
-        </p>
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             <EditableText id="home.hero.cta.primary">Inscription au module 1 — Gratuit</EditableText> <ArrowRight className="w-4 h-4" />
