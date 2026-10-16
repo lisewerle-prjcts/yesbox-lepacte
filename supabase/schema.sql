@@ -1365,3 +1365,16 @@ revoke update (langue) on public.profiles from authenticated;
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle'));
+
+-- ============================================================
+-- AVERTISSEMENTS AVANT EFFACEMENT ET INVITATIONS PAR E-MAIL
+-- Données effacées 1 an après la fin de l'accès payé : un e-mail prévient
+-- 2 mois, 1 mois, 1 semaine et la veille (rappels_envoyes, type
+-- 'effacement_donnees', clé = date d'effacement:palier).
+-- Invitation du ou de la partenaire par e-mail depuis le tableau de bord
+-- (rappels_envoyes, type 'invitation' : limite de 3 envois par jour).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation'));

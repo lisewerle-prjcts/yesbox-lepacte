@@ -7,6 +7,7 @@ import { t } from '@/lib/i18n/locale'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
+import { envoyerMail, mailConfigure } from '@/lib/mailer'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -151,5 +152,82 @@ export async function signerPacte(dateRdvAnnuel: string) {
 
   revalidatePath('/journal')
   revalidatePath('/tableau-de-bord')
+  return { success: true }
+}
+
+const INVITATIONS_PAR_JOUR = 3
+
+function echapperHtml(texte: string) {
+  return texte
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// Envoie au ou à la partenaire un e-mail d'invitation avec le lien pour
+// rejoindre le couple et le code de pairage. Écrit dans la langue du site
+// de la personne qui invite. Limité à 3 envois par jour et par couple.
+export async function envoyerInvitationPartenaire(email: string) {
+  const supabase = await createClient()
+  const locale = await getLocale()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+
+  const destinataire = email.trim().toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destinataire) || destinataire.length > 254) {
+    return { error: t(locale, 'Adresse e-mail invalide', 'Invalid email address') }
+  }
+  if (!mailConfigure()) return { error: t(locale, "L'envoi d'e-mails n'est pas configuré.", 'Email sending is not configured.') }
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from('profiles').select('couple_id, prenom, email').eq('id', user.id).single()
+  if (!profile?.couple_id) return { error: t(locale, 'Aucun couple trouvé', 'No couple found') }
+  if (destinataire === (profile.email ?? '').toLowerCase()) {
+    return { error: t(locale, 'Indique l’adresse e-mail de ton/ta partenaire, pas la tienne.', "Enter your partner's email address, not yours.") }
+  }
+
+  const [{ data: couple }, { count: membres }] = await Promise.all([
+    admin.from('couples').select('invite_token, pairing_code').eq('id', profile.couple_id).single(),
+    admin.from('profiles').select('id', { count: 'exact', head: true }).eq('couple_id', profile.couple_id),
+  ])
+  if (!couple) return { error: t(locale, 'Couple introuvable', 'Couple not found') }
+  if ((membres ?? 0) >= 2) return { error: t(locale, 'Vous êtes déjà pairé·es.', "You're already paired up.") }
+
+  const jour = new Date().toISOString().slice(0, 10)
+  const { count: envoisDuJour } = await admin.from('rappels_envoyes')
+    .select('couple_id', { count: 'exact', head: true })
+    .eq('couple_id', profile.couple_id).eq('type', 'invitation').like('cle', `${jour}:%`)
+  if ((envoisDuJour ?? 0) >= INVITATIONS_PAR_JOUR) {
+    return { error: t(locale, 'Tu as déjà envoyé 3 invitations aujourd’hui. Réessaie demain, ou partage le lien autrement.', "You've already sent 3 invitations today. Try again tomorrow, or share the link another way.") }
+  }
+  const { error: reserveError } = await admin.from('rappels_envoyes')
+    .insert({ couple_id: profile.couple_id, type: 'invitation', cle: `${jour}:${Date.now()}` })
+  if (reserveError) return { error: reserveError.message }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const lien = `${baseUrl}/rejoindre?token=${couple.invite_token}`
+  const prenomBrut = (profile.prenom || '').trim()
+  const prenom = echapperHtml(prenomBrut)
+  const p = (texte: string) => `<p style="margin:0 0 12px;">${texte}</p>`
+  const bouton = `<p style="margin:24px 0;"><a href="${lien}" style="display:inline-block;background:#c5256e;color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${t(locale, 'Rejoindre notre espace', 'Join our space')}</a></p>`
+
+  const ok = await envoyerMail({
+    to: destinataire,
+    subject: prenomBrut
+      ? t(locale, `${prenomBrut} t'invite à écrire votre pacte de couple`, `${prenomBrut} invites you to write your couple's pact`).replace(/[\r\n]+/g, ' ')
+      : t(locale, 'Une invitation à écrire votre pacte de couple', "An invitation to write your couple's pact"),
+    body: p(t(locale, 'Bonjour,', 'Hello,'))
+      + p(prenom
+        ? t(locale, `${prenom} a commencé YES BOX et t'invite à le faire à deux.`, `${prenom} has started YES BOX and is inviting you to do it together.`)
+        : t(locale, 'Ton/ta partenaire a commencé YES BOX et t’invite à le faire à deux.', 'Your partner has started YES BOX and is inviting you to do it together.'))
+      + p(t(locale,
+        'YES BOX, ce sont des modules simples et ludiques pour parler de ce qui compte : chacun·e répond de son côté, puis vous découvrez vos réponses ensemble. Le module 1 est gratuit pour vous deux, sans carte bancaire.',
+        "YES BOX is a set of simple, playful modules to talk about what matters: you each answer on your own, then discover your answers together. Module 1 is free for both of you, no card needed."))
+      + bouton
+      + p(t(locale, `Tu peux aussi créer ton compte sur le site et saisir le code de votre couple : <strong>${echapperHtml(couple.pairing_code ?? '')}</strong>`, `You can also create your account on the website and enter your couple code: <strong>${echapperHtml(couple.pairing_code ?? '')}</strong>`)),
+  })
+  if (!ok) return { error: t(locale, "L'e-mail n'a pas pu être envoyé. Réessaie dans quelques minutes.", 'The email could not be sent. Please try again in a few minutes.') }
   return { success: true }
 }

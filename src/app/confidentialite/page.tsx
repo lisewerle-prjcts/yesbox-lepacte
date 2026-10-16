@@ -26,12 +26,10 @@ export default async function Confidentialite() {
       t('Exécution du contrat, et obligation légale de conservation des pièces comptables (art. 6.1.b et 6.1.c RGPD)', 'Performance of the contract, and the legal obligation to keep accounting records (GDPR art. 6.1.b and 6.1.c)')],
     [t('Envoyer les e-mails de service (confirmation d’inscription, bienvenue, mot de passe, sécurité)', 'Sending service emails (sign-up confirmation, welcome, password, security)'),
       t('Exécution du contrat (art. 6.1.b RGPD)', 'Performance of the contract (GDPR art. 6.1.b)')],
-    [t('Envoyer des rappels pour accompagner votre parcours (parcours en pause depuis 10 jours, e-mail mensuel une fois le pacte signé), désactivables depuis Mon compte ou en bas de chaque e-mail', 'Sending reminders to support your program (program paused for 10 days, monthly email once the pact is signed), which you can turn off from My Account or at the bottom of each email'),
+    [t('Envoyer des rappels pour accompagner votre parcours (parcours en pause depuis 10 jours, e-mails réguliers une fois le pacte signé, 2 par mois maximum), désactivables depuis Mon compte ou en bas de chaque e-mail', 'Sending reminders to support your program (program paused for 10 days, regular emails once the pact is signed, 2 per month at most), which you can turn off from My Account or at the bottom of each email'),
       t('Exécution du contrat et intérêt légitime à vous accompagner dans le programme (art. 6.1.b et 6.1.f RGPD)', 'Performance of the contract and legitimate interest in supporting you through the program (GDPR art. 6.1.b and 6.1.f)')],
     [t('Sécuriser le service (limitation des tentatives de connexion, prévention des abus)', 'Securing the service (limiting login attempts, preventing abuse)'),
       t('Intérêt légitime à protéger le service et vos données (art. 6.1.f RGPD)', 'Legitimate interest in protecting the service and your data (GDPR art. 6.1.f)')],
-    [t('Traiter les pré-commandes reçues avant l’ouverture du programme', 'Handling pre-orders received before the program opened'),
-      t('Mesures précontractuelles prises à votre demande (art. 6.1.b RGPD)', 'Pre-contractual steps taken at your request (GDPR art. 6.1.b)')],
   ]
 
   const sousTraitants: [string, string, string][] = [
@@ -70,7 +68,6 @@ export default async function Confidentialite() {
               <li>{t('Abonnement : statut, dates de renouvellement et identifiants Stripe (pas vos données bancaires).', 'Subscription: status, renewal dates and Stripe identifiers (not your banking details).')}</li>
               <li>{t('Preuves de consentement : date à laquelle vous avez certifié avoir 15 ans ou plus et accepté le traitement des données sensibles.', 'Proof of consent: the date you certified being 15 or older and agreed to the processing of sensitive data.')}</li>
               <li>{t('Sécurité : tentatives de connexion échouées (pour bloquer temporairement les attaques).', 'Security: failed login attempts (to temporarily block attacks).')}</li>
-              <li>{t('Pré-commandes reçues avant l’ouverture : prénom, e-mail, prénom du ou de la partenaire, ville, message.', 'Pre-orders received before opening: first name, email, partner’s first name, city, message.')}</li>
             </ul>
           </section>
 
@@ -130,9 +127,8 @@ export default async function Confidentialite() {
             <h2 className={h2} style={h2Style}>{t('Durées de conservation', 'Retention periods')}</h2>
             <ul className={liste} style={{ color: 'var(--muted)' }}>
               <li>{t('Compte utilisé : tant que vous utilisez le service.', 'Active account: for as long as you use the service.')}</li>
-              <li>{t('Après la fin d’un accès payé : 18 mois, puis le compte est clos et vos réponses, conclusions et pacte sont effacés.', 'After paid access ends: 18 months, after which the account is closed and your answers, conclusions and pact are deleted.')}</li>
-              <li>{t('Compte gratuit ou jamais utilisé : supprimé entièrement après 18 mois sans connexion.', 'Free or unused account: fully deleted after 18 months without logging in.')}</li>
-              <li>{t('Pré-commandes : effacées 18 mois après leur envoi.', 'Pre-orders: deleted 18 months after they were sent.')}</li>
+              <li>{t('Après la fin d’un accès payé : 1 an, puis le compte est clos et vos réponses, conclusions et pacte sont effacés. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille.', 'After paid access ends: 1 year, after which the account is closed and your answers, conclusions and pact are deleted. An email warns you 2 months, 1 month, 1 week and the day before.')}</li>
+              <li>{t('Compte gratuit ou jamais utilisé : supprimé entièrement après 1 an sans connexion.', 'Free or unused account: fully deleted after 1 year without logging in.')}</li>
               <li>{t('Factures : 10 ans, conservées par Stripe et pour notre comptabilité (obligation légale).', 'Invoices: 10 years, kept by Stripe and for our accounting (legal obligation).')}</li>
               <li>{t('Suppression de votre compte à votre demande : effacement immédiat.', 'Deleting your account at your request: immediate erasure.')}</li>
             </ul>
@@ -186,7 +182,8 @@ export default async function Confidentialite() {
 
           <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}>
             {t('Dernière mise à jour : septembre 2026. Voir aussi les', 'Last updated: September 2026. See also the')}{' '}
-            <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}>{t('mentions légales', 'legal notice')}</Link>.
+            <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}>{t('mentions légales', 'legal notice')}</Link>{t(' et les ', ' and the ')}
+            <Link href="/cgv" style={{ color: 'var(--brand)' }}>{t('conditions générales de vente', 'terms of sale')}</Link>.
           </p>
         </div>
       </main>

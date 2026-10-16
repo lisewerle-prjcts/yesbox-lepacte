@@ -137,7 +137,7 @@ export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, rep
                 {rdvLe && (
                   <p className="flex items-center justify-center gap-2" style={{ fontSize: 15, color: 'var(--ink)', fontWeight: 600, marginTop: 12 }}>
                     <CalendarHeart className="w-5 h-5" style={{ color: 'var(--brand)' }} />
-                    {t(`Votre bilan annuel de couple : le ${formaterDate(rdvLe, locale)}`, `Your yearly couple review: ${formaterDate(rdvLe, locale)}`)}
+                    {t(`Notre rendez-vous annuel : le ${formaterDate(rdvLe, locale)}`, `Our yearly date: ${formaterDate(rdvLe, locale)}`)}
                   </p>
                 )}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center" style={{ marginTop: 28 }}>
@@ -152,7 +152,7 @@ export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, rep
                 </p>
                 {rdvLe && (
                   <p style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 8 }}>
-                    {t(`Date choisie pour votre bilan annuel : le ${formaterDate(rdvLe, locale)}.`, `Date chosen for your yearly review: ${formaterDate(rdvLe, locale)}.`)}
+                    {t(`Date choisie pour votre rendez-vous annuel : le ${formaterDate(rdvLe, locale)}.`, `Date chosen for your yearly date: ${formaterDate(rdvLe, locale)}.`)}
                   </p>
                 )}
                 <p className="font-mono" style={{ fontSize: 12, color: 'var(--muted)', marginTop: 16 }}>

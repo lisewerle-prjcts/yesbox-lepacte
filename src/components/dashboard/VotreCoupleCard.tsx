@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, Send, KeyRound, Gift, Heart } from 'lucide-react'
+import { Copy, Check, Send, KeyRound, Gift, Heart, Mail } from 'lucide-react'
 import Alert from '@/components/ui/Alert'
 import { updatePrenomPartenaire, updateDateAnniversaire } from '@/app/actions/compte'
-import { rejoindrePartenaireParCode } from '@/app/actions/couple'
+import { rejoindrePartenaireParCode, envoyerInvitationPartenaire } from '@/app/actions/couple'
 import { getAnniversaireActuel, getProchainAnniversaire } from '@/lib/anniversaires'
 import { useT } from '@/components/i18n/LocaleContext'
 
@@ -33,6 +33,9 @@ export default function VotreCoupleCard({
   const [joinCode, setJoinCode] = useState('')
   const [joinLoading, setJoinLoading] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(initialCodeError ?? null)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [inviteError, setInviteError] = useState<string | null>(null)
   const t = useT()
 
   async function savePartnerPrenom() {
@@ -69,6 +72,19 @@ export default function VotreCoupleCard({
     } else {
       copy(inviteLink, 'link')
     }
+  }
+
+  async function sendInvite(e: React.FormEvent) {
+    e.preventDefault()
+    setInviteError(null)
+    setInviteStatus('sending')
+    const res = await envoyerInvitationPartenaire(inviteEmail)
+    if (res.error) {
+      setInviteError(res.error)
+      setInviteStatus('idle')
+      return
+    }
+    setInviteStatus('sent')
   }
 
   async function handleJoin(formData: FormData) {
@@ -163,6 +179,35 @@ export default function VotreCoupleCard({
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="surface p-3 mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Mail className="w-3.5 h-3.5" style={{ color: 'var(--brand)' }} />
+              <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink)' }}>{t('Inviter ton/ta partenaire par e-mail', 'Invite your partner by email')}</p>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>{t('Nous lui envoyons le lien pour rejoindre votre espace, avec votre code de couple.', 'We send them the link to join your space, along with your couple code.')}</p>
+            {inviteStatus === 'sent' ? (
+              <p className="flex items-center gap-1.5" style={{ fontSize: 13, color: 'var(--sage)' }}>
+                <Check className="w-4 h-4" /> {t(`Invitation envoyée à ${inviteEmail}`, `Invitation sent to ${inviteEmail}`)}
+              </p>
+            ) : (
+              <form onSubmit={sendInvite} className="flex gap-2">
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  placeholder={t('Son adresse e-mail', 'Their email address')}
+                  required
+                  className="field"
+                  style={{ flex: 1 }}
+                />
+                <button type="submit" disabled={inviteStatus === 'sending'} className="btn-brand text-sm px-4" style={{ flexShrink: 0 }}>
+                  {inviteStatus === 'sending' ? '…' : t('Envoyer', 'Send')}
+                </button>
+              </form>
+            )}
+            {inviteError && <p style={{ fontSize: 12, color: '#c0392b', marginTop: 6 }}>{inviteError}</p>}
           </div>
 
           <div className="surface p-3 mb-4">

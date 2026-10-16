@@ -157,12 +157,12 @@ export default async function TableauDeBordPage({
         </div>
       )}
 
-      {/* Date du bilan annuel, choisie à la signature du pacte (tant que le module 10 n'est pas ouvert) */}
+      {/* Date du rendez-vous annuel, choisie à la signature du pacte (tant que le module 10 n'est pas ouvert) */}
       {profile?.couple_id && rdvLe && rdvVerrouille && (
         <div className="card p-5 mb-6 flex flex-wrap items-center gap-4" style={{ background: `linear-gradient(120deg, var(--brand-tint), var(--paper))` }}>
           <CalendarHeart className="w-8 h-8" style={{ color: 'var(--brand)', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 200 }}>
-            <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.rdv.label">VOTRE BILAN ANNUEL DE COUPLE</EditableText></p>
+            <p className="font-mono text-xs font-bold mb-1" style={{ color: 'var(--brand)', letterSpacing: '.1em' }}><EditableText id="dashboard.rdv.label.v2">NOTRE RENDEZ-VOUS ANNUEL</EditableText></p>
             <p className="font-serif font-bold" style={{ fontSize: 20, color: 'var(--ink)' }}>
               {new Date(`${rdvLe}T12:00:00Z`).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>

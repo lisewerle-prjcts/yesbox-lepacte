@@ -42,6 +42,7 @@ function Avantages({ prefixe, items, couleurCoche, couleurTexte }: { prefixe: st
 export default function OffresTarifs({ onInscription }: { onInscription: () => void }) {
   const t = useT()
   return (
+    <>
     <div className="grid md:grid-cols-3 gap-5">
       {/* Découverte */}
       <div className="card p-6 flex flex-col gap-4">
@@ -78,7 +79,7 @@ export default function OffresTarifs({ onInscription }: { onInscription: () => v
         <div className="tag-brand self-start"><EditableText id="offres.bac.tag">Votre rendez-vous annuel</EditableText></div>
         <div>
           <div className="font-serif font-bold" style={{ fontSize: 40, color: 'var(--ink)' }}>19 <small style={{ fontSize: 20 }}>{t('€/an', '€/year')}</small></div>
-          <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="offres.bac.desc">À activer plus tard</EditableText></div>
+          <div style={{ fontSize: 12, color: 'var(--muted)' }}><EditableText id="offres.bac.desc.v2">Prend le relais automatiquement une fois votre pacte signé</EditableText></div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
         <Avantages prefixe="offres.bac.avantages" items={BAC} couleurCoche="var(--sage)" couleurTexte="var(--ink-2)" />
@@ -87,5 +88,9 @@ export default function OffresTarifs({ onInscription }: { onInscription: () => v
         </button>
       </div>
     </div>
+      <p className="text-center mt-4" style={{ fontSize: 12, color: 'var(--muted)' }}>
+        {t('Prix par couple, en euros · TVA non applicable, art. 293 B du CGI', 'Prices per couple, in euros · VAT not applicable, art. 293 B of the French tax code')}
+      </p>
+    </>
   )
 }

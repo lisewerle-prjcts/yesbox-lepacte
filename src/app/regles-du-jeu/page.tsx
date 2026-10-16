@@ -47,7 +47,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.duree.titre">Durée des modules</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.duree.texte" multiline>Chaque module compte entre 10 et 15 questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler (réponses chacun·e de son côté, révélation, puis quelques notes dans le journal). Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
+              <EditableText id="regles.duree.texte.v2" multiline>Chaque module compte une dizaine de questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler (réponses chacun·e de son côté, révélation, puis quelques notes dans le journal). Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
             </p>
           </li>
           <li>
@@ -64,7 +64,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.confidentialite.jugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>
             </p>
             <p style={{ color: 'var(--muted)', marginTop: 8 }}>
-              <EditableText id="regles.confidentialite.texte.v2" multiline>Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part, 18 mois après la fin de votre abonnement ou votre dernière connexion, vos comptes sont supprimés et vos réponses sont effacées de manière permanente.</EditableText>
+              <EditableText id="regles.confidentialite.texte.v3" multiline>Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part, 1 an après la fin de votre abonnement, vos comptes sont supprimés et vos réponses sont effacées de manière permanente. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille de l&apos;effacement.</EditableText>
             </p>
           </li>
           <li>
@@ -80,7 +80,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.abonnementannuel.titre">Pacte – notre rendez-vous annuel</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.abonnementannuel.texte" multiline>Une fois votre pacte signé, l&apos;abonnement mensuel peut laisser la place à l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an). La bascule a lieu à la fin du mois déjà payé. Il donne accès au module « Notre rendez-vous annuel » et à tous les modules si vous souhaitez les refaire. Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
+              <EditableText id="regles.abonnementannuel.texte.v2" multiline>Une fois votre pacte signé par vous deux, l&apos;abonnement mensuel laisse automatiquement la place à l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an), sans démarche de votre part. La bascule a lieu à la fin du mois déjà payé, et un e-mail vous prévient quelques jours avant. Vous pouvez l&apos;annuler depuis MON COMPTE. Cet abonnement donne accès au module « Notre rendez-vous annuel » et à tous les modules si vous souhaitez les refaire. Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
             </p>
           </li>
           <li>
@@ -88,7 +88,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.rappels.titre">E-mails de rappel</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.rappels.texte" multiline>Si votre parcours est en pause depuis 10 jours, YES BOX vous envoie un petit rappel (deux au maximum). Une fois votre pacte signé, vous recevez chaque mois un e-mail pour faire vivre vos engagements. Vous pouvez désactiver ces rappels à tout moment dans MON COMPTE, où vous choisissez aussi la langue du site et des e-mails.</EditableText>
+              <EditableText id="regles.rappels.texte.v2" multiline>Si votre parcours est en pause depuis 10 jours, YES BOX vous envoie un petit rappel (deux au maximum). Une fois votre pacte signé, vous recevez des e-mails réguliers pour faire vivre vos engagements (2 par mois maximum). Vous pouvez désactiver ces rappels à tout moment dans MON COMPTE, où vous choisissez aussi la langue du site et des e-mails.</EditableText>
             </p>
           </li>
           <li>

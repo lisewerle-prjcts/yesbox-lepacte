@@ -35,7 +35,7 @@ export default function TarifsPage() {
 
         <p className="text-center mt-8" style={{ fontSize: 12, color: 'var(--muted)' }}>
           <EditableText id="tarifs.footer.prefix">Détail des abonnements, résiliation et règles du jeu :</EditableText>{' '}
-          <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}><EditableText id="tarifs.footer.link">conditions d&apos;utilisation</EditableText></Link>.
+          <Link href="/cgv" style={{ color: 'var(--brand)' }}><EditableText id="tarifs.footer.link.v2">conditions générales de vente</EditableText></Link>.
         </p>
       </main>
 
