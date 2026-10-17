@@ -9,6 +9,7 @@ import { conclusionDuModule } from '@/lib/modules-data'
 import { formatAnswer, formatConclusion } from '@/lib/questions'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { consentementManquant } from '@/lib/consentement'
+import { charteBetaManquante } from '@/lib/charte-beta'
 import { encoderRestauration, decoderRestauration, type DonneesRestauration } from '@/lib/restauration'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { chiffrer, dechiffrer, dechiffrerLignes } from '@/lib/chiffrement'
@@ -299,6 +300,31 @@ export async function enregistrerConsentement(formData: FormData) {
   const { error } = await createAdminClient()
     .from('profiles')
     .update({ age_minimum_certifie_le: maintenant, consentement_donnees_sensibles_le: maintenant })
+    .eq('id', user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/', 'layout')
+  return { success: true }
+}
+
+// Charte de la bêta (code BETANLR26), pour le ou la partenaire qui n'a pas
+// saisi le code à l'inscription (cf. /charte-beta).
+export async function accepterCharteBeta(formData: FormData) {
+  const supabase = await createClient()
+  const locale = await getLocale()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+  if (formData.get('charte_beta') !== 'on') {
+    return { error: t(locale, 'Merci de cocher la case pour accepter la charte.', 'Please tick the box to accept the charter.') }
+  }
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from('profiles').select('*').eq('id', user.id).single()
+  if (!(await charteBetaManquante(admin, profile))) return { success: true }
+
+  const { error } = await admin
+    .from('profiles')
+    .update({ charte_beta_acceptee_le: new Date().toISOString() })
     .eq('id', user.id)
   if (error) return { error: error.message }
 

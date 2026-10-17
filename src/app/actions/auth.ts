@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { rejoindreCoupleParCode, creerCoupleSolo, appliquerCodeInscription, codeInscriptionValide } from '@/lib/couple-join'
+import { estCodeCharteBeta } from '@/lib/charte-beta'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 import { hashRecoveryCode } from '@/lib/recovery-codes'
 import { getRecoveryEmail } from '@/lib/recovery-email'
@@ -67,6 +68,10 @@ export async function inscription(formData: FormData) {
   if (codeAvantage && !(await codeInscriptionValide(codeAvantage))) {
     return { error: t(locale, "Ce code n'existe pas ou est expiré.", 'This code does not exist or has expired.') }
   }
+  const charteBeta = estCodeCharteBeta(codeAvantage)
+  if (charteBeta && formData.get('charte_beta') !== 'on') {
+    return { error: t(locale, 'Merci d’accepter la charte de participation à la bêta.', 'Please accept the beta participation charter.') }
+  }
 
   // Avec Gmail configuré, Supabase crée le compte et génère le lien sans
   // envoyer de mail : c'est nous qui l'envoyons (cf. lib/confirmation-email).
@@ -100,6 +105,10 @@ export async function inscription(formData: FormData) {
       .eq('id', data.user.id)
     // À part : si la colonne langue manque encore, le consentement est enregistré.
     await enregistrerLangueProfil(createAdminClient(), data.user.id, locale)
+    // Idem pour l'acceptation de la charte de la bêta (code BETANLR26).
+    if (charteBeta) {
+      await createAdminClient().from('profiles').update({ charte_beta_acceptee_le: maintenant }).eq('id', data.user.id)
+    }
 
     if (partnerCode) {
       const result = await rejoindreCoupleParCode(data.user.id, partnerCode)
@@ -119,9 +128,10 @@ export async function inscription(formData: FormData) {
     await notifierNouvelleInscription({
       prenom,
       email,
-      parcours: partnerCode
+      parcours: (partnerCode
         ? (partnerCodeError ? `a tenté de rejoindre un couple (code ${partnerCode} refusé)` : `a rejoint un couple avec le code ${partnerCode}`)
-        : `a créé un nouveau couple${codeAvantage ? ` (code de parrainage ou promo ${codeAvantage})` : ''}`,
+        : `a créé un nouveau couple${codeAvantage ? ` (code de parrainage ou promo ${codeAvantage})` : ''}`)
+        + (charteBeta ? ' — charte de la bêta acceptée' : ''),
     })
   }
 
