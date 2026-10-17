@@ -92,12 +92,21 @@ export default function InscriptionForm({
     if (estCodeCharteBeta(valeur) && !estCodeCharteBeta(codeAvantage) && !charteAcceptee) setCharteOuverte(true)
   }
 
+  // Vérifié avant l'envoi : une action de formulaire vide les champs une fois
+  // terminée, même quand elle s'arrête tôt. Le code est lu dans le formulaire
+  // plutôt que dans l'état, au cas où le champ aurait été rempli sans
+  // déclencher onChange (remplissage automatique).
+  function verifierCharte(e: React.FormEvent<HTMLFormElement>) {
+    const formData = new FormData(e.currentTarget)
+    if (estCodeCharteBeta(formData.get('code_parrainage') as string | null) && formData.get('charte_beta') !== 'on') {
+      e.preventDefault()
+      setCodeAvantage(formData.get('code_parrainage') as string)
+      setCharteOuverte(true)
+    }
+  }
+
   async function handleAction(formData: FormData) {
     setError(null)
-    if (codeBeta && !charteAcceptee) {
-      setCharteOuverte(true)
-      return
-    }
     const password = formData.get('password') as string
     const passwordConfirm = formData.get('password_confirm') as string
     if (password !== passwordConfirm) {
@@ -105,7 +114,10 @@ export default function InscriptionForm({
       return
     }
     const result = await inscription(formData)
-    if (result?.error) setError(result.error)
+    if (result?.error) {
+      setError(result.error)
+      if ('charteBeta' in result && result.charteBeta) setCharteOuverte(true)
+    }
     else if (result?.needsConfirmation) onNeedsConfirmation(result.email)
   }
 
@@ -113,7 +125,7 @@ export default function InscriptionForm({
     <>
       {error && <Alert type="error" message={error} className="mb-5" />}
 
-      <form action={handleAction} className="space-y-5">
+      <form action={handleAction} onSubmit={verifierCharte} className="space-y-5">
         <div>
           <label htmlFor="prenom" className="label">
             <EditableText id="inscription.field.prenom">Ton prénom</EditableText>

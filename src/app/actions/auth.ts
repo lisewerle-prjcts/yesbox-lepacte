@@ -70,7 +70,7 @@ export async function inscription(formData: FormData) {
   }
   const charteBeta = estCodeCharteBeta(codeAvantage)
   if (charteBeta && formData.get('charte_beta') !== 'on') {
-    return { error: t(locale, 'Merci d’accepter la charte de participation à la bêta.', 'Please accept the beta participation charter.') }
+    return { error: t(locale, 'Merci d’accepter la charte de participation à la bêta.', 'Please accept the beta participation charter.'), charteBeta: true }
   }
 
   // Avec Gmail configuré, Supabase crée le compte et génère le lien sans
