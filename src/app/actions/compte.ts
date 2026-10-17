@@ -307,7 +307,7 @@ export async function enregistrerConsentement(formData: FormData) {
   return { success: true }
 }
 
-// Charte de la bêta (code BETANLR26), pour le ou la partenaire qui n'a pas
+// Charte de la bêta (codes BETANLR26, BETAFACEBOOK26), pour le ou la partenaire qui n'a pas
 // saisi le code à l'inscription (cf. /charte-beta).
 export async function accepterCharteBeta(formData: FormData) {
   const supabase = await createClient()

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 // Lisible par tout le monde. Une personne connectée dont le couple utilise le
-// code BETANLR26 sans avoir encore accepté la charte (en général le ou la
+// code BETANLR26 ou BETAFACEBOOK26 sans avoir encore accepté la charte (en général le ou la
 // partenaire qui a rejoint avec le code couple) y est redirigée par les
 // layouts de l'espace couple, et l'accepte ici.
 export default async function CharteBetaPage() {
