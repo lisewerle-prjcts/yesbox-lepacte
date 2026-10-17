@@ -8,7 +8,9 @@ import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import { inscription, renvoyerConfirmation } from '@/app/actions/auth'
-import { Eye, EyeOff, MailCheck, Lock } from 'lucide-react'
+import CharteBetaFenetre from '@/components/CharteBetaFenetre'
+import { estCodeCharteBeta } from '@/lib/charte-beta'
+import { Eye, EyeOff, MailCheck, Lock, CheckCircle2 } from 'lucide-react'
 
 // Formulaire d'inscription partagé entre la page /inscription et la fenêtre
 // d'inscription de la page d'accueil et des tarifs (InscriptionModal).
@@ -78,9 +80,24 @@ export default function InscriptionForm({
   const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [codeAvantage, setCodeAvantage] = useState(codeParrainageInitial)
+  // Code des testeurs (BETANLR26) : la charte de la bêta s'ouvre et doit être
+  // acceptée avant de créer le compte.
+  const codeBeta = estCodeCharteBeta(codeAvantage)
+  const [charteAcceptee, setCharteAcceptee] = useState(false)
+  const [charteOuverte, setCharteOuverte] = useState(estCodeCharteBeta(codeParrainageInitial))
+
+  function changerCode(valeur: string) {
+    setCodeAvantage(valeur)
+    if (estCodeCharteBeta(valeur) && !estCodeCharteBeta(codeAvantage) && !charteAcceptee) setCharteOuverte(true)
+  }
 
   async function handleAction(formData: FormData) {
     setError(null)
+    if (codeBeta && !charteAcceptee) {
+      setCharteOuverte(true)
+      return
+    }
     const password = formData.get('password') as string
     const passwordConfirm = formData.get('password_confirm') as string
     if (password !== passwordConfirm) {
@@ -193,10 +210,25 @@ export default function InscriptionForm({
             name="code_parrainage"
             type="text"
             placeholder={t('Ex : B7K2Q9 ou BETA2026', 'e.g. B7K2Q9 or BETA2026')}
-            defaultValue={codeParrainageInitial}
+            value={codeAvantage}
+            onChange={e => changerCode(e.target.value)}
             autoCapitalize="characters"
             className="input-field uppercase"
           />
+          {codeBeta && (
+            charteAcceptee ? (
+              <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--sage)' }}>
+                <CheckCircle2 className="w-3.5 h-3.5" /> Charte de la bêta acceptée.{' '}
+                <button type="button" onClick={() => setCharteOuverte(true)} className="underline">La relire</button>
+              </p>
+            ) : (
+              <p className="text-xs mt-1 text-gray-500">
+                Code testeur : la charte de participation à la bêta est à accepter avant de créer ton compte.{' '}
+                <button type="button" onClick={() => setCharteOuverte(true)} className="text-magenta font-semibold hover:underline">Lire la charte</button>
+              </p>
+            )
+          )}
+          {codeBeta && charteAcceptee && <input type="hidden" name="charte_beta" value="on" />}
         </div>
 
         <div className="space-y-3">
@@ -223,6 +255,13 @@ export default function InscriptionForm({
 
         <SubmitButton submitId={submitId} submitLabel={submitLabel} />
       </form>
+
+      {charteOuverte && (
+        <CharteBetaFenetre
+          onAccepter={() => { setCharteAcceptee(true); setCharteOuverte(false) }}
+          onFermer={() => setCharteOuverte(false)}
+        />
+      )}
 
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-500">

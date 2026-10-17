@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { adminCreerCodeGratuit, adminBasculerCodeGratuit } from '@/app/actions/admin'
+import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode } from '@/app/actions/admin'
 
 interface CodeGratuit {
   id: string
@@ -12,6 +12,46 @@ interface CodeGratuit {
   actif: boolean
   note: string | null
   created_at: string
+}
+
+function UsagesMax({ code, onModifie }: { code: CodeGratuit; onModifie: (usagesMax: number) => void }) {
+  const [valeur, setValeur] = useState(String(code.usages_max))
+  const [enregistrement, setEnregistrement] = useState(false)
+  const [erreur, setErreur] = useState('')
+  const modifie = Number(valeur) !== code.usages_max
+
+  async function enregistrer() {
+    setErreur('')
+    setEnregistrement(true)
+    const res = await adminModifierUsagesMaxCode(code.id, Number(valeur))
+    setEnregistrement(false)
+    if (res.error) { setErreur(res.error); return }
+    onModifie(Number(valeur))
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <span>{code.usages} /</span>
+        <input
+          type="number"
+          min={Math.max(1, code.usages)}
+          className="field py-1 px-2"
+          style={{ width: 72 }}
+          value={valeur}
+          onChange={e => setValeur(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && modifie && enregistrer()}
+          aria-label={`Nombre max d'utilisations du code ${code.code}`}
+        />
+        {modifie && (
+          <button onClick={enregistrer} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">
+            {enregistrement ? '…' : 'OK'}
+          </button>
+        )}
+      </div>
+      {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
+    </div>
+  )
 }
 
 export default function CodesGratuitsClient({ codes: initialCodes }: { codes: CodeGratuit[] }) {
@@ -35,7 +75,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
     setCreating(false)
     if (res.error) { setError(res.error); return }
     setCodes(cs => [{
-      id: crypto.randomUUID(), code: res.code!, duree_mois: dureeMois ? Number(dureeMois) : null,
+      id: res.id ?? crypto.randomUUID(), code: res.code!, duree_mois: dureeMois ? Number(dureeMois) : null,
       usages_max: Number(usagesMax) || 1, usages: 0, actif: true, note: note || null, created_at: new Date().toISOString(),
     }, ...cs])
     setCodeInput(''); setDureeMois(''); setUsagesMax('1'); setNote('')
@@ -95,7 +135,9 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
                 <tr key={c.id} className="border-b last:border-0">
                   <td className="py-2 font-mono font-semibold">{c.code}</td>
                   <td className="py-2">{c.duree_mois ? `${c.duree_mois} mois` : 'Illimité'}</td>
-                  <td className="py-2">{c.usages} / {c.usages_max}</td>
+                  <td className="py-2">
+                    <UsagesMax code={c} onModifie={usagesMax => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, usages_max: usagesMax } : x))} />
+                  </td>
                   <td className="py-2 text-gray-500">{c.note || '—'}</td>
                   <td className="py-2">{c.actif ? <span className="text-green-600">Actif</span> : <span className="text-gray-400">Désactivé</span>}</td>
                   <td className="py-2">

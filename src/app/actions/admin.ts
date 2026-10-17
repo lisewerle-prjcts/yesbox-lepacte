@@ -549,22 +549,37 @@ export async function adminCreerCodeGratuit(fields: {
   const admin = createAdminClient()
 
   const code = (fields.code?.trim() || genererCodeAleatoire()).toUpperCase()
-  const { error } = await admin.from('codes_gratuits').insert({
+  const { data, error } = await admin.from('codes_gratuits').insert({
     code,
     duree_mois: fields.dureeMois ?? null,
     usages_max: fields.usagesMax,
     note: fields.note?.trim() || null,
-  })
+  }).select('id').single()
   if (error) return { error: error.message }
 
   revalidatePath('/admin/codes')
-  return { success: true, code }
+  return { success: true, code, id: data.id as string }
 }
 
 export async function adminBasculerCodeGratuit(id: string, actif: boolean) {
   await assertAdmin()
   const admin = createAdminClient()
   const { error } = await admin.from('codes_gratuits').update({ actif }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/codes')
+  return { success: true }
+}
+
+// Nombre maximum d'utilisations modifiable après création, sans descendre
+// sous le nombre de couples ayant déjà utilisé le code.
+export async function adminModifierUsagesMaxCode(id: string, usagesMax: number) {
+  await assertAdmin()
+  if (!Number.isInteger(usagesMax) || usagesMax < 1) return { error: 'Le nombre d’utilisations doit être un entier supérieur ou égal à 1.' }
+  const admin = createAdminClient()
+  const { data: code, error: lectureError } = await admin.from('codes_gratuits').select('usages').eq('id', id).single()
+  if (lectureError || !code) return { error: lectureError?.message || 'Code introuvable.' }
+  if (usagesMax < code.usages) return { error: `Ce code a déjà été utilisé ${code.usages} fois : le maximum ne peut pas être inférieur.` }
+  const { error } = await admin.from('codes_gratuits').update({ usages_max: usagesMax }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/codes')
   return { success: true }

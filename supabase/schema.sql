@@ -1378,3 +1378,12 @@ alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation'));
+
+-- ============================================================
+-- CHARTE DE LA BÊTA (code BETANLR26, octobre-novembre 2026)
+-- Date d'acceptation de la charte de participation par chaque partenaire :
+-- à l'inscription avec le code, sinon sur /charte-beta (cf. lib/charte-beta).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.profiles add column if not exists charte_beta_acceptee_le timestamptz;
+revoke update (charte_beta_acceptee_le) on public.profiles from authenticated;
