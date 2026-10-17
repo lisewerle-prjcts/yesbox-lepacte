@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { BadgeCheck, KeyRound, Mail, MailCheck, Trash2, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { BadgeCheck, KeyRound, Mail, MailCheck, Search, Trash2, X } from 'lucide-react'
 import { adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser } from '@/app/actions/admin'
 
 interface User {
@@ -15,12 +15,39 @@ interface User {
   emailConfirme: boolean
 }
 
+// Recherche sans tenir compte des majuscules ni des accents.
+function normaliser(texte: string) {
+  return texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+// Tout ce qui permet de retrouver une personne : prénom, nom, e-mail, numéro
+// de couple et date d'inscription sous plusieurs formes (17/10/2026,
+// 17 octobre 2026, 2026-10-17).
+function texteRecherche(user: User) {
+  const d = new Date(user.createdAt)
+  const jj = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return normaliser([
+    user.prenom, user.nom, user.email,
+    user.coupleNumero != null ? `couple ${user.coupleNumero}` : 'sans couple',
+    `${jj}/${mm}/${d.getFullYear()}`,
+    `${d.getFullYear()}-${mm}-${jj}`,
+    d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+  ].filter(Boolean).join(' '))
+}
+
 export default function UtilisateursClient({ users }: { users: User[] }) {
+  const [recherche, setRecherche] = useState('')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [passwordShown, setPasswordShown] = useState<Record<string, { password: string; emailed: boolean }>>({})
   const [mailStatus, setMailStatus] = useState<Record<string, { ok: boolean; message: string } | undefined>>({})
   const [confirmDelete, setConfirmDelete] = useState<User | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  const index = useMemo(() => users.map(user => ({ user, texte: texteRecherche(user) })), [users])
+  // Chaque mot saisi doit apparaître (ex : « marie octobre »).
+  const mots = normaliser(recherche).split(/\s+/).filter(Boolean)
+  const usersFiltres = mots.length ? index.filter(({ texte }) => mots.every(m => texte.includes(m))).map(({ user }) => user) : users
 
   async function run(key: string, fn: () => Promise<void>) {
     setLoading(l => ({ ...l, [key]: true }))
@@ -74,8 +101,33 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
       {users.length === 0 ? (
         <p style={{ fontSize: 13, color: 'var(--muted)' }}>Aucun utilisateur inscrit pour l&apos;instant.</p>
       ) : (
+        <>
+        <div className="relative mb-4">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
+          <input
+            type="search"
+            className="field pl-9 pr-9"
+            placeholder="Rechercher par prénom, nom, e-mail ou date (ex : 17/10, octobre 2026)"
+            value={recherche}
+            onChange={e => setRecherche(e.target.value)}
+            aria-label="Rechercher un utilisateur"
+          />
+          {recherche && (
+            <button type="button" onClick={() => setRecherche('')} className="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Effacer la recherche">
+              <X className="w-4 h-4" style={{ color: 'var(--muted)' }} />
+            </button>
+          )}
+        </div>
+        {mots.length > 0 && (
+          <p className="mb-3" style={{ fontSize: 12, color: 'var(--muted)' }}>
+            {usersFiltres.length} résultat{usersFiltres.length > 1 ? 's' : ''} sur {users.length}
+          </p>
+        )}
+        {usersFiltres.length === 0 && (
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>Aucun utilisateur ne correspond à cette recherche.</p>
+        )}
         <div className="space-y-2">
-          {users.map(user => {
+          {usersFiltres.map(user => {
             const shown = passwordShown[user.id]
             const nomComplet = [user.prenom, user.nom].filter(Boolean).join(' ') || '—'
             return (
@@ -158,6 +210,7 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
             )
           })}
         </div>
+        </>
       )}
 
       {confirmDelete && (
