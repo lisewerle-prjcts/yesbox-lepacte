@@ -105,7 +105,7 @@ export async function inscription(formData: FormData) {
       .eq('id', data.user.id)
     // À part : si la colonne langue manque encore, le consentement est enregistré.
     await enregistrerLangueProfil(createAdminClient(), data.user.id, locale)
-    // Idem pour l'acceptation de la charte de la bêta (code BETANLR26).
+    // Idem pour l'acceptation de la charte de la bêta (codes BETANLR26, BETAFACEBOOK26).
     if (charteBeta) {
       await createAdminClient().from('profiles').update({ charte_beta_acceptee_le: maintenant }).eq('id', data.user.id)
     }

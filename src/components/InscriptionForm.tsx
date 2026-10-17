@@ -81,7 +81,7 @@ export default function InscriptionForm({
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [codeAvantage, setCodeAvantage] = useState(codeParrainageInitial)
-  // Code des testeurs (BETANLR26) : la charte de la bêta s'ouvre et doit être
+  // Code des testeurs (BETANLR26, BETAFACEBOOK26) : la charte de la bêta s'ouvre et doit être
   // acceptée avant de créer le compte.
   const codeBeta = estCodeCharteBeta(codeAvantage)
   const [charteAcceptee, setCharteAcceptee] = useState(false)

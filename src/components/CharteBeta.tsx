@@ -1,7 +1,7 @@
 // Texte de la charte de participation à la bêta (17 octobre - 16 novembre
 // 2026), repris du PDF « Yesbox_charte_betatest_oct_nov_2026 ». Affiché sur
 // /charte-beta et dans la fenêtre qui s'ouvre à l'inscription avec le code
-// BETANLR26 (cf. lib/charte-beta).
+// BETANLR26 ou BETAFACEBOOK26 (cf. lib/charte-beta).
 
 export const CASE_CHARTE_BETA =
   "J'ai lu cette charte, j'accepte de participer à la bêta de Yesbox dans ces conditions et d'être recontacté·e pour un entretien."

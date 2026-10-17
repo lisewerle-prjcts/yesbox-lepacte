@@ -7,7 +7,7 @@ import YesBoxLogo from '@/components/YesBoxLogo'
 import CharteBeta, { CASE_CHARTE_BETA } from '@/components/CharteBeta'
 
 // Page plein écran ouverte par le formulaire d'inscription quand le code
-// BETANLR26 est saisi. Rendue dans <body> pour couvrir aussi la fenêtre
+// BETANLR26 ou BETAFACEBOOK26 est saisi. Rendue dans <body> pour couvrir aussi la fenêtre
 // d'inscription de la page d'accueil (InscriptionModal).
 export default function CharteBetaFenetre({ onAccepter, onFermer }: { onAccepter: () => void; onFermer: () => void }) {
   const [coche, setCoche] = useState(false)
