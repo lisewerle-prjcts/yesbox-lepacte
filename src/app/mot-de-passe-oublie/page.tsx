@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import Alert from '@/components/ui/Alert'
 import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
-import { createClient } from '@/lib/supabase/client'
+import { demanderReinitialisation } from '@/app/actions/mot-de-passe'
 
 export default function MotDePasseOubliePage() {
   const [email, setEmail] = useState('')
@@ -14,20 +14,24 @@ export default function MotDePasseOubliePage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Retour d'un lien expiré ou déjà utilisé (cf. /auth/confirm).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('expire')) {
+      setError('Ce lien a expiré ou a déjà été utilisé. Refais une demande ci-dessous.')
+    }
+  }, [])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    })
-
-    if (error) {
-      setError(error.message)
-    } else {
-      setSent(true)
+    try {
+      const res = await demanderReinitialisation(email)
+      if (res.error) setError(res.error)
+      else setSent(true)
+    } catch {
+      setError("La demande n'a pas pu être envoyée. Réessaie.")
     }
     setLoading(false)
   }
@@ -72,7 +76,7 @@ export default function MotDePasseOubliePage() {
                 </div>
                 <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
                   {loading && <Spinner size="sm" />}
-                  {loading ? 'Sending...' : <EditableText id="mdpoublie.submit">Envoyer le lien</EditableText>}
+                  {loading ? 'Envoi…' : <EditableText id="mdpoublie.submit">Envoyer le lien</EditableText>}
                 </button>
               </form>
               <div className="mt-4 text-center">
