@@ -22,7 +22,7 @@ function dateFr(iso: string | null | undefined) {
 function exporterCsv(personnes: PersonneSegment[], modules: ModuleInfo[]) {
   const entetes = [
     'Prénom', 'Nom', 'E-mail', 'Couple', 'Inscrit·e le', 'Dernière connexion', 'Code',
-    'Modules terminés', ...modules.map((_, i) => `Fin M${i + 1}`), 'Pacte signé le', 'Abonnement résilié', 'Résilié le', 'Programme fini',
+    'Modules terminés', ...modules.map((_, i) => `Fin M${i + 1}`), 'Pacte signé le', 'Abonnement résilié', 'Résilié le', 'Programme initial fini',
   ]
   const lignes = personnes.map(p => [
     p.prenom ?? '', p.nom ?? '', p.email, p.coupleNumero ?? '', dateFr(p.inscritLe), dateFr(p.derniereConnexion), p.code ?? '',
@@ -174,7 +174,8 @@ export default function SegmentClient({
       <h2 className="font-semibold mb-1" style={{ fontSize: 15 }}>Envoyer un message à un segment</h2>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
         Une personne est dans le segment si elle remplit tous les critères AVEC et aucun critère SANS.
-        Un module est terminé quand il est révélé ; le programme est fini quand tous les modules le sont.
+        Un module est terminé quand il est révélé et que les deux ont écrit leur conclusion ; le programme
+        initial est fini quand les modules 1 à 9 sont terminés et le pacte signé par les deux.
       </p>
 
       <div className="flex gap-3 flex-wrap mb-4">

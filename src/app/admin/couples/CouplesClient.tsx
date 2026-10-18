@@ -1,17 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
   adminUpdateCouple, adminDeleteCouple, adminUpdateProfile,
 } from '@/app/actions/admin'
 
 interface UnassignedMember { id: string; prenom: string | null; nom: string | null; email: string; role: string | null }
-interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number; derniereConnexion: string | null }
-interface ModuleStatus { slug: string; statut: string; revealed: boolean; revealed_at: string | null }
+interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number; derniereConnexion: string | null; rappelsEmail: boolean }
+interface ModuleStatus { slug: string; statut: string; revealed: boolean; termine_le: string | null }
+export interface EmailEnvoye { date: string; destinataire: string; sujet: string; ok: boolean }
 interface Couple {
   id: string
   numero: number
@@ -20,12 +21,36 @@ interface Couple {
   date_anniversaire: string | null
   created_at: string
   derniere_connexion: string | null
+  emails: EmailEnvoye[]
   members: MemberProgress[]
   modules: ModuleStatus[]
 }
 
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
 const dateCourte = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
+
+// Recherche sans tenir compte des majuscules ni des accents (comme Admin >
+// Utilisateurs).
+function normaliser(texte: string) {
+  return texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+function formesDate(iso: string) {
+  const d = new Date(iso)
+  const jj = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return [`${jj}/${mm}/${d.getFullYear()}`, `${d.getFullYear()}-${mm}-${jj}`, d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })]
+}
+
+// Tout ce qui permet de retrouver un couple : numéro, code, nom, prénoms,
+// noms et e-mails des membres, date de création.
+function texteRecherche(couple: Couple) {
+  return normaliser([
+    `couple ${couple.numero}`, couple.pairing_code, couple.nom_couple,
+    ...couple.members.flatMap(m => [m.prenom, m.nom, m.email]),
+    ...formesDate(couple.created_at),
+  ].filter(Boolean).join(' '))
+}
 
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
@@ -43,6 +68,12 @@ export default function CouplesClient({
   const router = useRouter()
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
+  const [recherche, setRecherche] = useState('')
+
+  const index = useMemo(() => couples.map(couple => ({ couple, texte: texteRecherche(couple) })), [couples])
+  // Chaque mot saisi doit apparaître (ex : « lise octobre »).
+  const mots = normaliser(recherche).split(/\s+/).filter(Boolean)
+  const couplesFiltres = mots.length ? index.filter(({ texte }) => mots.every(m => texte.includes(m))).map(({ couple }) => couple) : couples
 
   async function addCouple() {
     setAdding(true)
@@ -55,6 +86,30 @@ export default function CouplesClient({
 
   return (
     <div className="space-y-4">
+      <div className="card p-5">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
+          <input
+            type="search"
+            className="field pl-9 pr-9"
+            placeholder="Rechercher par prénom, nom, e-mail ou date (ex : 17/10, octobre 2026)"
+            value={recherche}
+            onChange={e => setRecherche(e.target.value)}
+            aria-label="Rechercher un couple"
+          />
+          {recherche && (
+            <button type="button" onClick={() => setRecherche('')} className="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Effacer la recherche">
+              <X className="w-4 h-4" style={{ color: 'var(--muted)' }} />
+            </button>
+          )}
+        </div>
+        {mots.length > 0 && (
+          <p className="mt-3" style={{ fontSize: 12, color: 'var(--muted)' }}>
+            {couplesFiltres.length} résultat{couplesFiltres.length > 1 ? 's' : ''} sur {couples.length}
+          </p>
+        )}
+      </div>
+
       <div>
         <button onClick={addCouple} disabled={adding} className="btn-brand text-sm py-2 px-4 flex items-center gap-2" style={{ opacity: adding ? 0.6 : 1 }}>
           <Plus className="w-4 h-4" /> {adding ? 'Création…' : 'Ajouter un couple'}
@@ -64,8 +119,10 @@ export default function CouplesClient({
 
       {couples.length === 0 ? (
         <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple pour l&apos;instant.</div>
+      ) : couplesFiltres.length === 0 ? (
+        <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple ne correspond à cette recherche.</div>
       ) : (
-        couples.map(couple => (
+        couplesFiltres.map(couple => (
           <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} moduleSlugs={moduleSlugs} />
         ))
       )}
@@ -229,15 +286,17 @@ function CoupleCard({
             <div key={slug} className="rounded-lg p-2 text-center" style={{ background: bg, border: '1px solid rgba(0,0,0,.06)' }}>
               <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>M{i + 1}</div>
               <div style={{ fontSize: 16 }}>{STATUS_TEXT[mod?.revealed ? 'revealed' : st]}</div>
-              {mod?.revealed && mod.revealed_at && (
+              {mod?.termine_le && (
                 <div className="font-mono" style={{ fontSize: 9, color: 'white', marginTop: 2 }} title="Date de fin du module">
-                  {dateCourte(mod.revealed_at)}
+                  {dateCourte(mod.termine_le)}
                 </div>
               )}
             </div>
           )
         })}
       </div>
+
+      <EmailsCouple emails={couple.emails} />
 
       <Link
         href={`/admin/actions?couple_id=${couple.id}`}
@@ -290,6 +349,11 @@ function MemberRow({
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
             Dernière connexion : {member.derniereConnexion ? new Date(member.derniereConnexion).toLocaleDateString('fr-FR') : 'jamais'}
           </div>
+          {!member.rappelsEmail && (
+            <div className="flex items-center gap-1" style={{ fontSize: 11, color: '#dc2626', marginTop: 4 }}>
+              <BellOff className="w-3 h-3" /> A demandé à ne plus recevoir les e-mails de rappel
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
@@ -311,6 +375,42 @@ function MemberRow({
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </button>
         </div>
+      )}
+    </div>
+  )
+}
+
+function EmailsCouple({ emails }: { emails: EmailEnvoye[] }) {
+  const [tout, setTout] = useState(false)
+  const visibles = tout ? emails : emails.slice(0, 3)
+
+  return (
+    <div className="surface p-3 mb-3">
+      <div className="flex items-center gap-1.5 mb-2" style={{ fontSize: 12, fontWeight: 600 }}>
+        <Mail className="w-3.5 h-3.5" style={{ color: 'var(--brand)' }} />
+        E-mails envoyés <span style={{ fontWeight: 400, color: 'var(--muted)' }}>({emails.length})</span>
+      </div>
+      {emails.length === 0 ? (
+        <p style={{ fontSize: 11, color: 'var(--muted)' }}>Aucun e-mail envoyé pour l&apos;instant.</p>
+      ) : (
+        <ul className="space-y-1">
+          {visibles.map((e, i) => (
+            <li key={i} className="flex gap-3 flex-wrap" style={{ fontSize: 11 }}>
+              <span className="font-mono" style={{ color: 'var(--muted)', minWidth: 120 }}>
+                {new Date(e.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span style={{ color: 'var(--ink-2)', minWidth: 80 }}>{e.destinataire}</span>
+              <span style={{ flex: 1, color: e.ok ? 'var(--ink)' : '#dc2626' }}>
+                {e.sujet}{!e.ok && ' — échec de l\'envoi'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {emails.length > 3 && (
+        <button onClick={() => setTout(t => !t)} className="mt-2 text-xs font-medium" style={{ color: 'var(--brand)' }}>
+          {tout ? 'Afficher moins' : `Voir tout (${emails.length})`}
+        </button>
       )}
     </div>
   )

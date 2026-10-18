@@ -1387,3 +1387,23 @@ alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
 -- ============================================================
 alter table public.profiles add column if not exists charte_beta_acceptee_le timestamptz;
 revoke update (charte_beta_acceptee_le) on public.profiles from authenticated;
+
+-- ============================================================
+-- JOURNAL DES E-MAILS ENVOYÉS
+-- Chaque e-mail parti du site (bienvenue, rappels, notifications entre
+-- partenaires, envois de l'admin…) est noté ici : destinataire, objet,
+-- date, succès ou échec. Affiché pour chaque couple dans Admin > Couples
+-- & progression. Écrit uniquement par le serveur (clé service) : RLS
+-- activée, aucune politique.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.emails_envoyes (
+  id uuid primary key default uuid_generate_v4(),
+  destinataire text not null,
+  sujet text not null,
+  ok boolean not null default true,
+  erreur text,
+  envoye_le timestamptz not null default now()
+);
+alter table public.emails_envoyes enable row level security;
+create index if not exists emails_envoyes_destinataire_idx on public.emails_envoyes (lower(destinataire), envoye_le desc);

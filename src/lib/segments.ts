@@ -47,7 +47,7 @@ export const LIBELLES_CRITERES: Record<TypeCritere, string> = {
   inactif: 'Pas connecté·e depuis… jours',
   pacte_signe: 'A signé le pacte',
   resilie: 'A résilié l\'abonnement',
-  programme_termine: 'A fini le programme',
+  programme_termine: 'A fini le programme initial (M1 à M9 + pacte signé)',
 }
 
 const JOUR = 24 * 60 * 60 * 1000
