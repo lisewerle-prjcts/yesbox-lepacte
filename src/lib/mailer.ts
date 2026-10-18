@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { createClient } from '@supabase/supabase-js'
 
 // Envoi de tous les e-mails du site.
 // - Si RESEND_API_KEY est configurée : envoi par Resend depuis notre domaine
@@ -45,6 +46,20 @@ export function htmlVersTexte(html: string) {
     .trim()
 }
 
+// Note l'envoi dans le journal des e-mails (table emails_envoyes, affichée
+// dans Admin > Couples & progression). N'échoue jamais : un journal manqué
+// ne doit pas faire échouer l'envoi.
+async function journaliserEnvoi(destinataire: string, sujet: string, ok: boolean, erreur?: string) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return
+  try {
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } })
+    const { error } = await admin.from('emails_envoyes').insert({ destinataire, sujet, ok, erreur: erreur ?? null })
+    if (error) console.warn(`[mail] Journal des e-mails : ${error.message}`)
+  } catch (e) {
+    console.warn(`[mail] Journal des e-mails : ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
 interface Mail {
   to: string
   subject: string
@@ -63,7 +78,13 @@ export async function envoyerMail(mail: Mail): Promise<boolean> {
 // Resend ou de Gmail), affichée dans l'admin et écrite dans les logs.
 // Si Resend refuse l'envoi (ex. domaine pas encore validé chez Resend, qui
 // n'autorise alors que l'adresse du compte Resend), on réessaie par Gmail.
-export async function envoyerMailDetail({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ ok: boolean; erreur?: string }> {
+export async function envoyerMailDetail(mail: Mail): Promise<{ ok: boolean; erreur?: string }> {
+  const resultat = await envoyer(mail)
+  await journaliserEnvoi(mail.to, mail.subject, resultat.ok, resultat.erreur)
+  return resultat
+}
+
+async function envoyer({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ ok: boolean; erreur?: string }> {
   const html = mailHtml(body)
   const text = `${htmlVersTexte(body)}\n\n--\nYES BOX · yesbox-lepacte.fr`
   const erreurs: string[] = []

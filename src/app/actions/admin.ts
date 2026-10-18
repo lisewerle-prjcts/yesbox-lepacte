@@ -14,6 +14,9 @@ import { langueDuProfil } from '@/lib/i18n/langue-profil'
 import { t } from '@/lib/i18n/locale'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
+import { chargerPersonnesSegment } from '@/lib/segments-donnees'
+import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
+import { signatureDesinscription } from '@/lib/rappels-email'
 import type { QuestionType } from '@/types'
 
 function revalidateModuleLists() {
@@ -97,6 +100,43 @@ export async function adminSendEmail(to: string, subject: string, body: string) 
   const envoye = await envoyerMail({ to, subject, body: body.replace(/\n/g, '<br/>') })
   if (!envoye) return { error: 'Échec de l\'envoi' }
   return { success: true }
+}
+
+function echapperHtml(texte: string) {
+  return texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+// Envoi d'un même message à toutes les personnes d'un segment. Le segment
+// est recalculé ici à partir des données à jour (jamais pris tel quel du
+// navigateur). {prenom} dans l'objet ou le message est remplacé par le
+// prénom de chaque personne. Chaque e-mail porte le lien de désinscription
+// des rappels.
+export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, subject: string, body: string) {
+  await assertAdmin()
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
+  if (!subject.trim() || !body.trim()) return { error: 'Objet et message requis' }
+
+  const personnes = filtrerSegment(await chargerPersonnesSegment(createAdminClient()), filtres)
+  if (!personnes.length) return { error: 'Aucune personne dans ce segment' }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
+  let envoyes = 0
+  const echecs: string[] = []
+  for (const p of personnes) {
+    const prenom = p.prenom?.trim() || ''
+    const lien = `${appUrl}/desinscription?u=${encodeURIComponent(p.id)}&s=${signatureDesinscription(p.id)}&l=fr`
+    const ok = await envoyerMail({
+      to: p.email,
+      subject: subject.replace(/\{prenom\}/g, prenom).replace(/[\r\n]+/g, ' '),
+      body: `${body.replace(/\{prenom\}/g, echapperHtml(prenom)).replace(/\n/g, '<br/>')}`
+        + `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;"><a href="${lien}" style="color:#8a8580;">Ne plus recevoir ces e-mails</a></p>`,
+    })
+    if (ok) envoyes += 1
+    else echecs.push(p.email)
+    // Reste sous la limite d'envoi de Resend (quelques e-mails par seconde).
+    await new Promise(r => setTimeout(r, 600))
+  }
+  return { success: true, envoyes, echecs }
 }
 
 export async function adminSaveMessage(key: string, value: string) {
