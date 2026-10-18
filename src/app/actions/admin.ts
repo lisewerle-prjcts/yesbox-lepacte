@@ -624,3 +624,45 @@ export async function adminModifierUsagesMaxCode(id: string, usagesMax: number) 
   revalidatePath('/admin/codes')
   return { success: true }
 }
+
+// Attribue un code gratuit au couple d'un membre inscrit, comme s'il l'avait
+// saisi lui-même (mêmes règles : code actif, pas épuisé ; charte de la bêta
+// demandée ensuite pour les codes concernés). Un couple n'a qu'un code : avec
+// `remplacer`, l'ancien est retiré (et son utilisation décomptée) avant.
+export async function adminAttribuerCode(userId: string, code: string, remplacer = false) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  const cleanCode = code.trim().toUpperCase()
+  if (!cleanCode) return { error: 'Choisis un code.' }
+
+  const { data: profile } = await admin.from('profiles').select('couple_id').eq('id', userId).single()
+  if (!profile?.couple_id) return { error: 'Cette personne n\'a pas encore d\'espace couple : impossible de lui attribuer un code.' }
+  const coupleId = profile.couple_id as string
+
+  const { data: nouveau } = await admin.from('codes_gratuits').select('id, actif, usages, usages_max').eq('code', cleanCode).maybeSingle()
+  if (!nouveau || !nouveau.actif) return { error: 'Code invalide ou désactivé.' }
+  if (nouveau.usages >= nouveau.usages_max) return { error: 'Ce code a atteint son nombre maximum d\'utilisations : augmente-le dans Codes gratuits.' }
+
+  const { data: existant } = await admin.from('codes_gratuits_utilisations').select('id, code_id, codes_gratuits(code, usages)').eq('couple_id', coupleId).maybeSingle()
+  if (existant) {
+    const lie = existant.codes_gratuits as { code?: string; usages?: number } | { code?: string; usages?: number }[] | null
+    const ancien = Array.isArray(lie) ? lie[0] : lie
+    if (ancien?.code === cleanCode) return { error: `Ce couple a déjà le code ${cleanCode}.` }
+    if (!remplacer) return { error: `Ce couple a déjà le code ${ancien?.code ?? '—'}.`, codeExistant: ancien?.code ?? '—' }
+    const { error: suppression } = await admin.from('codes_gratuits_utilisations').delete().eq('id', existant.id)
+    if (suppression) return { error: suppression.message }
+    await admin.from('codes_gratuits').update({ usages: Math.max(0, (ancien?.usages ?? 1) - 1) }).eq('id', existant.code_id)
+  }
+
+  const { data, error } = await admin.rpc('utiliser_code_gratuit', { p_code: cleanCode, p_couple_id: coupleId })
+  if (error) return { error: error.message }
+  if (!data?.success) {
+    const messages: Record<string, string> = { invalide: 'Code invalide', epuise: 'Ce code a atteint son nombre maximum d\'utilisations', deja_utilise: 'Ce couple a déjà un code' }
+    return { error: messages[data?.error] ?? 'Code invalide' }
+  }
+
+  revalidatePath('/admin/utilisateurs')
+  revalidatePath('/admin/codes')
+  revalidatePath('/admin/actions')
+  return { success: true }
+}

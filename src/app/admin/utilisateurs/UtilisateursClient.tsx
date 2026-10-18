@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { BadgeCheck, KeyRound, Mail, MailCheck, Search, Trash2, X } from 'lucide-react'
-import { adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser } from '@/app/actions/admin'
+import { useRouter } from 'next/navigation'
+import { BadgeCheck, KeyRound, Mail, MailCheck, Search, Ticket, Trash2, X } from 'lucide-react'
+import { adminAttribuerCode, adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser } from '@/app/actions/admin'
 
 interface User {
   id: string
@@ -13,7 +14,10 @@ interface User {
   coupleNumero: number | null
   hasCouple: boolean
   emailConfirme: boolean
+  code: string | null
 }
+
+interface CodeDisponible { code: string; restants: number }
 
 // Recherche sans tenir compte des majuscules ni des accents.
 function normaliser(texte: string) {
@@ -28,7 +32,7 @@ function texteRecherche(user: User) {
   const jj = String(d.getDate()).padStart(2, '0')
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   return normaliser([
-    user.prenom, user.nom, user.email,
+    user.prenom, user.nom, user.email, user.code,
     user.coupleNumero != null ? `couple ${user.coupleNumero}` : 'sans couple',
     `${jj}/${mm}/${d.getFullYear()}`,
     `${d.getFullYear()}-${mm}-${jj}`,
@@ -36,8 +40,11 @@ function texteRecherche(user: User) {
   ].filter(Boolean).join(' '))
 }
 
-export default function UtilisateursClient({ users }: { users: User[] }) {
+export default function UtilisateursClient({ users, codesDisponibles }: { users: User[]; codesDisponibles: CodeDisponible[] }) {
+  const router = useRouter()
   const [recherche, setRecherche] = useState('')
+  const [codeOuvert, setCodeOuvert] = useState<string | null>(null)
+  const [codeChoisi, setCodeChoisi] = useState('')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [passwordShown, setPasswordShown] = useState<Record<string, { password: string; emailed: boolean }>>({})
   const [mailStatus, setMailStatus] = useState<Record<string, { ok: boolean; message: string } | undefined>>({})
@@ -85,6 +92,22 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
     await run(`confirm-manuel-${user.id}`, async () => {
       const res = await adminConfirmerEmail(user.id)
       showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Adresse confirmée : la personne peut se connecter')
+    })
+  }
+
+  async function attribuerCode(user: User) {
+    await run(`code-${user.id}`, async () => {
+      let res = await adminAttribuerCode(user.id, codeChoisi)
+      if ('codeExistant' in res && res.codeExistant) {
+        if (!window.confirm(`Le couple a déjà le code ${res.codeExistant}. Le remplacer par ${codeChoisi} ?`)) return
+        res = await adminAttribuerCode(user.id, codeChoisi, true)
+      }
+      showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : `Code ${codeChoisi} attribué`)
+      if (!res.error) {
+        setCodeOuvert(null)
+        setCodeChoisi('')
+        router.refresh()
+      }
     })
   }
 
@@ -151,6 +174,31 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
                       </span>
                     </div>
                   )}
+                  {user.code && (
+                    <div className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--sage)' }}>
+                      <Ticket className="w-3 h-3" /> Code <span className="font-mono">{user.code}</span>
+                    </div>
+                  )}
+                  {codeOuvert === user.id && (
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <select className="field" style={{ width: 220 }} value={codeChoisi} onChange={e => setCodeChoisi(e.target.value)}>
+                        <option value="">Choisir un code…</option>
+                        {codesDisponibles.map(c => (
+                          <option key={c.code} value={c.code} disabled={c.restants <= 0}>
+                            {c.code} — {c.restants > 0 ? `${c.restants} utilisation${c.restants > 1 ? 's' : ''} restante${c.restants > 1 ? 's' : ''}` : 'épuisé'}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        disabled={!codeChoisi || loading[`code-${user.id}`]}
+                        onClick={() => attribuerCode(user)}
+                        className="btn-brand text-xs py-2 px-3"
+                        style={{ opacity: !codeChoisi || loading[`code-${user.id}`] ? 0.5 : 1 }}
+                      >
+                        {loading[`code-${user.id}`] ? 'Attribution…' : 'Attribuer'}
+                      </button>
+                    </div>
+                  )}
                   {!user.emailConfirme && <div style={{ fontSize: 11, color: '#b45309' }}>Adresse e-mail pas encore confirmée</div>}
                   {mailStatus[user.id] && <p style={{ fontSize: 11, color: mailStatus[user.id]!.ok ? 'var(--sage)' : '#dc2626' }} className="mt-1">{mailStatus[user.id]!.message}</p>}
                 </div>
@@ -186,6 +234,16 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
                     >
                       <Mail className="w-3.5 h-3.5" />
                       {loading[`bienvenue-${user.id}`] ? 'Envoi…' : 'Renvoyer le mail de bienvenue'}
+                    </button>
+                  )}
+                  {user.hasCouple && (
+                    <button
+                      onClick={() => { setCodeOuvert(o => (o === user.id ? null : user.id)); setCodeChoisi('') }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--sage)' }}
+                    >
+                      <Ticket className="w-3.5 h-3.5" />
+                      {user.code ? 'Changer le code' : 'Attribuer un code'}
                     </button>
                   )}
                   <button
