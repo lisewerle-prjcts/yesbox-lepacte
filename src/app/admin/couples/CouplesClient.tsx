@@ -10,8 +10,8 @@ import {
 } from '@/app/actions/admin'
 
 interface UnassignedMember { id: string; prenom: string | null; nom: string | null; email: string; role: string | null }
-interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number }
-interface ModuleStatus { slug: string; statut: string; revealed: boolean }
+interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number; derniereConnexion: string | null }
+interface ModuleStatus { slug: string; statut: string; revealed: boolean; revealed_at: string | null }
 interface Couple {
   id: string
   numero: number
@@ -19,11 +19,14 @@ interface Couple {
   nom_couple: string | null
   date_anniversaire: string | null
   created_at: string
+  derniere_connexion: string | null
   members: MemberProgress[]
   modules: ModuleStatus[]
 }
 
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
+const dateCourte = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
+
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
 export default function CouplesClient({
@@ -149,6 +152,10 @@ function CoupleCard({
         <div className="flex items-center gap-2 flex-wrap">
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
             Créé le {new Date(couple.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {' · '}
+            {couple.derniere_connexion
+              ? `Dernière connexion le ${new Date(couple.derniere_connexion).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+              : 'Aucune connexion'}
           </div>
           <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
             <Pencil className="w-3.5 h-3.5" /> Modifier
@@ -222,6 +229,11 @@ function CoupleCard({
             <div key={slug} className="rounded-lg p-2 text-center" style={{ background: bg, border: '1px solid rgba(0,0,0,.06)' }}>
               <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>M{i + 1}</div>
               <div style={{ fontSize: 16 }}>{STATUS_TEXT[mod?.revealed ? 'revealed' : st]}</div>
+              {mod?.revealed && mod.revealed_at && (
+                <div className="font-mono" style={{ fontSize: 9, color: 'white', marginTop: 2 }} title="Date de fin du module">
+                  {dateCourte(mod.revealed_at)}
+                </div>
+              )}
             </div>
           )
         })}
@@ -275,6 +287,9 @@ function MemberRow({
           </div>
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{member.email}</div>
           <div style={{ fontSize: 11, color: 'var(--sage)', marginTop: 4 }}>{member.modulesCompleted}/{totalModules} modules terminés</div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+            Dernière connexion : {member.derniereConnexion ? new Date(member.derniereConnexion).toLocaleDateString('fr-FR') : 'jamais'}
+          </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>

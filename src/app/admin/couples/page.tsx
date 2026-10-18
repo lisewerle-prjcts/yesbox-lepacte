@@ -1,14 +1,16 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { dernieresConnexions } from '@/lib/segments-donnees'
 import CouplesClient from './CouplesClient'
 
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules] = await Promise.all([
+  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules, connexions] = await Promise.all([
     supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at').order('numero', { ascending: true }),
     supabase.from('profiles').select('id, prenom, nom, email, couple_id, role').order('email'),
     getEffectiveModules(),
+    dernieresConnexions(supabase),
   ])
 
   const questionCountBySlug: Record<string, number> = {}
@@ -18,7 +20,7 @@ export default async function AdminCouples() {
   const coupleIds = (couples || []).map(c => c.id)
 
   const { data: modules } = coupleIds.length
-    ? await supabase.from('modules').select('id, couple_id, slug, statut, revealed').in('couple_id', coupleIds)
+    ? await supabase.from('modules').select('id, couple_id, slug, statut, revealed, revealed_at').in('couple_id', coupleIds)
     : { data: [] }
 
   const moduleIds = (modules || []).map(m => m.id)
@@ -42,8 +44,14 @@ export default async function AdminCouples() {
         const answered = (reponses || []).filter(r => r.module_id === mod.id && r.user_id === member.id).length
         if (total > 0 && answered >= total) modulesCompleted += 1
       }
-      return { id: member.id, prenom: member.prenom, nom: member.nom, email: member.email, role: member.role, modulesCompleted }
+      return { id: member.id, prenom: member.prenom, nom: member.nom, email: member.email, role: member.role, modulesCompleted, derniereConnexion: connexions[member.id] ?? null }
     })
+    // Dernière connexion du couple : la plus récente de ses membres.
+    const derniereConnexion = membersWithProgress
+      .map(m => m.derniereConnexion)
+      .filter((d): d is string => !!d)
+      .sort()
+      .at(-1) ?? null
 
     return {
       id: couple.id,
@@ -52,8 +60,9 @@ export default async function AdminCouples() {
       nom_couple: couple.nom_couple,
       date_anniversaire: couple.date_anniversaire,
       created_at: couple.created_at,
+      derniere_connexion: derniereConnexion,
       members: membersWithProgress,
-      modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed })),
+      modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, revealed_at: m.revealed_at })),
     }
   })
 
