@@ -9,15 +9,18 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const tokenHash = searchParams.get('token_hash')
   const typeParam = searchParams.get('type')
-  const type = typeParam === 'signup' || typeParam === 'magiclink' ? typeParam : null
+  const type = typeParam === 'signup' || typeParam === 'magiclink' || typeParam === 'recovery' ? typeParam : null
 
   if (tokenHash && type) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
     if (!error) {
+      // Mot de passe oublié : session ouverte, il reste à choisir le nouveau.
+      if (type === 'recovery') return NextResponse.redirect(`${origin}/nouveau-mot-de-passe`)
       if (data.user) await envoyerBienvenueSiEnAttente(data.user.id)
       return NextResponse.redirect(`${origin}/tableau-de-bord`)
     }
+    if (type === 'recovery') return NextResponse.redirect(`${origin}/mot-de-passe-oublie?expire=1`)
   }
 
   return NextResponse.redirect(`${origin}/connexion?error=auth_callback_error`)
