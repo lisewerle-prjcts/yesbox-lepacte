@@ -298,6 +298,14 @@ function AjouterCodeCard() {
           type="text"
           className="input-field uppercase"
           placeholder={t('Ex : YES-AB12-CD34', 'e.g. YES-AB12-CD34')}
+          name="code_avantage"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           value={code}
           onChange={e => setCode(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && code.trim() && status !== 'saving') valider() }}

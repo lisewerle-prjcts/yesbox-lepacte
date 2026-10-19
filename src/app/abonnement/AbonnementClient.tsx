@@ -126,6 +126,14 @@ function CodeGratuitForm() {
           type="text"
           className="input-field uppercase"
           placeholder={t('Ton code', 'Your code')}
+          name="code_avantage"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           value={code}
           onChange={e => setCode(e.target.value)}
         />
