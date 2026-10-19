@@ -212,22 +212,28 @@ export async function connexion(formData: FormData) {
 
   await clearLoginAttempts(email)
 
-  // Filet de sécurité : si le lien de confirmation a été ouvert dans un autre
-  // navigateur (appli mail du téléphone…), /auth/callback échoue alors que
-  // l'adresse est bien confirmée, et l'e-mail de bienvenue n'était jamais envoyé.
-  const { data: { user: connecte } } = await supabase.auth.getUser()
-  // Langue choisie sur ce navigateur : les e-mails suivront.
-  const langueChoisie = await getLocaleExplicite()
-  if (connecte && langueChoisie) await enregistrerLangueProfil(createAdminClient(), connecte.id, langueChoisie)
-  // Nouveau navigateur (aucune langue choisie) : le site reprend la langue
-  // préférée du profil (Mon compte).
-  if (connecte && !langueChoisie) {
-    const langueProfil = await langueDuProfil(createAdminClient(), connecte.id)
-    if (langueProfil !== DEFAULT_LOCALE) {
-      ;(await cookies()).set(LOCALE_COOKIE, langueProfil, { path: '/', maxAge: 31536000, sameSite: 'lax' })
+  // Étapes annexes : un échec ici ne doit jamais faire échouer la connexion,
+  // la session étant déjà ouverte.
+  try {
+    // Filet de sécurité : si le lien de confirmation a été ouvert dans un autre
+    // navigateur (appli mail du téléphone…), /auth/callback échoue alors que
+    // l'adresse est bien confirmée, et l'e-mail de bienvenue n'était jamais envoyé.
+    const { data: { user: connecte } } = await supabase.auth.getUser()
+    // Langue choisie sur ce navigateur : les e-mails suivront.
+    const langueChoisie = await getLocaleExplicite()
+    if (connecte && langueChoisie) await enregistrerLangueProfil(createAdminClient(), connecte.id, langueChoisie)
+    // Nouveau navigateur (aucune langue choisie) : le site reprend la langue
+    // préférée du profil (Mon compte).
+    if (connecte && !langueChoisie) {
+      const langueProfil = await langueDuProfil(createAdminClient(), connecte.id)
+      if (langueProfil !== DEFAULT_LOCALE) {
+        ;(await cookies()).set(LOCALE_COOKIE, langueProfil, { path: '/', maxAge: 31536000, sameSite: 'lax' })
+      }
     }
+    if (connecte) await envoyerBienvenueSiEnAttente(connecte.id)
+  } catch (e) {
+    console.error(`[connexion] ${e instanceof Error ? e.message : String(e)}`)
   }
-  if (connecte) await envoyerBienvenueSiEnAttente(connecte.id)
 
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
   if (aal && aal.nextLevel === 'aal2' && aal.nextLevel !== aal.currentLevel) {
@@ -235,7 +241,11 @@ export async function connexion(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/tableau-de-bord')
+  // Pas de redirect() ici : la session vient d'être ouverte et la page
+  // suivante, rendue dans la même requête, pouvait échouer à la première
+  // connexion (« This page couldn't load »). Le navigateur charge la
+  // destination à neuf, comme après la double authentification.
+  return { destination: '/tableau-de-bord' }
 }
 
 export async function renvoyerConfirmation(email: string) {

@@ -43,12 +43,23 @@ export default function ConnexionPage() {
     setError(null)
     setEmailNotConfirmed(null)
     setResendState('idle')
-    const result = await connexion(formData)
+    let result: Awaited<ReturnType<typeof connexion>>
+    try {
+      result = await connexion(formData)
+    } catch {
+      // Réponse interrompue (réseau, déploiement en cours…) : si la session a
+      // bien été ouverte, le tableau de bord s'affiche ; sinon le site
+      // ramène ici.
+      window.location.assign('/tableau-de-bord')
+      return
+    }
     if (result?.error) {
       setError(result.error)
-      if (result.emailNotConfirmed && result.email) setEmailNotConfirmed(result.email)
-    } else if (result?.mfaRequired) {
+      if ('emailNotConfirmed' in result && result.emailNotConfirmed && result.email) setEmailNotConfirmed(result.email)
+    } else if (result && 'mfaRequired' in result && result.mfaRequired) {
       setMfaRequired(true)
+    } else if (result && 'destination' in result && result.destination) {
+      window.location.assign(result.destination)
     }
   }
 

@@ -86,13 +86,15 @@ export default async function TableauDeBordPage({
   const t = getT(locale)
   const inviteData = await getInviteLink()
   const effectiveModules = localizeModules(await getEffectiveModules(), locale)
-  const totalModuleCount = effectiveModules.length
-
-  const done = modules.filter(m => m.revealed).length
+  // Progression du parcours initial (modules 1 à 9) : le rendez-vous annuel
+  // (module 10) vient un an plus tard et n'en fait pas partie, et le module
+  // du pacte ne compte qu'une fois le pacte signé — 100 % à la signature.
+  const pacteSigne = !!signature?.pacte_signe_le
+  const totalModuleCount = effectiveModules.filter(m => m.slug !== MODULE_RDV_ANNUEL).length
+  const done = modules.filter(m => m.revealed && m.slug !== MODULE_RDV_ANNUEL && (m.slug !== MODULE_PACTE || pacteSigne)).length
   const pct = totalModuleCount ? Math.round((done / totalModuleCount) * 100) : 0
   // Le pacte se signe dès la fin du module 9 (le module 10 vient un an plus tard).
   const pacteASigner = modules.some(m => m.slug === MODULE_PACTE && m.revealed)
-  const pacteSigne = !!signature?.pacte_signe_le
   const rdvLe = pacteSigne ? signature?.rdv_annuel_le ?? null : null
   const rdvVerrouille = modules.find(m => m.slug === MODULE_RDV_ANNUEL)?.statut === 'locked'
 

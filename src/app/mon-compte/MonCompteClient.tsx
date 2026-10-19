@@ -298,6 +298,14 @@ function AjouterCodeCard() {
           type="text"
           className="input-field uppercase"
           placeholder={t('Ex : YES-AB12-CD34', 'e.g. YES-AB12-CD34')}
+          name="code_avantage"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           value={code}
           onChange={e => setCode(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && code.trim() && status !== 'saving') valider() }}
@@ -355,7 +363,7 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
           {boutonCopier('code')}
         </div>
         <p className="text-xs text-gray-400 mt-1">
-          {t('À saisir lors de l’inscription, ou plus tard dans Mon compte (« Ajouter un code »).', 'To enter when signing up, or later in My Account ("Add a code").')}
+          {t('À donner au couple que tu parraines, à saisir lors de l’inscription, ou plus tard dans leur compte (« Ajouter un code »).', 'To give to the couple you refer, to enter when signing up, or later in their account ("Add a code").')}
         </p>
       </div>
       <div className="mb-3 max-w-md">
