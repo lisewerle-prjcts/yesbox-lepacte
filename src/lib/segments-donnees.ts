@@ -6,16 +6,23 @@ import type { PersonneSegment } from '@/lib/segments'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
-// Dernière connexion de chaque compte (auth), par identifiant.
-export async function dernieresConnexions(admin: AdminClient): Promise<Record<string, string | null>> {
-  const resultat: Record<string, string | null> = {}
+// Dernière connexion et confirmation de l'e-mail de chaque compte (auth),
+// par identifiant.
+export async function infosAuth(admin: AdminClient): Promise<Record<string, { derniereConnexion: string | null; emailConfirme: boolean }>> {
+  const resultat: Record<string, { derniereConnexion: string | null; emailConfirme: boolean }> = {}
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
     if (error || !data?.users.length) break
-    for (const u of data.users) resultat[u.id] = u.last_sign_in_at ?? null
+    for (const u of data.users) resultat[u.id] = { derniereConnexion: u.last_sign_in_at ?? null, emailConfirme: !!u.email_confirmed_at }
     if (data.users.length < 1000) break
   }
   return resultat
+}
+
+// Dernière connexion de chaque compte (auth), par identifiant.
+export async function dernieresConnexions(admin: AdminClient): Promise<Record<string, string | null>> {
+  const infos = await infosAuth(admin)
+  return Object.fromEntries(Object.entries(infos).map(([id, i]) => [id, i.derniereConnexion]))
 }
 
 // Modules terminés de chaque couple, avec leur date de fin : un module est
@@ -60,17 +67,19 @@ export function programmeInitialTermine(slugs: string[], termines: Record<string
 // Toutes les personnes, comptes admin compris, avec ce qu'il faut pour les
 // filtrer par segment.
 export async function chargerPersonnesSegment(admin: AdminClient): Promise<PersonneSegment[]> {
-  const [{ data: profiles }, { data: couples }, modulesParCouple, { data: codes }, connexions, effectiveModules] = await Promise.all([
+  const [{ data: profiles }, { data: couples }, modulesParCouple, { data: codes }, auth, effectiveModules] = await Promise.all([
     admin.from('profiles').select('id, prenom, nom, email, couple_id, created_at, rappels_email'),
     admin.from('couples').select('id, numero, pacte_signe_le, subscription_status, subscription_cancel_at_period_end, subscription_canceled_at, compte_resilie_le'),
     modulesTerminesParCouple(admin),
     admin.from('codes_gratuits_utilisations').select('couple_id, codes_gratuits(code)'),
-    dernieresConnexions(admin),
+    infosAuth(admin),
     getEffectiveModules(),
   ])
   const slugs = effectiveModules.map(m => m.slug)
 
   const coupleParId = new Map((couples ?? []).map(c => [c.id, c]))
+  const membresParCouple = new Map<string, number>()
+  for (const p of profiles ?? []) if (p.couple_id) membresParCouple.set(p.couple_id, (membresParCouple.get(p.couple_id) ?? 0) + 1)
   const codeParCouple = new Map<string, string>()
   for (const u of codes ?? []) {
     const lie = u.codes_gratuits as { code?: string } | { code?: string }[] | null
@@ -95,7 +104,9 @@ export async function chargerPersonnesSegment(admin: AdminClient): Promise<Perso
       email: p.email,
       coupleNumero: couple?.numero ?? null,
       inscritLe: p.created_at,
-      derniereConnexion: connexions[p.id] ?? null,
+      derniereConnexion: auth[p.id]?.derniereConnexion ?? null,
+      emailConfirme: auth[p.id]?.emailConfirme ?? false,
+      paire: !!p.couple_id && (membresParCouple.get(p.couple_id) ?? 0) >= 2,
       code: p.couple_id ? codeParCouple.get(p.couple_id) ?? null : null,
       modulesTermines,
       pacteSigneLe: couple?.pacte_signe_le ?? null,

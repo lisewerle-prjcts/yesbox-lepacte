@@ -21,11 +21,11 @@ function dateFr(iso: string | null | undefined) {
 // avec BOM pour que les accents s'affichent correctement.
 function exporterCsv(personnes: PersonneSegment[], modules: ModuleInfo[]) {
   const entetes = [
-    'Prénom', 'Nom', 'E-mail', 'Couple', 'Inscrit·e le', 'Dernière connexion', 'Code',
+    'Prénom', 'Nom', 'E-mail', 'E-mail confirmé', 'Couple', 'Pairé·e', 'Inscrit·e le', 'Dernière connexion', 'Code',
     'Modules terminés', ...modules.map((_, i) => `Fin M${i + 1}`), 'Pacte signé le', 'Abonnement résilié', 'Résilié le', 'Programme initial fini',
   ]
   const lignes = personnes.map(p => [
-    p.prenom ?? '', p.nom ?? '', p.email, p.coupleNumero ?? '', dateFr(p.inscritLe), dateFr(p.derniereConnexion), p.code ?? '',
+    p.prenom ?? '', p.nom ?? '', p.email, p.emailConfirme ? 'oui' : 'non', p.coupleNumero ?? '', p.paire ? 'oui' : 'non', dateFr(p.inscritLe), dateFr(p.derniereConnexion), p.code ?? '',
     Object.keys(p.modulesTermines).length,
     ...modules.map(m => (m.slug in p.modulesTermines ? dateFr(p.modulesTermines[m.slug]) || 'oui' : '')),
     dateFr(p.pacteSigneLe), p.resilie ? 'oui' : 'non', dateFr(p.resilieLe), p.programmeTermine ? 'oui' : 'non',
@@ -87,6 +87,13 @@ function ListeCriteres({
               <select className="field" style={{ width: 200 }} value={c.valeur ?? ''} onChange={e => modifier(i, { ...c, valeur: e.target.value })}>
                 <option value="">Choisir…</option>
                 {modules.map(m => <option key={m.slug} value={m.slug}>{m.name}</option>)}
+              </select>
+            )}
+            {c.type === 'paire' && (
+              <select className="field" style={{ width: 110 }} value={c.valeur ?? ''} onChange={e => modifier(i, { ...c, valeur: e.target.value })}>
+                <option value="">Choisir…</option>
+                <option value="oui">Oui</option>
+                <option value="non">Non</option>
               </select>
             )}
             {c.type === 'inactif' && (
@@ -237,6 +244,8 @@ export default function SegmentClient({
                 <th className="py-1 pr-3">Personne</th>
                 <th className="py-1 pr-3">E-mail</th>
                 <th className="py-1 pr-3">Couple</th>
+                <th className="py-1 pr-3">Pairé·e</th>
+                <th className="py-1 pr-3">E-mail confirmé</th>
                 <th className="py-1 pr-3">Code</th>
                 <th className="py-1 pr-3">Modules terminés</th>
                 <th className="py-1 pr-3">Dernière connexion</th>
@@ -248,6 +257,8 @@ export default function SegmentClient({
                   <td className="py-1 pr-3">{[p.prenom, p.nom].filter(Boolean).join(' ') || '—'}</td>
                   <td className="py-1 pr-3 font-mono">{p.email}</td>
                   <td className="py-1 pr-3">{p.coupleNumero ?? '—'}</td>
+                  <td className="py-1 pr-3">{p.paire ? 'oui' : 'non'}</td>
+                  <td className="py-1 pr-3">{p.emailConfirme ? 'oui' : 'non'}</td>
                   <td className="py-1 pr-3 font-mono">{p.code ?? '—'}</td>
                   <td className="py-1 pr-3">{Object.keys(p.modulesTermines).length}/{modules.length}</td>
                   <td className="py-1 pr-3">{dateFr(p.derniereConnexion) || 'jamais'}</td>
