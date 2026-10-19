@@ -47,6 +47,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/messages', label: 'Messages & emails' },
     { href: '/admin/actions', label: 'Actions manuelles' },
     { href: '/admin/codes', label: 'Codes gratuits' },
+    { href: '/admin/cartes-cadeaux', label: 'Cartes cadeaux' },
     { href: '/admin/securite', label: 'Sécurité' },
     { href: '/admin/contenu', label: 'Contenu des modules' },
   ]

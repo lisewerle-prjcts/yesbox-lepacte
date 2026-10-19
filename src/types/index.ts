@@ -35,8 +35,11 @@ export interface Couple {
   subscription_formule?: 'mensuel' | 'annuel' | null
   /** Bascule programmée vers l'annuel : fin du mois déjà payé. */
   subscription_annuel_prevu_le?: string | null
+  /** Ancienne règle de conservation, plus utilisée (cf. effacement_prevu_le). */
   data_retention_until: string | null
   compte_resilie_le: string | null
+  /** Date d'effacement après 24 mois d'inactivité (cf. src/lib/conservation.ts). */
+  effacement_prevu_le?: string | null
   acces_gratuit_expire_le: string | null
   code_parrainage: string | null
   parrain_couple_id: string | null

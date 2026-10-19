@@ -28,7 +28,8 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | `/module/[slug]` | Parcours questions d'un module |
 | `/pacte` | Progression — suivi des 7 modules |
 | `/journal` | Notre Pacte — document partagé et signature |
-| `/mon-compte` | Infos personnelles, mot de passe |
+| `/mon-compte` | Infos personnelles, mot de passe, ajout d'un code |
+| `/offrir` | Offrir une carte cadeau (1, 2 ou 3 mois) |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |
 
 ## Les 7 modules
@@ -70,7 +71,11 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_ID_ABONNEMENT_MENSUEL=price_...
 # « Pacte – notre rendez-vous annuel » : prix récurrent annuel à 19 €
 STRIPE_PRICE_ID_ABONNEMENT_ANNUEL=price_...
-# Optionnel : sécurise la tâche planifiée de clôture des comptes après 13 mois
+# Cartes cadeaux (page /offrir) : prix Stripe à paiement unique
+STRIPE_PRICE_ID_CARTE_CADEAU_1_MOIS=price_...
+STRIPE_PRICE_ID_CARTE_CADEAU_2_MOIS=price_...
+STRIPE_PRICE_ID_CARTE_CADEAU_3_MOIS=price_...
+# Sécurise les tâches planifiées (effacement des comptes inactifs, rappels)
 CRON_SECRET=...
 ```
 
@@ -94,11 +99,44 @@ CRON_SECRET=...
   arrêter (ou reprendre) le renouvellement automatique ; l'accès reste actif
   jusqu'à la fin de la période déjà payée.
 - Après résiliation ou fin d'accès non renouvelée, seules les parties déjà
-  réalisées restent consultables ; les données sont conservées 13 mois puis
-  le compte est définitivement clos par la tâche planifiée
-  `GET /api/cron/purger-comptes-expires` (configurée dans `vercel.json`) :
-  l'abonnement ne peut plus être réactivé sur ce couple, il faut recommencer
-  avec un nouveau compte.
+  réalisées restent consultables.
+
+## Conservation des données : 24 mois d'inactivité
+
+Un compte est effacé (profil, réponses, conclusions, pacte, puis le couple)
+après 24 mois d'inactivité : aucune visite ni connexion d'un membre du
+couple, aucune réponse, plus d'accès payé ou offert en cours
+(`src/lib/conservation.ts`).
+
+- Le proxy note la dernière visite de chaque personne connectée
+  (`profiles.derniere_visite_le`, au plus toutes les 12 h) via la fonction
+  SQL `marquer_visite`, qui repousse aussi la date d'effacement du couple.
+- La tâche planifiée `GET /api/cron/purger-comptes-expires` (3 h UTC)
+  recalcule chaque nuit `couples.effacement_prevu_le` et efface les comptes
+  dont la date est passée. Une date n'est jamais fixée à moins de 61 jours
+  de son premier calcul.
+- E-mails d'avertissement 2 mois, 1 mois, 1 semaine et la veille (tâche
+  `rappels-email`), envoyés à chaque membre même si les rappels sont
+  désactivés ; une simple connexion repousse l'effacement de 24 mois.
+- Nécessite le bloc « CONSERVATION : EFFACEMENT APRÈS 24 MOIS
+  D'INACTIVITÉ » de `supabase/schema.sql`.
+
+## Cartes cadeaux (page /offrir)
+
+- Onglet « Offrir » (accueil et espace connecté) : 1, 2 ou 3 mois
+  d'abonnement, pour un autre couple ou pour son propre couple, payés via
+  Stripe Checkout (paiement unique, prix `STRIPE_PRICE_ID_CARTE_CADEAU_*`).
+- Après le paiement, un code `YES-XXXX-XXXX` est créé (webhook
+  `checkout.session.completed` ou page `/offrir/merci`, une seule fois),
+  envoyé par e-mail à la personne qui l'achète, avec la carte à imprimer
+  `/offrir/carte/YES-XXXX-XXXX` (bouton « Télécharger / imprimer », PDF A5
+  paysage via l'impression du navigateur).
+- Valable 1 an, pour un seul couple : à l'inscription (champ code), sur
+  `/abonnement` ou dans Mon compte > « Ajouter un code ». Le couple reçoit
+  les mois offerts (crédit Stripe s'il paie déjà, sinon accès gratuit
+  prolongé).
+- Admin > Cartes cadeaux : tous les codes, date d'achat, utilisation.
+- Nécessite le bloc « CARTES CADEAUX » de `supabase/schema.sql`.
 
 ## Chiffrement des contenus
 
@@ -140,10 +178,13 @@ Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.
 
 - **Codes testeurs** : `/admin/codes` permet de créer un code (durée en
   mois ou illimité, nombre d'utilisations). Le couple le saisit sur
-  `/abonnement` ou depuis la carte « Abonnement » de `/mon-compte` — aucune
-  carte bancaire n'est demandée. Un couple ne peut utiliser qu'un seul code.
+  `/abonnement` ou depuis la carte « Ajouter un code » de `/mon-compte` —
+  aucune carte bancaire n'est demandée. Un couple ne peut utiliser qu'un
+  seul code gratuit (les cartes cadeaux, elles, se cumulent).
 - **Parrainage** : chaque couple a un code et un lien à partager (carte
   « Parrainage » sur `/mon-compte`, aussi utilisable via `/inscription?parrain=CODE`).
   Au 5ᵉ couple parrainé qui s'inscrit (et à chaque palier de 5 suivant), le
   parrain reçoit automatiquement 1 mois offert : crédité sur sa prochaine
-  facture Stripe s'il paie déjà, sinon ajouté à son accès gratuit.
+  facture Stripe s'il paie déjà, sinon ajouté à son accès gratuit. Un
+  couple inscrit sans code peut saisir celui de son parrain après coup
+  (Mon compte > « Ajouter un code »).

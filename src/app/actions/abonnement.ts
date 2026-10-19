@@ -8,6 +8,8 @@ import { getStripe, PRIX_ABONNEMENT_MENSUEL_ID, PRIX_ABONNEMENT_ANNUEL_ID } from
 import { estAbonnementActif, estCompteResilie } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { programmerBasculeAnnuelle } from '@/lib/bascule-annuelle'
+import { normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
+import { enregistrerParrainage } from '@/lib/parrainage'
 
 async function getMonCoupleId() {
   const supabase = await createClient()
@@ -40,8 +42,8 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
 
   if (estCompteResilie(couple)) {
     return { error: t(locale,
-      "Ce compte a été clos 1 an après la fin de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
-      'This account was closed 1 year after the subscription ended: the subscription cannot be reactivated on this space. You need to start over with a new account.'
+      "Ce compte a été clos : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
+      'This account was closed: the subscription cannot be reactivated on this space. You need to start over with a new account.'
     ) }
   }
   if (estAbonnementActif(couple)) {
@@ -111,8 +113,8 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
   if (!signature?.pacte_signe_le) return { error: t(locale, 'Le rendez-vous annuel se propose une fois votre pacte signé.', 'The yearly date is available once your pact is signed.') }
   if (estCompteResilie(couple)) {
     return { error: t(locale,
-      "Ce compte a été clos 1 an après la fin de l'abonnement : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
-      'This account was closed 1 year after the subscription ended: the subscription cannot be reactivated on this space. You need to start over with a new account.'
+      "Ce compte a été clos : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
+      'This account was closed: the subscription cannot be reactivated on this space. You need to start over with a new account.'
     ) }
   }
 
@@ -232,7 +234,11 @@ export async function annulerAbonnement() {
   }
 }
 
-export async function utiliserCodeGratuit(code: string) {
+// Champ « Ajouter un code » (Mon compte, /abonnement) : accepte, à tout
+// moment, une carte cadeau (YES-XXXX-XXXX), un code de parrainage (si le
+// couple ne s'est pas inscrit avec) ou un code gratuit (Admin > Codes
+// gratuits). Renvoie un message de confirmation à afficher.
+export async function utiliserCode(code: string): Promise<{ error: string } | { success: true; message: string }> {
   const locale = await getLocale()
   const ctx = await getMonCoupleId()
   if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
@@ -241,11 +247,52 @@ export async function utiliserCodeGratuit(code: string) {
   if (!cleanCode) return { error: t(locale, 'Code requis', 'Code required') }
 
   const admin = createAdminClient()
-  const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', ctx.coupleId).single()
+  const { data: couple } = await admin.from('couples').select(`${ABONNEMENT_COLONNES}, code_parrainage, parrain_couple_id`).eq('id', ctx.coupleId).single()
+  if (!couple) return { error: t(locale, 'Couple introuvable', 'Couple not found') }
   if (estCompteResilie(couple)) {
     return { error: t(locale, "Ce compte a été résilié : impossible d'utiliser un code sur cet espace.", 'This account was closed: a code cannot be redeemed on this space.') }
   }
 
+  const rafraichir = () => {
+    revalidatePath('/mon-compte')
+    revalidatePath('/tableau-de-bord')
+    revalidatePath('/abonnement')
+  }
+
+  // 1. Carte cadeau
+  const codeCadeau = normaliserCodeCadeau(cleanCode)
+  if (codeCadeau) {
+    try {
+      const res = await utiliserCarteCadeau(admin, codeCadeau, ctx.coupleId)
+      if ('dureeMois' in res) {
+        rafraichir()
+        const mois = t(locale, `${res.dureeMois} mois`, `${res.dureeMois} month${res.dureeMois > 1 ? 's' : ''}`)
+        return {
+          success: true,
+          message: res.mode === 'credit_stripe'
+            ? t(locale, `Carte cadeau activée : ${mois} offert${res.dureeMois > 1 ? 's' : ''}, déduit${res.dureeMois > 1 ? 's' : ''} de vos prochains prélèvements.`, `Gift card activated: ${mois} free, deducted from your next payments.`)
+            : t(locale, `Carte cadeau activée : ${mois} d’accès complet offert${res.dureeMois > 1 ? 's' : ''}.`, `Gift card activated: ${mois} of full access for free.`),
+        }
+      }
+      if (res.erreur === 'deja_utilisee') return { error: t(locale, 'Cette carte cadeau a déjà été utilisée.', 'This gift card has already been used.') }
+      if (res.erreur === 'expiree') return { error: t(locale, 'Cette carte cadeau a expiré (valable 1 an après l’achat).', 'This gift card has expired (valid for 1 year after purchase).') }
+      // Code inconnu : on essaie encore les autres sortes de codes.
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  }
+
+  // 2. Code de parrainage (couple inscrit sans le code de son parrain)
+  const { data: parrain } = await admin.from('couples').select('id').eq('code_parrainage', cleanCode.toUpperCase()).maybeSingle()
+  if (parrain) {
+    if (parrain.id === ctx.coupleId) return { error: t(locale, 'C’est votre propre code de parrainage : partagez-le avec d’autres couples !', 'This is your own referral code: share it with other couples!') }
+    if (couple.parrain_couple_id) return { error: t(locale, 'Votre couple a déjà été parrainé.', 'Your couple already has a referrer.') }
+    if (!(await enregistrerParrainage(admin, cleanCode, ctx.coupleId))) return { error: t(locale, 'Code invalide', 'Invalid code') }
+    rafraichir()
+    return { success: true, message: t(locale, 'Code de parrainage enregistré : merci, le couple qui vous a parrainés se rapproche de son mois offert !', 'Referral code saved: thank you, the couple who referred you is one step closer to their free month!') }
+  }
+
+  // 3. Code gratuit (Admin > Codes gratuits)
   const { data, error } = await admin.rpc('utiliser_code_gratuit', { p_code: cleanCode, p_couple_id: ctx.coupleId })
   if (error) return { error: error.message }
 
@@ -259,10 +306,8 @@ export async function utiliserCodeGratuit(code: string) {
     return { error: t(locale, msg.fr, msg.en) }
   }
 
-  revalidatePath('/mon-compte')
-  revalidatePath('/tableau-de-bord')
-  revalidatePath('/abonnement')
-  return { success: true }
+  rafraichir()
+  return { success: true, message: t(locale, 'Code activé : votre accès gratuit est ouvert.', 'Code activated: your free access is open.') }
 }
 
 export async function reprendreAbonnement() {

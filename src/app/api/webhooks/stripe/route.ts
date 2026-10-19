@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
-import { getStripe, formuleDuPrix, RETENTION_MOIS } from '@/lib/stripe'
+import { getStripe, formuleDuPrix } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { ajouterMois } from '@/lib/dates'
+import { INACTIVITE_MOIS } from '@/lib/conservation'
+import { enregistrerCarteCadeau } from '@/lib/cartes-cadeaux'
 
 export const runtime = 'nodejs'
 
@@ -61,6 +63,12 @@ export async function POST(req: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
+      // Achat d'une carte cadeau (paiement unique, page /offrir) : le code
+      // est créé ici et envoyé par e-mail à la personne qui l'a achetée.
+      if (session.mode === 'payment' && session.metadata?.type === 'carte_cadeau') {
+        await enregistrerCarteCadeau(admin, session)
+        break
+      }
       if (session.mode !== 'subscription' || !session.subscription) break
       const coupleId = session.metadata?.couple_id
       if (!coupleId) break
@@ -75,7 +83,6 @@ export async function POST(req: Request) {
         subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
         subscription_cancel_at_period_end: false,
         subscription_canceled_at: null,
-        data_retention_until: null,
       }).eq('id', coupleId)
       await enregistrerFormule(admin, coupleId, subscription)
       break
@@ -105,14 +112,18 @@ export async function POST(req: Request) {
       const coupleId = await trouverCoupleId(admin, subscription)
       if (!coupleId) break
 
-      // L'accès payé se termine ici : les 12 mois de conservation des
-      // données démarrent maintenant (cf. RETENTION_MOIS et la tâche
-      // planifiée /api/cron/purger-comptes-expires).
       await admin.from('couples').update({
         subscription_status: 'expire',
         subscription_cancel_at_period_end: false,
-        data_retention_until: ajouterMois(new Date(), RETENTION_MOIS),
       }).eq('id', coupleId)
+      // L'accès payé se termine ici : les 24 mois avant effacement des
+      // données (sans nouvelle visite) partent au plus tôt de maintenant
+      // (cf. src/lib/conservation.ts, recalculé chaque nuit).
+      const effacementMin = ajouterMois(new Date(), INACTIVITE_MOIS)
+      const { data: actuel } = await admin.from('couples').select('effacement_prevu_le').eq('id', coupleId).maybeSingle()
+      if (!actuel?.effacement_prevu_le || new Date(actuel.effacement_prevu_le).getTime() < new Date(effacementMin).getTime()) {
+        await admin.from('couples').update({ effacement_prevu_le: effacementMin }).eq('id', coupleId)
+      }
       await admin.from('couples').update({ subscription_annuel_prevu_le: null }).eq('id', coupleId)
       break
     }

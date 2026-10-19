@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import EditableText from '@/components/edit-mode/EditableText'
 import { deconnexion } from '@/app/actions/auth'
-import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, ShieldCheck, UserCircle, Scale, Home } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, ScrollText, BookOpen, ShieldCheck, UserCircle, Scale, Home, Gift } from 'lucide-react'
 
 interface DashboardNavProps {
   profile: { prenom: string | null; email: string; couple_id: string | null; is_admin?: boolean | null } | null
@@ -25,6 +25,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
     { href: '/journal', key: 'journal', label: 'Notre Pacte', icon: <BookOpen className="w-4 h-4" /> },
     { href: '/mon-compte', key: 'moncompte', label: 'Mon compte', icon: <UserCircle className="w-4 h-4" /> },
     { href: '/regles-du-jeu', key: 'regles', label: 'Règles du jeu', icon: <Scale className="w-4 h-4" /> },
+    { href: '/offrir', key: 'offrir', label: 'Offrir', icon: <Gift className="w-4 h-4" /> },
     ...(profile?.is_admin ? [{ href: '/admin', key: 'admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
   ]
 
@@ -45,6 +46,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
               {l.key === 'journal' && <EditableText id="dashboard.nav.journal">Notre Pacte</EditableText>}
               {l.key === 'moncompte' && <EditableText id="dashboard.nav.moncompte">Mon compte</EditableText>}
               {l.key === 'regles' && <EditableText id="dashboard.nav.regles">Règles du jeu</EditableText>}
+              {l.key === 'offrir' && <EditableText id="dashboard.nav.offrir">Offrir</EditableText>}
               {l.key === 'admin' && <EditableText id="dashboard.nav.admin">Admin</EditableText>}
             </Link>
           ))}
@@ -79,6 +81,7 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
               {l.key === 'journal' && <EditableText id="dashboard.nav.journal">Notre Pacte</EditableText>}
               {l.key === 'moncompte' && <EditableText id="dashboard.nav.moncompte">Mon compte</EditableText>}
               {l.key === 'regles' && <EditableText id="dashboard.nav.regles">Règles du jeu</EditableText>}
+              {l.key === 'offrir' && <EditableText id="dashboard.nav.offrir">Offrir</EditableText>}
               {l.key === 'admin' && <EditableText id="dashboard.nav.admin">Admin</EditableText>}
             </Link>
           ))}

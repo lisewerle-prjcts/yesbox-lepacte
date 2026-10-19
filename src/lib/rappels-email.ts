@@ -23,8 +23,9 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //      proposition de passer de l'abonnement mensuel à l'abonnement annuel
 //      (« Pacte – notre rendez-vous annuel », bascule Stripe programmée
 //      depuis la page Notre Pacte) ;
-//   4. avant l'effacement des données (1 an après la fin de l'accès payé),
-//      un avertissement 2 mois, 1 mois, 1 semaine et la veille.
+//   4. avant l'effacement des données (après 24 mois d'inactivité, cf.
+//      src/lib/conservation.ts), un avertissement 2 mois, 1 mois,
+//      1 semaine et la veille.
 // Uniquement pour les couples dont l'accès est en cours (les relances après
 // résiliation viendront plus tard). Chaque membre peut refuser ces rappels
 // (profiles.rappels_email) : lien en bas de chaque e-mail ou Mon compte.
@@ -619,7 +620,7 @@ export function rappelsConfigures() {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Avertissements avant l'effacement des données (fin de l'accès payé + 1 an)
+// 4. Avertissements avant l'effacement des données (24 mois d'inactivité)
 // ---------------------------------------------------------------------------
 
 // Jours avant l'effacement : 2 mois, 1 mois, 1 semaine, la veille.
@@ -635,12 +636,12 @@ function contenuAvertissementEffacement(effacementLe: string, jours: number, loc
       ? t(locale, 'Vos données YES BOX seront effacées demain', 'Your YES BOX data will be deleted tomorrow')
       : t(locale, `Vos données YES BOX seront effacées le ${date}`, `Your YES BOX data will be deleted on ${date}`),
     corps: p(t(locale,
-      `Votre abonnement YES BOX a pris fin il y a bientôt un an. Sans action de votre part, vos données (réponses, conclusions et pacte) seront effacées ${quand}.`,
-      `Your YES BOX subscription ended almost a year ago. Unless you take action, your data (answers, conclusions and pact) will be deleted ${quand}.`))
+      `Votre espace YES BOX n’a pas été utilisé depuis longtemps : nous effaçons les comptes après 24 mois d’inactivité. Sans connexion de votre part, vos comptes et vos données (réponses, conclusions et pacte) seront effacés ${quand}.`,
+      `Your YES BOX space hasn’t been used for a long time: we delete accounts after 24 months of inactivity. Unless you log in, your accounts and your data (answers, conclusions and pact) will be deleted ${quand}.`))
       + p(t(locale,
-        'Vous pouvez vous rendre sur le site YES BOX et télécharger vos données complètes dans la rubrique Mon compte.',
-        'You can go to the YES BOX website and download all your data from the My Account section.'))
-      + bouton(`${appUrl()}/mon-compte`, t(locale, 'Télécharger nos données', 'Download our data')),
+        'Pour les garder, il vous suffit de vous connecter au site : le délai repart alors pour 24 mois. Vous pouvez aussi télécharger vos données complètes dans la rubrique Mon compte.',
+        'To keep them, simply log in to the website: the period then starts again for 24 months. You can also download all your data from the My Account section.'))
+      + bouton(`${appUrl()}/mon-compte`, t(locale, 'Me connecter', 'Log in')),
   }
 }
 
@@ -663,25 +664,24 @@ export async function envoyerAvertissementsEffacement(admin: AdminClient): Promi
   const limite = new Date(aujourdhui + (AVERTISSEMENTS_EFFACEMENT_JOURS[0] + 1) * JOUR).toISOString()
   const { data: couples, error } = await admin
     .from('couples')
-    .select('id, data_retention_until')
-    .is('compte_resilie_le', null)
-    .not('data_retention_until', 'is', null)
-    .gt('data_retention_until', maintenant.toISOString())
-    .lt('data_retention_until', limite)
+    .select('id, effacement_prevu_le')
+    .not('effacement_prevu_le', 'is', null)
+    .gt('effacement_prevu_le', maintenant.toISOString())
+    .lt('effacement_prevu_le', limite)
   if (error) throw new Error(error.message)
 
   let envoyes = 0
   for (const couple of couples ?? []) {
     try {
-      const effacementLe = couple.data_retention_until as string
+      const effacementLe = couple.effacement_prevu_le as string
       const joursAvant = Math.ceil((new Date(effacementLe).getTime() - aujourdhui) / JOUR)
       // Palier le plus proche atteint (un palier manqué n'est pas rattrapé
       // en plus du suivant).
       const palier = [...AVERTISSEMENTS_EFFACEMENT_JOURS].reverse().find(j => joursAvant <= j)
       if (!palier) continue
 
-      // Un seul envoi par palier et par date d'effacement (si l'abonnement
-      // est repris puis arrêté à nouveau, la date change et tout repart).
+      // Un seul envoi par palier et par date d'effacement (après une visite,
+      // la date est repoussée et tout repart).
       const { data: reserve, error: reserveError } = await admin
         .from('rappels_envoyes')
         .upsert({ couple_id: couple.id, type: 'effacement_donnees', cle: `${effacementLe.slice(0, 10)}:${palier}` }, { onConflict: 'couple_id,type,cle', ignoreDuplicates: true })

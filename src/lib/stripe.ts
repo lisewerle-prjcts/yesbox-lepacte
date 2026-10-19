@@ -25,7 +25,3 @@ export function formuleDuPrix(priceId: string | null | undefined): FormuleAbonne
   if (priceId === PRIX_ABONNEMENT_MENSUEL_ID) return 'mensuel'
   return null
 }
-
-// Durée de conservation des données après la fin de l'accès payé (résiliation
-// ou échéance non renouvelée), avant clôture définitive du compte.
-export const RETENTION_MOIS = 12

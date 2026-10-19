@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useT } from '@/components/i18n/LocaleContext'
-import { demarrerAbonnement, utiliserCodeGratuit } from '@/app/actions/abonnement'
+import { demarrerAbonnement, utiliserCode } from '@/app/actions/abonnement'
 import CaseRetractation from '@/components/CaseRetractation'
 
 const FEATURES = [
@@ -55,8 +55,8 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
-              "Ce compte a été clos 1 an après la fin de l'abonnement : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
-              'This account was closed 1 year after the subscription ended: it can no longer be reactivated here — you need to start over with a new account.'
+              "Ce compte a été clos : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
+              'This account was closed: it can no longer be reactivated here — you need to start over with a new account.'
             )}
           </p>
         </div>
@@ -102,22 +102,25 @@ function CodeGratuitForm() {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
 
   async function valider() {
     setError(null)
+    setMessage(null)
     setLoading(true)
-    const res = await utiliserCodeGratuit(code)
-    if (res.error) {
+    const res = await utiliserCode(code)
+    if ('error' in res) {
       setError(res.error)
       setLoading(false)
       return
     }
-    router.push('/tableau-de-bord')
+    setMessage(res.message)
+    setTimeout(() => router.push('/tableau-de-bord'), 2000)
   }
 
   return (
     <div className="card p-5 mt-5 text-center">
-      <p className="text-sm text-gray-600 mb-3">{t('Tu as un code de réduction ?', 'Do you have a discount code?')}</p>
+      <p className="text-sm text-gray-600 mb-3">{t('Tu as un code (carte cadeau, parrainage, code gratuit) ?', 'Do you have a code (gift card, referral, free code)?')}</p>
       <div className="flex items-center gap-2 justify-center max-w-xs mx-auto">
         <input
           type="text"
@@ -131,6 +134,7 @@ function CodeGratuitForm() {
         </button>
       </div>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      {message && <p className="text-sm text-green-700 mt-2">{message}</p>}
     </div>
   )
 }

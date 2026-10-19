@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const COOKIE_VISITE = 'yb_visite'
+
 export async function updateSession(request: NextRequest) {
   // Si les variables Supabase manquent, laisse passer sans authentification
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -49,7 +51,7 @@ export async function updateSession(request: NextRequest) {
   // Routes publiques accessibles sans authentification
   const publicRoutes = [
     '/', '/connexion', '/inscription', '/rejoindre',
-    '/tarifs', '/mentions-legales', '/cgv', '/confidentialite', '/mot-de-passe-oublie', '/auth', '/desinscription', '/charte-beta',
+    '/tarifs', '/offrir', '/mentions-legales', '/cgv', '/confidentialite', '/mot-de-passe-oublie', '/auth', '/desinscription', '/charte-beta',
   ]
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
@@ -71,6 +73,17 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/tableau-de-bord'
     return NextResponse.redirect(url)
+  }
+
+  // Visite d'une personne connectée : repousse l'effacement des données
+  // après 24 mois d'inactivité (cf. src/lib/conservation.ts). Au plus une
+  // fois toutes les 12 heures grâce à un cookie, pour ne pas écrire en base
+  // à chaque page.
+  if (user && !request.cookies.get(COOKIE_VISITE)) {
+    const { error } = await supabase.rpc('marquer_visite')
+    if (!error) {
+      supabaseResponse.cookies.set(COOKIE_VISITE, '1', { maxAge: 12 * 60 * 60, httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' })
+    }
   }
 
   // Ne pas interférer avec les routes admin — le layout admin gère lui-même la vérification is_admin

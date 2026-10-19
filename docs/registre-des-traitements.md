@@ -40,7 +40,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Données sensibles | Non (voir fiche 2) |
 | Destinataires | Le ou la partenaire du couple (réponses des modules révélés, journal, pacte) ; l'administration du site (compte et progression, sans le contenu des réponses) ; sous-traitants Vercel et Supabase |
 | Transferts hors UE | Base de données dans l'UE (Irlande). Hébergement du site : États-Unis (Vercel, voir tableau) |
-| Durée de conservation | Tant que le compte est utilisé. Compte jamais payé : suppression après 18 mois sans connexion. Après la fin d'un accès payé : clôture et effacement des réponses après 18 mois. Suppression immédiate sur demande (bouton « Supprimer mon compte ») |
+| Durée de conservation | Tant que le compte est utilisé. Après 24 mois d'inactivité (aucune visite ni connexion d'un membre du couple, aucune réponse, plus d'accès payé ou offert en cours) : suppression des comptes et effacement de toutes les données, avec e-mail d'avertissement 2 mois, 1 mois, 1 semaine et la veille (date de dernière visite : `profiles.derniere_visite_le` ; date d'effacement : `couples.effacement_prevu_le`, tâche planifiée quotidienne). Suppression immédiate sur demande (bouton « Supprimer mon compte ») |
 | Mesures de sécurité | HTTPS, mots de passe chiffrés, isolement de chaque couple par des règles d'accès en base (Row Level Security), droits en écriture limités aux champs modifiables, limitation des tentatives de connexion, double authentification disponible pour l'administration, purge automatique quotidienne |
 
 ## Fiche 2 — Réponses aux modules (données sensibles)
@@ -100,6 +100,20 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Durée de conservation | Effacement à la connexion réussie ; blocage de 15 minutes |
 | Mesures de sécurité | Table accessible uniquement côté serveur |
 
+## Fiche 7 — Cartes cadeaux
+
+| | |
+|---|---|
+| Date de création de la fiche | octobre 2026 |
+| Finalité | Vendre des cartes cadeaux (1, 2 ou 3 mois d'abonnement) sur la page /offrir, envoyer le code à la personne qui achète, permettre au couple de l'activer |
+| Base légale | Exécution du contrat (art. 6.1.b) ; obligation légale de conservation comptable (art. 6.1.c) |
+| Personnes concernées | Personnes qui achètent une carte (avec ou sans compte) ; couples qui l'utilisent |
+| Données | E-mail de la personne qui achète, prénoms facultatifs imprimés sur la carte (« Pour vous deux », « De la part de »), durée, montant, date d'achat, code, date d'utilisation et couple bénéficiaire |
+| Destinataires | Administration du site (Admin > Cartes cadeaux) ; sous-traitants Stripe (paiement), Supabase, Resend/Google (e-mail du code) |
+| Transferts hors UE | Voir tableau des sous-traitants |
+| Durée de conservation | 24 mois après la fin de validité de la carte (3 ans après l'achat), effacement automatique. Factures : 10 ans (Stripe) |
+| Mesures de sécurité | Table accessible uniquement côté serveur (RLS sans politique) ; code aléatoire de 8 caractères, utilisable une seule fois |
+
 ## Fiche 6 — Pré-commandes (traitement terminé)
 
 | | |
@@ -111,7 +125,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Données | Prénom, e-mail, prénom du ou de la partenaire, ville, message |
 | Destinataires | Administration du site ; Supabase |
 | Transferts hors UE | Non (Supabase, Irlande) |
-| Durée de conservation | 18 mois après l'envoi, effacement automatique |
+| Durée de conservation | 12 mois après l'envoi, effacement automatique |
 | Mesures de sécurité | Table accessible uniquement par l'administration |
 
 ---
