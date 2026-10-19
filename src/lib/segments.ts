@@ -13,6 +13,10 @@ export interface PersonneSegment {
   inscritLe: string | null
   /** Dernière connexion (auth), null si jamais connecté·e. */
   derniereConnexion: string | null
+  /** Adresse e-mail confirmée (auth). */
+  emailConfirme: boolean
+  /** Le couple a ses deux partenaires. */
+  paire: boolean
   /** Code gratuit utilisé par le couple à l'inscription. */
   code: string | null
   /** Date de fin (révélation) de chaque module terminé, par slug. */
@@ -26,11 +30,13 @@ export interface PersonneSegment {
   rappelsEmail: boolean
 }
 
-export type TypeCritere = 'code' | 'module_termine' | 'inactif' | 'pacte_signe' | 'resilie' | 'programme_termine'
+export type TypeCritere =
+  | 'code' | 'module_termine' | 'inactif' | 'paire' | 'email_non_confirme' | 'email_confirme'
+  | 'pacte_signe' | 'resilie' | 'programme_termine'
 
 export interface Critere {
   type: TypeCritere
-  /** Code (code), slug du module (module_termine), nombre de jours (inactif). */
+  /** Code (code), slug du module (module_termine), nombre de jours (inactif), 'oui' ou 'non' (paire). */
   valeur?: string
 }
 
@@ -45,6 +51,9 @@ export const LIBELLES_CRITERES: Record<TypeCritere, string> = {
   code: 'Inscrit·e avec le code…',
   module_termine: 'A terminé le module…',
   inactif: 'Pas connecté·e depuis… jours',
+  paire: 'Pairé·e (les deux partenaires inscrit·es)…',
+  email_non_confirme: 'E-mail non confirmé',
+  email_confirme: 'E-mail confirmé',
   pacte_signe: 'A signé le pacte',
   resilie: 'A résilié l\'abonnement',
   programme_termine: 'A fini le programme initial (M1 à M9 + pacte signé)',
@@ -65,6 +74,12 @@ function remplit(p: PersonneSegment, c: Critere, maintenant: number): boolean {
       if (!reference) return true
       return maintenant - new Date(reference).getTime() >= jours * JOUR
     }
+    case 'paire':
+      return c.valeur === 'oui' ? p.paire : c.valeur === 'non' ? !p.paire : false
+    case 'email_non_confirme':
+      return !p.emailConfirme
+    case 'email_confirme':
+      return p.emailConfirme
     case 'pacte_signe':
       return !!p.pacteSigneLe
     case 'resilie':
@@ -78,7 +93,7 @@ function remplit(p: PersonneSegment, c: Critere, maintenant: number): boolean {
 // choisi, nombre de jours vide) est ignoré, pour ne pas vider le segment
 // pendant la saisie.
 export function critereComplet(c: Critere): boolean {
-  if (c.type === 'code' || c.type === 'module_termine') return !!c.valeur?.trim()
+  if (c.type === 'code' || c.type === 'module_termine' || c.type === 'paire') return !!c.valeur?.trim()
   if (c.type === 'inactif') return c.valeur !== undefined && c.valeur !== '' && Number.isFinite(Number(c.valeur))
   return true
 }
