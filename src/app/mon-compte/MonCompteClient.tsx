@@ -316,10 +316,6 @@ function AjouterCodeCard() {
       </div>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
       {message && <p className="text-sm text-green-700 mt-2 flex items-center gap-1.5"><Check className="w-4 h-4" /> {message}</p>}
-      <p className="text-xs text-gray-400 mt-4">
-        {t('Envie de faire plaisir à un autre couple ?', 'Want to treat another couple?')}{' '}
-        <Link href="/offrir" className="text-magenta font-semibold">{t('Offrir YES BOX', 'Give YES BOX as a gift')}</Link>
-      </p>
     </div>
   )
 }

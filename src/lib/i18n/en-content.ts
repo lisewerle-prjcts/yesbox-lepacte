@@ -234,7 +234,11 @@ export const EN_CONTENT: Record<string, string> = {
   'dashboard.nav.moncompte': 'My Account',
   'dashboard.nav.regles': 'Game Rules',
   'dashboard.nav.admin': 'Admin',
-  'dashboard.nav.offrir': 'Give as a gift',
+  'dashboard.nav.rdvannuels': 'Our yearly dates',
+  // src/app/rdv-annuels/page.tsx
+  'rdvannuels.titre': 'Our yearly dates',
+  'rdvannuels.soustitre': 'Every month, a question to keep your pact alive, and every year, your couple review.',
+  'rdvannuels.attente': 'This page will open once your pact is signed: every month, you’ll note your answers to the question of the month here, and every year, you’ll do your couple review here on your yearly date.',
   'dashboard.nav.deconnexion': 'Log out',
   'dashboard.nav.sedeconnecter': 'Log out',
 

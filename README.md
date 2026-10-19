@@ -28,6 +28,7 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | `/module/[slug]` | Parcours questions d'un module |
 | `/pacte` | Progression — suivi des 7 modules |
 | `/journal` | Notre Pacte — document partagé et signature |
+| `/rdv-annuels` | Nos rdv annuels — réponses aux questions du mois et bilan annuel (module 10) |
 | `/mon-compte` | Infos personnelles, mot de passe, ajout d'un code |
 | `/offrir` | Offrir une carte cadeau (1, 2 ou 3 mois) |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { questionDuMois } from '@/lib/rappels-email'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
@@ -208,6 +209,23 @@ export async function telechargerMesDonnees() {
       lines.push('='.repeat(60))
       lines.push(couple.pacte_texte.trim())
       lines.push('')
+    }
+
+    // Réponses aux questions du mois (page Nos rendez-vous annuels).
+    const { data: reponsesMoisBrutes } = await supabase.from('rdv_reponses_mois').select('user_id, mois, valeur').eq('couple_id', moi.couple_id).order('mois')
+    const reponsesMois = dechiffrerLignes(reponsesMoisBrutes).filter(r => r.valeur?.trim())
+    if (reponsesMois.length) {
+      lines.push('='.repeat(60))
+      lines.push(t(locale, 'Nos rendez-vous annuels — questions du mois', 'Our yearly dates — monthly questions'))
+      lines.push('='.repeat(60))
+      for (const mois of [...new Set(reponsesMois.map(r => r.mois))]) {
+        lines.push(`- ${questionDuMois(mois, locale).question} (${t(locale, 'mois', 'month')} ${mois})`)
+        for (const membre of membresList) {
+          const r = reponsesMois.find(r => r.mois === mois && r.user_id === membre.id)
+          if (r) lines.push(`  ${nomDe(membre)} : ${r.valeur}`)
+        }
+        lines.push('')
+      }
     }
 
     // Requête à part : si les colonnes de signature manquent en base,
