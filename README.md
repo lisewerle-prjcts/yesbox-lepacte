@@ -185,7 +185,9 @@ Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.
 - **Parrainage** : chaque couple a un code et un lien à partager (carte
   « Parrainage » sur `/mon-compte`, aussi utilisable via `/inscription?parrain=CODE`).
   Au 5ᵉ couple parrainé qui s'inscrit (et à chaque palier de 5 suivant), le
-  parrain reçoit automatiquement 1 mois offert : crédité sur sa prochaine
-  facture Stripe s'il paie déjà, sinon ajouté à son accès gratuit. Un
+  parrain reçoit automatiquement 1 mois offert, ou 1 an s'il a signé son
+  pacte : crédité sur sa prochaine facture Stripe s'il paie déjà (1 mois de
+  mensuel, ou 1 an de « Pacte – notre rendez-vous annuel »), sinon ajouté à
+  son accès gratuit. Un
   couple inscrit sans code peut saisir celui de son parrain après coup
   (Mon compte > « Ajouter un code »).
