@@ -341,7 +341,7 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
         <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Parrainage', 'Referrals')}</h2>
       </div>
       <p className="text-sm text-gray-600 mb-3">
-        {t('Chaque 5 couples parrainés qui s’inscrivent, vous recevez 1 mois offert.', 'For every 5 referred couples who sign up, you get 1 month free.')}
+        {t('Chaque 5 couples parrainés qui s’inscrivent, vous recevez 1 mois offert, ou un an offert si vous avez signé votre pacte et terminé le programme initial.', 'For every 5 referred couples who sign up, you get 1 month free, or a year free if you have signed your pact and completed the initial program.')}
       </p>
       <div className="mb-3 max-w-md">
         <label className="label">{t('Ton code parrain', 'Your referral code')}</label>
@@ -365,7 +365,7 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
           ? t('Aucun couple parrainé pour le moment.', 'No referred couples yet.')
           : prochainSeuil === 0
           ? t(`${filleulsCount} couple(s) parrainé(s) — bravo !`, `${filleulsCount} referred couple(s) — nice!`)
-          : t(`${filleulsCount} couple(s) parrainé(s) · encore ${prochainSeuil} avant ton prochain mois offert`, `${filleulsCount} referred couple(s) · ${prochainSeuil} more until your next free month`)}
+          : t(`${filleulsCount} couple(s) parrainé(s) · encore ${prochainSeuil} avant ta prochaine récompense`, `${filleulsCount} referred couple(s) · ${prochainSeuil} more until your next reward`)}
       </p>
     </div>
   )

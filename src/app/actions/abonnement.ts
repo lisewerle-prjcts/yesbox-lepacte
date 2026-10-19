@@ -289,7 +289,7 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
     if (couple.parrain_couple_id) return { error: t(locale, 'Votre couple a déjà été parrainé.', 'Your couple already has a referrer.') }
     if (!(await enregistrerParrainage(admin, cleanCode, ctx.coupleId))) return { error: t(locale, 'Code invalide', 'Invalid code') }
     rafraichir()
-    return { success: true, message: t(locale, 'Code de parrainage enregistré : merci, le couple qui vous a parrainés se rapproche de son mois offert !', 'Referral code saved: thank you, the couple who referred you is one step closer to their free month!') }
+    return { success: true, message: t(locale, 'Code de parrainage enregistré : merci, le couple qui vous a parrainés se rapproche de sa récompense !', 'Referral code saved: thank you, the couple who referred you is one step closer to their reward!') }
   }
 
   // 3. Code gratuit (Admin > Codes gratuits)
