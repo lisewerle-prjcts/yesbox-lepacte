@@ -6,6 +6,7 @@ import { Check, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useT } from '@/components/i18n/LocaleContext'
 import { demarrerAbonnement, utiliserCode } from '@/app/actions/abonnement'
 import CaseRetractation from '@/components/CaseRetractation'
+import ChampCode from '@/components/ChampCode'
 
 const FEATURES = [
   "L'ensemble des modules du parcours initial (hors rendez-vous annuels)",
@@ -122,20 +123,11 @@ function CodeGratuitForm() {
     <div className="card p-5 mt-5 text-center">
       <p className="text-sm text-gray-600 mb-3">{t('Tu as un code (carte cadeau, parrainage, code gratuit) ?', 'Do you have a code (gift card, referral, free code)?')}</p>
       <div className="flex items-center gap-2 justify-center max-w-xs mx-auto">
-        <input
-          type="text"
-          className="input-field uppercase"
+        <ChampCode
           placeholder={t('Ton code', 'Your code')}
-          name="code_avantage"
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          data-1p-ignore
-          data-lpignore="true"
-          data-form-type="other"
           value={code}
-          onChange={e => setCode(e.target.value)}
+          onChange={setCode}
+          onEntree={() => { if (code.trim() && !loading) valider() }}
         />
         <button onClick={valider} disabled={loading || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
           {loading ? '…' : t('Valider', 'Apply')}

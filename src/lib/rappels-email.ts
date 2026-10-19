@@ -430,7 +430,39 @@ const THEMES_EN: ThemeMensuel[] = [
 ]
 
 // Nombre de mois entiers écoulés depuis la signature (même jour du mois).
-function moisDepuis(debut: Date, maintenant: Date) {
+// La question de chaque thème, dans le même ordre que THEMES : affichée sur
+// la page Nos rendez-vous annuels (/rdv-annuels), où chaque membre du couple
+// note sa réponse.
+const QUESTIONS_MOIS: [fr: string, en: string][] = [
+  ['Quel engagement de notre pacte avons-nous le mieux tenu ce mois-ci ?', 'Which commitment in our pact did we keep best this month?'],
+  ['Quelle chose précise ai-je appréciée chez l’autre ce mois-ci ?', 'What specific thing did I appreciate about the other this month?'],
+  ['Lequel de nos 3 principes avons-nous le plus vécu ? Lequel aimerions-nous soigner davantage ?', 'Which of our 3 principles did we live most? Which one would we like to nurture more?'],
+  ['Notre soirée sans écran : qu’avons-nous fait, et qu’en retenons-nous ?', 'Our screen-free evening: what did we do, and what do we take from it?'],
+  ['Quel désaccord « négociable » avons-nous repris, et qu’avons-nous compris de l’autre ?', 'Which "negotiable" disagreement did we revisit, and what did we understand about each other?'],
+  ['Y a-t-il un engagement de notre pacte à ajuster, à préciser ou à ajouter ?', 'Is there a commitment in our pact to adjust, clarify or add?'],
+  ['Comment avons-nous fait vivre notre geste de rapprochement ?', 'How did we keep our closeness gesture alive?'],
+  ['Qu’est-ce qui va mieux entre nous ? Que voulons-nous garder précieusement ?', 'What is going better between us? What do we want to treasure?'],
+  ['Quel projet commun avons-nous fait avancer, et de quel pas ?', 'Which shared project did we move forward, and by what step?'],
+  ['De quoi ai-je besoin en ce moment ? Qu’est-ce que l’autre pourrait faire pour m’aider ?', 'What do I need right now? What could the other do to help me?'],
+  ['Qu’ai-je écrit à l’autre, et qu’est-ce que ce mot a changé ?', 'What did I write to the other, and what did that note change?'],
+]
+
+// Thème du mois : dans l'ordre à partir du 1er mois après la signature, puis
+// on reboucle (à partir du 2e).
+function indexTheme(mois: number) {
+  const n = THEMES.length
+  return mois <= n ? mois - 1 : 1 + ((mois - 2) % (n - 1))
+}
+
+export function questionDuMois(mois: number, locale: Locale): { titre: string; question: string } {
+  const i = indexTheme(mois)
+  return {
+    titre: (locale === 'en' ? THEMES_EN : THEMES)[i].subject,
+    question: QUESTIONS_MOIS[i][locale === 'en' ? 1 : 0],
+  }
+}
+
+export function moisDepuis(debut: Date, maintenant: Date) {
   let mois = (maintenant.getUTCFullYear() - debut.getUTCFullYear()) * 12 + (maintenant.getUTCMonth() - debut.getUTCMonth())
   if (maintenant.getUTCDate() < debut.getUTCDate()) mois--
   return mois
@@ -453,14 +485,17 @@ function contenuMensuel(mois: number, autreBrut: string, rdvLe: string | null, j
         + bouton(`${base}/journal`, t(locale, 'Voir notre pacte', 'See our pact')),
     }
   }
-  const themes = locale === 'en' ? THEMES_EN : THEMES
-  const theme = themes[mois <= themes.length ? mois - 1 : 1 + ((mois - 2) % (themes.length - 1))]
+  const theme = (locale === 'en' ? THEMES_EN : THEMES)[indexTheme(mois)]
   const rappelRdv = rdvLe && joursAvantRdv !== null && joursAvantRdv > 0
     ? p(`<span style="font-size:13px;color:#8a8580;">${t(locale, `Prochain rendez-vous annuel : le ${formaterDate(rdvLe, locale)}.`, `Next yearly date: ${formaterDate(rdvLe, locale)}.`)}</span>`)
     : ''
   return {
     subject: theme.subject,
-    corps: theme.paragraphes(autre).map(p).join('') + bouton(`${base}/journal`, t(locale, 'Relire notre pacte', 'Reread our pact')) + rappelRdv,
+    corps: theme.paragraphes(autre).map(p).join('')
+      + p(t(locale, 'Notez vos réponses dans « Nos rendez-vous annuels » : vous les retrouverez pour votre bilan annuel.', 'Note your answers in "Our yearly dates": you’ll find them again for your yearly review.'))
+      + bouton(`${base}/rdv-annuels`, t(locale, 'Noter nos réponses', 'Note our answers'))
+      + p(`<a href="${base}/journal" style="color:#c5256e;">${t(locale, 'Relire notre pacte', 'Reread our pact')}</a>`)
+      + rappelRdv,
   }
 }
 

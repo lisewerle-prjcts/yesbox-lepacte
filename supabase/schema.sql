@@ -1484,3 +1484,28 @@ create table if not exists public.cartes_cadeaux (
 );
 alter table public.cartes_cadeaux enable row level security;
 create index if not exists cartes_cadeaux_achete_le_idx on public.cartes_cadeaux (achete_le desc);
+
+-- ============================================================
+-- NOS RENDEZ-VOUS ANNUELS : RÉPONSES AUX QUESTIONS DU MOIS
+-- Une fois le pacte signé, chaque mois, une question (celle de l'e-mail
+-- mensuel, cf. src/lib/rappels-email.ts). Chaque membre du couple note sa
+-- réponse sur la page /rdv-annuels ; les deux réponses sont visibles par
+-- le couple. mois = nombre de mois écoulés depuis la signature (1, 2, …).
+-- Texte chiffré par le serveur (enc:v1:…), écrit uniquement par le serveur
+-- (clé service) ; lecture réservée aux deux membres du couple.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.rdv_reponses_mois (
+  id uuid primary key default uuid_generate_v4(),
+  couple_id uuid not null references public.couples(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  mois integer not null check (mois >= 1),
+  valeur text,
+  updated_at timestamptz not null default now(),
+  unique (couple_id, user_id, mois)
+);
+alter table public.rdv_reponses_mois enable row level security;
+drop policy if exists "rdv_reponses_mois_select" on public.rdv_reponses_mois;
+create policy "rdv_reponses_mois_select" on public.rdv_reponses_mois for select using (
+  couple_id in (select couple_id from public.profiles where id = auth.uid())
+);
