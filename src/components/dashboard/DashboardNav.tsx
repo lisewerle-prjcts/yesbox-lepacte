@@ -32,14 +32,13 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
   return (
     <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(251,248,243,.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--line)' }}>
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <YesBoxLogo size="sm" href="/tableau-de-bord" />
+        <div style={{ flexShrink: 0 }}><YesBoxLogo size="sm" href="/tableau-de-bord" /></div>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden xl:flex items-center gap-0.5">
           {links.map(l => (
             <Link key={l.href} href={l.href}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
-              style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
-              {l.icon}
+              className="flex items-center px-2 py-2 rounded-lg font-medium transition-all whitespace-nowrap"
+              style={{ fontSize: 13.5, color: pathname === l.href ? 'var(--brand)' : 'var(--muted)', background: pathname === l.href ? 'var(--brand-tint)' : 'transparent' }}>
               {l.key === 'yesbox' && <EditableText id="dashboard.nav.accueil">Accueil</EditableText>}
               {l.key === 'dashboard' && <EditableText id="dashboard.nav.tableaudebord">Tableau de bord</EditableText>}
               {l.key === 'pacte' && <EditableText id="dashboard.nav.pacte">Progression</EditableText>}
@@ -52,24 +51,24 @@ export default function DashboardNav({ profile }: DashboardNavProps) {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
-          <span className="text-sm" style={{ color: 'var(--muted)' }}>
+        <div className="hidden xl:flex items-center gap-2">
+          <span className="hidden xl:inline text-sm whitespace-nowrap" style={{ color: 'var(--muted)' }}>
             {profile?.prenom || profile?.email}
           </span>
           <form action={deconnexion}>
-            <button type="submit" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg transition-all" style={{ color: 'var(--muted)' }}>
-              <LogOut className="w-4 h-4" /><EditableText id="dashboard.nav.deconnexion">Déconnexion</EditableText>
+            <button type="submit" className="flex items-center font-medium px-2 py-2 rounded-lg transition-all whitespace-nowrap" style={{ color: 'var(--muted)', fontSize: 13.5 }}>
+              <EditableText id="dashboard.nav.deconnexion">Déconnexion</EditableText>
             </button>
           </form>
         </div>
 
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
+        <button className="xl:hidden p-2" onClick={() => setOpen(!open)}>
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {open && (
-        <div style={{ background: 'var(--paper)', borderTop: '1px solid var(--line)', padding: '12px 24px' }} className="md:hidden space-y-1">
+        <div style={{ background: 'var(--paper)', borderTop: '1px solid var(--line)', padding: '12px 24px' }} className="xl:hidden space-y-1">
           {links.map(l => (
             <Link key={l.href} href={l.href} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium"
               style={{ color: pathname === l.href ? 'var(--brand)' : 'var(--ink)' }}

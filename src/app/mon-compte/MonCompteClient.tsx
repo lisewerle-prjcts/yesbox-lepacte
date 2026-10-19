@@ -13,6 +13,7 @@ import type { CoupleAbonnement } from '@/types'
 import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
 import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
 import Link from 'next/link'
+import ChampCode from '@/components/ChampCode'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -294,21 +295,11 @@ function AjouterCodeCard() {
         )}
       </p>
       <div className="flex items-center gap-2 max-w-sm">
-        <input
-          type="text"
-          className="input-field uppercase"
+        <ChampCode
           placeholder={t('Ex : YES-AB12-CD34', 'e.g. YES-AB12-CD34')}
-          name="code_avantage"
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          data-1p-ignore
-          data-lpignore="true"
-          data-form-type="other"
           value={code}
-          onChange={e => setCode(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && code.trim() && status !== 'saving') valider() }}
+          onChange={setCode}
+          onEntree={() => { if (code.trim() && status !== 'saving') valider() }}
         />
         <button onClick={valider} disabled={status === 'saving' || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
           {status === 'saving' ? '…' : t('Valider', 'Apply')}
