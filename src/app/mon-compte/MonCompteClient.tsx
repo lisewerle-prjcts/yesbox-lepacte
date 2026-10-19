@@ -318,7 +318,7 @@ function AjouterCodeCard() {
 
 function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: string | null; filleulsCount: number }) {
   const t = useT()
-  const [copied, setCopied] = useState(false)
+  const [copie, setCopie] = useState<'code' | 'lien' | null>(null)
   if (!codeParrainage) return null
 
   const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
@@ -326,11 +326,18 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
   const restants = 5 - (filleulsCount % 5)
   const prochainSeuil = restants === 5 ? 0 : restants
 
-  async function copierLien() {
-    await navigator.clipboard.writeText(lien)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+  async function copier(quoi: 'code' | 'lien') {
+    await navigator.clipboard.writeText(quoi === 'code' ? codeParrainage! : lien)
+    setCopie(quoi)
+    setTimeout(() => setCopie(null), 2500)
   }
+
+  const boutonCopier = (quoi: 'code' | 'lien') => (
+    <button onClick={() => copier(quoi)} className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1.5 flex-shrink-0">
+      {copie === quoi ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+      {copie === quoi ? t('Copié', 'Copied') : t('Copier', 'Copy')}
+    </button>
+  )
 
   return (
     <div className="card p-6">
@@ -342,13 +349,20 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
         {t('Chaque 5 couples parrainés qui s’inscrivent, vous recevez 1 mois offert.', 'For every 5 referred couples who sign up, you get 1 month free.')}
       </p>
       <div className="mb-3 max-w-md">
+        <label className="label">{t('Ton code parrain', 'Your referral code')}</label>
+        <div className="flex items-center gap-3">
+          <span className="font-mono font-bold" style={{ fontSize: 20, letterSpacing: '.2em' }}>{codeParrainage}</span>
+          {boutonCopier('code')}
+        </div>
+        <p className="text-xs text-gray-400 mt-1">
+          {t('À saisir lors de l’inscription, ou plus tard dans Mon compte (« Ajouter un code »).', 'To enter when signing up, or later in My Account ("Add a code").')}
+        </p>
+      </div>
+      <div className="mb-3 max-w-md">
         <label className="label">{t('Ton lien de parrainage', 'Your referral link')}</label>
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs truncate" style={{ flex: 1 }}>{lien}</span>
-          <button onClick={copierLien} className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1.5 flex-shrink-0">
-            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? t('Copié', 'Copied') : t('Copier', 'Copy')}
-          </button>
+          {boutonCopier('lien')}
         </div>
       </div>
       <p className="text-xs text-gray-400">
