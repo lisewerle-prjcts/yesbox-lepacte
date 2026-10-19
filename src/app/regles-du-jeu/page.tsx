@@ -64,7 +64,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.confidentialite.jugement" multiline>Et pas de jugement : ni thérapeute, ni intelligence artificielle n&apos;analyse ce que vous écrivez. Juste des questions pour vous aider à vous parler.</EditableText>
             </p>
             <p style={{ color: 'var(--muted)', marginTop: 8 }}>
-              <EditableText id="regles.confidentialite.texte.v3" multiline>Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Sans action de votre part, 1 an après la fin de votre abonnement, vos comptes sont supprimés et vos réponses sont effacées de manière permanente. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille de l&apos;effacement.</EditableText>
+              <EditableText id="regles.confidentialite.texte.v4" multiline>Les personnes en charge de l&apos;administration de YES BOX n&apos;ont pas accès aux réponses des couples. En fin de parcours, si vous souhaitez garder vos réponses, vous pouvez les télécharger dans la rubrique MON COMPTE. Après 24 mois d&apos;inactivité (aucune connexion et plus d&apos;abonnement en cours), vos comptes sont supprimés et vos réponses sont effacées de manière permanente. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille de l&apos;effacement : il suffit de vous connecter pour garder vos données.</EditableText>
             </p>
           </li>
           <li>

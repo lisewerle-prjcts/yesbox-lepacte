@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail, Languages } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail, Languages, Ticket } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, importerMesDonnees, supprimerMonCompte,
 } from '@/app/actions/compte'
 import { changerRappelsEmail } from '@/app/actions/rappels'
 import { memoriserLangue } from '@/app/actions/langue'
-import { annulerAbonnement, reprendreAbonnement, annulerBasculeAnnuelle, utiliserCodeGratuit } from '@/app/actions/abonnement'
+import { annulerAbonnement, reprendreAbonnement, annulerBasculeAnnuelle, utiliserCode } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
 import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
 import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
@@ -48,6 +48,7 @@ export default function MonCompteClient({
         <MesInfosCard prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} />
+        {!estCompteResilie(abonnement) && <AjouterCodeCard />}
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <LangueCard langueInitiale={langue} />
         <RappelsCard actifInitial={rappelsEmail} />
@@ -184,8 +185,8 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
-              "Ce compte a été clos 1 an après la fin de l'abonnement. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
-              'This account was closed 1 year after the subscription ended. It can no longer be reactivated here: you need to start over with a new account.'
+              "Ce compte a été clos. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
+              'This account was closed. It can no longer be reactivated here: you need to start over with a new account.'
             )}
           </p>
         </div>
@@ -246,50 +247,71 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
               : <>{t('Accès gratuit jusqu’au', 'Free access until')} <strong>{abonnement?.acces_gratuit_expire_le ? formatDate(abonnement.acces_gratuit_expire_le, locale) : '—'}</strong></>}
           </p>
           <p className="text-xs text-gray-400">
-            {t('Offert (code testeur ou parrainage) — aucun paiement en cours.', 'Granted (tester code or referral) — no payment in progress.')}
+            {t('Offert (carte cadeau, code gratuit ou parrainage) — aucun paiement en cours.', 'Granted (gift card, free code or referral) — no payment in progress.')}
           </p>
         </>
       ) : (
         <>
           <p className="text-sm text-gray-600 mb-4">{t('Aucun abonnement actif pour le moment.', 'No active subscription at the moment.')}</p>
           <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('S’abonner', 'Subscribe')}</Link>
-          <CodeGratuitForm />
         </>
       )}
     </div>
   )
 }
 
-function CodeGratuitForm() {
+// Carte cadeau, code de parrainage (si le couple s'est inscrit sans) ou code
+// gratuit : utilisable à tout moment, même après l'inscription ou pendant un
+// abonnement en cours (cf. utiliserCode).
+function AjouterCodeCard() {
   const t = useT()
   const [code, setCode] = useState('')
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
   async function valider() {
     setError('')
+    setMessage('')
     setStatus('saving')
-    const res = await utiliserCodeGratuit(code)
-    if (res.error) { setError(res.error); setStatus('error'); return }
+    const res = await utiliserCode(code)
+    if ('error' in res) { setError(res.error); setStatus('error'); return }
+    setMessage(res.message)
+    setCode('')
     setStatus('saved')
   }
 
   return (
-    <div className="mt-4 pt-4" style={{ borderTop: '1px solid #eee' }}>
-      <label className="label">{t('J’ai un code gratuit', 'I have a free code')}</label>
-      <div className="flex items-center gap-2 max-w-xs">
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Ticket className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Ajouter un code', 'Add a code')}</h2>
+      </div>
+      <p className="text-sm text-gray-600 mb-3">
+        {t(
+          'Une carte cadeau reçue, le code du couple qui vous a parrainés si vous ne l’avez pas saisi à l’inscription, ou un code gratuit : ajoutez-le ici, à tout moment.',
+          'A gift card you received, the code of the couple who referred you if you didn’t enter it when signing up, or a free code: add it here, at any time.'
+        )}
+      </p>
+      <div className="flex items-center gap-2 max-w-sm">
         <input
           type="text"
           className="input-field uppercase"
-          placeholder={t('Ex : BETA2026', 'e.g. BETA2026')}
+          placeholder={t('Ex : YES-AB12-CD34', 'e.g. YES-AB12-CD34')}
           value={code}
           onChange={e => setCode(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && code.trim() && status !== 'saving') valider() }}
         />
         <button onClick={valider} disabled={status === 'saving' || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
-          {status === 'saving' ? t('…', '…') : t('Valider', 'Apply')}
+          {status === 'saving' ? '…' : t('Valider', 'Apply')}
         </button>
       </div>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      {message && <p className="text-sm text-green-700 mt-2 flex items-center gap-1.5"><Check className="w-4 h-4" /> {message}</p>}
+      <p className="text-xs text-gray-400 mt-4">
+        {t('Envie de faire plaisir à un autre couple ?', 'Want to treat another couple?')}{' '}
+        <Link href="/offrir" className="text-magenta font-semibold">{t('Offrir YES BOX', 'Give YES BOX as a gift')}</Link>
+      </p>
     </div>
   )
 }

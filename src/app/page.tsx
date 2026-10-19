@@ -33,6 +33,7 @@ const NAV_LINKS = (t: (fr: string, en: string) => string) => [
   { href: '#modules', key: 'modules', label: t('Les modules', 'The modules') },
   { href: '#tarifs', key: 'tarifs', label: t('Tarifs', 'Pricing') },
   { href: '#faq', key: 'faq', label: t('FAQ', 'FAQ') },
+  { href: '/offrir', key: 'offrir', label: t('Offrir', 'Give as a gift') },
 ]
 
 const OPTIONS = (t: (fr: string, en: string) => string) => [
@@ -53,6 +54,8 @@ const FAQ = (t: (fr: string, en: string) => string) => [
   { q: t('Qui peut lire nos réponses ?', 'Who can read our answers?'), r: t("Vous deux, et personne d'autre. Vos réponses sont chiffrées sur nos serveurs, et l'équipe YES BOX n'y a pas accès. Aucun·e thérapeute ni aucune intelligence artificielle ne les analyse.", 'Just the two of you. Your answers are encrypted on our servers, and the YES BOX team has no access to them. No therapist and no artificial intelligence analyzes them.') },
   { q: t('Et si une réponse fait mal ?', 'What if an answer hurts?'), r: t("Ça peut arriver : certaines questions touchent à des sujets sensibles. Prenez le temps d'en parler, sans vous presser, et revenez-y plus tard si besoin. YES BOX n'est pas une thérapie : si une discussion révèle une souffrance profonde, n'hésitez pas à vous faire accompagner par un·e professionnel·le.", "It can happen: some questions touch on sensitive topics. Take time to talk about it, without rushing, and come back to it later if needed. YES BOX is not therapy: if a conversation reveals deep pain, don't hesitate to get support from a professional.") },
   { q: t('Peut-on arrêter quand on veut ?', 'Can we stop whenever we want?'), r: t("Oui. L'abonnement est sans engagement et se résilie en un clic depuis Mon compte. L'accès reste ouvert jusqu'à la fin de la période déjà payée.", 'Yes. The subscription has no commitment and can be cancelled in one click from My Account. Access stays open until the end of the period already paid for.') },
+  { q: t('Combien de temps gardez-vous nos données ?', 'How long do you keep our data?'), r: t("Tant que vous utilisez YES BOX. Après 24 mois d'inactivité (aucune connexion et plus d'abonnement en cours), vos comptes et vos réponses sont définitivement effacés. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille : il suffit de vous connecter pour les garder. Vous pouvez aussi télécharger vos données ou supprimer votre compte à tout moment depuis Mon compte.", 'For as long as you use YES BOX. After 24 months of inactivity (no login and no subscription in progress), your accounts and answers are permanently deleted. An email warns you 2 months, 1 month, 1 week and the day before: just log in to keep them. You can also download your data or delete your account at any time from My Account.') },
+  { q: t('Peut-on offrir YES BOX ?', 'Can we give YES BOX as a gift?'), r: t("Oui ! Depuis la page Offrir, choisissez 1, 2 ou 3 mois d'abonnement. Vous recevez aussitôt un code (YES-XXXX-XXXX) et une carte cadeau à imprimer. Le couple active le code à son inscription ou plus tard dans Mon compte, dans l'année qui suit l'achat. Vous faites partie du couple ? Vous pouvez aussi vous l'offrir à vous deux.", "Yes! From the Give as a gift page, choose 1, 2 or 3 months of subscription. You instantly receive a code (YES-XXXX-XXXX) and a printable gift card. The couple activates the code when signing up or later in My Account, within a year of purchase. Are you part of the couple? You can also treat the two of you.") },
 ]
 
 const PACTE_LIST = (t: (fr: string, en: string) => string) => [
@@ -462,6 +465,7 @@ export default function LandingPage() {
             <Link href="/connexion" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.connexion">Connexion</EditableText></Link>
             <button onClick={() => setModalOpen(true)} style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.inscription">Inscription</EditableText></button>
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.tarifs">Tarifs</EditableText></Link>
+            <Link href="/offrir" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.offrir">Offrir</EditableText></Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.mentions">Mentions légales</EditableText></Link>
             <Link href="/cgv" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.cgv">CGV</EditableText></Link>
             <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.confidentialite">Confidentialité</EditableText></Link>

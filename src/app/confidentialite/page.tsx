@@ -24,6 +24,10 @@ export default async function Confidentialite() {
       t('Votre consentement explicite, recueilli à l’inscription (art. 9.2.a RGPD), retirable à tout moment en supprimant votre compte', 'Your explicit consent, collected at sign-up (GDPR art. 9.2.a), which you can withdraw at any time by deleting your account')],
     [t('Gérer l’abonnement, les paiements et la facturation', 'Managing the subscription, payments and invoicing'),
       t('Exécution du contrat, et obligation légale de conservation des pièces comptables (art. 6.1.b et 6.1.c RGPD)', 'Performance of the contract, and the legal obligation to keep accounting records (GDPR art. 6.1.b and 6.1.c)')],
+    [t('Vendre les cartes cadeaux : paiement, envoi du code à la personne qui achète, carte à imprimer, activation par le couple', 'Selling gift cards: payment, sending the code to the buyer, printable card, activation by the couple'),
+      t('Exécution du contrat, et obligation légale de conservation des pièces comptables (art. 6.1.b et 6.1.c RGPD)', 'Performance of the contract, and the legal obligation to keep accounting records (GDPR art. 6.1.b and 6.1.c)')],
+    [t('Appliquer la durée de conservation : date de votre dernière visite, pour effacer les comptes inactifs depuis 24 mois et vous prévenir avant', 'Applying the retention period: the date of your last visit, to delete accounts inactive for 24 months and warn you beforehand'),
+      t('Obligation légale de limiter la conservation des données (art. 5.1.e et 6.1.c RGPD)', 'Legal obligation to limit data retention (GDPR art. 5.1.e and 6.1.c)')],
     [t('Envoyer les e-mails de service (confirmation d’inscription, bienvenue, mot de passe, sécurité)', 'Sending service emails (sign-up confirmation, welcome, password, security)'),
       t('Exécution du contrat (art. 6.1.b RGPD)', 'Performance of the contract (GDPR art. 6.1.b)')],
     [t('Envoyer des rappels pour accompagner votre parcours (parcours en pause depuis 10 jours, e-mails réguliers une fois le pacte signé, 2 par mois maximum), désactivables depuis Mon compte ou en bas de chaque e-mail', 'Sending reminders to support your program (program paused for 10 days, regular emails once the pact is signed, 2 per month at most), which you can turn off from My Account or at the bottom of each email'),
@@ -35,7 +39,7 @@ export default async function Confidentialite() {
   const sousTraitants: [string, string, string][] = [
     ['Vercel Inc.', t('Hébergement du site', 'Website hosting'), t('États-Unis', 'United States')],
     ['Supabase Inc.', t('Base de données et authentification', 'Database and authentication'), t('Irlande (UE) — base hébergée dans la région eu-west-1', 'Ireland (EU) — database hosted in the eu-west-1 region')],
-    ['Stripe Payments Europe, Ltd.', t('Paiement de l’abonnement (nous ne voyons jamais votre numéro de carte)', 'Subscription payment (we never see your card number)'), t('Irlande (UE), avec transferts possibles vers les États-Unis', 'Ireland (EU), with possible transfers to the United States')],
+    ['Stripe Payments Europe, Ltd.', t('Paiement de l’abonnement et des cartes cadeaux (nous ne voyons jamais votre numéro de carte)', 'Payment for subscriptions and gift cards (we never see your card number)'), t('Irlande (UE), avec transferts possibles vers les États-Unis', 'Ireland (EU), with possible transfers to the United States')],
     ['Google LLC (Gmail)', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
     ['Resend Inc.', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
   ]
@@ -66,6 +70,8 @@ export default async function Confidentialite() {
               <li>{t('Espace couple : nom du couple, date de couple, code couple, code de parrainage.', 'Couple space: couple name, couple date, couple code, referral code.')}</li>
               <li>{t('Contenu du programme : vos réponses aux modules, vos conclusions et votre pacte. Certaines questions portent sur la vie intime ou les convictions religieuses : ce sont des données sensibles, traitées uniquement avec votre consentement explicite.', 'Program content: your module answers, your conclusions and your pact. Some questions relate to intimate life or religious beliefs: this is sensitive data, processed only with your explicit consent.')}</li>
               <li>{t('Abonnement : statut, dates de renouvellement et identifiants Stripe (pas vos données bancaires).', 'Subscription: status, renewal dates and Stripe identifiers (not your banking details).')}</li>
+              <li>{t('Cartes cadeaux : adresse e-mail de la personne qui achète, prénoms facultatifs imprimés sur la carte (« Pour vous deux », « De la part de »), durée, montant et date d’achat, code, et couple qui l’a utilisé.', 'Gift cards: the buyer’s email address, optional first names printed on the card ("For the two of you", "From"), length, amount and date of purchase, code, and the couple who used it.')}</li>
+              <li>{t('Activité : date de votre dernière visite sur le site, pour appliquer la durée de conservation ci-dessous.', 'Activity: the date of your last visit to the site, to apply the retention period below.')}</li>
               <li>{t('Preuves de consentement : date à laquelle vous avez certifié avoir 15 ans ou plus et accepté le traitement des données sensibles.', 'Proof of consent: the date you certified being 15 or older and agreed to the processing of sensitive data.')}</li>
               <li>{t('Sécurité : tentatives de connexion échouées (pour bloquer temporairement les attaques).', 'Security: failed login attempts (to temporarily block attacks).')}</li>
             </ul>
@@ -126,9 +132,9 @@ export default async function Confidentialite() {
           <section>
             <h2 className={h2} style={h2Style}>{t('Durées de conservation', 'Retention periods')}</h2>
             <ul className={liste} style={{ color: 'var(--muted)' }}>
-              <li>{t('Compte utilisé : tant que vous utilisez le service.', 'Active account: for as long as you use the service.')}</li>
-              <li>{t('Après la fin d’un accès payé : 1 an, puis le compte est clos et vos réponses, conclusions et pacte sont effacés. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille.', 'After paid access ends: 1 year, after which the account is closed and your answers, conclusions and pact are deleted. An email warns you 2 months, 1 month, 1 week and the day before.')}</li>
-              <li>{t('Compte gratuit ou jamais utilisé : supprimé entièrement après 1 an sans connexion.', 'Free or unused account: fully deleted after 1 year without logging in.')}</li>
+              <li>{t('Compte : tant que vous utilisez le service.', 'Account: for as long as you use the service.')}</li>
+              <li>{t('Après 24 mois d’inactivité (aucune connexion d’un membre du couple, aucune réponse enregistrée et plus d’accès payé ou offert en cours) : vos comptes, réponses, conclusions et pacte sont définitivement effacés. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille ; il suffit de vous connecter pour repousser l’effacement de 24 mois.', 'After 24 months of inactivity (no login by either member of the couple, no answer saved, and no paid or gifted access in progress): your accounts, answers, conclusions and pact are permanently deleted. An email warns you 2 months, 1 month, 1 week and the day before; simply log in to postpone the deletion by 24 months.')}</li>
+              <li>{t('Cartes cadeaux : 24 mois après la fin de validité de la carte (soit 3 ans après l’achat).', 'Gift cards: 24 months after the card’s validity ends (i.e. 3 years after purchase).')}</li>
               <li>{t('Factures : 10 ans, conservées par Stripe et pour notre comptabilité (obligation légale).', 'Invoices: 10 years, kept by Stripe and for our accounting (legal obligation).')}</li>
               <li>{t('Suppression de votre compte à votre demande : effacement immédiat.', 'Deleting your account at your request: immediate erasure.')}</li>
             </ul>
@@ -174,14 +180,14 @@ export default async function Confidentialite() {
             <h2 className={h2} style={h2Style}>Cookies</h2>
             <p>
               {t(
-                'Le site utilise uniquement des cookies strictement nécessaires, qui ne demandent pas de consentement : le cookie de session qui vous garde connecté·e, et un cookie qui mémorise votre langue (1 an). Aucun cookie publicitaire ni de mesure d’audience.',
-                'The site only uses strictly necessary cookies, which do not require consent: the session cookie that keeps you logged in, and a cookie that remembers your language (1 year). No advertising or analytics cookies.',
+                'Le site utilise uniquement des cookies strictement nécessaires, qui ne demandent pas de consentement : le cookie de session qui vous garde connecté·e, un cookie qui mémorise votre langue (1 an) et un cookie technique qui évite d’enregistrer votre visite à chaque page (12 heures). Aucun cookie publicitaire ni de mesure d’audience.',
+                'The site only uses strictly necessary cookies, which do not require consent: the session cookie that keeps you logged in, a cookie that remembers your language (1 year) and a technical cookie that avoids recording your visit on every page (12 hours). No advertising or analytics cookies.',
               )}
             </p>
           </section>
 
           <p className="pt-4" style={{ fontSize: 12, color: 'var(--muted)' }}>
-            {t('Dernière mise à jour : septembre 2026. Voir aussi les', 'Last updated: September 2026. See also the')}{' '}
+            {t('Dernière mise à jour : octobre 2026. Voir aussi les', 'Last updated: October 2026. See also the')}{' '}
             <Link href="/mentions-legales" style={{ color: 'var(--brand)' }}>{t('mentions légales', 'legal notice')}</Link>{t(' et les ', ' and the ')}
             <Link href="/cgv" style={{ color: 'var(--brand)' }}>{t('conditions générales de vente', 'terms of sale')}</Link>.
           </p>

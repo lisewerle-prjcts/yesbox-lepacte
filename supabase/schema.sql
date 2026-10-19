@@ -1407,3 +1407,80 @@ create table if not exists public.emails_envoyes (
 );
 alter table public.emails_envoyes enable row level security;
 create index if not exists emails_envoyes_destinataire_idx on public.emails_envoyes (lower(destinataire), envoye_le desc);
+
+-- ============================================================
+-- CONSERVATION : EFFACEMENT APRÈS 24 MOIS D'INACTIVITÉ
+-- Remplace la règle « 1 an après la fin de l'accès payé ». Un compte est
+-- effacé (profil, réponses, conclusions, pacte, puis le couple) après
+-- 24 mois sans activité : ni visite ni connexion d'un membre, ni réponse,
+-- ni accès payé ou gratuit en cours (cf. src/lib/conservation.ts).
+--   - profiles.derniere_visite_le : dernière visite d'une personne
+--     connectée, posée par le proxy (au plus toutes les 12 heures) via
+--     marquer_visite, qui repousse aussi la date d'effacement du couple.
+--   - couples.effacement_prevu_le : date d'effacement, recalculée chaque
+--     nuit par /api/cron/purger-comptes-expires ; e-mails d'avertissement
+--     2 mois, 1 mois, 1 semaine et la veille. Jamais moins de 61 jours
+--     après son premier calcul (les 4 avertissements ont le temps de partir).
+-- couples.data_retention_until n'est plus utilisée.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.profiles add column if not exists derniere_visite_le timestamptz;
+revoke update (derniere_visite_le) on public.profiles from authenticated;
+alter table public.couples add column if not exists effacement_prevu_le timestamptz;
+revoke update (effacement_prevu_le) on public.couples from authenticated;
+
+-- L'intervalle de 24 mois doit rester identique à INACTIVITE_MOIS
+-- (src/lib/conservation.ts).
+create or replace function public.marquer_visite()
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_couple uuid;
+begin
+  if auth.uid() is null then return; end if;
+  update public.profiles set derniere_visite_le = now() where id = auth.uid()
+  returning couple_id into v_couple;
+  if v_couple is not null then
+    update public.couples
+    set effacement_prevu_le = greatest(coalesce(effacement_prevu_le, now()), now() + interval '24 months')
+    where id = v_couple;
+  end if;
+end;
+$$;
+revoke execute on function public.marquer_visite() from public, anon;
+grant execute on function public.marquer_visite() to authenticated;
+
+-- ============================================================
+-- CARTES CADEAUX (page /offrir)
+-- 1, 2 ou 3 mois d'abonnement offerts, payés via Stripe Checkout
+-- (paiement unique). Le code (YES-XXXX-XXXX) est créé par le webhook
+-- Stripe ou la page de remerciement (le premier des deux, une seule fois
+-- grâce à stripe_session_id), envoyé par e-mail à la personne qui
+-- l'achète et affiché sur une carte à imprimer. Valable 1 an après
+-- l'achat, utilisable une seule fois, depuis Mon compte, /abonnement ou à
+-- l'inscription : le couple reçoit les mois offerts (crédit sur sa
+-- prochaine facture Stripe s'il paie déjà, sinon accès gratuit prolongé).
+-- Lignes effacées 24 mois après la fin de validité de la carte.
+-- Lecture et écriture réservées au serveur (clé service) : RLS activée,
+-- aucune politique.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.cartes_cadeaux (
+  id uuid primary key default uuid_generate_v4(),
+  code text unique not null,
+  duree_mois integer not null check (duree_mois between 1 and 12),
+  -- true : la personne qui achète fait partie du couple qui en profite.
+  pour_soi boolean not null default false,
+  de_la_part_de text,
+  pour_qui text,
+  acheteur_email text,
+  montant_centimes integer,
+  devise text,
+  stripe_session_id text unique,
+  achete_le timestamptz not null default now(),
+  expire_le timestamptz not null,
+  utilise_le timestamptz,
+  utilise_par_couple_id uuid references public.couples(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+alter table public.cartes_cadeaux enable row level security;
+create index if not exists cartes_cadeaux_achete_le_idx on public.cartes_cadeaux (achete_le desc);

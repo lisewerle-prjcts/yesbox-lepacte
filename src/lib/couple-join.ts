@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { enregistrerParrainage } from '@/lib/parrainage'
+import { normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
 import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 
@@ -13,20 +14,30 @@ import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/r
 // arguments.
 
 // Le champ « Code de parrainage ou code promo » de l'inscription accepte
-// les deux : on essaie d'abord le code comme code de parrainage (seulement
-// pour un nouveau couple), puis comme code gratuit (Admin > Codes gratuits).
+// tous les codes : carte cadeau (YES-XXXX-XXXX), puis code de parrainage
+// (seulement pour un nouveau couple), puis code gratuit (Admin > Codes
+// gratuits).
 // Best-effort : un code invalide ne bloque jamais l'inscription.
 export async function appliquerCodeInscription(coupleId: string, code: string, nouveauCouple: boolean) {
   const clean = code.trim()
   if (!clean) return
   const admin = createAdminClient()
+  const codeCadeau = normaliserCodeCadeau(clean)
+  if (codeCadeau) {
+    try {
+      if ('dureeMois' in await utiliserCarteCadeau(admin, codeCadeau, coupleId)) return
+    } catch (e) {
+      console.error(`[inscription] carte cadeau ${codeCadeau} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
   if (nouveauCouple && await enregistrerParrainage(admin, clean, coupleId)) return
   await admin.rpc('utiliser_code_gratuit', { p_code: clean, p_couple_id: coupleId })
 }
 
 // Vérifié avant de créer le compte, pour afficher une erreur dans le
 // formulaire : le code doit être un code de parrainage existant, ou un code
-// gratuit actif qui n'a pas atteint son nombre maximum d'utilisations.
+// gratuit actif qui n'a pas atteint son nombre maximum d'utilisations, ou une
+// carte cadeau ni utilisée ni expirée.
 export async function codeInscriptionValide(code: string) {
   const clean = code.trim().toUpperCase()
   if (!clean) return true
@@ -34,6 +45,12 @@ export async function codeInscriptionValide(code: string) {
 
   const { data: parrain } = await admin.from('couples').select('id').eq('code_parrainage', clean).maybeSingle()
   if (parrain) return true
+
+  const codeCadeau = normaliserCodeCadeau(clean)
+  if (codeCadeau) {
+    const { data: carte } = await admin.from('cartes_cadeaux').select('utilise_le, expire_le').eq('code', codeCadeau).maybeSingle()
+    if (carte) return !carte.utilise_le && new Date(carte.expire_le).getTime() > Date.now()
+  }
 
   const { data: gratuit } = await admin.from('codes_gratuits').select('usages, usages_max')
     .eq('code', clean).eq('actif', true).maybeSingle()

@@ -12,7 +12,7 @@ export const FILLEULS_POUR_UN_MOIS_OFFERT = 5
 // compte client (appliqué automatiquement à sa prochaine facture) plutôt
 // qu'une extension d'accès gratuit, qui ne l'empêcherait pas d'être
 // prélevé par le renouvellement automatique en cours.
-async function crediterMoisStripe(admin: AdminClient, stripeCustomerId: string, nbMois: number) {
+async function crediterMoisStripe(admin: AdminClient, stripeCustomerId: string, nbMois: number, description: string) {
   const stripe = getStripe()
   const price = PRIX_ABONNEMENT_MENSUEL_ID ? await stripe.prices.retrieve(PRIX_ABONNEMENT_MENSUEL_ID) : null
   const montant = price?.unit_amount ?? 2900
@@ -20,7 +20,7 @@ async function crediterMoisStripe(admin: AdminClient, stripeCustomerId: string, 
   await stripe.customers.createBalanceTransaction(stripeCustomerId, {
     amount: -montant * nbMois,
     currency: devise,
-    description: `Parrainage YES BOX : ${nbMois} mois offert${nbMois > 1 ? 's' : ''}`,
+    description: `${description} : ${nbMois} mois offert${nbMois > 1 ? 's' : ''}`,
   })
 }
 
@@ -36,21 +36,26 @@ async function etendreAccesGratuit(admin: AdminClient, coupleId: string, nbMois:
   await admin.from('couples').update({ acces_gratuit_expire_le: ajouterMois(new Date(base), nbMois) }).eq('id', coupleId)
 }
 
-export async function accorderMoisGratuits(admin: AdminClient, coupleId: string, nbMois: number) {
-  if (nbMois <= 0) return
+// Renvoie la façon dont les mois ont été accordés : crédit sur la prochaine
+// facture Stripe, ou accès gratuit prolongé.
+export async function accorderMoisGratuits(admin: AdminClient, coupleId: string, nbMois: number, description = 'Parrainage YES BOX'): Promise<'credit_stripe' | 'acces_gratuit'> {
+  if (nbMois <= 0) return 'acces_gratuit'
   const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', coupleId).single()
-  if (!couple) return
+  if (!couple) return 'acces_gratuit'
 
-  if (estAbonnementActif(couple) && couple.stripe_customer_id) {
+  // Abonnement dont le renouvellement est arrêté : un crédit ne servirait à
+  // rien, l'accès gratuit prend le relais à la fin de la période payée.
+  if (estAbonnementActif(couple) && !couple.subscription_cancel_at_period_end && couple.stripe_customer_id) {
     try {
-      await crediterMoisStripe(admin, couple.stripe_customer_id, nbMois)
-      return
+      await crediterMoisStripe(admin, couple.stripe_customer_id, nbMois, description)
+      return 'credit_stripe'
     } catch {
       // Si Stripe échoue (clé absente, etc.), on ne perd pas la récompense :
       // elle est accordée comme accès gratuit à la place.
     }
   }
   await etendreAccesGratuit(admin, coupleId, nbMois)
+  return 'acces_gratuit'
 }
 
 // Rattache un couple qui vient de s'inscrire à son parrain (RPC atomique,

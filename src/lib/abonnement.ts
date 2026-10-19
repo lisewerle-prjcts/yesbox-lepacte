@@ -28,16 +28,13 @@ export function aAccesComplet(couple: CoupleAbonnement | null | undefined): bool
   return estAbonnementActif(couple) || aAccesGratuitActif(couple)
 }
 
-// Le compte est définitivement clos (1 an sans accès payé écoulé) :
-// plus aucune réactivation possible sur ce couple, il faut repartir de zéro.
-// Calculé à la volée à partir de data_retention_until (le webhook la pose à
-// la fin de l'accès + 1 an) — compte_resilie_le n'est posé qu'une fois la
-// tâche planifiée passée, mais le calcul ci-dessous est déjà vrai avant.
+// Le compte a été clos par l'ancienne règle de conservation (réponses
+// effacées un an après la fin de l'accès payé) : plus aucune réactivation
+// possible sur ce couple, il faut repartir de zéro. Depuis la règle des
+// 24 mois d'inactivité (src/lib/conservation.ts), les comptes inactifs sont
+// effacés entièrement et plus aucun compte n'est clos de cette façon.
 export function estCompteResilie(couple: CoupleAbonnement | null | undefined): boolean {
-  if (!couple) return false
-  if (couple.compte_resilie_le) return true
-  if (!couple.data_retention_until) return false
-  return new Date(couple.data_retention_until).getTime() <= Date.now()
+  return !!couple?.compte_resilie_le
 }
 
 // Un module payant reste consultable une fois révélé (« partie réalisée »)

@@ -20,7 +20,7 @@ export const EN_CONTENT: Record<string, string> = {
   'regles.confidentialite.intro': 'You go through the modules just the two of you, without judgment.',
   'regles.confidentialite.lecture': 'No one else reads your answers: they stay visible only to the two of you and are encrypted on our servers. You can download them at any time, and delete them when you leave the program.',
   'regles.confidentialite.jugement': 'And no judgment: no therapist and no artificial intelligence analyzes what you write. Just questions to help you talk to each other.',
-  'regles.confidentialite.texte.v3': 'The people who run YES BOX have no access to couples’ answers. At the end of your journey, if you want to keep your answers, you can download them from the MY ACCOUNT section. Without any action on your part, 1 year after your subscription ends, your accounts are deleted and your answers are permanently erased. An email warns you 2 months, 1 month, 1 week and the day before the deletion.',
+  'regles.confidentialite.texte.v4': 'The people who run YES BOX have no access to couples’ answers. At the end of your journey, if you want to keep your answers, you can download them from the MY ACCOUNT section. After 24 months of inactivity (no login and no subscription in progress), your accounts are deleted and your answers are permanently erased. An email warns you 2 months, 1 month, 1 week and the day before the deletion: just log in to keep your data.',
   'regles.pacte.titre': "The couple's pact",
   'regles.pacte.texte.v3': 'Written together at the end of the initial program (module 9), it brings together what matters most from the different modules. When you sign it, you choose the date of your yearly date, ideally one year later (between 6 and 18 months): one year from now, on Valentine’s Day, or on a date that means something to you. On that day, the "Our Yearly Date" module opens so you can reread it together and make it grow with you.',
   'regles.abonnementannuel.titre': 'Pact – our yearly date',
@@ -234,6 +234,7 @@ export const EN_CONTENT: Record<string, string> = {
   'dashboard.nav.moncompte': 'My Account',
   'dashboard.nav.regles': 'Game Rules',
   'dashboard.nav.admin': 'Admin',
+  'dashboard.nav.offrir': 'Give as a gift',
   'dashboard.nav.deconnexion': 'Log out',
   'dashboard.nav.sedeconnecter': 'Log out',
 
@@ -289,6 +290,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.nav.forwhom': "Who it's for",
   'home.nav.modules': 'The modules',
   'home.nav.tarifs': 'Pricing',
+  'home.nav.offrir': 'Give as a gift',
   'home.nav.monespace': 'My space',
   'home.nav.seconnecter': 'Log in',
   'home.nav.sinscrire': 'Sign up',
@@ -401,6 +403,11 @@ export const EN_CONTENT: Record<string, string> = {
   'home.footer.link.connexion': 'Log in',
   'home.footer.link.inscription': 'Sign up',
   'home.footer.link.tarifs': 'Pricing',
+  'home.footer.link.offrir': 'Give as a gift',
+  // src/app/offrir/OffrirClient.tsx
+  'offrir.eyebrow': 'Gift card',
+  'offrir.titre': 'Give YES BOX to a couple',
+  'offrir.sousTitre': 'Evenings for two to get to know each other better, talk better and choose to commit. Give 1, 2 or 3 months of subscription, with a lovely printable card.',
   'home.footer.link.mentions': 'Legal Notice',
   'home.footer.link.confidentialite': 'Privacy',
 }
