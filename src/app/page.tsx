@@ -7,6 +7,7 @@ import InscriptionModal from '@/components/InscriptionModal'
 import OffresTarifs from '@/components/OffresTarifs'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
+import LocaleFlagToggle from '@/components/i18n/LocaleFlagToggle'
 import { MODULES } from '@/lib/modules-data'
 import { localizeModules } from '@/lib/i18n/module-text'
 import { ArrowRight, Check, Menu, X } from 'lucide-react'
@@ -122,10 +123,14 @@ export default function LandingPage() {
                 </button>
               </>
             )}
+            <LocaleFlagToggle />
           </div>
-          <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          <div className="md:hidden flex items-center gap-1">
+            <LocaleFlagToggle />
+            <button className="p-2" onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
         {menuOpen && (
           <div className="md:hidden space-y-3" style={{ background: 'var(--paper)', borderTop: '1px solid var(--line)', padding: '16px 24px' }}>
