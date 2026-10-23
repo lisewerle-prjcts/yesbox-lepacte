@@ -90,9 +90,11 @@ export async function rejoindreCoupleParCode(userId: string, code: string) {
   const admin = createAdminClient()
   const locale = await getLocale()
 
-  const cleanCode = code.trim().toUpperCase()
-  if (!/^[A-Z0-9]{5}$/.test(cleanCode)) {
-    return { error: t(locale, 'Le code doit contenir 5 lettres/chiffres', 'The code must contain 5 letters/digits') }
+  // Codes à 5 caractères, ou 6 pour les premiers couples (et ceux modifiés
+  // depuis l'admin). Espaces, tirets et points d'un copier-coller ignorés.
+  const cleanCode = (code ?? '').replace(/[\s.\-]/g, '').toUpperCase()
+  if (!/^[A-Z0-9]{5,6}$/.test(cleanCode)) {
+    return { error: t(locale, 'Le code couple contient 5 ou 6 lettres/chiffres', 'The couple code has 5 or 6 letters/digits') }
   }
 
   // Limite les essais pour empêcher de deviner un code de couple par force brute
