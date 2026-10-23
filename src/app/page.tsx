@@ -15,9 +15,10 @@ import { createClient } from '@/lib/supabase/client'
 
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
-  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 24 ans ensemble.", "We discovered things we'd never dared say after 24 years together."), prenom: 'J & J', lieu: '' },
-  { texte: t("On a passé des soirées très sympa en tête à tête ; ça ne nous était jamais arrivé de prendre du temps pour parler de nous, de comment mieux fonctionner", "We spent some really lovely evenings, just the two of us; we'd never before taken the time to talk about ourselves and how to work better together"), prenom: '', lieu: '' },
-  { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'xxx & xxx', lieu: 'Bordeaux' },
+  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 24 ans ensemble.", "We discovered things we'd never dared say after 24 years together."), prenom: 'J & J', lieu: t('Octobre 2026', 'October 2026') },
+  { texte: t("On a passé des soirées très sympa en tête à tête ; ça ne nous était jamais arrivé de prendre du temps pour parler de nous, de comment mieux fonctionner", "We spent some really lovely evenings, just the two of us; we'd never before taken the time to talk about ourselves and how to work better together"), prenom: 'Elodie et Romain', lieu: t('Octobre 2026', 'October 2026') },
+  { texte: t("Je recommande à tous les couples qui veulent vraiment s'engager. Une vraie préparation émotionnelle.", 'I recommend it to every couple who truly wants to commit. Real emotional preparation.'), prenom: 'Julie & Antoine', lieu: t('Septembre 2026', 'September 2026') },
+  { texte: t("C'est exactement ce qu'il nous fallait, pour ne pas devenir QUE des parents", "It's exactly what we needed, so we wouldn't become ONLY parents"), prenom: 'M + P', lieu: t('Septembre 2026', 'September 2026') },
 ]
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
@@ -389,16 +390,16 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title.v3">Ce que YES BOX peut changer pour un couple.</EditableText></h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {temoignagesList.map((item, i) => (
               <div key={i} className="card p-6 flex flex-col">
                 <div className="mb-3" style={{ color: 'var(--brand)', letterSpacing: 2, fontSize: 14 }}>★★★★★</div>
                 <blockquote className="font-serif flex-1 mb-4" style={{ fontStyle: 'italic', fontSize: 17, lineHeight: 1.5, color: 'var(--ink)' }}>
-                  &laquo; <EditableText id={`home.temoignages.${i}.texte.v2`} multiline>{item.texte}</EditableText> &raquo;
+                  &laquo; <EditableText id={`home.temoignages.${i}.texte.v3`} multiline>{item.texte}</EditableText> &raquo;
                 </blockquote>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom.v3`}>{item.prenom}</EditableText></div>
-                  <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}><EditableText id={`home.temoignages.${i}.lieu.v2`}>{item.lieu}</EditableText></div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom.v4`}>{item.prenom}</EditableText></div>
+                  <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}><EditableText id={`home.temoignages.${i}.lieu.v3`}>{item.lieu}</EditableText></div>
                 </div>
               </div>
             ))}
