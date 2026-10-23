@@ -20,7 +20,7 @@ export default async function AdminCouples() {
   const supabase = createAdminClient()
 
   const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules, connexions, terminesParCouple, { data: journalEmails }, { data: rappels }] = await Promise.all([
-    supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at, derniere_relance_le').order('numero', { ascending: true }),
+    supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at, derniere_relance_le').order('numero', { ascending: false }),
     supabase.from('profiles').select('id, prenom, nom, email, couple_id, role, rappels_email, email_bienvenue_envoye_le').order('email'),
     getEffectiveModules(),
     dernieresConnexions(supabase),
