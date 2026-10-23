@@ -48,6 +48,15 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Une redirection doit garder les cookies de session que getUser() vient
+  // peut-être de renouveler : sinon le navigateur garde l'ancien jeton,
+  // déjà consommé, et la personne se retrouve déconnectée au clic suivant.
+  const rediriger = (url: URL) => {
+    const reponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => reponse.cookies.set(cookie))
+    return reponse
+  }
+
   // Routes publiques accessibles sans authentification
   const publicRoutes = [
     '/', '/connexion', '/inscription', '/rejoindre',
@@ -61,7 +70,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/connexion'
-    return NextResponse.redirect(url)
+    return rediriger(url)
   }
 
   // Redirige vers /tableau-de-bord si déjà connecté sur les routes auth
@@ -72,7 +81,7 @@ export async function updateSession(request: NextRequest) {
   if (user && authRoutes.includes(pathname) && !saisieCodeMfa) {
     const url = request.nextUrl.clone()
     url.pathname = '/tableau-de-bord'
-    return NextResponse.redirect(url)
+    return rediriger(url)
   }
 
   // Visite d'une personne connectée : repousse l'effacement des données

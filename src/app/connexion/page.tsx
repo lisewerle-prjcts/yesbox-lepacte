@@ -9,6 +9,7 @@ import Spinner from '@/components/ui/Spinner'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import { connexion, renvoyerConfirmation, verifierCodeMfa, verifierCodeRecuperationMfa } from '@/app/actions/auth'
+import { createClient as createBrowserClient } from '@/lib/supabase/client'
 import { Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton({ label, pendingLabel }: { label: React.ReactNode; pendingLabel: string }) {
@@ -47,10 +48,16 @@ export default function ConnexionPage() {
     try {
       result = await connexion(formData)
     } catch {
-      // Réponse interrompue (réseau, déploiement en cours…) : si la session a
-      // bien été ouverte, le tableau de bord s'affiche ; sinon le site
-      // ramène ici.
-      window.location.assign('/tableau-de-bord')
+      // Réponse interrompue (réseau, déploiement en cours, délai dépassé…) :
+      // on n'ouvre le tableau de bord que si la session a bien été ouverte.
+      // Sinon le site ramenait ici sans message, et la connexion semblait
+      // tourner en boucle.
+      const { data: { session } } = await createBrowserClient().auth.getSession().catch(() => ({ data: { session: null } }))
+      if (session) {
+        window.location.assign('/tableau-de-bord')
+      } else {
+        setError(t('La connexion n’a pas abouti. Réessaie dans un instant ; si cela continue, écris-nous.', 'Signing in did not go through. Please try again in a moment; if it keeps happening, contact us.'))
+      }
       return
     }
     if (result?.error) {

@@ -12,6 +12,11 @@ const EXPEDITEUR_DOMAINE = process.env.MAIL_FROM || 'lise@yesbox-lepacte.fr'
 // ne reçoit pas de courrier.
 const REPONDRE_A = process.env.MAIL_REPLY_TO || 'lise.yesbox@gmail.com'
 
+// Un envoi bloqué ne doit jamais bloquer la page qui l'a déclenché (la
+// connexion envoie l'e-mail de bienvenue s'il est encore en attente) : par
+// défaut, Gmail peut attendre jusqu'à 10 minutes.
+const DELAI_ENVOI_MS = 10_000
+
 export function mailConfigure() {
   return !!process.env.RESEND_API_KEY || (!!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD)
 }
@@ -95,6 +100,7 @@ async function envoyer({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ 
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], reply_to: REPONDRE_A, subject, html, text }),
+        signal: AbortSignal.timeout(DELAI_ENVOI_MS),
       })
       if (res.ok) return { ok: true }
       const detail = await res.json().catch(() => null) as { message?: string } | null
@@ -108,6 +114,9 @@ async function envoyer({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+      connectionTimeout: DELAI_ENVOI_MS,
+      greetingTimeout: DELAI_ENVOI_MS,
+      socketTimeout: DELAI_ENVOI_MS,
     })
     try {
       await transporter.sendMail({
