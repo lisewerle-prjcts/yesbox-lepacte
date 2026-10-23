@@ -204,12 +204,12 @@ export default function InscriptionForm({
             name="partner_code"
             type="text"
             placeholder={t('Ex : A3F9K', 'e.g. A3F9K')}
-            maxLength={5}
+            maxLength={12}
             autoCapitalize="characters"
             className="input-field uppercase"
           />
           <p className="text-xs text-gray-400 mt-1">
-            <EditableText id="inscription.field.code.aide" multiline>Ton/ta partenaire a déjà créé son profil ? Renseigne son code à 5 caractères pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.</EditableText>
+            <EditableText id="inscription.field.code.aide" multiline>Ton/ta partenaire a déjà créé son profil ? Renseigne son code couple pour être pairé·e directement. Sinon, tu pourras l&apos;ajouter plus tard.</EditableText>
           </p>
         </div>
 
