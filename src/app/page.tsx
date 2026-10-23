@@ -15,8 +15,8 @@ import { createClient } from '@/lib/supabase/client'
 
 
 const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
-  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 4 ans ensemble. Le module sur les disputes nous a sauvés.", "We discovered things we'd never dared say after 4 years together. The module on arguments saved us."), prenom: 'xxx & xxx', lieu: 'Paris' },
-  { texte: t("Notre pacte de couple est encadré dans notre salon. On le relit chaque anniversaire. C'est notre plus belle décision.", "Our Couple's Pact is framed in our living room. We reread it every anniversary. It's the best decision we've made."), prenom: 'xxx & xxx', lieu: 'Lyon' },
+  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 24 ans ensemble.", "We discovered things we'd never dared say after 24 years together."), prenom: 'J & J', lieu: '' },
+  { texte: t("On a passé des soirées très sympa en tête à tête ; ça ne nous était jamais arrivé de prendre du temps pour parler de nous, de comment mieux fonctionner", "We spent some really lovely evenings, just the two of us; we'd never before taken the time to talk about ourselves and how to work better together"), prenom: '', lieu: '' },
   { texte: t('Je recommande à tous les couples qui veulent aller plus loin que le PACS. Une vraie préparation émotionnelle.', 'I recommend it to every couple who wants more than just a legal commitment. Real emotional preparation.'), prenom: 'xxx & xxx', lieu: 'Bordeaux' },
 ]
 
@@ -387,20 +387,18 @@ export default function LandingPage() {
       <section className="py-20" style={{ background: 'var(--cream-2)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
-            <div className="eyebrow justify-center mb-3"><EditableText id="home.temoignages.eyebrow.v3">Exemples de témoignages</EditableText></div>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title.v3">Ce que YES BOX peut changer pour un couple.</EditableText></h2>
-            <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}><EditableText id="home.temoignages.avertissement" multiline>Témoignages générés par IA, à titre d&apos;illustration, en attendant ceux de nos premiers couples.</EditableText></p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {temoignagesList.map((item, i) => (
               <div key={i} className="card p-6 flex flex-col">
                 <div className="mb-3" style={{ color: 'var(--brand)', letterSpacing: 2, fontSize: 14 }}>★★★★★</div>
                 <blockquote className="font-serif flex-1 mb-4" style={{ fontStyle: 'italic', fontSize: 17, lineHeight: 1.5, color: 'var(--ink)' }}>
-                  &laquo; <EditableText id={`home.temoignages.${i}.texte`} multiline>{item.texte}</EditableText> &raquo;
+                  &laquo; <EditableText id={`home.temoignages.${i}.texte.v2`} multiline>{item.texte}</EditableText> &raquo;
                 </blockquote>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom.v2`}>{item.prenom}</EditableText></div>
-                  <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}><EditableText id={`home.temoignages.${i}.lieu`}>{item.lieu}</EditableText></div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom.v3`}>{item.prenom}</EditableText></div>
+                  <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}><EditableText id={`home.temoignages.${i}.lieu.v2`}>{item.lieu}</EditableText></div>
                 </div>
               </div>
             ))}
