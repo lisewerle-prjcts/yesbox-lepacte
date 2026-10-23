@@ -215,7 +215,7 @@ export default function VotreCoupleCard({
               <KeyRound className="w-3.5 h-3.5" style={{ color: 'var(--brand)' }} />
               <p className="font-semibold" style={{ fontSize: 13, color: 'var(--ink)' }}>{t('Ton/ta partenaire a déjà un code ?', 'Your partner already has a code?')}</p>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>{t("S'il/elle a créé son profil de son côté sans indiquer ton code, renseigne le sien ici pour vous pairer.", 'If they created their profile separately without entering your code, enter theirs here to pair up.')}</p>
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>{t("Si ton ou ta partenaire a créé son profil de son côté sans indiquer ton code, renseigne le sien ici pour vous pairer.", 'If they created their profile separately without entering your code, enter theirs here to pair up.')}</p>
             <form action={handleJoin} className="flex gap-2">
               <input
                 name="code"
