@@ -14,7 +14,7 @@ interface MemberProgress { id: string; prenom: string | null; nom: string | null
 interface ModuleStatus { slug: string; statut: string; revealed: boolean; termine_le: string | null }
 export interface EmailEnvoye { date: string; destinataire: string; sujet: string; ok: boolean }
 export interface GrandeDateAVenir { type: 'rencontre' | 'mariage' | 'bilan'; le: string; annees: number | null; joursAvant: number; numero: number; nom: string }
-const LIBELLE_GRANDE_DATE = { rencontre: 'rencontre', mariage: 'mariage', bilan: 'bilan annuel' }
+const LIBELLE_GRANDE_DATE = { rencontre: 'anniversaire de couple', mariage: 'mariage', bilan: 'bilan annuel' }
 interface Couple {
   id: string
   numero: number
@@ -149,7 +149,7 @@ export default function CouplesClient({
   )
 }
 
-// Anniversaires de rencontre et de mariage et rendez-vous de bilan annuel
+// Anniversaires de couple et de mariage et rendez-vous de bilan annuel
 // des 90 prochains jours, pour préparer les e-mails.
 function GrandesDatesAVenir({ dates }: { dates: GrandeDateAVenir[] }) {
   return (

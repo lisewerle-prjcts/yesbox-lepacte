@@ -103,7 +103,7 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
             <strong>Couple {tache.numero}</strong>{tache.nomCouple ? ` — ${tache.nomCouple}` : ''}
           </p>
           <p style={{ fontSize: 12, color: 'var(--muted)' }}>
-            {tache.type === 'mariage' ? 'Anniversaire de mariage' : 'Anniversaire de rencontre'} · {tache.annees} an{tache.annees > 1 ? 's' : ''} le {dateLongue(tache.anniversaire)}
+            {tache.type === 'mariage' ? 'Anniversaire de mariage' : 'Anniversaire de couple'} · {tache.annees} an{tache.annees > 1 ? 's' : ''} le {dateLongue(tache.anniversaire)}
             {' · '}envoi {quand(tache.joursAvantEnvoi)}{tache.joursAvantEnvoi > 1 ? ` (${dateLongue(tache.envoiLe)})` : ''}
           </p>
         </div>

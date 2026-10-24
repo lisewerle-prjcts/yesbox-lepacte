@@ -13,7 +13,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
   { cle: 'mensuels', nom: 'Rendez-vous mensuels & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé, et l’annonce du rendez-vous annuel.' },
-  { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de rencontre (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
+  { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
   { cle: 'abonnement', nom: 'Abonnement & cartes cadeaux', description: 'Passage à l’abonnement annuel, cartes cadeaux.' },
 ]
 
@@ -712,7 +712,7 @@ ${EQUIPE.en}` },
 // Anniversaires
 // ---------------------------------------------------------------------------
 
-// Anniversaire de rencontre : un conseil différent chaque année (on reprend
+// Anniversaire de couple : un conseil différent chaque année (on reprend
 // au début après le dernier).
 const CONSEILS_RENCONTRE: { etiquette: string; fr: string; en: string }[] = [
   {
@@ -766,10 +766,10 @@ export function cleAnniversaireRencontre(annees: number) {
 
 const ANNIVERSAIRES: ModeleEmail[] = [
   ...CONSEILS_RENCONTRE.map((conseil, i): ModeleEmail => ({
-    cle: `anniv_rencontre_${i + 1}`, famille: 'anniversaires', nom: `Anniversaire de rencontre — année ${i + 1} : ${conseil.etiquette}`, rappel: true,
+    cle: `anniv_rencontre_${i + 1}`, famille: 'anniversaires', nom: `Anniversaire de couple — année ${i + 1} : ${conseil.etiquette}`, rappel: true,
     etiquette: conseil.etiquette,
     facultatives: ['mot_personnel'],
-    quand: `Le jour J de l’anniversaire de rencontre, une fois validé dans Vue d’ensemble > Tâches, la ${i + 1}${i ? 'e' : 're'} année (puis tous les ${CONSEILS_RENCONTRE.length} ans : année ${i + 1 + CONSEILS_RENCONTRE.length}, ${i + 1 + 2 * CONSEILS_RENCONTRE.length}…).`,
+    quand: `Le jour J de l’anniversaire de couple, une fois validé dans Vue d’ensemble > Tâches, la ${i + 1}${i ? 'e' : 're'} année (puis tous les ${CONSEILS_RENCONTRE.length} ans : année ${i + 1 + CONSEILS_RENCONTRE.length}, ${i + 1 + 2 * CONSEILS_RENCONTRE.length}…).`,
     fr: { objet: 'Joyeux anniversaire de couple ! {annees} aujourd’hui 💞', corps: `${BONJOUR.fr}
 
 Il y a {annees}, jour pour jour, votre histoire commençait. Toute l’équipe YES BOX vous souhaite un très bel anniversaire de couple !

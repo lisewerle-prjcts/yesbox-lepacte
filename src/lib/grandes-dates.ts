@@ -15,7 +15,7 @@ type AdminClient = ReturnType<typeof createAdminClient>
 export type TypeGrandeDate = 'rencontre' | 'mariage'
 
 export const LIBELLES_GRANDE_DATE: Record<TypeGrandeDate, string> = {
-  rencontre: 'Anniversaire de rencontre',
+  rencontre: 'Anniversaire de couple',
   mariage: 'Anniversaire de mariage',
 }
 
@@ -114,7 +114,7 @@ export async function envoyerAlertesGrandesDates(admin: AdminClient): Promise<nu
 
 // ---------------------------------------------------------------------------
 // E-mails d'anniversaire aux couples (rappels, désactivables) :
-//   - anniversaire de rencontre : le jour J, avec un conseil différent
+//   - anniversaire de couple : le jour J, avec un conseil différent
 //     chaque année (modèles « anniv_rencontre_1 », « anniv_rencontre_2 »…) ;
 //   - anniversaire de mariage : une semaine avant, avec le nom des noces et
 //     une idée de petit cadeau symbolique.
@@ -359,7 +359,7 @@ export async function envoyerRappelsValidation(admin: AdminClient): Promise<numb
       const ok = await envoyerMail({
         nom: 'YES BOX Tâches',
         to: destinataire,
-        subject: `À valider : e-mail ${d.type === 'mariage' ? "d'anniversaire de mariage" : "d'anniversaire de rencontre"} du Couple ${couple.numero}, envoi ${jours === 0 ? "aujourd'hui" : jours === 1 ? 'demain' : `dans ${jours} jours`}`,
+        subject: `À valider : e-mail ${d.type === 'mariage' ? "d'anniversaire de mariage" : "d'anniversaire de couple"} du Couple ${couple.numero}, envoi ${jours === 0 ? "aujourd'hui" : jours === 1 ? 'demain' : `dans ${jours} jours`}`,
         body: `
           <p>L'e-mail d'anniversaire de ce couple n'est pas encore validé. Sans validation, il ne partira pas.</p>
           <p><strong>Couple :</strong> ${couple.numero}${couple.nom_couple ? ` — ${echapper(couple.nom_couple)}` : ''}<br><strong>${libelle} :</strong> ${formater(d.le)} (${d.annees} an${d.annees > 1 ? 's' : ''})<br><strong>Envoi prévu :</strong> ${quand}</p>

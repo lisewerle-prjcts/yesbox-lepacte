@@ -11,7 +11,7 @@ export const maxDuration = 60
 // l'abonnement annuel 5 jours avant la fin du mois, avertissements avant
 // l'effacement des données (cf. src/lib/rappels-email.ts) ; alerte à
 // l'équipe un mois avant les grandes dates des couples, e-mails d'anniversaire
-// de rencontre (jour J) et de mariage (J-7) une fois validés, rappel à l'équipe
+// de couple (jour J) et de mariage (J-7) une fois validés, rappel à l'équipe
 // s'ils ne le sont pas 3 jours avant (src/lib/grandes-dates.ts).
 export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET
