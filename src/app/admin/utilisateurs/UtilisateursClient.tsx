@@ -15,6 +15,9 @@ interface User {
   hasCouple: boolean
   emailConfirme: boolean
   code: string | null
+  derniereConnexion: string | null
+  /** Fin de l'accès offert au couple (code gratuit, carte cadeau, parrainage). */
+  finAcces: string | null
 }
 
 interface CodeDisponible { code: string; restants: number }
@@ -38,6 +41,16 @@ function texteRecherche(user: User) {
     `${d.getFullYear()}-${mm}-${jj}`,
     d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
   ].filter(Boolean).join(' '))
+}
+
+const dateLongue = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+
+// Fin de l'accès offert : date, « illimité » (2999), ou « terminé » si passée.
+function FinAcces({ iso }: { iso: string }) {
+  const fin = new Date(iso)
+  if (fin.getFullYear() >= 2999) return <span>— illimité</span>
+  if (fin.getTime() < Date.now()) return <span style={{ color: '#b45309' }}>— terminé le {dateLongue(iso)}</span>
+  return <span>— jusqu’au {dateLongue(iso)}</span>
 }
 
 export default function UtilisateursClient({ users, codesDisponibles }: { users: User[]; codesDisponibles: CodeDisponible[] }) {
@@ -164,7 +177,11 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                   </div>
                   <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{user.email}</div>
                   <div style={{ fontSize: 11, color: 'var(--muted)' }}>
-                    Inscrit·e le {new Date(user.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    Inscrit·e le {dateLongue(user.createdAt)}
+                    {' · '}
+                    {user.derniereConnexion
+                      ? <>Dernière connexion le {dateLongue(user.derniereConnexion)}</>
+                      : <span style={{ color: '#b45309' }}>jamais connecté·e</span>}
                   </div>
                   {shown && (
                     <div className="mt-1 flex items-center gap-2" style={{ fontSize: 11 }}>
@@ -177,6 +194,12 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                   {user.code && (
                     <div className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--sage)' }}>
                       <Ticket className="w-3 h-3" /> Code <span className="font-mono">{user.code}</span>
+                      {user.finAcces && <FinAcces iso={user.finAcces} />}
+                    </div>
+                  )}
+                  {!user.code && user.finAcces && (
+                    <div className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--sage)' }}>
+                      <Ticket className="w-3 h-3" /> Accès offert <FinAcces iso={user.finAcces} />
                     </div>
                   )}
                   {codeOuvert === user.id && (
