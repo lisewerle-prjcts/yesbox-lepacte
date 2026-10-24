@@ -16,6 +16,7 @@ import { enregistrerLangueProfil, langueDuProfil } from '@/lib/i18n/langue-profi
 import { cookies } from 'next/headers'
 import { t, DEFAULT_LOCALE, LOCALE_COOKIE } from '@/lib/i18n/locale'
 import { z } from 'zod'
+import { adresseIp, limiteDepassee, verifierAntiRobot } from '@/lib/limites'
 import type { Locale } from '@/lib/i18n/locale'
 
 function inscriptionSchema(locale: Locale) {
@@ -53,6 +54,15 @@ export async function inscription(formData: FormData) {
   }
 
   const { prenom, email, password } = parsed.data
+
+  // Case anti-robot, puis au plus 5 inscriptions par heure et 20 par jour
+  // depuis une même adresse IP.
+  if (!(await verifierAntiRobot(formData.get('cf-turnstile-response') as string | null))) {
+    return { error: t(locale, 'La vérification anti-robot a échoué. Réessaie.', 'The anti-bot check failed. Please try again.'), antiRobot: true }
+  }
+  if (await limiteDepassee(`inscription:ip:${await adresseIp()}`, [{ max: 5, minutes: 60 }, { max: 20, minutes: 24 * 60 }])) {
+    return { error: t(locale, 'Trop d’inscriptions depuis cette connexion. Réessaie dans une heure.', 'Too many sign-ups from this connection. Please try again in an hour.') }
+  }
 
   // Âge minimum (majorité numérique en France : 15 ans) et consentement
   // explicite au traitement des données sensibles (RGPD art. 9 : religion,
@@ -254,6 +264,12 @@ export async function renvoyerConfirmation(email: string) {
   if (!parsed.success) {
     return { error: t(locale, 'Email invalide', 'Invalid email') }
   }
+
+  // Au plus 1 renvoi par minute et 5 par jour pour une même adresse, et 10
+  // par heure depuis une même connexion.
+  const trop = t(locale, 'Tu as déjà demandé plusieurs renvois. Attends quelques minutes avant de réessayer.', 'You already asked for several resends. Please wait a few minutes before trying again.')
+  if (await limiteDepassee(`confirmation:ip:${await adresseIp()}`, [{ max: 10, minutes: 60 }])) return { error: trop }
+  if (await limiteDepassee(`confirmation:email:${parsed.data.toLowerCase()}`, [{ max: 1, minutes: 1 }, { max: 5, minutes: 24 * 60 }])) return { error: trop }
 
   if (gmailConfigure()) {
     const res = await renvoyerMailConfirmation(parsed.data)

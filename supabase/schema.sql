@@ -1553,3 +1553,18 @@ alter table public.validations_emails enable row level security;
 -- seulement (Vue d'ensemble > Tâches), par langue : { "fr": { "objet",
 -- "corps" }, "en": { … } }. Vide : texte du modèle.
 alter table public.validations_emails add column if not exists contenu jsonb;
+
+-- ============================================================
+-- Migration : limites d'actions publiques (inscription, renvoi de l'e-mail
+-- de confirmation), cf. src/lib/limites.ts. Purgée chaque nuit.
+-- Écrite uniquement par le serveur (clé service).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.limites_actions (
+  id bigint generated always as identity primary key,
+  cle text not null,
+  cree_le timestamptz not null default now()
+);
+create index if not exists limites_actions_cle_idx on public.limites_actions (cle, cree_le desc);
+alter table public.limites_actions enable row level security;
+-- Aucune policy : accessible uniquement via le service role.

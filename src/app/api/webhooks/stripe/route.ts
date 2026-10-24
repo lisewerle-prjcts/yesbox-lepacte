@@ -34,6 +34,13 @@ async function enregistrerFormule(admin: ReturnType<typeof createAdminClient>, c
   ).eq('id', coupleId)
 }
 
+// Écriture en base qui doit réussir : une erreur Supabase est levée, pour que
+// l'événement Stripe soit renvoyé plus tard (cf. le try/catch de POST).
+async function ecrire(requete: PromiseLike<{ error: { message: string } | null }>) {
+  const { error } = await requete
+  if (error) throw new Error(error.message)
+}
+
 export async function POST(req: Request) {
   const signature = req.headers.get('stripe-signature')
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -60,76 +67,85 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true, deja_traite: true })
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      // Achat d'une carte cadeau (paiement unique, page /offrir) : le code
-      // est créé ici et envoyé par e-mail à la personne qui l'a achetée.
-      if (session.mode === 'payment' && session.metadata?.type === 'carte_cadeau') {
-        await enregistrerCarteCadeau(admin, session)
+  // En cas d'erreur pendant le traitement, l'événement n'est plus marqué
+  // comme traité et Stripe le renvoie plus tard (réponse 500) : un paiement
+  // n'est jamais perdu.
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session
+        // Achat d'une carte cadeau (paiement unique, page /offrir) : le code
+        // est créé ici et envoyé par e-mail à la personne qui l'a achetée.
+        if (session.mode === 'payment' && session.metadata?.type === 'carte_cadeau') {
+          await enregistrerCarteCadeau(admin, session)
+          break
+        }
+        if (session.mode !== 'subscription' || !session.subscription) break
+        const coupleId = session.metadata?.couple_id
+        if (!coupleId) break
+
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+        const periodEnd = subscription.items.data[0]?.current_period_end
+
+        await ecrire(admin.from('couples').update({
+          stripe_customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id,
+          stripe_subscription_id: subscription.id,
+          subscription_status: 'actif',
+          subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+          subscription_cancel_at_period_end: false,
+          subscription_canceled_at: null,
+        }).eq('id', coupleId))
+        await enregistrerFormule(admin, coupleId, subscription)
         break
       }
-      if (session.mode !== 'subscription' || !session.subscription) break
-      const coupleId = session.metadata?.couple_id
-      if (!coupleId) break
 
-      const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-      const periodEnd = subscription.items.data[0]?.current_period_end
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription
+        const coupleId = await trouverCoupleId(admin, subscription)
+        if (!coupleId) break
 
-      await admin.from('couples').update({
-        stripe_customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id,
-        stripe_subscription_id: subscription.id,
-        subscription_status: 'actif',
-        subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
-        subscription_cancel_at_period_end: false,
-        subscription_canceled_at: null,
-      }).eq('id', coupleId)
-      await enregistrerFormule(admin, coupleId, subscription)
-      break
-    }
+        const periodEnd = subscription.items.data[0]?.current_period_end
+        const statut = subscription.status === 'active' || subscription.status === 'trialing' ? 'actif'
+          : subscription.status === 'past_due' || subscription.status === 'unpaid' || subscription.status === 'incomplete' ? 'incomplet'
+          : 'expire'
 
-    case 'customer.subscription.updated': {
-      const subscription = event.data.object as Stripe.Subscription
-      const coupleId = await trouverCoupleId(admin, subscription)
-      if (!coupleId) break
-
-      const periodEnd = subscription.items.data[0]?.current_period_end
-      const statut = subscription.status === 'active' || subscription.status === 'trialing' ? 'actif'
-        : subscription.status === 'past_due' || subscription.status === 'unpaid' || subscription.status === 'incomplete' ? 'incomplet'
-        : 'expire'
-
-      await admin.from('couples').update({
-        subscription_status: statut,
-        subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
-        subscription_cancel_at_period_end: subscription.cancel_at_period_end,
-      }).eq('id', coupleId)
-      await enregistrerFormule(admin, coupleId, subscription)
-      break
-    }
-
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object as Stripe.Subscription
-      const coupleId = await trouverCoupleId(admin, subscription)
-      if (!coupleId) break
-
-      await admin.from('couples').update({
-        subscription_status: 'expire',
-        subscription_cancel_at_period_end: false,
-      }).eq('id', coupleId)
-      // L'accès payé se termine ici : les 24 mois avant effacement des
-      // données (sans nouvelle visite) partent au plus tôt de maintenant
-      // (cf. src/lib/conservation.ts, recalculé chaque nuit).
-      const effacementMin = ajouterMois(new Date(), INACTIVITE_MOIS)
-      const { data: actuel } = await admin.from('couples').select('effacement_prevu_le').eq('id', coupleId).maybeSingle()
-      if (!actuel?.effacement_prevu_le || new Date(actuel.effacement_prevu_le).getTime() < new Date(effacementMin).getTime()) {
-        await admin.from('couples').update({ effacement_prevu_le: effacementMin }).eq('id', coupleId)
+        await ecrire(admin.from('couples').update({
+          subscription_status: statut,
+          subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+          subscription_cancel_at_period_end: subscription.cancel_at_period_end,
+        }).eq('id', coupleId))
+        await enregistrerFormule(admin, coupleId, subscription)
+        break
       }
-      await admin.from('couples').update({ subscription_annuel_prevu_le: null }).eq('id', coupleId)
-      break
-    }
 
-    default:
-      break
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription
+        const coupleId = await trouverCoupleId(admin, subscription)
+        if (!coupleId) break
+
+        await ecrire(admin.from('couples').update({
+          subscription_status: 'expire',
+          subscription_cancel_at_period_end: false,
+        }).eq('id', coupleId))
+        // L'accès payé se termine ici : les 24 mois avant effacement des
+        // données (sans nouvelle visite) partent au plus tôt de maintenant
+        // (cf. src/lib/conservation.ts, recalculé chaque nuit).
+        const effacementMin = ajouterMois(new Date(), INACTIVITE_MOIS)
+        const { data: actuel } = await admin.from('couples').select('effacement_prevu_le').eq('id', coupleId).maybeSingle()
+        if (!actuel?.effacement_prevu_le || new Date(actuel.effacement_prevu_le).getTime() < new Date(effacementMin).getTime()) {
+          await ecrire(admin.from('couples').update({ effacement_prevu_le: effacementMin }).eq('id', coupleId))
+        }
+        await admin.from('couples').update({ subscription_annuel_prevu_le: null }).eq('id', coupleId)
+        break
+      }
+
+      default:
+        break
+    }
+  } catch (err) {
+    await admin.from('stripe_events').delete().eq('id', event.id)
+    console.error(`[stripe] ${event.type} ${event.id} : ${(err as Error).message}`)
+    return NextResponse.json({ error: 'Traitement impossible, réessayer plus tard' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })

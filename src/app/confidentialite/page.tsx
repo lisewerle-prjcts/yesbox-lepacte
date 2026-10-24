@@ -42,6 +42,7 @@ export default async function Confidentialite() {
     ['Stripe Payments Europe, Ltd.', t('Paiement de l’abonnement et des cartes cadeaux (nous ne voyons jamais votre numéro de carte)', 'Payment for subscriptions and gift cards (we never see your card number)'), t('Irlande (UE), avec transferts possibles vers les États-Unis', 'Ireland (EU), with possible transfers to the United States')],
     ['Google LLC (Gmail)', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
     ['Resend Inc.', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
+    ['Cloudflare, Inc. (Turnstile)', t('Vérification anti-robot à l’inscription (adresse IP et informations techniques du navigateur, sans cookie publicitaire)', 'Anti-bot check at sign-up (IP address and technical browser information, no advertising cookie)'), t('États-Unis', 'United States')],
   ]
 
   return (

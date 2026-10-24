@@ -9,6 +9,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 import { inscription, renvoyerConfirmation } from '@/app/actions/auth'
 import CharteBetaFenetre from '@/components/CharteBetaFenetre'
+import AntiRobot from '@/components/AntiRobot'
 import { estCodeCharteBeta } from '@/lib/charte-beta'
 import { Eye, EyeOff, MailCheck, Lock, CheckCircle2 } from 'lucide-react'
 
@@ -29,10 +30,13 @@ function SubmitButton({ submitId, submitLabel }: { submitId: string; submitLabel
 export function ConfirmationEmail({ email }: { email: string }) {
   const t = useT()
   const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [resendError, setResendError] = useState<string | null>(null)
 
   async function handleResend() {
     setResendState('sending')
+    setResendError(null)
     const result = await renvoyerConfirmation(email)
+    if (result?.error) setResendError(result.error)
     setResendState(result?.error ? 'idle' : 'sent')
   }
 
@@ -50,6 +54,7 @@ export function ConfirmationEmail({ email }: { email: string }) {
         <strong>{t('Pense à vérifier tes spams.', 'Be sure to check your spam folder.')}</strong>{' '}
         {t('Ton e-mail de bienvenue, avec ton code couple, suivra juste après la confirmation.', 'Your welcome email, with your couple code, will follow right after you confirm.')}
       </p>
+      {resendError && <Alert type="error" message={resendError} className="mb-3" />}
       {resendState === 'sent' ? (
         <Alert type="success" message={t('Email renvoyé ! Vérifie ta boîte mail (et tes spams).', 'Email resent! Check your inbox (and your spam folder).')} />
       ) : (
@@ -79,6 +84,7 @@ export default function InscriptionForm({
 }) {
   const t = useT()
   const [error, setError] = useState<string | null>(null)
+  const [essaiAntiRobot, setEssaiAntiRobot] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [codeAvantage, setCodeAvantage] = useState(codeParrainageInitial)
   // Code des testeurs (BETANLR26, BETAFACEBOOK26) : la charte de la bêta s'ouvre et doit être
@@ -116,6 +122,8 @@ export default function InscriptionForm({
     const result = await inscription(formData)
     if (result?.error) {
       setError(result.error)
+      // Un jeton anti-robot ne sert qu'une fois : nouvelle case pour le prochain essai.
+      setEssaiAntiRobot(n => n + 1)
       if ('charteBeta' in result && result.charteBeta) setCharteOuverte(true)
     }
     else if (result?.needsConfirmation) onNeedsConfirmation(result.email)
@@ -264,6 +272,8 @@ export default function InscriptionForm({
             </span>
           </label>
         </div>
+
+        <AntiRobot essai={essaiAntiRobot} />
 
         <SubmitButton submitId={submitId} submitLabel={submitLabel} />
       </form>
