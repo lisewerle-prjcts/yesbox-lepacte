@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { envoyerAlertesGrandesDates } from '@/lib/grandes-dates'
+import { envoyerAlertesGrandesDates, envoyerEmailsAnniversaires } from '@/lib/grandes-dates'
 import { envoyerRelancesInactivite, envoyerRappelsMensuels, envoyerPropositionsAnnuel, envoyerAvertissementsEffacement, rappelsConfigures } from '@/lib/rappels-email'
 
 export const runtime = 'nodejs'
@@ -10,7 +10,8 @@ export const maxDuration = 60
 // sans avancer, e-mails mensuels une fois le pacte signé et proposition de
 // l'abonnement annuel 5 jours avant la fin du mois, avertissements avant
 // l'effacement des données (cf. src/lib/rappels-email.ts) ; alerte à
-// l'équipe un mois avant les grandes dates des couples (src/lib/grandes-dates.ts).
+// l'équipe un mois avant les grandes dates des couples, e-mails d'anniversaire
+// de rencontre (jour J) et de mariage (J-7) (src/lib/grandes-dates.ts).
 export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret || req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
@@ -25,7 +26,8 @@ export async function GET(req: Request) {
     const propositionsAnnuel = await envoyerPropositionsAnnuel(admin)
     const avertissementsEffacement = await envoyerAvertissementsEffacement(admin)
     const alertesGrandesDates = await envoyerAlertesGrandesDates(admin)
-    return NextResponse.json({ relances, mensuels, propositionsAnnuel, avertissementsEffacement, alertesGrandesDates })
+    const anniversaires = await envoyerEmailsAnniversaires(admin)
+    return NextResponse.json({ relances, mensuels, propositionsAnnuel, avertissementsEffacement, alertesGrandesDates, anniversaires })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }

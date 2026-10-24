@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Lock, Unlock, Eye, RotateCcw, Send, Check } from 'lucide-react'
+import { Lock, Unlock, Eye, RotateCcw, Check } from 'lucide-react'
 import {
   adminUnlockModule, adminLockModule, adminRevealModule,
   adminResetModule, adminSendEmail,
 } from '@/app/actions/admin'
 import Alert from '@/components/ui/Alert'
+import ComposeurEmail, { BoutonsEnvoi, MESSAGE_VIDE, type MessageManuel, type ModeEnvoi, type ModeleComposeur } from '@/components/admin/ComposeurEmail'
 
 interface Couple { id: string; created_at: string; members: { prenom?: string; email: string }[] }
 interface Precommande { id: string; prenom: string; email: string }
@@ -17,22 +18,24 @@ export default function AdminActionsClient({
   precommandes,
   defaultCoupleId,
   modules,
+  modeles,
 }: {
   couples: Couple[]
   precommandes: Precommande[]
   defaultCoupleId?: string
   modules: ModuleInfo[]
+  modeles: ModeleComposeur[]
 }) {
   const [selectedCouple, setSelectedCouple] = useState(defaultCoupleId || couples[0]?.id || '')
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [done, setDone] = useState<Record<string, boolean>>({})
   const [erreur, setErreur] = useState<string | null>(null)
 
-  // Email custom
+  // Email écrit à la main (ou à partir d'un modèle)
   const [emailTo, setEmailTo] = useState('')
-  const [emailSubject, setEmailSubject] = useState('')
-  const [emailBody, setEmailBody] = useState('')
-  const [emailStatus, setEmailStatus] = useState<'idle'|'sending'|'sent'|'error'>('idle')
+  const [message, setMessage] = useState<MessageManuel>(MESSAGE_VIDE)
+  const [envoi, setEnvoi] = useState<ModeEnvoi | null>(null)
+  const [emailResultat, setEmailResultat] = useState<{ ok: boolean; texte: string } | null>(null)
 
   async function run(key: string, fn: () => Promise<{ success?: boolean; error?: string }>, confirmation?: string) {
     if (confirmation && !window.confirm(confirmation)) return
@@ -56,12 +59,21 @@ export default function AdminActionsClient({
   const couple = couples.find(c => c.id === selectedCouple)
   const coupleLabel = couple?.members.map(m => m.prenom || m.email).join(' & ') || '—'
 
-  async function sendEmail() {
-    setEmailStatus('sending')
-    const res = await adminSendEmail(emailTo, emailSubject, emailBody)
-    setEmailStatus(res.error ? 'error' : 'sent')
-    if (!res.error) { setEmailTo(''); setEmailSubject(''); setEmailBody('') }
-    setTimeout(() => setEmailStatus('idle'), 3000)
+  async function sendEmail(mode: ModeEnvoi) {
+    setEnvoi(mode)
+    setEmailResultat(null)
+    try {
+      const res = await adminSendEmail(emailTo, message, mode)
+      if (res.error) setEmailResultat({ ok: false, texte: res.error })
+      else {
+        setEmailResultat({ ok: true, texte: `E-mail envoyé à ${emailTo} (version ${res.langue === 'en' ? 'anglaise' : 'française'}).` })
+        setEmailTo('')
+        setMessage(MESSAGE_VIDE)
+      }
+    } catch {
+      setEmailResultat({ ok: false, texte: "L'envoi a échoué. Recharge la page et réessaie." })
+    }
+    setEnvoi(null)
   }
 
   return (
@@ -124,7 +136,7 @@ export default function AdminActionsClient({
       {/* Email custom */}
       <div className="card p-5">
         <h2 className="font-semibold mb-1" style={{ fontSize: 15 }}>Envoyer un email</h2>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Email libre vers n&apos;importe quelle adresse.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Vers n&apos;importe quelle adresse : un message écrit de zéro ou repris d&apos;un e-mail automatique. « Selon la langue choisie » utilise la langue de la personne si l&apos;adresse est inscrite (sinon le français).</p>
 
         <div className="space-y-3">
           <div>
@@ -147,21 +159,14 @@ export default function AdminActionsClient({
             </div>
             <input type="email" className="field" placeholder="ou tape une adresse" value={emailTo} onChange={e => setEmailTo(e.target.value)} />
           </div>
-          <div>
-            <label className="flabel">Objet</label>
-            <input type="text" className="field" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Objet de l'email" />
-          </div>
-          <div>
-            <label className="flabel">Message (texte, les retours à la ligne sont conservés)</label>
-            <textarea className="field" rows={6} value={emailBody} onChange={e => setEmailBody(e.target.value)} placeholder="Bonjour,&#10;&#10;..." />
-          </div>
-          <button
-            onClick={sendEmail}
-            disabled={!emailTo || !emailSubject || !emailBody || emailStatus === 'sending'}
-            className="btn-brand flex items-center gap-2"
-          >
-            {emailStatus === 'sending' ? 'Envoi…' : emailStatus === 'sent' ? <><Check className="w-4 h-4" /> Envoyé !</> : emailStatus === 'error' ? 'Erreur — réessaie' : <><Send className="w-4 h-4" /> Envoyer</>}
-          </button>
+          <ComposeurEmail
+            modeles={modeles}
+            message={message}
+            onChange={setMessage}
+            aideVariables="Remplacées automatiquement si l’adresse est celle d’une personne inscrite : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple)."
+          />
+          {emailResultat && <Alert type={emailResultat.ok ? 'success' : 'error'} message={emailResultat.texte} />}
+          <BoutonsEnvoi message={emailTo.trim() ? message : { ...MESSAGE_VIDE }} envoi={envoi} onEnvoyer={sendEmail} libelle="" />
         </div>
       </div>
     </div>

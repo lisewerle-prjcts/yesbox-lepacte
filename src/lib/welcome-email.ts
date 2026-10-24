@@ -1,78 +1,15 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { envoyerMail, mailConfigure } from '@/lib/mailer'
+import { mailConfigure } from '@/lib/mailer'
+import { envoyerModele } from '@/lib/modeles-email/serveur'
 import type { Locale } from '@/lib/i18n/locale'
 import { langueDuProfil } from '@/lib/i18n/langue-profil'
 
-export const WELCOME_EMAIL_DEFAULTS = {
-  email_bienvenue_subject: 'Bienvenue sur YES BOX — voici ton code couple',
-  email_bienvenue_body: `Bonjour {prenom},
-
-Ton compte YES BOX — Le Pacte est créé !
-
-Voici ton code couple, à transmettre à la personne avec qui tu veux signer ton pacte :
-
-{code}
-
-Elle pourra le saisir lors de son inscription, ou depuis son espace.
-
-À très vite,
-L'équipe YES BOX`,
-}
-
-// Version anglaise (non modifiable depuis l'admin, qui édite la version
-// française).
-const WELCOME_EMAIL_EN = {
-  subject: 'Welcome to YES BOX — here is your couple code',
-  body: `Hello {prenom},
-
-Your YES BOX — Le Pacte account has been created!
-
-Here is your couple code, to share with the person you want to sign your pact with:
-
-{code}
-
-They can enter it when signing up, or from their account.
-
-See you soon,
-The YES BOX team`,
-}
-
+// Texte : modèle « bienvenue » (src/lib/modeles-email/catalogue.ts),
+// modifiable depuis l'admin.
 // Renvoie true si l'e-mail est parti, false sinon (envoi non configuré ou erreur).
 export async function sendWelcomeEmail(email: string, prenom: string, code: string, locale: Locale = 'fr'): Promise<boolean> {
   if (!mailConfigure()) return false
-
-  const admin = createAdminClient()
-  const { data: settings } = await admin
-    .from('settings')
-    .select('key, value')
-    .in('key', ['email_bienvenue_subject', 'email_bienvenue_body'])
-
-  const map: Record<string, string> = {}
-  settings?.forEach(s => { map[s.key] = s.value })
-
-  const subjectTemplate = locale === 'en' ? WELCOME_EMAIL_EN.subject : map.email_bienvenue_subject ?? WELCOME_EMAIL_DEFAULTS.email_bienvenue_subject
-  const bodyTemplate = locale === 'en' ? WELCOME_EMAIL_EN.body : map.email_bienvenue_body ?? WELCOME_EMAIL_DEFAULTS.email_bienvenue_body
-
-  // Le prénom est saisi librement à l'inscription : on neutralise tout HTML
-  // (sinon un « prénom » pourrait injecter un lien piégé dans un e-mail
-  // envoyé depuis notre adresse) et les retours à la ligne dans l'objet.
-  const subject = subjectTemplate.replace(/\{prenom\}/g, prenom).replace(/\{code\}/g, code).replace(/[\r\n]+/g, ' ')
-  const body = echapperHtml(bodyTemplate.replace(/\{prenom\}/g, prenom).replace(/\{code\}/g, code))
-
-  return envoyerMail({
-    to: email,
-    subject,
-    body: body.split('\n').map(line => `<p style="margin:0 0 12px;">${line || '&nbsp;'}</p>`).join(''),
-  })
-}
-
-function echapperHtml(texte: string) {
-  return texte
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+  return envoyerModele({ to: email, cle: 'bienvenue', locale, vars: { prenom, code } })
 }
 
 // Envoie l'e-mail de bienvenue (avec le code couple) une seule fois, et

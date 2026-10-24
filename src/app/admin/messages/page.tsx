@@ -1,17 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { WELCOME_EMAIL_DEFAULTS } from '@/lib/welcome-email'
+import { FAMILLES, MODELES_EMAIL, DESCRIPTION_VARIABLES, variablesDuModele } from '@/lib/modeles-email/catalogue'
+import { contenusModeles } from '@/lib/modeles-email/serveur'
 import MessagesEditor from './MessagesEditor'
+import EditeurModeles from './EditeurModeles'
 
 const DEFAULT_MESSAGES: Record<string, { label: string; default: string; multiline?: boolean }> = {
-  email_bienvenue_subject: {
-    label: 'Objet de l\'email de bienvenue (envoyé à chaque inscription)',
-    default: WELCOME_EMAIL_DEFAULTS.email_bienvenue_subject,
-  },
-  email_bienvenue_body: {
-    label: 'Corps de l\'email de bienvenue — variables {prenom} et {code} (code couple)',
-    default: WELCOME_EMAIL_DEFAULTS.email_bienvenue_body,
-    multiline: true,
-  },
   module_debloque_message: {
     label: 'Message affiché quand un module est débloqué',
     default: 'Le module suivant est maintenant disponible. À vous deux de décider quand vous êtes prêts.',
@@ -38,12 +31,34 @@ export default async function AdminMessages() {
     multiline: meta.multiline ?? false,
   }))
 
+  const contenus = await contenusModeles()
+  const modeles = MODELES_EMAIL.map(m => ({
+    cle: m.cle,
+    famille: m.famille,
+    nom: m.nom,
+    quand: m.quand,
+    rappel: !!m.rappel,
+    etiquette: m.etiquette ?? null,
+    facultatives: m.facultatives ?? [],
+    obligatoires: m.obligatoires ?? [],
+    variables: variablesDuModele(m).map(v => ({ nom: v, description: DESCRIPTION_VARIABLES[v] ?? '' })),
+    defaut: { fr: m.fr, en: m.en },
+    actuel: contenus[m.cle],
+  }))
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Messages & emails</h1>
-        <p style={{ fontSize: 14, color: 'var(--muted)' }}>Modifie les messages automatiques. Les variables <code style={{ background: 'var(--cream-2)', padding: '1px 5px', borderRadius: 4 }}>{'{prenom}'}</code> sont remplacées automatiquement.</p>
+        <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Messages & e-mails</h1>
+        <p style={{ fontSize: 14, color: 'var(--muted)' }}>
+          Tous les e-mails automatiques envoyés aux couples, en français et en anglais, classés par famille. Les variables
+          entre accolades, comme <code style={{ background: 'var(--cream-2)', padding: '1px 5px', borderRadius: 4 }}>{'{prenom}'}</code>, sont remplacées automatiquement.
+          Pour envoyer l’un de ces e-mails à la main, va dans Actions manuelles.
+        </p>
       </div>
+      <EditeurModeles familles={FAMILLES} modeles={modeles} />
+
+      <h2 className="font-serif text-2xl font-bold mt-10 mb-3" style={{ color: 'var(--ink)' }}>Messages affichés sur le site</h2>
       <MessagesEditor messages={messages} />
     </div>
   )

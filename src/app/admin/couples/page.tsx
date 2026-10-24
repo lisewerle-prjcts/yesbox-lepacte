@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { dernieresConnexions, modulesTerminesParCouple } from '@/lib/segments-donnees'
 import { prochainesGrandesDates } from '@/lib/grandes-dates'
-import CouplesClient, { type EmailEnvoye } from './CouplesClient'
+import CouplesClient, { type EmailEnvoye, type GrandeDateAVenir } from './CouplesClient'
 
 const LIBELLES_NOTIFICATION: Record<string, string> = {
   reponses_a_ton_tour: 'à ton tour de répondre',
@@ -20,7 +20,7 @@ const LIBELLES_RAPPEL: Record<string, string> = {
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
-  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules, connexions, terminesParCouple, { data: journalEmails }, { data: rappels }] = await Promise.all([
+  const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules, connexions, terminesParCouple, { data: journalEmails }, { data: rappels }, { data: signatures }] = await Promise.all([
     supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, date_mariage, created_at, derniere_relance_le').order('numero', { ascending: false }),
     supabase.from('profiles').select('id, prenom, nom, email, couple_id, role, rappels_email, email_bienvenue_envoye_le').order('email'),
     getEffectiveModules(),
@@ -29,7 +29,10 @@ export default async function AdminCouples() {
     // Table absente (SQL pas encore exécuté) : data null, la page reste utilisable.
     supabase.from('emails_envoyes').select('destinataire, sujet, ok, envoye_le').order('envoye_le', { ascending: false }).limit(10000),
     supabase.from('rappels_envoyes').select('couple_id, type, envoye_le'),
+    // Requête à part : si la colonne manque en base, le reste s'affiche.
+    supabase.from('couples').select('id, rdv_annuel_le'),
   ])
+  const rdvAnnuelParCouple = new Map((signatures ?? []).map(s => [s.id, s.rdv_annuel_le as string | null]))
 
   const questionCountBySlug: Record<string, number> = {}
   for (const m of effectiveModules) questionCountBySlug[m.slug] = m.questions.length
@@ -115,6 +118,7 @@ export default async function AdminCouples() {
       nom_couple: couple.nom_couple,
       date_anniversaire: couple.date_anniversaire,
       date_mariage: couple.date_mariage,
+      rdv_annuel_le: rdvAnnuelParCouple.get(couple.id) ?? null,
       created_at: couple.created_at,
       derniere_connexion: derniereConnexion,
       emails,
@@ -123,13 +127,22 @@ export default async function AdminCouples() {
     }
   })
 
-  // Anniversaires de rencontre et de mariage des 90 prochains jours, pour
-  // préparer les e-mails (une alerte part aussi par e-mail un mois avant).
-  const grandesDates = couplesData
-    .flatMap(c => prochainesGrandesDates(c).map(d => ({ ...d, numero: c.numero, nom: c.nom_couple || c.members.map(m => m.prenom || m.email).join(' & ') })))
+  // Anniversaires de rencontre et de mariage et rendez-vous de bilan annuel
+  // des 90 prochains jours, pour préparer les e-mails (une alerte part aussi
+  // par e-mail un mois avant les anniversaires).
+  const maintenant = new Date()
+  const aujourdhui = Date.UTC(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate())
+  const nomDu = (c: (typeof couplesData)[number]) => c.nom_couple || c.members.map(m => m.prenom || m.email).join(' & ')
+  const grandesDates: GrandeDateAVenir[] = [
+    ...couplesData.flatMap(c => prochainesGrandesDates(c).map(d => ({ type: d.type, le: d.le.toISOString(), annees: d.annees, joursAvant: d.joursAvant, numero: c.numero, nom: nomDu(c) }))),
+    ...couplesData.flatMap(c => {
+      if (!c.rdv_annuel_le) return []
+      const jours = Math.round((Date.parse(`${c.rdv_annuel_le.slice(0, 10)}T00:00:00Z`) - aujourdhui) / (24 * 60 * 60 * 1000))
+      return jours >= 0 ? [{ type: 'bilan' as const, le: `${c.rdv_annuel_le.slice(0, 10)}T12:00:00Z`, annees: null, joursAvant: jours, numero: c.numero, nom: nomDu(c) }] : []
+    }),
+  ]
     .filter(d => d.joursAvant <= 90)
     .sort((a, b) => a.joursAvant - b.joursAvant)
-    .map(d => ({ type: d.type, le: d.le.toISOString(), annees: d.annees, joursAvant: d.joursAvant, numero: d.numero, nom: d.nom }))
 
   return (
     <div>

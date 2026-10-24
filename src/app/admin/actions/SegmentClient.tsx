@@ -1,13 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Plus, X, Send, Check, Download, Users } from 'lucide-react'
+import { Plus, X, Download, Users } from 'lucide-react'
 import { adminEnvoyerEmailSegment } from '@/app/actions/admin'
 import {
   filtrerSegment, LIBELLES_CRITERES,
   type Critere, type FiltresSegment, type PersonneSegment, type TypeCritere,
 } from '@/lib/segments'
 import Alert from '@/components/ui/Alert'
+import ComposeurEmail, { BoutonsEnvoi, MESSAGE_VIDE, type MessageManuel, type ModeEnvoi, type ModeleComposeur } from '@/components/admin/ComposeurEmail'
 
 interface ModuleInfo { slug: string; name: string }
 
@@ -133,18 +134,19 @@ export default function SegmentClient({
   personnes,
   codes,
   modules,
+  modeles,
 }: {
   personnes: PersonneSegment[]
   codes: string[]
   modules: ModuleInfo[]
+  modeles: ModeleComposeur[]
 }) {
   const [avec, setAvec] = useState<Critere[]>([])
   const [sans, setSans] = useState<Critere[]>([])
   const [respecterDesinscription, setRespecterDesinscription] = useState(true)
   const [voirListe, setVoirListe] = useState(false)
-  const [objet, setObjet] = useState('')
-  const [message, setMessage] = useState('')
-  const [statut, setStatut] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [message, setMessage] = useState<MessageManuel>(MESSAGE_VIDE)
+  const [envoi, setEnvoi] = useState<ModeEnvoi | null>(null)
   const [resultat, setResultat] = useState<string | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
 
@@ -154,26 +156,26 @@ export default function SegmentClient({
     [personnes, avec, sans, respecterDesinscription],
   )
 
-  async function envoyer() {
-    if (!window.confirm(`Envoyer « ${objet} » à ${segment.length} personne${segment.length > 1 ? 's' : ''} ?`)) return
+  async function envoyer(mode: ModeEnvoi) {
+    const version = mode === 'fr' ? 'la version française' : mode === 'en' ? 'la version anglaise' : 'la version de la langue choisie par chaque personne'
+    if (!window.confirm(`Envoyer ${version} à ${segment.length} personne${segment.length > 1 ? 's' : ''} ?`)) return
     setErreur(null)
     setResultat(null)
-    setStatut('sending')
+    setEnvoi(mode)
     try {
-      const res = await adminEnvoyerEmailSegment(filtres, objet, message)
+      const res = await adminEnvoyerEmailSegment(filtres, message, mode)
       if (res.error) {
         setErreur(res.error)
-        setStatut('idle')
-        return
+      } else {
+        const echecs = res.echecs ?? []
+        const n = res.envoyes ?? 0
+        const detail = mode === 'langue' && res.parLangue ? ` (${res.parLangue.fr} en français, ${res.parLangue.en} en anglais)` : ''
+        setResultat(`${n} e-mail${n > 1 ? 's' : ''} envoyé${n > 1 ? 's' : ''}${detail}${echecs.length ? ` — échec pour : ${echecs.join(', ')}` : ''}.`)
       }
-      const echecs = res.echecs ?? []
-      setResultat(`${res.envoyes} e-mail${(res.envoyes ?? 0) > 1 ? 's' : ''} envoyé${(res.envoyes ?? 0) > 1 ? 's' : ''}${echecs.length ? ` — échec pour : ${echecs.join(', ')}` : ''}.`)
-      setStatut('sent')
-      setTimeout(() => setStatut('idle'), 3000)
     } catch {
       setErreur("L'envoi a échoué. Recharge la page et réessaie.")
-      setStatut('idle')
     }
+    setEnvoi(null)
   }
 
   return (
@@ -273,25 +275,13 @@ export default function SegmentClient({
       {resultat && <Alert type="success" message={resultat} className="mb-4" />}
 
       <div className="space-y-3">
-        <div>
-          <label className="flabel">Objet</label>
-          <input type="text" className="field" value={objet} onChange={e => setObjet(e.target.value)} placeholder="Objet de l'email" />
-        </div>
-        <div>
-          <label className="flabel">Message (texte, les retours à la ligne sont conservés ; {'{prenom}'} est remplacé par le prénom)</label>
-          <textarea className="field" rows={6} value={message} onChange={e => setMessage(e.target.value)} placeholder="Bonjour {prenom},&#10;&#10;..." />
-        </div>
-        <button
-          onClick={envoyer}
-          disabled={!segment.length || !objet.trim() || !message.trim() || statut === 'sending'}
-          className="btn-brand flex items-center gap-2"
-        >
-          {statut === 'sending'
-            ? 'Envoi en cours…'
-            : statut === 'sent'
-              ? <><Check className="w-4 h-4" /> Envoyé !</>
-              : <><Send className="w-4 h-4" /> Envoyer à {segment.length} personne{segment.length > 1 ? 's' : ''}</>}
-        </button>
+        <ComposeurEmail
+          modeles={modeles}
+          message={message}
+          onChange={setMessage}
+          aideVariables="Remplacées pour chaque personne : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple)."
+        />
+        <BoutonsEnvoi message={segment.length ? message : MESSAGE_VIDE} envoi={envoi} onEnvoyer={envoyer} libelle={`(${segment.length})`} />
       </div>
     </div>
   )
