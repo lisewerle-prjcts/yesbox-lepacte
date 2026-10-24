@@ -1,6 +1,93 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Thème (anciennement tailwind.config.ts) : couleurs, polices, arrondis et
+   animations de la charte YES BOX. */
+@theme {
+  --animate-*: initial;
+  --animate-fade-in: fadeIn 0.4s ease;
+  --animate-slide-up: slideUp 0.35s ease-out;
+
+  --color-brand: #c5256e;
+  --color-brand-deep: #a11857;
+  --color-brand-soft: #f7d9e6;
+  --color-brand-tint: #fceef4;
+  --color-cream: #f6f1ea;
+  --color-cream-2: #efe7da;
+  --color-paper: #fbf8f3;
+  --color-ink: #1a1816;
+  --color-ink-2: #3b3733;
+  --color-muted: #736c63;
+  --color-line: #e6dfd1;
+  --color-sage: #5e7d6a;
+  --color-sage-soft: #e2ece4;
+  --color-dark: #2a2521;
+  --color-dark-2: #352f29;
+
+  /* Gris, rouges et verts utilisés par le site, aux valeurs de Tailwind 3
+     (Tailwind 4 a changé sa palette par défaut). */
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-red-50: #fef2f2;
+  --color-red-200: #fecaca;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-sm: 11px;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Compatibilité avec Tailwind 3 : couleur de bordure par défaut et curseur
+   « main » sur les boutons, que Tailwind 4 ne met plus par défaut. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 @layer base {
   :root {

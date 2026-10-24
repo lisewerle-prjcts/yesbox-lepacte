@@ -100,7 +100,7 @@ export default function CharteBeta() {
       <dl className="mt-3 rounded-lg overflow-hidden border" style={{ borderColor: 'var(--line)' }}>
         {DONNEES.map(([terme, definition], i) => (
           <div key={terme} className="sm:flex px-4 py-3" style={i ? { borderTop: '1px solid var(--line)' } : undefined}>
-            <dt className="font-semibold sm:w-48 sm:flex-shrink-0" style={{ color: 'var(--ink)' }}>{terme}</dt>
+            <dt className="font-semibold sm:w-48 sm:shrink-0" style={{ color: 'var(--ink)' }}>{terme}</dt>
             <dd>{definition}</dd>
           </div>
         ))}

@@ -53,7 +53,7 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
 
       {compteResilie && (
         <div className="card p-4 mb-6 flex items-start gap-3" style={{ background: '#fdf2f2', border: '1px solid #f5c6c6' }}>
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
               "Ce compte a été clos : l'abonnement ne peut plus être réactivé ici, il faut recommencer avec un nouveau compte.",
@@ -72,7 +72,7 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
         <div className="space-y-2 mb-6">
           {FEATURES.map((f, i) => (
             <div key={i} className="flex gap-2 items-start">
-              <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.85)' }} />
+              <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.85)' }} />
               <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.92)' }}>{t(f, FEATURES_EN[i])}</span>
             </div>
           ))}
@@ -129,7 +129,7 @@ function CodeGratuitForm() {
           onChange={setCode}
           onEntree={() => { if (code.trim() && !loading) valider() }}
         />
-        <button onClick={valider} disabled={loading || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
+        <button onClick={valider} disabled={loading || !code.trim()} className="btn-secondary text-sm py-2 px-4 shrink-0">
           {loading ? '…' : t('Valider', 'Apply')}
         </button>
       </div>

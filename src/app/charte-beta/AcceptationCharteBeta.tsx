@@ -39,7 +39,7 @@ export default function AcceptationCharteBeta() {
       {error && <Alert type="error" message={error} className="mb-4" />}
       <form action={handleAction}>
         <label className="flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" name="charte_beta" required className="mt-1 flex-shrink-0" />
+          <input type="checkbox" name="charte_beta" required className="mt-1 shrink-0" />
           <span className="text-sm text-gray-600">{CASE_CHARTE_BETA}</span>
         </label>
         <SubmitButton />

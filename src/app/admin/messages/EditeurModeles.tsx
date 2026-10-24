@@ -49,7 +49,7 @@ export default function EditeurModeles({ familles, modeles }: { familles: { cle:
                 <h2 className="font-semibold" style={{ fontSize: 16, color: 'var(--ink)' }}>{f.nom}</h2>
                 <p style={{ fontSize: 12, color: 'var(--muted)' }}>{f.description}</p>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0" style={{ fontSize: 12, color: 'var(--muted)' }}>
+              <div className="flex items-center gap-2 shrink-0" style={{ fontSize: 12, color: 'var(--muted)' }}>
                 {liste.length} e-mail{liste.length > 1 ? 's' : ''}{modifies ? ` · ${modifies} modifié${modifies > 1 ? 's' : ''}` : ''}
                 {ouverte ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </div>
@@ -109,7 +109,7 @@ function CarteModele({ modele }: { modele: Modele }) {
           </p>
           <p style={{ fontSize: 12, color: 'var(--muted)' }}>{modele.quand}</p>
         </div>
-        {ouvert ? <ChevronDown className="w-4 h-4 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 flex-shrink-0" />}
+        {ouvert ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
       </button>
 
       {ouvert && (

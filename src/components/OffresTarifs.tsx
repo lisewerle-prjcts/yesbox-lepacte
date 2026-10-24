@@ -31,7 +31,7 @@ function Avantages({ prefixe, items, couleurCoche, couleurTexte }: { prefixe: st
     <>
       {items.map((texte, i) => (
         <div key={i} className="flex gap-2 items-start">
-          <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: couleurCoche }} />
+          <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: couleurCoche }} />
           <span style={{ fontSize: 13.5, color: couleurTexte }}><EditableText id={`${prefixe}.${i}`}>{texte}</EditableText></span>
         </div>
       ))}

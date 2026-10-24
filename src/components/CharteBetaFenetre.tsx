@@ -45,7 +45,7 @@ export default function CharteBetaFenetre({ onAccepter, onFermer }: { onAccepter
         <div className="card mt-10">
           <p className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>À cocher pour finaliser ton inscription :</p>
           <label className="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" checked={coche} onChange={e => setCoche(e.target.checked)} className="mt-1 flex-shrink-0" />
+            <input type="checkbox" checked={coche} onChange={e => setCoche(e.target.checked)} className="mt-1 shrink-0" />
             <span className="text-sm text-gray-600">{CASE_CHARTE_BETA}</span>
           </label>
           <button type="button" disabled={!coche} onClick={onAccepter} className="btn-primary w-full mt-5 disabled:opacity-50 disabled:cursor-not-allowed">
