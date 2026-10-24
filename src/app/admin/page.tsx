@@ -4,6 +4,8 @@ import { modulesTerminesParCouple, programmeInitialTermine } from '@/lib/segment
 import Link from 'next/link'
 import { tachesEmailsAnniversaire } from '@/lib/grandes-dates'
 import TachesClient from './TachesClient'
+import ProblemesConnexionClient from './ProblemesConnexionClient'
+import { chargerProblemesConnexion } from '@/lib/problemes-connexion'
 
 export default async function AdminHome() {
   const supabase = createAdminClient()
@@ -22,6 +24,7 @@ export default async function AdminHome() {
     getEffectiveModules(),
   ])
   const { taches, tableManquante } = await tachesEmailsAnniversaire(supabase)
+  const problemes = await chargerProblemesConnexion(supabase)
 
   // Parcours rendez-vous annuel : programme initial fini (les 8 modules
   // thématiques et le pacte terminés, pacte signé), comme le critère
@@ -59,6 +62,7 @@ export default async function AdminHome() {
       </div>
 
       <TachesClient taches={taches} tableManquante={tableManquante} />
+      <ProblemesConnexionClient {...problemes} />
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4 mb-8">
