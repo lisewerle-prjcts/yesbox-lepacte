@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { envoyerMail, mailConfigure } from '@/lib/mailer'
+import { mailConfigure } from '@/lib/mailer'
+import { envoyerModele } from '@/lib/modeles-email/serveur'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { MODULE_PACTE } from '@/lib/progression'
 import { langueDuProfil } from '@/lib/i18n/langue-profil'
@@ -33,95 +34,21 @@ function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
 }
 
-function echapperHtml(texte: string) {
-  return texte
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
 function formaterDate(iso: string, locale: Locale) {
   return new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' })
 }
 
-function bouton(href: string, label: string) {
-  return `<p style="margin:24px 0;"><a href="${href}" style="display:inline-block;background:#c5256e;color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${label}</a></p>`
-}
-
-// Prénoms et titre arrivent bruts : échappés dans le corps HTML (un prénom
-// est saisi librement), laissés tels quels dans l'objet (texte brut).
-function contenu(type: TypeNotification, auteurBrut: string, destinataireBrut: string, titreBrut: string, slugBrut: string, dernierModule: boolean, locale: Locale, basculeAnnuelleLe?: string) {
-  const base = appUrl()
+// Modèle (cf. src/lib/modeles-email/catalogue.ts) et lien du bouton.
+function modele(type: TypeNotification, slugBrut: string, dernierModule: boolean): { cle: string; chemin: string } {
   const slug = encodeURIComponent(slugBrut)
-  const auteur = echapperHtml(auteurBrut)
-  const module = locale === 'en' ? `"${echapperHtml(titreBrut)}"` : `« ${echapperHtml(titreBrut)} »`
-  const moduleBrut = locale === 'en' ? `"${titreBrut}"` : `« ${titreBrut} »`
-  const bonjour = `<p style="margin:0 0 12px;">${t(locale, 'Bonjour', 'Hello')}${destinataireBrut ? ` ${echapperHtml(destinataireBrut)}` : ''},</p>`
-  const p = (texte: string) => `<p style="margin:0 0 12px;">${texte}</p>`
-
+  const pacte = slugBrut === MODULE_PACTE
   switch (type) {
-    case 'reponses_a_ton_tour':
-      return {
-        subject: t(locale, `${auteurBrut} a terminé le module ${moduleBrut} — à ton tour !`, `${auteurBrut} finished the ${moduleBrut} module — your turn!`),
-        body: bonjour
-          + p(t(locale, `${auteur} vient de répondre à toutes les questions du module ${module}.`, `${auteur} just answered every question in the ${module} module.`))
-          + p(t(locale, `À ton tour ! Ses réponses restent cachées tant que tu n'as pas répondu : vous les découvrirez ensemble.`, `Your turn! Their answers stay hidden until you've answered: you'll discover them together.`))
-          + bouton(`${base}/module/${slug}`, t(locale, 'Répondre aux questions', 'Answer the questions')),
-      }
-    case 'reponses_partagees':
-      return {
-        subject: t(locale, `Module ${moduleBrut} : vos réponses sont prêtes`, `${moduleBrut} module: your answers are ready`),
-        body: bonjour
-          + p(t(locale, `${auteur} vient de terminer à son tour le module ${module}. Vous avez chacun·e répondu à toutes les questions.`, `${auteur} just finished the ${module} module too. You have both answered every question.`))
-          + p(t(locale, `C'est le moment de débriefer ensemble et de découvrir vos réponses respectives.`, `It's time to talk it over together and discover each other's answers.`))
-          + bouton(`${base}/module/${slug}/revelation`, t(locale, 'Découvrir nos réponses', 'Discover our answers')),
-      }
-    case 'journal_a_ton_tour':
-      if (slugBrut === MODULE_PACTE) {
-        return {
-          subject: t(locale, `${auteurBrut} a signé votre pacte`, `${auteurBrut} signed your pact`),
-          body: bonjour
-            + p(t(locale, `${auteur} vient de signer votre pacte de couple.`, `${auteur} just signed your couple's pact.`))
-            + p(t(locale, `À ton tour de le signer : le programme sera terminé dès que vos deux signatures seront posées.`, `Your turn to sign it: the program will be complete as soon as you have both signed.`))
-            + bouton(`${base}/module/${slug}/revelation`, t(locale, 'Signer notre pacte', 'Sign our pact')),
-        }
-      }
-      return {
-        subject: t(locale, `${auteurBrut} a écrit sa conclusion du module ${moduleBrut}`, `${auteurBrut} wrote their conclusion for the ${moduleBrut} module`),
-        body: bonjour
-          + p(t(locale, `${auteur} vient d'inscrire sa conclusion du module ${module} dans votre journal.`, `${auteur} just added their conclusion for the ${module} module to your journal.`))
-          + p(t(locale, `À ton tour d'écrire la tienne : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.`, `Your turn to write yours: the next module will unlock as soon as both your conclusions are in the journal.`))
-          + bouton(`${base}/module/${slug}/revelation`, t(locale, 'Écrire ma conclusion', 'Write my conclusion')),
-      }
+    case 'reponses_a_ton_tour': return { cle: 'module_reponses_a_ton_tour', chemin: `/module/${slug}` }
+    case 'reponses_partagees': return { cle: 'module_reponses_partagees', chemin: `/module/${slug}/revelation` }
+    case 'journal_a_ton_tour': return { cle: pacte ? 'pacte_a_ton_tour' : 'module_conclusion_a_ton_tour', chemin: `/module/${slug}/revelation` }
     case 'journal_complet':
-      if (slugBrut === MODULE_PACTE) {
-        return {
-          subject: t(locale, 'Votre pacte est signé', 'Your pact is signed'),
-          body: bonjour
-            + p(t(locale, `${auteur} vient de signer à son tour : votre pacte de couple porte vos deux signatures.`, `${auteur} just signed too: your couple's pact now bears both your signatures.`))
-            + p(t(locale, `Bravo pour tout ce chemin parcouru ensemble !`, `Congratulations on everything you've been through together!`))
-            + p((basculeAnnuelleLe
-              ? t(locale, `À la fin de votre mois d'abonnement, le ${formaterDate(basculeAnnuelleLe, locale)}, vous passerez automatiquement à l'abonnement annuel (19 €/an, résiliable à tout moment depuis Mon compte). `, `At the end of your month of subscription, on ${formaterDate(basculeAnnuelleLe, locale)}, you'll automatically switch to the yearly subscription (€19/year, cancel anytime from My Account). `)
-              : '')
-              + t(locale, `Vous recevrez des messages régulièrement tout au long de l'année (2 par mois maximum) pour continuer à renforcer votre couple, jusqu'à la date de rendez-vous que vous avez fixée.`, `You'll receive messages regularly throughout the year (2 per month at most) to keep strengthening your relationship, until the date you set for your yearly date.`))
-            + p(t(locale, `Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce rendez-vous comme il se doit. Retrouvez la date de votre rendez-vous annuel sur votre tableau de bord.`, `On that day, a special module will be waiting for you, and we'll guide you beforehand so you can prepare for it properly. You'll find the date of your yearly date on your dashboard.`))
-            + p(t(locale, `À bientôt, et prenez soin de vous et de votre couple.`, `See you soon, and take care of yourselves and your relationship.`))
-            + bouton(`${base}/tableau-de-bord`, t(locale, 'Voir notre tableau de bord', 'See our dashboard')),
-        }
-      }
-      return {
-        subject: dernierModule
-          ? t(locale, `Module ${moduleBrut} scellé`, `${moduleBrut} module sealed`)
-          : t(locale, `Module ${moduleBrut} scellé — le suivant vous attend`, `${moduleBrut} module sealed — the next one awaits`),
-        body: bonjour
-          + p(t(locale, `${auteur} vient d'écrire sa conclusion : vos deux conclusions du module ${module} sont dans le journal.`, `${auteur} just wrote their conclusion: both your conclusions for the ${module} module are in the journal.`))
-          + p(dernierModule
-            ? t(locale, `C'était le dernier module : bravo pour tout ce chemin parcouru ensemble !`, `That was the last module: congratulations on everything you've been through together!`)
-            : t(locale, `Le module suivant est débloqué, vous pouvez passer à la suite.`, `The next module is unlocked, you can move on.`))
-          + bouton(`${base}/tableau-de-bord`, dernierModule ? t(locale, 'Voir notre tableau de bord', 'See our dashboard') : t(locale, 'Passer au module suivant', 'Go to the next module')),
-      }
+      if (pacte) return { cle: 'pacte_signe', chemin: '/tableau-de-bord' }
+      return { cle: dernierModule ? 'module_scelle_dernier' : 'module_scelle', chemin: '/tableau-de-bord' }
   }
 }
 
@@ -147,8 +74,21 @@ export async function notifierPartenaire(type: TypeNotification, ctx: Contexte):
 
     const locale = await langueDuProfil(admin, destinataire.id)
     const titre = locale === 'en' ? ctx.moduleTitreEn ?? ctx.moduleTitre : ctx.moduleTitre
-    const { subject, body } = contenu(type, auteur.prenom || t(locale, 'Ton binôme', 'Your partner'), destinataire.prenom || '', titre, ctx.moduleSlug, !!ctx.dernierModule, locale, ctx.basculeAnnuelleLe)
-    await envoyerMail({ to: destinataire.email, subject: subject.replace(/[\r\n]+/g, ' '), body })
+    const { cle, chemin } = modele(type, ctx.moduleSlug, !!ctx.dernierModule)
+    await envoyerModele({
+      to: destinataire.email,
+      cle,
+      locale,
+      vars: {
+        prenom: destinataire.prenom || '',
+        partenaire: auteur.prenom || t(locale, 'Ton binôme', 'Your partner'),
+        module: titre,
+        lien: `${appUrl()}${chemin}`,
+        phrase_abonnement: ctx.basculeAnnuelleLe
+          ? t(locale, `À la fin de votre mois d'abonnement, le ${formaterDate(ctx.basculeAnnuelleLe, locale)}, vous passerez automatiquement à l'abonnement annuel (19 €/an, résiliable à tout moment depuis Mon compte).`, `At the end of your month of subscription, on ${formaterDate(ctx.basculeAnnuelleLe, locale)}, you'll automatically switch to the yearly subscription (€19/year, cancel anytime from My Account).`)
+          : '',
+      },
+    })
   } catch (e) {
     console.error(`[notifications] ${type} : ${e instanceof Error ? e.message : String(e)}`)
   }

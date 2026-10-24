@@ -7,7 +7,8 @@ import { t } from '@/lib/i18n/locale'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
-import { envoyerMail, mailConfigure } from '@/lib/mailer'
+import { mailConfigure } from '@/lib/mailer'
+import { envoyerModele } from '@/lib/modeles-email/serveur'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -157,15 +158,6 @@ export async function signerPacte(dateRdvAnnuel: string) {
 
 const INVITATIONS_PAR_JOUR = 3
 
-function echapperHtml(texte: string) {
-  return texte
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
 // Envoie au ou à la partenaire un e-mail d'invitation avec le lien pour
 // rejoindre le couple et le code de pairage. Écrit dans la langue du site
 // de la personne qui invite. Limité à 3 envois par jour et par couple.
@@ -209,24 +201,11 @@ export async function envoyerInvitationPartenaire(email: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const lien = `${baseUrl}/rejoindre?token=${couple.invite_token}`
   const prenomBrut = (profile.prenom || '').trim()
-  const prenom = echapperHtml(prenomBrut)
-  const p = (texte: string) => `<p style="margin:0 0 12px;">${texte}</p>`
-  const bouton = `<p style="margin:24px 0;"><a href="${lien}" style="display:inline-block;background:#c5256e;color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${t(locale, 'Rejoindre notre espace', 'Join our space')}</a></p>`
-
-  const ok = await envoyerMail({
+  const ok = await envoyerModele({
     to: destinataire,
-    subject: prenomBrut
-      ? t(locale, `${prenomBrut} t'invite à écrire votre pacte de couple`, `${prenomBrut} invites you to write your couple's pact`).replace(/[\r\n]+/g, ' ')
-      : t(locale, 'Une invitation à écrire votre pacte de couple', "An invitation to write your couple's pact"),
-    body: p(t(locale, 'Bonjour,', 'Hello,'))
-      + p(prenom
-        ? t(locale, `${prenom} a commencé YES BOX et t'invite à le faire à deux.`, `${prenom} has started YES BOX and is inviting you to do it together.`)
-        : t(locale, 'Ton/ta partenaire a commencé YES BOX et t’invite à le faire à deux.', 'Your partner has started YES BOX and is inviting you to do it together.'))
-      + p(t(locale,
-        'YES BOX, ce sont des modules simples et ludiques pour parler de ce qui compte : chacun·e répond de son côté, puis vous découvrez vos réponses ensemble. Le module 1 est gratuit pour vous deux, sans carte bancaire.',
-        "YES BOX is a set of simple, playful modules to talk about what matters: you each answer on your own, then discover your answers together. Module 1 is free for both of you, no card needed."))
-      + bouton
-      + p(t(locale, `Tu peux aussi créer ton compte sur le site et saisir le code de votre couple : <strong>${echapperHtml(couple.pairing_code ?? '')}</strong>`, `You can also create your account on the website and enter your couple code: <strong>${echapperHtml(couple.pairing_code ?? '')}</strong>`)),
+    cle: 'invitation_partenaire',
+    locale,
+    vars: { invite_par: prenomBrut || t(locale, 'Ton/ta partenaire', 'Your partner'), lien, code: couple.pairing_code ?? '' },
   })
   if (!ok) return { error: t(locale, "L'e-mail n'a pas pu être envoyé. Réessaie dans quelques minutes.", 'The email could not be sent. Please try again in a few minutes.') }
   return { success: true }

@@ -4,7 +4,8 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { langueDuProfil } from '@/lib/i18n/langue-profil'
-import { envoyerMail, mailConfigure } from '@/lib/mailer'
+import { mailConfigure } from '@/lib/mailer'
+import { envoyerModele, rendreModele } from '@/lib/modeles-email/serveur'
 
 // Mot de passe oublié. Le lien part de notre propre envoi (comme le mail de
 // confirmation, cf. lib/confirmation-email) : Supabase ne fait que générer
@@ -18,9 +19,6 @@ function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
 }
 
-const SUJET_FR = 'Choisis un nouveau mot de passe — YES BOX'
-const SUJET_EN = 'Choose a new password — YES BOX'
-
 // Répond toujours « envoyé » (sauf adresse vide) : on ne révèle pas si un
 // compte existe pour cette adresse.
 export async function demanderReinitialisation(email: string) {
@@ -33,10 +31,12 @@ export async function demanderReinitialisation(email: string) {
   const { data: profile } = await admin.from('profiles').select('id, prenom').eq('email', adresse).maybeSingle()
   if (!profile) return { success: true }
 
+  const vars = { prenom: profile.prenom || '' }
+  const objets = await Promise.all((['fr', 'en'] as const).map(async l => (await rendreModele('mot_de_passe_oublie', l, vars)).objet))
   // Pas plus d'une demande par minute pour une même adresse (journal des
   // e-mails ; ignoré si la table n'existe pas encore).
   const { data: recent } = await admin.from('emails_envoyes').select('id')
-    .eq('destinataire', adresse).in('sujet', [SUJET_FR, SUJET_EN])
+    .eq('destinataire', adresse).in('sujet', objets)
     .gte('envoye_le', new Date(Date.now() - 60_000).toISOString()).limit(1)
   if (recent?.length) return { success: true }
 
@@ -48,18 +48,7 @@ export async function demanderReinitialisation(email: string) {
 
   const langue = await langueDuProfil(admin, profile.id)
   const url = `${appUrl()}/auth/confirm?token_hash=${encodeURIComponent(lien.properties.hashed_token)}&type=recovery`
-  const prenom = (profile.prenom || '').replace(/[<>&"']/g, '')
-  await envoyerMail({
-    to: adresse,
-    subject: t(langue, SUJET_FR, SUJET_EN),
-    body: `
-      <p>${t(langue, 'Bonjour', 'Hello')} ${prenom},</p>
-      <p>${t(langue, 'Tu as demandé à changer ton mot de passe YES BOX. Clique sur le bouton ci-dessous pour en choisir un nouveau :', 'You asked to change your YES BOX password. Click the button below to choose a new one:')}</p>
-      <p style="margin:24px 0;"><a href="${url}" style="background:#c5256e;color:white;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block;">${t(langue, 'Choisir un nouveau mot de passe', 'Choose a new password')}</a></p>
-      <p style="font-size:12px;color:#736c63;">${t(langue, 'Ce lien est valable 1 heure et ne sert qu\'une fois. Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :', 'This link is valid for 1 hour and can only be used once. If the button doesn\'t work, copy this link into your browser:')}<br>${url}</p>
-      <p style="font-size:12px;color:#736c63;">${t(langue, "Si tu n'es pas à l'origine de cette demande, ignore ce message : ton mot de passe reste inchangé.", "If you didn't request this, ignore this message: your password stays the same.")}</p>
-    `,
-  })
+  await envoyerModele({ to: adresse, cle: 'mot_de_passe_oublie', locale: langue, vars: { ...vars, lien: url } })
   return { success: true }
 }
 

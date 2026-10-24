@@ -2,7 +2,7 @@ import { randomInt } from 'crypto'
 import type Stripe from 'stripe'
 import type { createAdminClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
-import { envoyerMail } from '@/lib/mailer'
+import { envoyerModele } from '@/lib/modeles-email/serveur'
 import { ajouterMois } from '@/lib/dates'
 import { accorderMoisGratuits } from '@/lib/parrainage'
 import { t, isLocale, type Locale } from '@/lib/i18n/locale'
@@ -151,29 +151,16 @@ export async function enregistrerCarteCadeau(admin: AdminClient, session: Stripe
 
 async function envoyerEmailCarteCadeau(carte: CarteCadeau, locale: Locale) {
   if (!carte.acheteur_email) return
-  const mois = t(locale, `${carte.duree_mois} mois`, `${carte.duree_mois} month${carte.duree_mois > 1 ? 's' : ''}`)
-  const p = (texte: string) => `<p style="margin:0 0 12px;">${texte}</p>`
-  const corps = p(t(locale, 'Bonjour,', 'Hello,'))
-    + p(t(locale,
-      `Merci pour votre achat ! Voici votre carte cadeau YES BOX : <strong>${mois} d’abonnement</strong> au programme YES BOX – Le Pacte.`,
-      `Thank you for your purchase! Here is your YES BOX gift card: <strong>${mois} of subscription</strong> to the YES BOX – Le Pacte program.`))
-    + `<p style="margin:20px 0;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:22px;letter-spacing:.12em;padding:12px 20px;border:2px dashed #c5256e;border-radius:10px;background:white;">${carte.code}</span></p>`
-    + p(carte.pour_soi
-      ? t(locale,
-        'Pour l’activer, connectez-vous sur yesbox-lepacte.fr et saisissez ce code dans Mon compte, rubrique « Ajouter un code » (ou lors de votre inscription).',
-        'To activate it, log in at yesbox-lepacte.fr and enter this code in My Account, under "Add a code" (or when you sign up).')
-      : t(locale,
-        'Transmettez ce code au couple à qui vous l’offrez : il suffit de le saisir lors de l’inscription sur yesbox-lepacte.fr, ou plus tard dans Mon compte, rubrique « Ajouter un code ». Vous pouvez aussi imprimer la carte cadeau ci-dessous.',
-        'Pass this code on to the couple you are giving it to: they just enter it when signing up at yesbox-lepacte.fr, or later in My Account, under "Add a code". You can also print the gift card below.'))
-    + p(t(locale,
-      `Valable jusqu’au ${formaterDateCarte(carte.expire_le, locale)}, pour un seul couple.`,
-      `Valid until ${formaterDateCarte(carte.expire_le, locale)}, for one couple.`))
-    + `<p style="margin:24px 0;"><a href="${lienCarteCadeau(carte.code)}" style="display:inline-block;background:#c5256e;color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${t(locale, 'Télécharger la carte à imprimer', 'Download the printable card')}</a></p>`
-    + p(t(locale, 'L’équipe YES BOX', 'The YES BOX team'))
-  await envoyerMail({
+  await envoyerModele({
     to: carte.acheteur_email,
-    subject: t(locale, `Votre carte cadeau YES BOX : ${carte.code}`, `Your YES BOX gift card: ${carte.code}`),
-    body: corps,
+    cle: carte.pour_soi ? 'carte_cadeau_pour_soi' : 'carte_cadeau_offerte',
+    locale,
+    vars: {
+      mois: t(locale, `${carte.duree_mois} mois`, `${carte.duree_mois} month${carte.duree_mois > 1 ? 's' : ''}`),
+      code: carte.code,
+      date: formaterDateCarte(carte.expire_le, locale),
+      lien: lienCarteCadeau(carte.code),
+    },
   })
 }
 

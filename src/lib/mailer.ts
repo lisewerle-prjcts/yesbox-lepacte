@@ -72,6 +72,8 @@ interface Mail {
   body: string
   /** Nom affiché de l'expéditeur. */
   nom?: string
+  /** Mot-clé ajouté à l'objet dans le journal des e-mails (ex. conseil envoyé). */
+  etiquette?: string
 }
 
 // Renvoie true si l'e-mail est parti, false sinon (aucun envoi configuré ou erreur).
@@ -85,7 +87,7 @@ export async function envoyerMail(mail: Mail): Promise<boolean> {
 // n'autorise alors que l'adresse du compte Resend), on réessaie par Gmail.
 export async function envoyerMailDetail(mail: Mail): Promise<{ ok: boolean; erreur?: string }> {
   const resultat = await envoyer(mail)
-  await journaliserEnvoi(mail.to, mail.subject, resultat.ok, resultat.erreur)
+  await journaliserEnvoi(mail.to, mail.etiquette ? `${mail.subject} · [${mail.etiquette}]` : mail.subject, resultat.ok, resultat.erreur)
   return resultat
 }
 

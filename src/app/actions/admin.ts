@@ -10,13 +10,16 @@ import { assertAdmin } from '@/lib/admin-mail'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { sendWelcomeEmail, envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { renvoyerMailConfirmation } from '@/lib/confirmation-email'
-import { langueDuProfil } from '@/lib/i18n/langue-profil'
-import { t } from '@/lib/i18n/locale'
+import { langueDuProfil, languesDesProfils } from '@/lib/i18n/langue-profil'
+import type { Locale } from '@/lib/i18n/locale'
 import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
-import { signatureDesinscription } from '@/lib/rappels-email'
+import { piedDePageRappel } from '@/lib/desinscription'
+import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
+import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
+import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
 import type { QuestionType } from '@/types'
 
 function revalidateModuleLists() {
@@ -93,50 +96,153 @@ export async function adminResetModule(coupleId: string, slug: string) {
   return { success: true }
 }
 
-export async function adminSendEmail(to: string, subject: string, body: string) {
-  await assertAdmin()
-  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
+// ---------------------------------------------------------------------------
+// E-mails écrits à la main (Admin > Actions manuelles) : à partir de rien ou
+// d'un modèle d'e-mail automatique, en français, en anglais, ou dans la
+// langue choisie par chaque personne (les deux versions sont alors
+// nécessaires). Variables remplacées pour chaque personne : {prenom},
+// {partenaire} (prénom de l'autre membre du couple) et {code} (code couple).
+// ---------------------------------------------------------------------------
 
-  const envoye = await envoyerMail({ to, subject, body: body.replace(/\n/g, '<br/>') })
-  if (!envoye) return { error: 'Échec de l\'envoi' }
-  return { success: true }
+export type ModeEnvoi = 'fr' | 'en' | 'langue'
+export interface MessageManuel { fr: ContenuEmail; en: ContenuEmail; modele?: string | null }
+
+const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code']
+
+function verifierMessage(message: MessageManuel, mode: ModeEnvoi): string | null {
+  const langues: Locale[] = mode === 'langue' ? ['fr', 'en'] : [mode]
+  for (const l of langues) {
+    if (!message[l].objet.trim() || !message[l].corps.trim()) {
+      return mode === 'langue'
+        ? 'Remplis l’objet et le message en français ET en anglais pour envoyer selon la langue de chaque personne.'
+        : `Remplis l’objet et le message de la version ${l === 'fr' ? 'française' : 'anglaise'}.`
+    }
+  }
+  const restantes = variablesNonRemplacees(
+    langues.flatMap(l => [message[l].objet, message[l].corps]),
+    Object.fromEntries(VARIABLES_MANUELLES.map(v => [v, ''])),
+  )
+  if (restantes.length) {
+    return `Ces variables ne peuvent pas être remplies pour un envoi manuel : ${restantes.map(v => `{${v}}`).join(', ')}. Remplace-les par le texte voulu.`
+  }
+  return null
 }
 
-function echapperHtml(texte: string) {
-  return texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+function etiquetteManuelle(message: MessageManuel) {
+  return message.modele && estModeleEmail(message.modele) ? `envoi manuel · modèle : ${modeleEmail(message.modele).nom}` : 'envoi manuel'
+}
+
+// Prénom, prénom de l'autre membre du couple, code couple et langue de
+// chaque personne.
+async function contexteDestinataires(admin: ReturnType<typeof createAdminClient>, ids: string[]) {
+  const contexte = new Map<string, { prenom: string; partenaire: string; code: string; langue: Locale }>()
+  if (!ids.length) return contexte
+  const { data: personnes } = await admin.from('profiles').select('id, prenom, couple_id').in('id', ids)
+  const coupleIds = [...new Set((personnes ?? []).map(p => p.couple_id).filter((c): c is string => !!c))]
+  const [{ data: membres }, { data: couples }, langues] = await Promise.all([
+    coupleIds.length ? admin.from('profiles').select('id, prenom, couple_id').in('couple_id', coupleIds) : Promise.resolve({ data: [] as { id: string; prenom: string | null; couple_id: string | null }[] }),
+    coupleIds.length ? admin.from('couples').select('id, pairing_code').in('id', coupleIds) : Promise.resolve({ data: [] as { id: string; pairing_code: string | null }[] }),
+    languesDesProfils(admin, ids),
+  ])
+  for (const p of personnes ?? []) {
+    const autre = (membres ?? []).find(m => m.couple_id && m.couple_id === p.couple_id && m.id !== p.id)
+    contexte.set(p.id, {
+      prenom: p.prenom?.trim() || '',
+      partenaire: autre?.prenom?.trim() || '',
+      code: (couples ?? []).find(c => c.id === p.couple_id)?.pairing_code || '',
+      langue: langues.get(p.id) ?? 'fr',
+    })
+  }
+  return contexte
+}
+
+function rendreMessage(message: MessageManuel, langue: Locale, vars: Variables) {
+  return { objet: rendreObjet(message[langue].objet, vars), html: rendreCorps(message[langue].corps, vars) }
+}
+
+export async function adminSendEmail(to: string, message: MessageManuel, mode: ModeEnvoi) {
+  await assertAdmin()
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
+  const adresse = to.trim()
+  if (!adresse) return { error: 'Destinataire requis' }
+  const erreur = verifierMessage(message, mode)
+  if (erreur) return { error: erreur }
+
+  // Adresse d'une personne inscrite : prénom, partenaire, code et langue.
+  const admin = createAdminClient()
+  const { data: profil } = await admin.from('profiles').select('id').eq('email', adresse.toLowerCase()).maybeSingle()
+  const ctx = profil ? (await contexteDestinataires(admin, [profil.id])).get(profil.id) : undefined
+  const langue: Locale = mode === 'langue' ? ctx?.langue ?? 'fr' : mode
+  const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '' })
+
+  const envoye = await envoyerMail({ to: adresse, subject: objet, body: html, etiquette: etiquetteManuelle(message) })
+  if (!envoye) return { error: 'Échec de l\'envoi' }
+  return { success: true, langue }
 }
 
 // Envoi d'un même message à toutes les personnes d'un segment. Le segment
 // est recalculé ici à partir des données à jour (jamais pris tel quel du
-// navigateur). {prenom} dans l'objet ou le message est remplacé par le
-// prénom de chaque personne. Chaque e-mail porte le lien de désinscription
-// des rappels.
-export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, subject: string, body: string) {
+// navigateur). Chaque e-mail porte le lien de désinscription des rappels.
+export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, message: MessageManuel, mode: ModeEnvoi) {
   await assertAdmin()
   if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
-  if (!subject.trim() || !body.trim()) return { error: 'Objet et message requis' }
+  const erreur = verifierMessage(message, mode)
+  if (erreur) return { error: erreur }
 
-  const personnes = filtrerSegment(await chargerPersonnesSegment(createAdminClient()), filtres)
+  const admin = createAdminClient()
+  const personnes = filtrerSegment(await chargerPersonnesSegment(admin), filtres)
   if (!personnes.length) return { error: 'Aucune personne dans ce segment' }
+  const contexte = await contexteDestinataires(admin, personnes.map(p => p.id))
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
   let envoyes = 0
+  const parLangue = { fr: 0, en: 0 }
   const echecs: string[] = []
   for (const p of personnes) {
-    const prenom = p.prenom?.trim() || ''
-    const lien = `${appUrl}/desinscription?u=${encodeURIComponent(p.id)}&s=${signatureDesinscription(p.id)}&l=fr`
-    const ok = await envoyerMail({
-      to: p.email,
-      subject: subject.replace(/\{prenom\}/g, prenom).replace(/[\r\n]+/g, ' '),
-      body: `${body.replace(/\{prenom\}/g, echapperHtml(prenom)).replace(/\n/g, '<br/>')}`
-        + `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;"><a href="${lien}" style="color:#8a8580;">Ne plus recevoir ces e-mails</a></p>`,
-    })
-    if (ok) envoyes += 1
+    const ctx = contexte.get(p.id)
+    const langue: Locale = mode === 'langue' ? ctx?.langue ?? 'fr' : mode
+    const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? p.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '' })
+    const ok = await envoyerMail({ to: p.email, subject: objet, body: html + piedDePageRappel(p.id, langue), etiquette: etiquetteManuelle(message) })
+    if (ok) { envoyes += 1; parLangue[langue] += 1 }
     else echecs.push(p.email)
     // Reste sous la limite d'envoi de Resend (quelques e-mails par seconde).
     await new Promise(r => setTimeout(r, 600))
   }
-  return { success: true, envoyes, echecs }
+  return { success: true, envoyes, parLangue, echecs }
+}
+
+// Modèles d'e-mails automatiques modifiés depuis Admin > Messages & e-mails.
+export async function adminSaveModeleEmail(cle: string, langue: Locale, contenu: ContenuEmail) {
+  const supabase = await assertAdmin()
+  if (!estModeleEmail(cle) || (langue !== 'fr' && langue !== 'en')) return { error: 'Modèle inconnu' }
+  if (!contenu.objet.trim() || !contenu.corps.trim()) return { error: 'L’objet et le message sont obligatoires.' }
+  const modele = modeleEmail(cle)
+  const presentes = new Set([contenu.objet, contenu.corps].flatMap(variablesDuTexte))
+  const manquantes = (modele.obligatoires ?? []).filter(v => !presentes.has(v))
+  if (manquantes.length) return { error: `Cet e-mail doit contenir ${manquantes.map(v => `{${v}}`).join(', ')} (sinon il ne sert plus à rien).` }
+  const connues = new Set(variablesDuModele(modele))
+  const inconnues = [...presentes].filter(v => !connues.has(v))
+  if (inconnues.length) return { error: `Variables inconnues pour cet e-mail : ${inconnues.map(v => `{${v}}`).join(', ')}.` }
+
+  const { error } = await supabase.from('settings').upsert({ key: cleReglageModele(cle, langue), value: JSON.stringify({ objet: contenu.objet, corps: contenu.corps }) }, { onConflict: 'key' })
+  if (error) return { error: error.message }
+  viderCacheModeles()
+  revalidatePath('/admin/messages')
+  revalidatePath('/admin/actions')
+  return { success: true }
+}
+
+export async function adminResetModeleEmail(cle: string, langue: Locale) {
+  const supabase = await assertAdmin()
+  if (!estModeleEmail(cle)) return { error: 'Modèle inconnu' }
+  const cles = [cleReglageModele(cle, langue)]
+  // Ancien réglage de l'e-mail de bienvenue (version française).
+  if (cle === 'bienvenue' && langue === 'fr') cles.push('email_bienvenue_subject', 'email_bienvenue_body')
+  const { error } = await supabase.from('settings').delete().in('key', cles)
+  if (error) return { error: error.message }
+  viderCacheModeles()
+  revalidatePath('/admin/messages')
+  revalidatePath('/admin/actions')
+  return { success: true, contenu: modeleEmail(cle)[langue] }
 }
 
 export async function adminSaveMessage(key: string, value: string) {
@@ -421,16 +527,7 @@ export async function adminResetAndSendPassword(userId: string) {
   }
 
   const langue = await langueDuProfil(admin, userId)
-  const emailed = await envoyerMail({
-    to: email,
-    subject: t(langue, 'Ton nouveau mot de passe YES BOX', 'Your new YES BOX password'),
-    body: `
-      <p>${t(langue, 'Bonjour', 'Hello')} ${profile?.prenom || ''},</p>
-      <p>${t(langue, 'Voici ton nouveau mot de passe pour te connecter à ton espace YES BOX — Le Pacte :', 'Here is your new password to log in to your YES BOX — Le Pacte account:')}</p>
-      <p style="font-family:monospace;font-size:20px;font-weight:700;background:#f7d9e6;color:#c5256e;padding:12px 20px;border-radius:10px;display:inline-block;letter-spacing:.05em;">${newPassword}</p>
-      <p>${t(langue, 'Connecte-toi puis change-le si tu le souhaites depuis ton espace.', 'Log in, then change it from your account if you wish.')}</p>
-    `,
-  })
+  const emailed = await envoyerModele({ to: email, cle: 'nouveau_mot_de_passe', locale: langue, vars: { prenom: profile?.prenom || '', mot_de_passe: newPassword } })
 
   return { success: true, password: newPassword, emailed }
 }

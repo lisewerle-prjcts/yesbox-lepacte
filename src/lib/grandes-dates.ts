@@ -1,6 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { envoyerMail } from '@/lib/mailer'
 import { getProchainAnniversaire } from '@/lib/anniversaires'
+import { NOCES, nomNoces } from '@/lib/noces'
+import { t, type Locale } from '@/lib/i18n/locale'
+import { membresDuCouple, envoyerRappel } from '@/lib/rappels-email'
+import { cleAnniversaireRencontre } from '@/lib/modeles-email/catalogue'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -100,6 +104,81 @@ export async function envoyerAlertesGrandesDates(admin: AdminClient): Promise<nu
       }
     } catch (e) {
       console.error(`[grandes-dates] couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
+
+// ---------------------------------------------------------------------------
+// E-mails aux couples (rappels, désactivables) :
+//   - anniversaire de rencontre : le jour J, avec un conseil différent
+//     chaque année (modèles « anniv_rencontre_1 », « anniv_rencontre_2 »…) ;
+//   - anniversaire de mariage : une semaine avant, avec le nom des noces et
+//     une idée de petit cadeau symbolique.
+// Une seule fois par anniversaire (rappels_envoyes, cle
+// « email_rencontre:AAAA-MM-JJ » / « email_mariage:AAAA-MM-JJ »).
+// ---------------------------------------------------------------------------
+
+export const MARIAGE_JOURS_AVANT = 7
+
+function dureeAnnees(annees: number, locale: Locale) {
+  return t(locale, `${annees} an${annees > 1 ? 's' : ''}`, `${annees} year${annees > 1 ? 's' : ''}`)
+}
+
+function dateLongue(d: Date, locale: Locale) {
+  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+export async function envoyerEmailsAnniversaires(admin: AdminClient): Promise<number> {
+  const { data: couples, error } = await admin
+    .from('couples')
+    .select('id, date_anniversaire, date_mariage')
+    .is('compte_resilie_le', null)
+    .or('date_anniversaire.not.is.null,date_mariage.not.is.null')
+  if (error) throw new Error(error.message)
+
+  let envoyes = 0
+  for (const couple of couples ?? []) {
+    try {
+      const aEnvoyer = prochainesGrandesDates(couple).filter(d =>
+        (d.type === 'rencontre' && d.joursAvant === 0) || (d.type === 'mariage' && d.joursAvant === MARIAGE_JOURS_AVANT))
+      if (!aEnvoyer.length) continue
+
+      const membres = await membresDuCouple(admin, couple.id)
+      if (!membres.some(m => m.rappels_email && m.email)) continue
+
+      for (const d of aEnvoyer) {
+        const anniversaire = `${d.le.getFullYear()}-${String(d.le.getMonth() + 1).padStart(2, '0')}-${String(d.le.getDate()).padStart(2, '0')}`
+        const { data: reserve, error: reserveError } = await admin
+          .from('rappels_envoyes')
+          .upsert({ couple_id: couple.id, type: 'alerte_grande_date', cle: `email_${d.type}:${anniversaire}` }, { onConflict: 'couple_id,type,cle', ignoreDuplicates: true })
+          .select('couple_id')
+        if (reserveError) throw new Error(reserveError.message)
+        if (!reserve?.length) continue
+
+        for (const m of membres) {
+          const autre = membres.find(x => x.id !== m.id)
+          const commun = { partenaire: autre?.prenom ?? '', annees: dureeAnnees(d.annees, m.langue), date: dateLongue(d.le, m.langue) }
+          let ok: boolean
+          if (d.type === 'rencontre') {
+            ok = await envoyerRappel(m, cleAnniversaireRencontre(d.annees), commun)
+          } else {
+            const noces = NOCES[d.annees]
+            ok = noces
+              ? await envoyerRappel(m, 'anniv_mariage', {
+                ...commun,
+                matiere: m.langue === 'en' ? noces.en : noces.fr,
+                noces: nomNoces(noces),
+                autour_matiere: m.langue === 'en' ? noces.en : noces.autour,
+                idees_cadeau: noces.idees?.[m.langue] ?? '',
+              }, nomNoces(noces))
+              : await envoyerRappel(m, 'anniv_mariage_sans_noces', commun, `${d.annees} ans de mariage`)
+          }
+          if (ok) envoyes++
+        }
+      }
+    } catch (e) {
+      console.error(`[grandes-dates] e-mail d'anniversaire du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes

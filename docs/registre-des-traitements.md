@@ -77,7 +77,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | | |
 |---|---|
 | Date de création de la fiche | septembre 2026 |
-| Finalité | Confirmation d'inscription, e-mail de bienvenue, réinitialisation du mot de passe, alertes de sécurité ; rappels d'accompagnement (relance après 10 jours sans avancer dans le parcours, au plus 2 ; un e-mail par mois une fois le pacte signé, tant que l'accès est en cours) |
+| Finalité | Confirmation d'inscription, e-mail de bienvenue, réinitialisation du mot de passe, alertes de sécurité ; rappels d'accompagnement (relance après 10 jours sans avancer dans le parcours, au plus 2 ; un e-mail par mois une fois le pacte signé, tant que l'accès est en cours ; e-mail le jour de l'anniversaire de rencontre et une semaine avant l'anniversaire de mariage, si le couple a indiqué ces dates) |
 | Base légale | Exécution du contrat (art. 6.1.b) ; rappels : intérêt légitime (art. 6.1.f), avec opposition possible à tout moment (case dans Mon compte, lien en bas de chaque rappel — `profiles.rappels_email`) |
 | Personnes concernées | Utilisatrices et utilisateurs inscrits |
 | Données | E-mail, prénom, code couple, langue choisie (français ou anglais, pour écrire dans la bonne langue) ; pour les rappels : prénom de l'autre membre du couple, titre du module en cours, date de dernière activité, date du rendez-vous annuel. Le contenu des réponses et du pacte n'est jamais repris dans les e-mails |

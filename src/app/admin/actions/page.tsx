@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
+import { MODELES_EMAIL } from '@/lib/modeles-email/catalogue'
+import { contenusModeles } from '@/lib/modeles-email/serveur'
 import AdminActionsClient from './AdminActionsClient'
 import SegmentClient from './SegmentClient'
 
@@ -21,6 +23,9 @@ export default async function AdminActionsPage({
   const { data: codes } = await supabase.from('codes_gratuits').select('code').order('created_at', { ascending: false })
   const effectiveModules = await getEffectiveModules()
   const personnes = await chargerPersonnesSegment(supabase)
+  // Modèles d'e-mails automatiques (textes en vigueur) pour partir d'un modèle.
+  const contenus = await contenusModeles()
+  const modeles = MODELES_EMAIL.map(m => ({ cle: m.cle, famille: m.famille, nom: m.nom, ...contenus[m.cle] }))
   const modules = effectiveModules.map((m, i) => ({ slug: m.slug, name: `M${i + 1} — ${m.titre}` }))
 
   const couplesWithMembers = (couples || []).map(c => ({
@@ -32,19 +37,21 @@ export default async function AdminActionsPage({
     <div>
       <div className="mb-6">
         <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Actions manuelles</h1>
-        <p style={{ fontSize: 14, color: 'var(--muted)' }}>Débloquer/verrouiller des modules, envoyer des emails (à une personne ou à un segment), déclencher des actions.</p>
+        <p style={{ fontSize: 14, color: 'var(--muted)' }}>Débloquer/verrouiller des modules, envoyer des e-mails (écrits de zéro ou repris d’un e-mail automatique, en français, en anglais ou selon la langue de chaque personne), à une personne ou à un segment.</p>
       </div>
       <AdminActionsClient
         couples={couplesWithMembers}
         precommandes={precommandes || []}
         defaultCoupleId={couple_id}
         modules={modules}
+        modeles={modeles}
       />
       <div className="mt-6">
         <SegmentClient
           personnes={personnes}
           codes={(codes || []).map(c => c.code)}
           modules={modules}
+          modeles={modeles}
         />
       </div>
     </div>
