@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode } from '@/app/actions/admin'
+import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode } from '@/app/actions/admin'
 
 interface CodeGratuit {
   id: string
@@ -50,6 +50,64 @@ function UsagesMax({ code, onModifie }: { code: CodeGratuit; onModifie: (usagesM
         )}
       </div>
       {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
+    </div>
+  )
+}
+
+// Durée du code (mois, vide = illimité). Si des couples l'ont déjà utilisé,
+// on demande si leur date de fin d'accès change aussi.
+function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: number | null) => void }) {
+  const [valeur, setValeur] = useState(code.duree_mois ? String(code.duree_mois) : '')
+  const [choix, setChoix] = useState(false)
+  const [enregistrement, setEnregistrement] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null)
+  const nouvelle = valeur.trim() ? Number(valeur) : null
+  const modifie = nouvelle !== code.duree_mois
+
+  async function enregistrer(appliquerAuxCouples: boolean) {
+    setMessage(null)
+    setEnregistrement(true)
+    const res = await adminModifierDureeCode(code.id, nouvelle, appliquerAuxCouples)
+    setEnregistrement(false)
+    setChoix(false)
+    if (res.error) { setMessage({ ok: false, texte: res.error }); return }
+    onModifie(nouvelle)
+    setMessage({ ok: true, texte: appliquerAuxCouples
+      ? `Enregistré : fin d’accès mise à jour pour ${res.couplesModifies} couple${(res.couplesModifies ?? 0) > 1 ? 's' : ''}.`
+      : 'Enregistré pour les prochaines utilisations.' })
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          min={1}
+          className="field py-1 px-2"
+          style={{ width: 72 }}
+          value={valeur}
+          placeholder="∞"
+          onChange={e => { setValeur(e.target.value); setChoix(false); setMessage(null) }}
+          onKeyDown={e => e.key === 'Enter' && modifie && (code.usages ? setChoix(true) : enregistrer(false))}
+          aria-label={`Durée en mois du code ${code.code}`}
+        />
+        <span className="text-xs text-gray-500">{nouvelle ? 'mois' : 'illimité'}</span>
+        {modifie && !choix && (
+          <button onClick={() => (code.usages ? setChoix(true) : enregistrer(false))} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">
+            {enregistrement ? '…' : 'OK'}
+          </button>
+        )}
+      </div>
+      {choix && (
+        <div className="mt-1.5 text-xs space-y-1" style={{ maxWidth: 280 }}>
+          <p className="text-gray-500">{code.usages} couple{code.usages > 1 ? 's ont' : ' a'} déjà utilisé ce code. Leur accès change-t-il aussi ?</p>
+          <div className="flex gap-1.5 flex-wrap">
+            <button onClick={() => enregistrer(false)} disabled={enregistrement} className="btn-ghost text-xs py-1 px-2">Prochains seulement</button>
+            <button onClick={() => enregistrer(true)} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">Aussi pour {code.usages > 1 ? `ces ${code.usages} couples` : 'ce couple'}</button>
+          </div>
+        </div>
+      )}
+      {message && <p className={`text-xs mt-1 ${message.ok ? 'text-green-600' : 'text-red-600'}`}>{message.texte}</p>}
     </div>
   )
 }
@@ -134,7 +192,9 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
               {codes.map(c => (
                 <tr key={c.id} className="border-b last:border-0">
                   <td className="py-2 font-mono font-semibold">{c.code}</td>
-                  <td className="py-2">{c.duree_mois ? `${c.duree_mois} mois` : 'Illimité'}</td>
+                  <td className="py-2">
+                    <Duree code={c} onModifie={dureeMois => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, duree_mois: dureeMois } : x))} />
+                  </td>
                   <td className="py-2">
                     <UsagesMax code={c} onModifie={usagesMax => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, usages_max: usagesMax } : x))} />
                   </td>
