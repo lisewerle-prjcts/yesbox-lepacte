@@ -4,6 +4,7 @@ import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { MODELES_EMAIL } from '@/lib/modeles-email/catalogue'
 import { contenusModeles } from '@/lib/modeles-email/serveur'
 import AdminActionsClient from './AdminActionsClient'
+import ReglesEnvoi from '@/components/admin/ReglesEnvoi'
 import SegmentClient from './SegmentClient'
 
 // L'envoi à un segment part e-mail par e-mail : on laisse le temps.
@@ -39,6 +40,7 @@ export default async function AdminActionsPage({
         <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Actions manuelles</h1>
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>Débloquer/verrouiller des modules, envoyer des e-mails (écrits de zéro ou repris d’un e-mail automatique, en français, en anglais ou selon la langue de chaque personne), à une personne ou à un segment.</p>
       </div>
+      <ReglesEnvoi />
       <AdminActionsClient
         couples={couplesWithMembers}
         precommandes={precommandes || []}
