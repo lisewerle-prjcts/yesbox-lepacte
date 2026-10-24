@@ -1517,6 +1517,9 @@ create policy "rdv_reponses_mois_select" on public.rdv_reponses_mois for select 
 -- Idempotent : peut être relancé sans risque.
 -- ============================================================
 alter table public.couples add column if not exists date_mariage date;
+-- Modifiable par les membres du couple depuis le tableau de bord (comme
+-- date_anniversaire, cf. « VERROUILLAGE DES DROITS (v14) »).
+grant update (date_mariage) on public.couples to authenticated;
 
 -- ============================================================
 -- Migration : alerte à l'équipe un mois avant les grandes dates des couples
