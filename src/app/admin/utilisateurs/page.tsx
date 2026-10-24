@@ -4,7 +4,7 @@ import UtilisateursClient from './UtilisateursClient'
 export default async function AdminUtilisateurs() {
   const supabase = createAdminClient()
 
-  const [{ data: profiles }, { data: couples }, { data: authUsers }, { data: codes }, { data: utilisations }] = await Promise.all([
+  const [{ data: profiles }, { data: couples }, { data: authUsers }, { data: codes }, { data: utilisations }, { data: reponses }, { data: verrous }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, email, nom, prenom, created_at, couple_id')
@@ -13,6 +13,10 @@ export default async function AdminUtilisateurs() {
     supabase.auth.admin.listUsers({ perPage: 1000 }),
     supabase.from('codes_gratuits').select('code, usages, usages_max').eq('actif', true).order('created_at', { ascending: false }),
     supabase.from('codes_gratuits_utilisations').select('couple_id, codes_gratuits(code)'),
+    // Qui a commencé à répondre (au moins une réponse enregistrée).
+    supabase.from('reponses').select('user_id'),
+    // Connexions bloquées en ce moment après trop d'essais.
+    supabase.from('login_attempts').select('email').gt('locked_until', new Date().toISOString()),
   ])
 
   const codeParCouple: Record<string, string> = {}
@@ -28,6 +32,9 @@ export default async function AdminUtilisateurs() {
     confirmeById[u.id] = !!u.email_confirmed_at
     derniereConnexionById[u.id] = u.last_sign_in_at ?? null
   }
+
+  const aRepondu = new Set((reponses || []).map(r => r.user_id))
+  const bloques = new Set((verrous || []).map(v => v.email))
 
   const numeroByCoupleId: Record<string, number> = {}
   // Fin de l'accès offert (code gratuit, carte cadeau, parrainage).
@@ -48,6 +55,8 @@ export default async function AdminUtilisateurs() {
     emailConfirme: confirmeById[p.id] ?? true,
     code: p.couple_id ? codeParCouple[p.couple_id] ?? null : null,
     derniereConnexion: derniereConnexionById[p.id] ?? null,
+    aCommence: aRepondu.has(p.id),
+    bloque: bloques.has(p.email.toLowerCase()),
     finAcces: p.couple_id ? finAccesByCoupleId[p.couple_id] ?? null : null,
   }))
 

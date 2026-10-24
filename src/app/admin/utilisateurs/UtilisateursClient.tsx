@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BadgeCheck, KeyRound, Mail, MailCheck, Search, Ticket, Trash2, X } from 'lucide-react'
-import { adminAttribuerCode, adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser } from '@/app/actions/admin'
+import { BadgeCheck, KeyRound, LockOpen, Mail, MailCheck, Search, Ticket, Trash2, X } from 'lucide-react'
+import { adminAttribuerCode, adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser, adminDebloquerConnexion } from '@/app/actions/admin'
 
 interface User {
   id: string
@@ -16,6 +16,10 @@ interface User {
   emailConfirme: boolean
   code: string | null
   derniereConnexion: string | null
+  /** A enregistré au moins une réponse à un module. */
+  aCommence: boolean
+  /** Connexion bloquée en ce moment après trop d'essais de mot de passe. */
+  bloque: boolean
   /** Fin de l'accès offert au couple (code gratuit, carte cadeau, parrainage). */
   finAcces: string | null
 }
@@ -91,6 +95,14 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
     await run(`bienvenue-${user.id}`, async () => {
       const res = await adminRenvoyerBienvenue(user.id)
       showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Mail de bienvenue envoyé')
+    })
+  }
+
+  async function debloquer(user: User) {
+    await run(`debloquer-${user.id}`, async () => {
+      const res = await adminDebloquerConnexion(user.email.toLowerCase())
+      showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Connexion débloquée : la personne peut réessayer tout de suite')
+      if (!res.error) router.refresh()
     })
   }
 
@@ -223,6 +235,7 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                     </div>
                   )}
                   {!user.emailConfirme && <div style={{ fontSize: 11, color: '#b45309' }}>Adresse e-mail pas encore confirmée</div>}
+                  {user.bloque && <div style={{ fontSize: 11, color: '#b45309' }}>Connexion bloquée 15 minutes après trop d’essais de mot de passe</div>}
                   {mailStatus[user.id] && <p style={{ fontSize: 11, color: mailStatus[user.id]!.ok ? 'var(--sage)' : '#dc2626' }} className="mt-1">{mailStatus[user.id]!.message}</p>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -248,10 +261,20 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                       {loading[`confirm-manuel-${user.id}`] ? 'Confirmation…' : 'Confirmer l\'adresse manuellement'}
                     </button>
                   )}
-                  {/* Utile seulement à qui a confirmé son adresse sans jamais venir
-                      sur le site : une fois connecté·e, le code couple est sur le
-                      tableau de bord. */}
-                  {user.hasCouple && user.emailConfirme && !user.derniereConnexion && (
+                  {user.bloque && (
+                    <button
+                      disabled={loading[`debloquer-${user.id}`]}
+                      onClick={() => debloquer(user)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: '#b45309', opacity: loading[`debloquer-${user.id}`] ? 0.5 : 1 }}
+                    >
+                      <LockOpen className="w-3.5 h-3.5" />
+                      {loading[`debloquer-${user.id}`] ? 'Déblocage…' : 'Débloquer la connexion'}
+                    </button>
+                  )}
+                  {/* Utile tant que la personne n'a pas commencé son premier
+                      module ; ensuite, elle n'en a plus besoin. */}
+                  {user.hasCouple && !user.aCommence && (
                     <button
                       disabled={loading[`bienvenue-${user.id}`]}
                       onClick={() => resendWelcome(user)}
