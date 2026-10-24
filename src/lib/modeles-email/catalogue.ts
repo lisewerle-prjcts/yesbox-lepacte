@@ -13,7 +13,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
   { cle: 'mensuels', nom: 'Rendez-vous mensuels & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé, et l’annonce du rendez-vous annuel.' },
-  { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de rencontre (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
+  { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
   { cle: 'abonnement', nom: 'Abonnement & cartes cadeaux', description: 'Passage à l’abonnement annuel, cartes cadeaux.' },
 ]
 
@@ -712,7 +712,7 @@ ${EQUIPE.en}` },
 // Anniversaires
 // ---------------------------------------------------------------------------
 
-// Anniversaire de rencontre : un conseil différent chaque année (on reprend
+// Anniversaire de couple : un conseil différent chaque année (on reprend
 // au début après le dernier).
 const CONSEILS_RENCONTRE: { etiquette: string; fr: string; en: string }[] = [
   {
@@ -736,14 +736,14 @@ const CONSEILS_RENCONTRE: { etiquette: string; fr: string; en: string }[] = [
     en: '**Today’s challenge: a walk together.** Take a moment to go for a walk together, without your phones. Walk, talk, or simply enjoy being side by side.',
   },
   {
-    etiquette: 'premier rendez-vous',
-    fr: '**Le défi du jour : rejouez votre premier rendez-vous.** Même lieu, même plat, même boisson… ou simplement le récit, chacun·e avec ses souvenirs. Vous verrez que vous ne vous souvenez pas toujours des mêmes détails !',
-    en: '**Today’s challenge: replay your first date.** Same place, same dish, same drink… or simply the story, each with your own memories. You’ll see you don’t always remember the same details!',
+    etiquette: 'bocal à souvenirs',
+    fr: '**Le défi du jour : un bocal à souvenirs.** Prenez un bocal ou une jolie boîte, et glissez-y chacun·e cinq petits papiers avec un souvenir heureux de l’année qui vient de s’écouler. Lisez-les ensemble ce soir, puis gardez le bocal : il se remplira d’année en année.',
+    en: '**Today’s challenge: a memory jar.** Take a jar or a pretty box, and each slip in five little notes with a happy memory from the past year. Read them together tonight, then keep the jar: it will fill up year after year.',
   },
   {
-    etiquette: 'lettre au futur',
-    fr: '**Le défi du jour : une lettre au futur.** Écrivez ensemble une lettre à votre couple dans 10 ans : ce que vous vivez aujourd’hui, ce que vous vous souhaitez. Glissez-la dans une enveloppe à rouvrir plus tard.',
-    en: '**Today’s challenge: a letter to the future.** Together, write a letter to your couple ten years from now: what you’re living today, what you wish for yourselves. Slip it into an envelope to open later.',
+    etiquette: 'photo de l’année',
+    fr: '**Le défi du jour : la photo de l’année.** Prenez-vous en photo tous les deux aujourd’hui, au même endroit ou dans la même pose chaque année. Dans quelques années, vous aurez votre propre album d’anniversaires.',
+    en: '**Today’s challenge: this year’s photo.** Take a photo of the two of you today, in the same place or the same pose every year. In a few years, you’ll have your very own anniversary album.',
   },
   {
     etiquette: 'playlist',
@@ -766,10 +766,10 @@ export function cleAnniversaireRencontre(annees: number) {
 
 const ANNIVERSAIRES: ModeleEmail[] = [
   ...CONSEILS_RENCONTRE.map((conseil, i): ModeleEmail => ({
-    cle: `anniv_rencontre_${i + 1}`, famille: 'anniversaires', nom: `Anniversaire de rencontre — année ${i + 1} : ${conseil.etiquette}`, rappel: true,
+    cle: `anniv_rencontre_${i + 1}`, famille: 'anniversaires', nom: `Anniversaire de couple — année ${i + 1} : ${conseil.etiquette}`, rappel: true,
     etiquette: conseil.etiquette,
     facultatives: ['mot_personnel'],
-    quand: `Le jour J de l’anniversaire de rencontre, une fois validé dans Vue d’ensemble > Tâches, la ${i + 1}${i ? 'e' : 're'} année (puis tous les ${CONSEILS_RENCONTRE.length} ans : année ${i + 1 + CONSEILS_RENCONTRE.length}, ${i + 1 + 2 * CONSEILS_RENCONTRE.length}…).`,
+    quand: `Le jour J de l’anniversaire de couple, une fois validé dans Vue d’ensemble > Tâches, la ${i + 1}${i ? 'e' : 're'} année (puis tous les ${CONSEILS_RENCONTRE.length} ans : année ${i + 1 + CONSEILS_RENCONTRE.length}, ${i + 1 + 2 * CONSEILS_RENCONTRE.length}…).`,
     fr: { objet: 'Joyeux anniversaire de couple ! {annees} aujourd’hui 💞', corps: `${BONJOUR.fr}
 
 Il y a {annees}, jour pour jour, votre histoire commençait. Toute l’équipe YES BOX vous souhaite un très bel anniversaire de couple !

@@ -10,7 +10,7 @@ import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
 import { dechiffrerLignes } from '@/lib/chiffrement'
 import { envoyerModele } from '@/lib/modeles-email/serveur'
-import { cleThemeMensuel, NOMBRE_THEMES_MENSUELS, themeMensuelParDefaut } from '@/lib/modeles-email/catalogue'
+import { cleThemeMensuel, NOMBRE_THEMES_MENSUELS, themeMensuelParDefaut, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import type { Variables } from '@/lib/modeles-email/rendu'
 
 // Le lien de désinscription est signé dans src/lib/desinscription.ts.
@@ -60,7 +60,7 @@ export async function membresDuCouple(admin: AdminClient, coupleId: string): Pro
 
 // Rappel : seulement si la personne accepte les rappels ; lien de
 // désinscription en bas.
-export async function envoyerRappel(destinataire: Membre, cle: string, vars: Variables = {}, etiquette?: string): Promise<boolean> {
+export async function envoyerRappel(destinataire: Membre, cle: string, vars: Variables = {}, etiquette?: string, contenu?: ContenuEmail | null): Promise<boolean> {
   if (!destinataire.email || !destinataire.rappels_email) return false
   return envoyerModele({
     to: destinataire.email,
@@ -69,6 +69,7 @@ export async function envoyerRappel(destinataire: Membre, cle: string, vars: Var
     vars: { prenom: destinataire.prenom ?? '', ...vars },
     desinscription: destinataire.id,
     etiquette,
+    contenu,
   })
 }
 

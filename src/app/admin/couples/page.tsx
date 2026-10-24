@@ -140,7 +140,7 @@ export default async function AdminCouples() {
     }
   })
 
-  // Anniversaires de rencontre et de mariage et rendez-vous de bilan annuel
+  // Anniversaires de couple et de mariage et rendez-vous de bilan annuel
   // des 90 prochains jours, pour préparer les e-mails (une alerte part aussi
   // par e-mail un mois avant les anniversaires).
   const maintenant = new Date()
