@@ -736,14 +736,14 @@ const CONSEILS_RENCONTRE: { etiquette: string; fr: string; en: string }[] = [
     en: '**Today’s challenge: a walk together.** Take a moment to go for a walk together, without your phones. Walk, talk, or simply enjoy being side by side.',
   },
   {
-    etiquette: 'premier rendez-vous',
-    fr: '**Le défi du jour : rejouez votre premier rendez-vous.** Même lieu, même plat, même boisson… ou simplement le récit, chacun·e avec ses souvenirs. Vous verrez que vous ne vous souvenez pas toujours des mêmes détails !',
-    en: '**Today’s challenge: replay your first date.** Same place, same dish, same drink… or simply the story, each with your own memories. You’ll see you don’t always remember the same details!',
+    etiquette: 'bocal à souvenirs',
+    fr: '**Le défi du jour : un bocal à souvenirs.** Prenez un bocal ou une jolie boîte, et glissez-y chacun·e cinq petits papiers avec un souvenir heureux de l’année qui vient de s’écouler. Lisez-les ensemble ce soir, puis gardez le bocal : il se remplira d’année en année.',
+    en: '**Today’s challenge: a memory jar.** Take a jar or a pretty box, and each slip in five little notes with a happy memory from the past year. Read them together tonight, then keep the jar: it will fill up year after year.',
   },
   {
-    etiquette: 'lettre au futur',
-    fr: '**Le défi du jour : une lettre au futur.** Écrivez ensemble une lettre à votre couple dans 10 ans : ce que vous vivez aujourd’hui, ce que vous vous souhaitez. Glissez-la dans une enveloppe à rouvrir plus tard.',
-    en: '**Today’s challenge: a letter to the future.** Together, write a letter to your couple ten years from now: what you’re living today, what you wish for yourselves. Slip it into an envelope to open later.',
+    etiquette: 'photo de l’année',
+    fr: '**Le défi du jour : la photo de l’année.** Prenez-vous en photo tous les deux aujourd’hui, au même endroit ou dans la même pose chaque année. Dans quelques années, vous aurez votre propre album d’anniversaires.',
+    en: '**Today’s challenge: this year’s photo.** Take a photo of the two of you today, in the same place or the same pose every year. In a few years, you’ll have your very own anniversary album.',
   },
   {
     etiquette: 'playlist',
