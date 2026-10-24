@@ -9,7 +9,7 @@ export default async function AdminUtilisateurs() {
       .from('profiles')
       .select('id, email, nom, prenom, created_at, couple_id')
       .order('created_at', { ascending: false }),
-    supabase.from('couples').select('id, numero'),
+    supabase.from('couples').select('id, numero, acces_gratuit_expire_le'),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
     supabase.from('codes_gratuits').select('code, usages, usages_max').eq('actif', true).order('created_at', { ascending: false }),
     supabase.from('codes_gratuits_utilisations').select('couple_id, codes_gratuits(code)'),
@@ -23,10 +23,19 @@ export default async function AdminUtilisateurs() {
   }
 
   const confirmeById: Record<string, boolean> = {}
-  for (const u of authUsers?.users || []) confirmeById[u.id] = !!u.email_confirmed_at
+  const derniereConnexionById: Record<string, string | null> = {}
+  for (const u of authUsers?.users || []) {
+    confirmeById[u.id] = !!u.email_confirmed_at
+    derniereConnexionById[u.id] = u.last_sign_in_at ?? null
+  }
 
   const numeroByCoupleId: Record<string, number> = {}
-  for (const c of couples || []) numeroByCoupleId[c.id] = c.numero
+  // Fin de l'accès offert (code gratuit, carte cadeau, parrainage).
+  const finAccesByCoupleId: Record<string, string | null> = {}
+  for (const c of couples || []) {
+    numeroByCoupleId[c.id] = c.numero
+    finAccesByCoupleId[c.id] = c.acces_gratuit_expire_le ?? null
+  }
 
   const users = (profiles || []).map(p => ({
     id: p.id,
@@ -38,6 +47,8 @@ export default async function AdminUtilisateurs() {
     hasCouple: !!p.couple_id,
     emailConfirme: confirmeById[p.id] ?? true,
     code: p.couple_id ? codeParCouple[p.couple_id] ?? null : null,
+    derniereConnexion: derniereConnexionById[p.id] ?? null,
+    finAcces: p.couple_id ? finAccesByCoupleId[p.couple_id] ?? null : null,
   }))
 
   return (
