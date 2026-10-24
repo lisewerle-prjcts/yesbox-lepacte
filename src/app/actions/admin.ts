@@ -18,6 +18,7 @@ import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel } from '@/lib/desinscription'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
+import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
@@ -721,6 +722,46 @@ export async function adminModifierUsagesMaxCode(id: string, usagesMax: number) 
   if (error) return { error: error.message }
   revalidatePath('/admin/codes')
   return { success: true }
+}
+
+// Durée d'un code gratuit (en mois, null = illimité). Par défaut, elle ne
+// vaut que pour les prochaines utilisations ; avec `appliquerAuxCouples`, la
+// date de fin d'accès des couples qui l'ont déjà utilisé est décalée d'autant
+// (ce qui garde les mois ajoutés entre-temps par une carte cadeau ou un
+// parrainage).
+export async function adminModifierDureeCode(id: string, dureeMois: number | null, appliquerAuxCouples: boolean) {
+  await assertAdmin()
+  if (dureeMois !== null && (!Number.isInteger(dureeMois) || dureeMois < 1 || dureeMois > 240)) {
+    return { error: 'La durée doit être un nombre entier de mois (1 à 240), ou vide pour un accès illimité.' }
+  }
+  const admin = createAdminClient()
+  const { data: code, error: lectureError } = await admin.from('codes_gratuits').select('duree_mois').eq('id', id).single()
+  if (lectureError || !code) return { error: lectureError?.message || 'Code introuvable.' }
+  const ancienne = code.duree_mois as number | null
+
+  const { error } = await admin.from('codes_gratuits').update({ duree_mois: dureeMois }).eq('id', id)
+  if (error) return { error: error.message }
+
+  let couplesModifies = 0
+  if (appliquerAuxCouples && ancienne !== dureeMois) {
+    const { data: utilisations } = await admin.from('codes_gratuits_utilisations').select('couple_id, utilise_le').eq('code_id', id)
+    const ids = (utilisations ?? []).map(u => u.couple_id)
+    const { data: couples } = ids.length ? await admin.from('couples').select('id, acces_gratuit_expire_le').in('id', ids) : { data: [] }
+    for (const u of utilisations ?? []) {
+      const actuelle = (couples ?? []).find(c => c.id === u.couple_id)?.acces_gratuit_expire_le as string | null | undefined
+      const illimiteeActuelle = !!actuelle && new Date(actuelle).getFullYear() >= 2999
+      let nouvelle: string
+      if (dureeMois === null) nouvelle = ACCES_GRATUIT_ILLIMITE_ISO
+      else if (ancienne === null || illimiteeActuelle || !actuelle) nouvelle = ajouterMois(new Date(u.utilise_le), dureeMois)
+      else nouvelle = ajouterMois(new Date(actuelle), dureeMois - ancienne)
+      const { error: majError } = await admin.from('couples').update({ acces_gratuit_expire_le: nouvelle }).eq('id', u.couple_id)
+      if (majError) return { error: `Durée enregistrée, mais un couple n'a pas pu être mis à jour : ${majError.message}` }
+      couplesModifies++
+    }
+    revalidatePath('/admin/utilisateurs')
+  }
+  revalidatePath('/admin/codes')
+  return { success: true, couplesModifies }
 }
 
 // Attribue un code gratuit au couple d'un membre inscrit, comme s'il l'avait
