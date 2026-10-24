@@ -23,6 +23,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Stripe Payments Europe, Ltd. | Paiement de l'abonnement | Irlande (UE), transferts possibles vers les États-Unis | CCT / Data Privacy Framework |
 | Google LLC (Gmail) | Envoi des e-mails de service | États-Unis | CCT / Data Privacy Framework |
 | Resend Inc. | Envoi des e-mails de service | États-Unis | CCT |
+| Cloudflare, Inc. (Turnstile) | Vérification anti-robot à l'inscription (adresse IP, informations techniques du navigateur) | États-Unis | CCT / Data Privacy Framework |
 
 > À faire : accepter ou signer le contrat de sous-traitance (DPA) de chacun de ces prestataires et en garder une copie avec ce registre.
 

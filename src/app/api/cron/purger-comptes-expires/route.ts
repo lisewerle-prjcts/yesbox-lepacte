@@ -4,6 +4,7 @@ import { ajouterMois } from '@/lib/dates'
 import { appliquerConservation } from '@/lib/conservation'
 import { purgerCartesCadeaux } from '@/lib/cartes-cadeaux'
 import { chiffrerDonneesEnClair } from '@/lib/chiffrement-migration'
+import { purgerLimites } from '@/lib/limites'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
     const precommandesSupprimees = await purgerPrecommandes(admin)
     const cartesCadeauxSupprimees = await purgerCartesCadeaux(admin)
     const chiffres = await chiffrerDonneesEnClair(admin)
+    await purgerLimites()
     return NextResponse.json({ datesMisesAJour, comptesEffaces, precommandesSupprimees, cartesCadeauxSupprimees, chiffres })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
