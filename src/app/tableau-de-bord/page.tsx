@@ -44,19 +44,23 @@ export default async function TableauDeBordPage({
   let modules: Module[] = []
   let partner: { prenom: string | null; email: string; id: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
+  let dateMariage: string | null = null
   let signature: { pacte_signe_le: string | null; rdv_annuel_le: string | null } | null = null
   let coupleAbonnement: CoupleAbonnement | null = null
   let reponses: { module_id: string; user_id: string; question_slug: string; valeur: string | null }[] = []
 
   if (profile?.couple_id) {
-    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }, { data: sig }] = await Promise.all([
+    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }, { data: sig }, { data: mariage }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
       supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
       supabase.from('couples').select('nom_couple, date_anniversaire').eq('id', profile.couple_id).single(),
       supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
       // Requête à part : si les colonnes de signature manquent en base, le reste s'affiche.
       supabase.from('couples').select('pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).maybeSingle(),
+      // Idem pour la date de mariage (colonne ajoutée par migration).
+      supabase.from('couples').select('date_mariage').eq('id', profile.couple_id).maybeSingle(),
     ])
+    dateMariage = mariage?.date_mariage ?? null
     signature = sig
     modules = mods || []
     partner = part
@@ -129,6 +133,7 @@ export default async function TableauDeBordPage({
           hasPartner={!!partner}
           partnerPrenom={partner?.prenom ?? ''}
           dateAnniversaire={couple?.date_anniversaire ?? ''}
+          dateMariage={dateMariage ?? ''}
           pairingCode={inviteData.success ? inviteData.pairingCode ?? null : null}
           inviteLink={inviteData.success ? inviteData.link ?? null : null}
           initialCodeError={code_error}

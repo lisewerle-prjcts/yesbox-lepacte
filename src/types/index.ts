@@ -21,6 +21,7 @@ export interface Couple {
   numero: number
   nom_couple: string | null
   date_anniversaire: string | null
+  date_mariage: string | null
   invite_token: string | null
   invite_token_expires_at: string | null
   invite_used: boolean
