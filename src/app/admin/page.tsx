@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
+import { modulesTerminesParCouple, programmeInitialTermine } from '@/lib/segments-donnees'
 import Link from 'next/link'
 import { tachesEmailsAnniversaire } from '@/lib/grandes-dates'
 import TachesClient from './TachesClient'
@@ -10,23 +11,24 @@ export default async function AdminHome() {
   const [
     { count: totalUsers },
     { data: allCouples },
-    { data: completeModules },
+    terminesParCouple,
     { data: modulesStats },
     effectiveModules,
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('couples').select('id'),
-    supabase.from('modules').select('couple_id').eq('statut', 'complete'),
+    supabase.from('couples').select('id, pacte_signe_le'),
+    modulesTerminesParCouple(supabase),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
     getEffectiveModules(),
   ])
   const { taches, tableManquante } = await tachesEmailsAnniversaire(supabase)
 
-  const completeCountByCouple: Record<string, number> = {}
-  completeModules?.forEach(m => { completeCountByCouple[m.couple_id] = (completeCountByCouple[m.couple_id] ?? 0) + 1 })
+  // Parcours rendez-vous annuel : programme initial fini (les 8 modules
+  // thématiques et le pacte terminés, pacte signé), comme le critère
+  // « Programme initial fini » des segments.
   const totalCouples = allCouples?.length ?? 0
-  const totalModuleCount = effectiveModules.length
-  const couplesParcoursBac = (allCouples ?? []).filter(c => (completeCountByCouple[c.id] ?? 0) === totalModuleCount).length
+  const slugs = effectiveModules.map(m => m.slug)
+  const couplesParcoursBac = (allCouples ?? []).filter(c => programmeInitialTermine(slugs, terminesParCouple.get(c.id) ?? {}, c.pacte_signe_le)).length
   const couplesParcoursInitial = totalCouples - couplesParcoursBac
 
   const moduleSlugs = effectiveModules.map(m => m.slug)

@@ -28,6 +28,7 @@ interface Couple {
   emails: EmailEnvoye[]
   members: MemberProgress[]
   modules: ModuleStatus[]
+  rdvAnnuels: { valides: (string | null)[]; enCours: boolean; prevuLe: string | null }
 }
 
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
@@ -61,6 +62,9 @@ function texteRecherche(couple: Couple) {
   ].filter(Boolean).join(' '))
 }
 
+// Cases « rendez-vous annuel » affichées sous la grille des modules.
+const RDV_ANNUELS_AFFICHES = 9
+
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
 export default function CouplesClient({
@@ -69,12 +73,14 @@ export default function CouplesClient({
   unassigned,
   totalModules,
   moduleSlugs,
+  pacteSlug,
 }: {
   grandesDates: GrandeDateAVenir[]
   couples: Couple[]
   unassigned: UnassignedMember[]
   totalModules: number
   moduleSlugs: string[]
+  pacteSlug: string
 }) {
   const router = useRouter()
   const [adding, setAdding] = useState(false)
@@ -136,7 +142,7 @@ export default function CouplesClient({
         <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple ne correspond à cette recherche.</div>
       ) : (
         couplesFiltres.map(couple => (
-          <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} moduleSlugs={moduleSlugs} />
+          <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} moduleSlugs={moduleSlugs} pacteSlug={pacteSlug} />
         ))
       )}
     </div>
@@ -178,11 +184,13 @@ function CoupleCard({
   unassigned,
   totalModules,
   moduleSlugs,
+  pacteSlug,
 }: {
   couple: Couple
   unassigned: UnassignedMember[]
   totalModules: number
   moduleSlugs: string[]
+  pacteSlug: string
 }) {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
@@ -348,13 +356,39 @@ function CoupleCard({
           const bg = mod?.revealed ? STATUS_COLOR.revealed : STATUS_COLOR[st] || STATUS_COLOR.locked
           return (
             <div key={slug} className="rounded-lg p-2 text-center" style={{ background: bg, border: '1px solid rgba(0,0,0,.06)' }}>
-              <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>M{i + 1}</div>
+              <div className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>{slug === pacteSlug ? 'Pacte' : `M${i + 1}`}</div>
               <div style={{ fontSize: 16 }}>{STATUS_TEXT[mod?.revealed ? 'revealed' : st]}</div>
               {mod?.termine_le && (
                 <div className="font-mono" style={{ fontSize: 9, color: 'white', marginTop: 2 }} title="Date de fin du module">
                   {dateCourte(mod.termine_le)}
                 </div>
               )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Rendez-vous annuels : une case par rendez-vous validé */}
+      <div className="font-mono font-bold mb-1" style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.08em' }}>RENDEZ-VOUS ANNUELS</div>
+      <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${RDV_ANNUELS_AFFICHES}, minmax(0, 1fr))` }}>
+        {Array.from({ length: RDV_ANNUELS_AFFICHES }).map((_, i) => {
+          const valide = i < couple.rdvAnnuels.valides.length
+          const date = valide ? couple.rdvAnnuels.valides[i] : null
+          const suivant = i === couple.rdvAnnuels.valides.length
+          const enCours = suivant && couple.rdvAnnuels.enCours
+          const prevu = suivant && !enCours ? couple.rdvAnnuels.prevuLe : null
+          return (
+            <div
+              key={i}
+              className="rounded-lg p-2 text-center"
+              title={valide ? 'Rendez-vous annuel validé' : enCours ? 'Rendez-vous annuel ouvert, pas encore terminé' : prevu ? 'Date prévue du rendez-vous annuel' : ''}
+              style={{ background: valide ? STATUS_COLOR.revealed : enCours ? STATUS_COLOR.en_cours : 'transparent', border: valide || enCours ? '1px solid rgba(0,0,0,.06)' : '1px dashed var(--line)', minHeight: 44 }}
+            >
+              <div className="font-mono font-bold" style={{ fontSize: 10, color: valide ? 'white' : 'var(--muted)', marginBottom: 2 }}>RDV {i + 1}</div>
+              {valide && <div style={{ fontSize: 14, color: 'white' }}>★</div>}
+              {valide && date && <div className="font-mono" style={{ fontSize: 9, color: 'white' }}>{dateCourte(date)}</div>}
+              {enCours && <div style={{ fontSize: 14 }}>✏️</div>}
+              {prevu && <div className="font-mono" style={{ fontSize: 9, color: 'var(--muted)' }}>prévu {dateCourte(`${prevu.slice(0, 10)}T12:00:00Z`)}</div>}
             </div>
           )
         })}

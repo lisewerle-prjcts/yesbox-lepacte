@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { dernieresConnexions, modulesTerminesParCouple } from '@/lib/segments-donnees'
 import { prochainesGrandesDates } from '@/lib/grandes-dates'
+import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import CouplesClient, { type EmailEnvoye, type GrandeDateAVenir } from './CouplesClient'
 
 const LIBELLES_NOTIFICATION: Record<string, string> = {
@@ -37,6 +38,9 @@ export default async function AdminCouples() {
   const questionCountBySlug: Record<string, number> = {}
   for (const m of effectiveModules) questionCountBySlug[m.slug] = m.questions.length
   const SLUGS = effectiveModules.map(m => m.slug)
+  // Parcours initial : les 8 modules thématiques et le pacte ; le module du
+  // rendez-vous annuel est affiché à part (une case par rendez-vous).
+  const SLUGS_INITIAUX = SLUGS.filter(s => s !== MODULE_RDV_ANNUEL)
 
   const coupleIds = (couples || []).map(c => c.id)
 
@@ -92,10 +96,12 @@ export default async function AdminCouples() {
     if (avantJournal(couple.derniere_relance_le)) emails.push({ date: couple.derniere_relance_le, destinataire: LES_DEUX, sujet: 'Relance après inactivité', ok: true })
     emails.sort((a, b) => b.date.localeCompare(a.date))
     const coupleModules = (modules || []).filter(m => m.couple_id === couple.id)
+    const termines = terminesParCouple.get(couple.id) ?? {}
+    const rdvValide = MODULE_RDV_ANNUEL in termines
 
     const membersWithProgress = members.map(member => {
       let modulesCompleted = 0
-      for (const slug of SLUGS) {
+      for (const slug of SLUGS_INITIAUX) {
         const mod = coupleModules.find(m => m.slug === slug)
         if (!mod) continue
         const total = questionCountBySlug[slug] || 0
@@ -124,6 +130,13 @@ export default async function AdminCouples() {
       emails,
       members: membersWithProgress,
       modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, termine_le: terminesParCouple.get(couple.id)?.[m.slug] ?? null })),
+      // Rendez-vous annuels validés (module du rendez-vous annuel terminé :
+      // révélé et conclu par les deux) ; un seul est suivi pour l'instant.
+      rdvAnnuels: {
+        valides: rdvValide ? [termines[MODULE_RDV_ANNUEL] ?? null] : [],
+        enCours: !rdvValide && coupleModules.some(m => m.slug === MODULE_RDV_ANNUEL && m.statut !== 'locked'),
+        prevuLe: rdvAnnuelParCouple.get(couple.id) ?? null,
+      },
     }
   })
 
@@ -155,7 +168,7 @@ export default async function AdminCouples() {
           Erreur lors du chargement des couples : {couplesError.message}
         </div>
       )}
-      <CouplesClient grandesDates={grandesDates} couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} moduleSlugs={SLUGS} />
+      <CouplesClient grandesDates={grandesDates} couples={couplesData} unassigned={unassigned} totalModules={SLUGS_INITIAUX.length} moduleSlugs={SLUGS_INITIAUX} pacteSlug={MODULE_PACTE} />
     </div>
   )
 }
