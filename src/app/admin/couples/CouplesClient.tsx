@@ -13,7 +13,8 @@ interface UnassignedMember { id: string; prenom: string | null; nom: string | nu
 interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number; derniereConnexion: string | null; rappelsEmail: boolean }
 interface ModuleStatus { slug: string; statut: string; revealed: boolean; termine_le: string | null }
 export interface EmailEnvoye { date: string; destinataire: string; sujet: string; ok: boolean }
-export interface GrandeDateAVenir { type: 'rencontre' | 'mariage'; le: string; annees: number; joursAvant: number; numero: number; nom: string }
+export interface GrandeDateAVenir { type: 'rencontre' | 'mariage' | 'bilan'; le: string; annees: number | null; joursAvant: number; numero: number; nom: string }
+const LIBELLE_GRANDE_DATE = { rencontre: 'rencontre', mariage: 'mariage', bilan: 'bilan annuel' }
 interface Couple {
   id: string
   numero: number
@@ -21,6 +22,7 @@ interface Couple {
   nom_couple: string | null
   date_anniversaire: string | null
   date_mariage: string | null
+  rdv_annuel_le: string | null
   created_at: string
   derniere_connexion: string | null
   emails: EmailEnvoye[]
@@ -30,6 +32,8 @@ interface Couple {
 
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
 const dateLongue = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+// Date AAAA-MM-JJ lue à midi UTC pour éviter un décalage d'un jour.
+const dateJour = (date: string) => dateLongue(`${date.slice(0, 10)}T12:00:00Z`)
 const dateCourte = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
 
 // Recherche sans tenir compte des majuscules ni des accents (comme Admin >
@@ -139,8 +143,8 @@ export default function CouplesClient({
   )
 }
 
-// Anniversaires de rencontre et de mariage des 90 prochains jours, pour
-// préparer les e-mails.
+// Anniversaires de rencontre et de mariage et rendez-vous de bilan annuel
+// des 90 prochains jours, pour préparer les e-mails.
 function GrandesDatesAVenir({ dates }: { dates: GrandeDateAVenir[] }) {
   return (
     <div className="card p-5">
@@ -158,7 +162,7 @@ function GrandesDatesAVenir({ dates }: { dates: GrandeDateAVenir[] }) {
               <span className="font-mono" style={{ color: 'var(--muted)', minWidth: 110 }}>{dateLongue(d.le)}</span>
               <span><strong>Couple {d.numero}</strong>{d.nom ? ` — ${d.nom}` : ''}</span>
               <span style={{ color: 'var(--muted)' }}>
-                · {d.type === 'mariage' ? 'mariage' : 'rencontre'}, {d.annees} an{d.annees > 1 ? 's' : ''}
+                · {LIBELLE_GRANDE_DATE[d.type]}{d.annees ? `, ${d.annees} an${d.annees > 1 ? 's' : ''}` : ''}
                 {' · '}{d.joursAvant === 0 ? "aujourd'hui" : `dans ${d.joursAvant} jour${d.joursAvant > 1 ? 's' : ''}`}
               </span>
             </li>
@@ -246,15 +250,6 @@ function CoupleCard({
             </span>
           )}
           {couple.nom_couple && <span style={{ fontSize: 13, fontWeight: 600 }}>{couple.nom_couple}</span>}
-          {(couple.date_anniversaire || couple.date_mariage) && (
-            <span className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--muted)' }}>
-              <CalendarHeart className="w-3 h-3" />
-              {[
-                couple.date_anniversaire && `Rencontre : ${dateLongue(couple.date_anniversaire)}`,
-                couple.date_mariage && `Mariage : ${dateLongue(couple.date_mariage)}`,
-              ].filter(Boolean).join(' · ')}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
@@ -271,6 +266,21 @@ function CoupleCard({
             <Trash2 className="w-3.5 h-3.5" /> Effacer
           </button>
         </div>
+      </div>
+
+      {/* Grandes dates du couple */}
+      <div className="flex flex-wrap gap-x-5 gap-y-1 mb-4 items-center" style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+        <CalendarHeart className="w-3.5 h-3.5" style={{ color: 'var(--brand)' }} />
+        {([
+          ['Rencontre', couple.date_anniversaire, 'non renseignée'],
+          ['Mariage', couple.date_mariage, 'non renseignée'],
+          ['Bilan annuel', couple.rdv_annuel_le, 'pas encore fixé'],
+        ] as const).map(([libelle, date, vide]) => (
+          <span key={libelle}>
+            <span style={{ color: 'var(--muted)' }}>{libelle} : </span>
+            {date ? <strong>{dateJour(date)}</strong> : <span style={{ color: 'var(--muted)' }}>{vide}</span>}
+          </span>
+        ))}
       </div>
 
       {editing && (
