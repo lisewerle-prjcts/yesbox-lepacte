@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, Send, KeyRound, Gift, Heart, Mail } from 'lucide-react'
+import { Copy, Check, Send, KeyRound, Heart, Mail, CalendarHeart } from 'lucide-react'
 import Alert from '@/components/ui/Alert'
-import { updatePrenomPartenaire, updateDateAnniversaire } from '@/app/actions/compte'
+import { updatePrenomPartenaire, updateDateAnniversaire, updateDateMariage } from '@/app/actions/compte'
 import { rejoindrePartenaireParCode, envoyerInvitationPartenaire } from '@/app/actions/couple'
-import { getAnniversaireActuel, getProchainAnniversaire } from '@/lib/anniversaires'
+import { getProchainAnniversaire } from '@/lib/anniversaires'
 import { useT } from '@/components/i18n/LocaleContext'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -13,7 +13,8 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 export default function VotreCoupleCard({
   hasPartner,
   partnerPrenom: initialPartnerPrenom,
-  dateAnniversaire: initialDate,
+  dateAnniversaire,
+  dateMariage,
   pairingCode,
   inviteLink,
   initialCodeError,
@@ -21,14 +22,13 @@ export default function VotreCoupleCard({
   hasPartner: boolean
   partnerPrenom: string
   dateAnniversaire: string
+  dateMariage: string
   pairingCode: string | null
   inviteLink: string | null
   initialCodeError?: string | null
 }) {
   const [partnerPrenom, setPartnerPrenom] = useState(initialPartnerPrenom)
   const [partnerStatus, setPartnerStatus] = useState<SaveStatus>('idle')
-  const [date, setDate] = useState(initialDate)
-  const [dateStatus, setDateStatus] = useState<SaveStatus>('idle')
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
   const [joinCode, setJoinCode] = useState('')
   const [joinLoading, setJoinLoading] = useState(false)
@@ -43,13 +43,6 @@ export default function VotreCoupleCard({
     const res = await updatePrenomPartenaire(partnerPrenom)
     setPartnerStatus(res.error ? 'error' : 'saved')
     setTimeout(() => setPartnerStatus('idle'), 2500)
-  }
-
-  async function saveDate() {
-    setDateStatus('saving')
-    const res = await updateDateAnniversaire(date)
-    setDateStatus(res.error ? 'error' : 'saved')
-    setTimeout(() => setDateStatus('idle'), 2500)
   }
 
   async function copy(text: string, which: 'code' | 'link') {
@@ -95,73 +88,44 @@ export default function VotreCoupleCard({
     if (res.error) setJoinError(res.error)
   }
 
-  const anniversaireActuel = date ? getAnniversaireActuel(date) : null
-  const prochainAnniversaire = date ? getProchainAnniversaire(date) : null
-
   return (
     <div className="card p-5 mb-6">
       <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>{t('Votre couple', 'Your couple')}</h2>
 
       {joinError && <Alert type="error" message={joinError} className="mb-4" />}
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-4">
-        {hasPartner && (
-          <div>
-            <label className="flabel">{t('Prénom de ton/ta partenaire', "Your partner's first name")}</label>
-            <div className="flex gap-2">
-              <input type="text" className="field" value={partnerPrenom} onChange={e => setPartnerPrenom(e.target.value)} />
-              <button onClick={savePartnerPrenom} disabled={partnerStatus === 'saving'} className="btn-secondary text-sm px-3" style={{ flexShrink: 0 }}>
-                {partnerStatus === 'saved' ? <Check className="w-4 h-4" /> : 'OK'}
-              </button>
-            </div>
-          </div>
-        )}
-        <div>
-          <label className="flabel">{t("Date d'anniversaire de couple", 'Couple anniversary date')}</label>
+      {hasPartner && (
+        <div className="mb-4" style={{ maxWidth: 360 }}>
+          <label className="flabel">{t('Prénom de ton/ta partenaire', "Your partner's first name")}</label>
           <div className="flex gap-2">
-            <input type="date" className="field" value={date} onChange={e => setDate(e.target.value)} />
-            <button onClick={saveDate} disabled={dateStatus === 'saving'} className="btn-secondary text-sm px-3" style={{ flexShrink: 0 }}>
-              {dateStatus === 'saved' ? <Check className="w-4 h-4" /> : 'OK'}
+            <input type="text" className="field" value={partnerPrenom} onChange={e => setPartnerPrenom(e.target.value)} />
+            <button onClick={savePartnerPrenom} disabled={partnerStatus === 'saving'} className="btn-secondary text-sm px-3" style={{ flexShrink: 0 }}>
+              {partnerStatus === 'saved' ? <Check className="w-4 h-4" /> : 'OK'}
             </button>
           </div>
         </div>
-      </div>
-
-      {(anniversaireActuel || prochainAnniversaire) && (
-        <div className="grid sm:grid-cols-2 gap-3 mb-4">
-          {anniversaireActuel && (
-            <div className="surface p-3">
-              <p className="font-mono" style={{ fontSize: 10, color: 'var(--brand)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-                <Gift className="w-3 h-3 inline mr-1" />{t('En cours', 'Current')}
-              </p>
-              <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                <strong>{anniversaireActuel.years}</strong>{t(
-                  ` an${anniversaireActuel.years > 1 ? 's' : ''}`,
-                  `-year${anniversaireActuel.years > 1 ? 's' : ''} anniversary`
-                )}
-                {anniversaireActuel.matiere && <> — {t('noces de ', '')}<strong>{anniversaireActuel.matiere}</strong></>}
-              </p>
-            </div>
-          )}
-          {prochainAnniversaire && (
-            <div className="surface p-3">
-              <p className="font-mono" style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-                {t('À venir', 'Coming up')}
-              </p>
-              <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-                {t(
-                  `Le ${prochainAnniversaire.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} — `,
-                  `On ${prochainAnniversaire.date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} — `
-                )}<strong>{prochainAnniversaire.years}</strong>{t(
-                  ` an${prochainAnniversaire.years > 1 ? 's' : ''}`,
-                  `-year${prochainAnniversaire.years > 1 ? 's' : ''} anniversary`
-                )}
-                {prochainAnniversaire.matiere && <>{t(', noces de ', ' — ')}<strong>{prochainAnniversaire.matiere}</strong></>}
-              </p>
-            </div>
-          )}
-        </div>
       )}
+
+      <div className="surface p-4 mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <CalendarHeart className="w-4 h-4" style={{ color: 'var(--brand)' }} />
+          <p className="font-semibold" style={{ fontSize: 14, color: 'var(--ink)' }}>{t('Nos grandes dates', 'Our big dates')}</p>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>{t('Quelles sont vos dates de couple ?', 'What are your couple dates?')}</p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <DateCouple
+            label={t('Date de rencontre', 'Date you met')}
+            hint={t('Le jour où tout a commencé', 'The day it all began')}
+            initial={dateAnniversaire}
+            save={updateDateAnniversaire}
+          />
+          <DateCouple
+            label={t('Date de mariage', 'Wedding date')}
+            initial={dateMariage}
+            save={updateDateMariage}
+          />
+        </div>
+      </div>
 
       {!hasPartner && pairingCode && (
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16, marginTop: 4 }}>
@@ -238,6 +202,57 @@ export default function VotreCoupleCard({
       {hasPartner && (
         <p className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--sage)' }}>
           <Heart className="w-3.5 h-3.5" /> {t('Vous êtes pairé·es', "You're paired up")}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// Une date du bloc « Nos grandes dates » : champ + enregistrement, et rappel
+// du prochain anniversaire de cette date une fois renseignée.
+function DateCouple({
+  label,
+  hint,
+  initial,
+  save,
+}: {
+  label: string
+  hint?: string
+  initial: string
+  save: (date: string) => Promise<{ error?: string; success?: boolean }>
+}) {
+  const [date, setDate] = useState(initial)
+  const [status, setStatus] = useState<SaveStatus>('idle')
+  const t = useT()
+
+  async function enregistrer() {
+    setStatus('saving')
+    const res = await save(date)
+    setStatus(res.error ? 'error' : 'saved')
+    setTimeout(() => setStatus('idle'), 2500)
+  }
+
+  const prochain = date ? getProchainAnniversaire(date) : null
+
+  return (
+    <div>
+      <label className="flabel">{label}</label>
+      {hint && <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: -2, marginBottom: 6 }}>{hint}</p>}
+      <div className="flex gap-2">
+        <input type="date" className="field" value={date} onChange={e => setDate(e.target.value)} />
+        <button onClick={enregistrer} disabled={status === 'saving'} className="btn-secondary text-sm px-3" style={{ flexShrink: 0 }}>
+          {status === 'saved' ? <Check className="w-4 h-4" /> : 'OK'}
+        </button>
+      </div>
+      {status === 'error' && <p style={{ fontSize: 12, color: '#c0392b', marginTop: 6 }}>{t("L'enregistrement a échoué, réessaie.", 'Saving failed, please try again.')}</p>}
+      {prochain && prochain.years > 0 && (
+        <p style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 6 }}>
+          {t('Prochain anniversaire : ', 'Next anniversary: ')}
+          {t(
+            `le ${prochain.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} — `,
+            `${prochain.date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} — `
+          )}
+          <strong>{prochain.years}</strong>{t(` an${prochain.years > 1 ? 's' : ''}`, ` year${prochain.years > 1 ? 's' : ''}`)}
         </p>
       )}
     </div>

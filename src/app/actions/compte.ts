@@ -80,6 +80,14 @@ export async function updateNomCouple(nomCouple: string) {
 }
 
 export async function updateDateAnniversaire(dateAnniversaire: string) {
+  return updateDateCouple({ date_anniversaire: dateAnniversaire || null })
+}
+
+export async function updateDateMariage(dateMariage: string) {
+  return updateDateCouple({ date_mariage: dateMariage || null })
+}
+
+async function updateDateCouple(champ: { date_anniversaire: string | null } | { date_mariage: string | null }) {
   const supabase = await createClient()
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
@@ -90,7 +98,7 @@ export async function updateDateAnniversaire(dateAnniversaire: string) {
 
   const { error } = await supabase
     .from('couples')
-    .update({ date_anniversaire: dateAnniversaire || null })
+    .update(champ)
     .eq('id', myProfile.couple_id)
 
   if (error) return { error: error.message }

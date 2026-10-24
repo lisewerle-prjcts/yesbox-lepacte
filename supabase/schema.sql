@@ -58,7 +58,8 @@ create table public.couples (
   id uuid primary key default uuid_generate_v4(),
   numero integer generated always as identity, -- numérotation "Couple 1, 2, ..." réservée à l'admin
   nom_couple text,
-  date_anniversaire date,
+  date_anniversaire date, -- date de rencontre (« le jour où tout a commencé »)
+  date_mariage date,
   invite_token uuid unique default uuid_generate_v4(),
   invite_token_expires_at timestamptz default (now() + interval '7 days'),
   invite_used boolean default false,
@@ -1509,3 +1510,10 @@ drop policy if exists "rdv_reponses_mois_select" on public.rdv_reponses_mois;
 create policy "rdv_reponses_mois_select" on public.rdv_reponses_mois for select using (
   couple_id in (select couple_id from public.profiles where id = auth.uid())
 );
+
+-- ============================================================
+-- Migration : date de mariage du couple (bloc « Nos grandes dates » du
+-- tableau de bord, à côté de la date de rencontre = date_anniversaire).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists date_mariage date;
