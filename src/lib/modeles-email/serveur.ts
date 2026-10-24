@@ -3,7 +3,7 @@ import { envoyerMail } from '@/lib/mailer'
 import type { Locale } from '@/lib/i18n/locale'
 import { piedDePageRappel } from '@/lib/desinscription'
 import { modeleEmail, type ContenuEmail } from './catalogue'
-import { rendreCorps, rendreObjet, type Variables } from './rendu'
+import { corpsAvecMotPersonnel, rendreCorps, rendreObjet, type Variables } from './rendu'
 
 // Modèles d'e-mails modifiés depuis l'admin : réglages
 // « modele_email::<clé>::<langue> » (JSON { objet, corps }) ; sans réglage,
@@ -74,7 +74,8 @@ export async function contenusModeles(): Promise<Record<string, Record<Locale, C
 export async function rendreModele(cle: string, locale: Locale, vars: Variables) {
   const modele = modeleEmail(cle)
   const contenu = await contenuModele(cle, locale)
-  return { objet: rendreObjet(contenu.objet, vars), html: rendreCorps(contenu.corps, vars, modele.facultatives) }
+  const corps = corpsAvecMotPersonnel(contenu.corps, vars.mot_personnel as string | undefined)
+  return { objet: rendreObjet(contenu.objet, vars), html: rendreCorps(corps, vars, modele.facultatives) }
 }
 
 // Envoie un modèle. Pour un rappel, `desinscription` (id de la personne)

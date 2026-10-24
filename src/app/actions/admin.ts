@@ -17,6 +17,7 @@ import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel } from '@/lib/desinscription'
+import { envoyerEmailsAnniversaires, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
@@ -761,5 +762,39 @@ export async function adminAttribuerCode(userId: string, code: string, remplacer
   revalidatePath('/admin/utilisateurs')
   revalidatePath('/admin/codes')
   revalidatePath('/admin/actions')
+  return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// Tâches : validation des e-mails d'anniversaire (Admin > Vue d'ensemble),
+// avec un mot personnel facultatif. Validé le jour même de l'envoi (après le
+// passage de la tâche du matin), l'e-mail part tout de suite.
+// ---------------------------------------------------------------------------
+
+function verifierTache(type: string, anniversaire: string) {
+  return (type === 'rencontre' || type === 'mariage') && /^\d{4}-\d{2}-\d{2}$/.test(anniversaire)
+}
+
+export async function adminValiderEmailAnniversaire(coupleId: string, type: TypeGrandeDate, anniversaire: string, mot: string) {
+  await assertAdmin()
+  if (!verifierTache(type, anniversaire)) return { error: 'Tâche invalide' }
+  const admin = createAdminClient()
+  const { error } = await admin.from('validations_emails').upsert(
+    { couple_id: coupleId, type, anniversaire, valide_le: new Date().toISOString(), mot: mot.trim().slice(0, 2000) || null },
+    { onConflict: 'couple_id,type,anniversaire' },
+  )
+  if (error) return { error: error.message.includes('validations_emails') ? 'Table validations_emails absente : lance la commande SQL de la dernière mise à jour dans Supabase.' : error.message }
+  const envoyes = await envoyerEmailsAnniversaires(admin, coupleId)
+  revalidatePath('/admin')
+  return { success: true, envoyes }
+}
+
+export async function adminAnnulerValidationEmail(coupleId: string, type: TypeGrandeDate, anniversaire: string) {
+  await assertAdmin()
+  if (!verifierTache(type, anniversaire)) return { error: 'Tâche invalide' }
+  const admin = createAdminClient()
+  const { error } = await admin.from('validations_emails').delete().eq('couple_id', coupleId).eq('type', type).eq('anniversaire', anniversaire)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
   return { success: true }
 }

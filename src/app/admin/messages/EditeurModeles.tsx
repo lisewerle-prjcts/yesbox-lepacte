@@ -29,7 +29,7 @@ const EXEMPLE: Record<string, string> = {
   rappel_rdv: 'Prochain rendez-vous annuel : le 12 mars 2027.', precision_rdv: ', le 12 mars 2027',
   phrase_abonnement: 'À la fin de votre mois d’abonnement, le 12 mars 2027, vous passerez automatiquement à l’abonnement annuel.',
   mois: '6 mois', mot_de_passe: 'k3Rm-92xa', annees: '5 ans', matiere: 'bois', autour_matiere: 'du bois', noces: 'noces de bois',
-  idees_cadeau: 'un objet sculpté, une boîte à souvenirs gravée, ou un arbre à planter ensemble', invite_par: 'Camille',
+  idees_cadeau: 'un objet sculpté, une boîte à souvenirs gravée, ou un arbre à planter ensemble', invite_par: 'Camille', mot_personnel: 'Un petit mot de l’équipe : merci de faire partie de l’aventure YES BOX !',
 }
 
 const egal = (a: ContenuEmail, b: ContenuEmail) => a.objet === b.objet && a.corps === b.corps
