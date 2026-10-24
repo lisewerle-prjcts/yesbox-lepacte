@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff, CalendarHeart } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
   adminUpdateCouple, adminDeleteCouple, adminUpdateProfile,
@@ -13,12 +13,14 @@ interface UnassignedMember { id: string; prenom: string | null; nom: string | nu
 interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number; derniereConnexion: string | null; rappelsEmail: boolean }
 interface ModuleStatus { slug: string; statut: string; revealed: boolean; termine_le: string | null }
 export interface EmailEnvoye { date: string; destinataire: string; sujet: string; ok: boolean }
+export interface GrandeDateAVenir { type: 'rencontre' | 'mariage'; le: string; annees: number; joursAvant: number; numero: number; nom: string }
 interface Couple {
   id: string
   numero: number
   pairing_code: string | null
   nom_couple: string | null
   date_anniversaire: string | null
+  date_mariage: string | null
   created_at: string
   derniere_connexion: string | null
   emails: EmailEnvoye[]
@@ -27,6 +29,7 @@ interface Couple {
 }
 
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
+const dateLongue = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 const dateCourte = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })
 
 // Recherche sans tenir compte des majuscules ni des accents (comme Admin >
@@ -49,17 +52,21 @@ function texteRecherche(couple: Couple) {
     `couple ${couple.numero}`, couple.pairing_code, couple.nom_couple,
     ...couple.members.flatMap(m => [m.prenom, m.nom, m.email]),
     ...formesDate(couple.created_at),
+    ...(couple.date_anniversaire ? formesDate(couple.date_anniversaire) : []),
+    ...(couple.date_mariage ? formesDate(couple.date_mariage) : []),
   ].filter(Boolean).join(' '))
 }
 
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
 export default function CouplesClient({
+  grandesDates,
   couples,
   unassigned,
   totalModules,
   moduleSlugs,
 }: {
+  grandesDates: GrandeDateAVenir[]
   couples: Couple[]
   unassigned: UnassignedMember[]
   totalModules: number
@@ -86,6 +93,8 @@ export default function CouplesClient({
 
   return (
     <div className="space-y-4">
+      <GrandesDatesAVenir dates={grandesDates} />
+
       <div className="card p-5">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
@@ -130,6 +139,36 @@ export default function CouplesClient({
   )
 }
 
+// Anniversaires de rencontre et de mariage des 90 prochains jours, pour
+// préparer les e-mails.
+function GrandesDatesAVenir({ dates }: { dates: GrandeDateAVenir[] }) {
+  return (
+    <div className="card p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <CalendarHeart className="w-4 h-4" style={{ color: 'var(--brand)' }} />
+        <h2 className="font-semibold" style={{ fontSize: 15, color: 'var(--ink)' }}>Grandes dates à venir (90 jours)</h2>
+      </div>
+      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Un e-mail d&apos;alerte part aussi un mois avant chaque date.</p>
+      {dates.length === 0 ? (
+        <p style={{ fontSize: 13, color: 'var(--muted)' }}>Aucune date dans les 90 prochains jours.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {dates.map(d => (
+            <li key={`${d.numero}-${d.type}`} className="flex flex-wrap gap-x-2" style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+              <span className="font-mono" style={{ color: 'var(--muted)', minWidth: 110 }}>{dateLongue(d.le)}</span>
+              <span><strong>Couple {d.numero}</strong>{d.nom ? ` — ${d.nom}` : ''}</span>
+              <span style={{ color: 'var(--muted)' }}>
+                · {d.type === 'mariage' ? 'mariage' : 'rencontre'}, {d.annees} an{d.annees > 1 ? 's' : ''}
+                {' · '}{d.joursAvant === 0 ? "aujourd'hui" : `dans ${d.joursAvant} jour${d.joursAvant > 1 ? 's' : ''}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function CoupleCard({
   couple,
   unassigned,
@@ -145,6 +184,7 @@ function CoupleCard({
   const [editing, setEditing] = useState(false)
   const [nomCouple, setNomCouple] = useState(couple.nom_couple || '')
   const [dateAnniversaire, setDateAnniversaire] = useState(couple.date_anniversaire || '')
+  const [dateMariage, setDateMariage] = useState(couple.date_mariage || '')
   const [pairingCode, setPairingCode] = useState(couple.pairing_code || '')
   const [saving, setSaving] = useState(false)
   const [assignChoice, setAssignChoice] = useState('')
@@ -156,6 +196,7 @@ function CoupleCard({
     const res = await adminUpdateCouple(couple.id, {
       nom_couple: nomCouple || null,
       date_anniversaire: dateAnniversaire || null,
+      date_mariage: dateMariage || null,
       ...(code ? { pairing_code: code } : {}),
     })
     setSaving(false)
@@ -205,6 +246,15 @@ function CoupleCard({
             </span>
           )}
           {couple.nom_couple && <span style={{ fontSize: 13, fontWeight: 600 }}>{couple.nom_couple}</span>}
+          {(couple.date_anniversaire || couple.date_mariage) && (
+            <span className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--muted)' }}>
+              <CalendarHeart className="w-3 h-3" />
+              {[
+                couple.date_anniversaire && `Rencontre : ${dateLongue(couple.date_anniversaire)}`,
+                couple.date_mariage && `Mariage : ${dateLongue(couple.date_mariage)}`,
+              ].filter(Boolean).join(' · ')}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
@@ -230,8 +280,12 @@ function CoupleCard({
             <input type="text" className="field" value={nomCouple} onChange={e => setNomCouple(e.target.value)} placeholder="Ex : Lise & Jérôme" />
           </div>
           <div>
-            <label className="flabel">Date d&apos;anniversaire</label>
+            <label className="flabel">Date de rencontre</label>
             <input type="date" className="field" value={dateAnniversaire} onChange={e => setDateAnniversaire(e.target.value)} />
+          </div>
+          <div>
+            <label className="flabel">Date de mariage</label>
+            <input type="date" className="field" value={dateMariage} onChange={e => setDateMariage(e.target.value)} />
           </div>
           <div>
             <label className="flabel">Code couple</label>

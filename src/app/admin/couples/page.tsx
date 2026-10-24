@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { dernieresConnexions, modulesTerminesParCouple } from '@/lib/segments-donnees'
+import { prochainesGrandesDates } from '@/lib/grandes-dates'
 import CouplesClient, { type EmailEnvoye } from './CouplesClient'
 
 const LIBELLES_NOTIFICATION: Record<string, string> = {
@@ -20,7 +21,7 @@ export default async function AdminCouples() {
   const supabase = createAdminClient()
 
   const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules, connexions, terminesParCouple, { data: journalEmails }, { data: rappels }] = await Promise.all([
-    supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, created_at, derniere_relance_le').order('numero', { ascending: false }),
+    supabase.from('couples').select('id, numero, pairing_code, nom_couple, date_anniversaire, date_mariage, created_at, derniere_relance_le').order('numero', { ascending: false }),
     supabase.from('profiles').select('id, prenom, nom, email, couple_id, role, rappels_email, email_bienvenue_envoye_le').order('email'),
     getEffectiveModules(),
     dernieresConnexions(supabase),
@@ -81,7 +82,8 @@ export default async function AdminCouples() {
       emails.push({ date: n.envoye_le, destinataire: prenomDe(n.destinataire_id), sujet: `M${numeroModule(mod.slug)} : ${LIBELLES_NOTIFICATION[n.type] ?? n.type}`, ok: true })
     }
     for (const r of rappels || []) {
-      if (r.couple_id !== couple.id || !avantJournal(r.envoye_le)) continue
+      // Les alertes de grandes dates partent vers l'équipe, pas vers le couple.
+      if (r.couple_id !== couple.id || r.type === 'alerte_grande_date' || !avantJournal(r.envoye_le)) continue
       emails.push({ date: r.envoye_le, destinataire: LES_DEUX, sujet: LIBELLES_RAPPEL[r.type] ?? r.type, ok: true })
     }
     if (avantJournal(couple.derniere_relance_le)) emails.push({ date: couple.derniere_relance_le, destinataire: LES_DEUX, sujet: 'Relance après inactivité', ok: true })
@@ -112,6 +114,7 @@ export default async function AdminCouples() {
       pairing_code: couple.pairing_code,
       nom_couple: couple.nom_couple,
       date_anniversaire: couple.date_anniversaire,
+      date_mariage: couple.date_mariage,
       created_at: couple.created_at,
       derniere_connexion: derniereConnexion,
       emails,
@@ -119,6 +122,14 @@ export default async function AdminCouples() {
       modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, termine_le: terminesParCouple.get(couple.id)?.[m.slug] ?? null })),
     }
   })
+
+  // Anniversaires de rencontre et de mariage des 90 prochains jours, pour
+  // préparer les e-mails (une alerte part aussi par e-mail un mois avant).
+  const grandesDates = couplesData
+    .flatMap(c => prochainesGrandesDates(c).map(d => ({ ...d, numero: c.numero, nom: c.nom_couple || c.members.map(m => m.prenom || m.email).join(' & ') })))
+    .filter(d => d.joursAvant <= 90)
+    .sort((a, b) => a.joursAvant - b.joursAvant)
+    .map(d => ({ type: d.type, le: d.le.toISOString(), annees: d.annees, joursAvant: d.joursAvant, numero: d.numero, nom: d.nom }))
 
   return (
     <div>
@@ -131,7 +142,7 @@ export default async function AdminCouples() {
           Erreur lors du chargement des couples : {couplesError.message}
         </div>
       )}
-      <CouplesClient couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} moduleSlugs={SLUGS} />
+      <CouplesClient grandesDates={grandesDates} couples={couplesData} unassigned={unassigned} totalModules={SLUGS.length} moduleSlugs={SLUGS} />
     </div>
   )
 }
