@@ -811,3 +811,13 @@ export async function adminAnnulerValidationEmail(coupleId: string, type: TypeGr
   revalidatePath('/admin')
   return { success: true }
 }
+
+// Débloque une connexion (ou la saisie du code couple) verrouillée après
+// trop d'essais (Admin > Vue d'ensemble > Problèmes de connexion).
+export async function adminDebloquerConnexion(cle: string) {
+  await assertAdmin()
+  const { error } = await createAdminClient().from('login_attempts').delete().eq('email', cle)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  return { success: true }
+}
