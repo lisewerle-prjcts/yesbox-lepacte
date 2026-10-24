@@ -1527,3 +1527,21 @@ alter table public.couples add column if not exists date_mariage date;
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date'));
+
+-- ============================================================
+-- Migration : validation des e-mails d'anniversaire (rencontre, mariage)
+-- par l'équipe avant envoi, avec un mot personnel facultatif
+-- (Admin > Vue d'ensemble > Tâches). Sans validation, l'e-mail ne part pas.
+-- Écrite uniquement par le serveur (clé service).
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.validations_emails (
+  couple_id uuid not null references public.couples(id) on delete cascade,
+  type text not null check (type in ('rencontre', 'mariage')),
+  anniversaire date not null,
+  valide_le timestamptz,
+  mot text,
+  primary key (couple_id, type, anniversaire)
+);
+alter table public.validations_emails enable row level security;
+-- Aucune policy : accessible uniquement via le service role.

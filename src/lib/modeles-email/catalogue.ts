@@ -13,7 +13,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
   { cle: 'mensuels', nom: 'Rendez-vous mensuels & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé, et l’annonce du rendez-vous annuel.' },
-  { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de rencontre (le jour J, un conseil différent chaque année) et de mariage (une semaine avant).' },
+  { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de rencontre (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
   { cle: 'abonnement', nom: 'Abonnement & cartes cadeaux', description: 'Passage à l’abonnement annuel, cartes cadeaux.' },
 ]
 
@@ -60,6 +60,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   noces: '« noces de bois », « noces d’or »…',
   idees_cadeau: 'idées de cadeaux pour cette matière (vide s’il n’y en a pas)',
   invite_par: 'prénom de la personne qui invite (ou « Ton/ta partenaire »)',
+  mot_personnel: 'mot personnel ajouté à la validation (Vue d’ensemble > Tâches), vide sinon',
 }
 
 export function variablesDuModele(m: Pick<ModeleEmail, 'fr' | 'en'>): string[] {
@@ -767,12 +768,15 @@ const ANNIVERSAIRES: ModeleEmail[] = [
   ...CONSEILS_RENCONTRE.map((conseil, i): ModeleEmail => ({
     cle: `anniv_rencontre_${i + 1}`, famille: 'anniversaires', nom: `Anniversaire de rencontre — année ${i + 1} : ${conseil.etiquette}`, rappel: true,
     etiquette: conseil.etiquette,
-    quand: `Le jour J de l’anniversaire de rencontre, la ${i + 1}${i ? 'e' : 're'} année (puis tous les ${CONSEILS_RENCONTRE.length} ans : année ${i + 1 + CONSEILS_RENCONTRE.length}, ${i + 1 + 2 * CONSEILS_RENCONTRE.length}…).`,
+    facultatives: ['mot_personnel'],
+    quand: `Le jour J de l’anniversaire de rencontre, une fois validé dans Vue d’ensemble > Tâches, la ${i + 1}${i ? 'e' : 're'} année (puis tous les ${CONSEILS_RENCONTRE.length} ans : année ${i + 1 + CONSEILS_RENCONTRE.length}, ${i + 1 + 2 * CONSEILS_RENCONTRE.length}…).`,
     fr: { objet: 'Joyeux anniversaire de couple ! {annees} aujourd’hui 💞', corps: `${BONJOUR.fr}
 
 Il y a {annees}, jour pour jour, votre histoire commençait. Toute l’équipe YES BOX vous souhaite un très bel anniversaire de couple !
 
 ${conseil.fr}
+
+{mot_personnel}
 
 Belle journée à vous deux,
 ${EQUIPE.fr}` },
@@ -782,13 +786,15 @@ ${EQUIPE.fr}` },
 
 ${conseil.en}
 
+{mot_personnel}
+
 Have a lovely day, both of you,
 ${EQUIPE.en}` },
   })),
   {
     cle: 'anniv_mariage', famille: 'anniversaires', nom: 'Anniversaire de mariage — une semaine avant (avec les noces)', rappel: true,
-    quand: 'Une semaine avant l’anniversaire de mariage, quand l’année a un nom de noces (coton, bois…).',
-    facultatives: ['idees_cadeau'],
+    quand: 'Une semaine avant l’anniversaire de mariage, une fois validé dans Vue d’ensemble > Tâches, quand l’année a un nom de noces (coton, bois…).',
+    facultatives: ['idees_cadeau', 'mot_personnel'],
     fr: { objet: 'Dans une semaine : vos {noces}', corps: `${BONJOUR.fr}
 
 Dans une semaine, le {date}, vous fêterez {annees} de mariage : vos **{noces}**.
@@ -796,6 +802,8 @@ Dans une semaine, le {date}, vous fêterez {annees} de mariage : vos **{noces}**
 **Qu’avez-vous prévu pour votre anniversaire de mariage ?** Un dîner, une escapade, un moment rien qu’à vous deux ?
 
 Pourquoi ne pas vous offrir un petit cadeau symbolique autour {autour_matiere} ? Par exemple : {idees_cadeau}.
+
+{mot_personnel}
 
 Belle préparation à vous deux,
 ${EQUIPE.fr}` },
@@ -807,17 +815,22 @@ In a week, on {date}, you’ll celebrate {annees} of marriage: your **{matiere} 
 
 Why not treat yourselves to a small symbolic gift around {matiere}? For example: {idees_cadeau}.
 
+{mot_personnel}
+
 Enjoy getting ready, both of you,
 ${EQUIPE.en}` },
   },
   {
     cle: 'anniv_mariage_sans_noces', famille: 'anniversaires', nom: 'Anniversaire de mariage — une semaine avant (année sans nom de noces)', rappel: true,
-    quand: 'Une semaine avant l’anniversaire de mariage, les années sans nom de noces (51 à 54 ans…).',
+    facultatives: ['mot_personnel'],
+    quand: 'Une semaine avant l’anniversaire de mariage, une fois validé dans Vue d’ensemble > Tâches, les années sans nom de noces (51 à 54 ans…).',
     fr: { objet: 'Dans une semaine : {annees} de mariage', corps: `${BONJOUR.fr}
 
 Dans une semaine, le {date}, vous fêterez {annees} de mariage.
 
 **Qu’avez-vous prévu pour votre anniversaire de mariage ?** Un dîner, une escapade, un moment rien qu’à vous deux ?
+
+{mot_personnel}
 
 Belle préparation à vous deux,
 ${EQUIPE.fr}` },
@@ -826,6 +839,8 @@ ${EQUIPE.fr}` },
 In a week, on {date}, you’ll celebrate {annees} of marriage.
 
 **What have you planned for your wedding anniversary?** A dinner, a getaway, a moment just for the two of you?
+
+{mot_personnel}
 
 Enjoy getting ready, both of you,
 ${EQUIPE.en}` },

@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import Link from 'next/link'
+import { tachesEmailsAnniversaire } from '@/lib/grandes-dates'
+import TachesClient from './TachesClient'
 
 export default async function AdminHome() {
   const supabase = createAdminClient()
@@ -18,6 +20,7 @@ export default async function AdminHome() {
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
     getEffectiveModules(),
   ])
+  const { taches, tableManquante } = await tachesEmailsAnniversaire(supabase)
 
   const completeCountByCouple: Record<string, number> = {}
   completeModules?.forEach(m => { completeCountByCouple[m.couple_id] = (completeCountByCouple[m.couple_id] ?? 0) + 1 })
@@ -52,6 +55,8 @@ export default async function AdminHome() {
         <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Vue d&apos;ensemble</h1>
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>Tableau de bord administrateur YES BOX</p>
       </div>
+
+      <TachesClient taches={taches} tableManquante={tableManquante} />
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4 mb-8">

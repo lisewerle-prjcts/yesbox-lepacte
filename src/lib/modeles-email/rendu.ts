@@ -110,6 +110,12 @@ export function rendreCorps(corps: string, vars: Variables, facultatives: string
   return html.join('')
 }
 
+// Mot personnel ajouté à un e-mail (validation des e-mails d'anniversaire) :
+// à sa place si le modèle prévoit {mot_personnel}, sinon à la fin.
+export function corpsAvecMotPersonnel(corps: string, mot: string | null | undefined) {
+  return mot?.trim() && !corps.includes('{mot_personnel}') ? `${corps}\n\n{mot_personnel}` : corps
+}
+
 export function rendreObjet(objet: string, vars: Variables): string {
   return substituer(objet, vars, v => v).replace(/\*\*/g, '').replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim()
 }

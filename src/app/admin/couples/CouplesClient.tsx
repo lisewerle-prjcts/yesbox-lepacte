@@ -152,7 +152,7 @@ function GrandesDatesAVenir({ dates }: { dates: GrandeDateAVenir[] }) {
         <CalendarHeart className="w-4 h-4" style={{ color: 'var(--brand)' }} />
         <h2 className="font-semibold" style={{ fontSize: 15, color: 'var(--ink)' }}>Grandes dates à venir (90 jours)</h2>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Un e-mail d&apos;alerte part aussi un mois avant chaque date.</p>
+      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Un e-mail d&apos;alerte part aussi un mois avant chaque anniversaire. Les e-mails envoyés aux couples se valident dans <Link href="/admin#taches" style={{ color: 'var(--brand)' }}>Vue d&apos;ensemble &gt; Tâches</Link>.</p>
       {dates.length === 0 ? (
         <p style={{ fontSize: 13, color: 'var(--muted)' }}>Aucune date dans les 90 prochains jours.</p>
       ) : (
