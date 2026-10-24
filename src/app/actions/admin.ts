@@ -17,7 +17,7 @@ import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel } from '@/lib/desinscription'
-import { envoyerEmailsAnniversaires, type TypeGrandeDate } from '@/lib/grandes-dates'
+import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
@@ -775,15 +775,28 @@ function verifierTache(type: string, anniversaire: string) {
   return (type === 'rencontre' || type === 'mariage') && /^\d{4}-\d{2}-\d{2}$/.test(anniversaire)
 }
 
-export async function adminValiderEmailAnniversaire(coupleId: string, type: TypeGrandeDate, anniversaire: string, mot: string) {
+// `contenu` : texte modifié pour ce couple seulement, par langue (vide :
+// texte du modèle).
+export async function adminValiderEmailAnniversaire(coupleId: string, type: TypeGrandeDate, anniversaire: string, mot: string, contenu: ContenuPerso = {}) {
   await assertAdmin()
   if (!verifierTache(type, anniversaire)) return { error: 'Tâche invalide' }
+  const perso: ContenuPerso = {}
+  for (const l of ['fr', 'en'] as const) {
+    const c = contenu[l]
+    if (!c) continue
+    if (!c.objet?.trim() || !c.corps?.trim()) return { error: `L’objet et le message de la version ${l === 'fr' ? 'française' : 'anglaise'} ne peuvent pas être vides.` }
+    perso[l] = { objet: c.objet.slice(0, 300), corps: c.corps.slice(0, 10000) }
+  }
   const admin = createAdminClient()
+  const ligne = { couple_id: coupleId, type, anniversaire, valide_le: new Date().toISOString(), mot: mot.trim().slice(0, 2000) || null }
   const { error } = await admin.from('validations_emails').upsert(
-    { couple_id: coupleId, type, anniversaire, valide_le: new Date().toISOString(), mot: mot.trim().slice(0, 2000) || null },
+    Object.keys(perso).length ? { ...ligne, contenu: perso } : { ...ligne, contenu: null },
     { onConflict: 'couple_id,type,anniversaire' },
   )
-  if (error) return { error: error.message.includes('validations_emails') ? 'Table validations_emails absente : lance la commande SQL de la dernière mise à jour dans Supabase.' : error.message }
+  if (error) {
+    if (error.message.includes('contenu')) return { error: 'Pour modifier le texte, lance d’abord dans Supabase : alter table public.validations_emails add column if not exists contenu jsonb;' }
+    return { error: error.message.includes('validations_emails') ? 'Table validations_emails absente : lance la commande SQL de la dernière mise à jour dans Supabase.' : error.message }
+  }
   const envoyes = await envoyerEmailsAnniversaires(admin, coupleId)
   revalidatePath('/admin')
   return { success: true, envoyes }

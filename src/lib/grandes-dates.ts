@@ -175,11 +175,18 @@ function emailPour(d: ProchaineGrandeDate, m: Membre, membres: Membre[], mot: st
   }
 }
 
-interface Validation { couple_id: string; type: TypeGrandeDate; anniversaire: string; valide_le: string | null; mot: string | null }
+// Texte modifié pour ce couple, par langue (sinon celui du modèle).
+export type ContenuPerso = Partial<Record<Locale, ContenuEmail>>
+
+interface Validation { couple_id: string; type: TypeGrandeDate; anniversaire: string; valide_le: string | null; mot: string | null; contenu?: ContenuPerso | null }
 
 async function validations(admin: AdminClient, coupleIds: string[]): Promise<Validation[]> {
   if (!coupleIds.length) return []
-  const { data, error } = await admin.from('validations_emails').select('couple_id, type, anniversaire, valide_le, mot').in('couple_id', coupleIds)
+  const avecContenu = await admin.from('validations_emails').select('couple_id, type, anniversaire, valide_le, mot, contenu').in('couple_id', coupleIds)
+  // Colonne « contenu » pas encore créée : les validations restent lues.
+  const { data, error } = avecContenu.error
+    ? await admin.from('validations_emails').select('couple_id, type, anniversaire, valide_le, mot').in('couple_id', coupleIds)
+    : avecContenu
   // Table absente (SQL pas encore exécuté) : rien n'est validé, rien ne part.
   if (error) { console.error(`[grandes-dates] validations : ${error.message}`); return [] }
   return (data ?? []) as Validation[]
@@ -204,6 +211,7 @@ export interface DestinataireTache {
   /** A désactivé les rappels : ne recevra pas l'e-mail. */
   exclu: boolean
   cle: string
+  /** Texte du modèle (sans modification pour ce couple). */
   contenu: ContenuEmail
   facultatives: string[]
   vars: Variables
@@ -220,6 +228,8 @@ export interface TacheEmailAnniversaire {
   joursAvantEnvoi: number
   valideLe: string | null
   mot: string
+  /** Texte modifié pour ce couple (par langue). */
+  contenuPerso: ContenuPerso
   destinataires: DestinataireTache[]
 }
 
@@ -270,6 +280,7 @@ export async function tachesEmailsAnniversaire(admin: AdminClient): Promise<{ ta
       joursAvantEnvoi: joursAvantEnvoi(d),
       valideLe: v?.valide_le ?? null,
       mot,
+      contenuPerso: v?.contenu ?? {},
       destinataires,
     })
   }
@@ -306,7 +317,7 @@ export async function envoyerEmailsAnniversaires(admin: AdminClient, coupleId?: 
 
       for (const m of membres) {
         const { cle, vars, etiquette } = emailPour(d, m, membres, v.mot ?? '')
-        if (await envoyerRappel(m, cle, vars, etiquette)) envoyes++
+        if (await envoyerRappel(m, cle, vars, etiquette, v.contenu?.[m.langue])) envoyes++
       }
     } catch (e) {
       console.error(`[grandes-dates] e-mail d'anniversaire du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)

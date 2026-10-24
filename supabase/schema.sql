@@ -1548,3 +1548,8 @@ create table if not exists public.validations_emails (
 );
 alter table public.validations_emails enable row level security;
 -- Aucune policy : accessible uniquement via le service role.
+
+-- Migration : texte d'un e-mail d'anniversaire modifié pour un couple
+-- seulement (Vue d'ensemble > Tâches), par langue : { "fr": { "objet",
+-- "corps" }, "en": { … } }. Vide : texte du modèle.
+alter table public.validations_emails add column if not exists contenu jsonb;

@@ -6,7 +6,8 @@ import { Check, ChevronDown, ChevronRight, CalendarHeart } from 'lucide-react'
 import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail } from '@/app/actions/admin'
 import { ApercuEmail } from '@/components/admin/ComposeurEmail'
 import { corpsAvecMotPersonnel } from '@/lib/modeles-email/rendu'
-import type { TacheEmailAnniversaire } from '@/lib/grandes-dates'
+import type { ContenuPerso, TacheEmailAnniversaire } from '@/lib/grandes-dates'
+import type { ContenuEmail } from '@/lib/modeles-email/catalogue'
 
 const dateLongue = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
@@ -53,14 +54,31 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
   const [apercu, setApercu] = useState(0)
   const [statut, setStatut] = useState<'idle' | 'busy'>('idle')
   const [info, setInfo] = useState<{ ok: boolean; texte: string } | null>(null)
+  const [perso, setPerso] = useState<ContenuPerso>(tache.contenuPerso)
+  const [editer, setEditer] = useState(Object.keys(tache.contenuPerso).length > 0)
   const valide = !!tache.valideLe
-  const motModifie = mot.trim() !== tache.mot.trim()
+  const persoModifie = JSON.stringify(perso) !== JSON.stringify(tache.contenuPerso)
+  const motModifie = mot.trim() !== tache.mot.trim() || persoModifie
   const destinataire = tache.destinataires[apercu]
+  // Langues des membres du couple, et texte du modèle pour chacune.
+  const langues = [...new Set(tache.destinataires.map(d => d.langue))]
+  const texteModele = (l: 'fr' | 'en') => tache.destinataires.find(d => d.langue === l)!.contenu
+  const texte = (l: 'fr' | 'en'): ContenuEmail => perso[l] ?? texteModele(l)
+
+  function modifierTexte(l: 'fr' | 'en', champ: keyof ContenuEmail, valeur: string) {
+    setPerso(p => ({ ...p, [l]: { ...texte(l), [champ]: valeur } }))
+  }
 
   async function valider() {
     setStatut('busy')
     setInfo(null)
-    const res = await adminValiderEmailAnniversaire(tache.coupleId, tache.type, tache.anniversaire, mot)
+    // Seules les langues réellement modifiées sont gardées.
+    const modifie: ContenuPerso = {}
+    for (const l of langues) {
+      const c = perso[l]
+      if (c && (c.objet !== texteModele(l).objet || c.corps !== texteModele(l).corps)) modifie[l] = c
+    }
+    const res = await adminValiderEmailAnniversaire(tache.coupleId, tache.type, tache.anniversaire, mot, modifie)
     setStatut('idle')
     if (res.error) { setInfo({ ok: false, texte: res.error }); return }
     setInfo({ ok: true, texte: res.envoyes ? `Validé et envoyé (${res.envoyes} e-mail${res.envoyes > 1 ? 's' : ''}).` : `Validé : il partira ${quand(tache.joursAvantEnvoi)}, le ${dateLongue(tache.envoiLe)}.` })
@@ -109,9 +127,36 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
               placeholder="Ex : Toute l’équipe YES BOX est heureuse de faire partie de votre histoire !"
             />
             <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
-              Ajouté tel quel dans l’e-mail des deux membres, avant la signature. Écris-le dans la langue du couple
+              Ajouté tel quel dans l’e-mail des deux membres, avant la signature (pour changer tout le texte, utilise « Modifier le texte » ci-dessous). Écris-le dans la langue du couple
               ({[...new Set(tache.destinataires.map(d => (d.langue === 'en' ? 'anglais' : 'français')))].join(' / ')}).
             </p>
+          </div>
+
+          <div>
+            {!editer ? (
+              <button type="button" onClick={() => setEditer(true)} className="text-xs" style={{ color: 'var(--brand)' }}>
+                ✎ Modifier le texte de cet e-mail (pour ce couple seulement)
+              </button>
+            ) : (
+              <div className="space-y-3 surface p-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p style={{ fontSize: 12, color: 'var(--ink-2)' }}><strong>Texte pour ce couple seulement</strong> — le modèle commun (Messages & e-mails) ne change pas.</p>
+                  <button type="button" onClick={() => { setPerso({}); setEditer(false) }} className="text-xs" style={{ color: 'var(--muted)' }}>
+                    Revenir au texte du modèle
+                  </button>
+                </div>
+                {langues.map(l => (
+                  <div key={l} className="space-y-2">
+                    {langues.length > 1 && <p className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)' }}>{l === 'fr' ? 'VERSION FRANÇAISE' : 'VERSION ANGLAISE'}</p>}
+                    <input type="text" className="field" value={texte(l).objet} onChange={e => modifierTexte(l, 'objet', e.target.value)} />
+                    <textarea className="field font-mono" rows={10} style={{ fontSize: 12.5 }} value={texte(l).corps} onChange={e => modifierTexte(l, 'corps', e.target.value)} />
+                  </div>
+                ))}
+                <p style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  Garde les variables entre accolades ({'{prenom}'}, {'{annees}'}…) : elles sont remplacées pour chaque membre. Une ligne vide entre deux paragraphes, **gras**.
+                </p>
+              </div>
+            )}
           </div>
 
           {tache.destinataires.length > 1 && (
@@ -128,7 +173,7 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
               <p style={{ fontSize: 12, color: 'var(--muted)' }}>{destinataire.prenom} a désactivé les e-mails de rappel : ne recevra pas cet e-mail.</p>
             ) : (
               <ApercuEmail
-                contenu={{ objet: destinataire.contenu.objet, corps: corpsAvecMotPersonnel(destinataire.contenu.corps, mot) }}
+                contenu={{ objet: texte(destinataire.langue).objet, corps: corpsAvecMotPersonnel(texte(destinataire.langue).corps, mot) }}
                 vars={{ ...Object.fromEntries(Object.entries(destinataire.vars).map(([k, v]) => [k, String(v ?? '')])), mot_personnel: mot }}
                 facultatives={destinataire.facultatives}
               />
@@ -139,7 +184,7 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
           <div className="flex items-center gap-3 flex-wrap">
             {(!valide || motModifie) && (
               <button onClick={valider} disabled={statut === 'busy'} className="btn-brand text-sm py-2 px-4 flex items-center gap-1.5">
-                <Check className="w-4 h-4" /> {statut === 'busy' ? 'Un instant…' : valide ? 'Valider avec ce mot' : tache.joursAvantEnvoi === 0 ? 'Valider et envoyer maintenant' : 'Valider l’envoi'}
+                <Check className="w-4 h-4" /> {statut === 'busy' ? 'Un instant…' : valide ? 'Valider avec ces modifications' : tache.joursAvantEnvoi === 0 ? 'Valider et envoyer maintenant' : 'Valider l’envoi'}
               </button>
             )}
             {valide && (

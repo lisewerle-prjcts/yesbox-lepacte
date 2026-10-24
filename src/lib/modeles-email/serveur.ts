@@ -71,9 +71,11 @@ export async function contenusModeles(): Promise<Record<string, Record<Locale, C
   return resultat
 }
 
-export async function rendreModele(cle: string, locale: Locale, vars: Variables) {
+// `contenuForce` : texte modifié pour un envoi précis (ex. e-mail
+// d'anniversaire d'un couple), à la place de celui du modèle.
+export async function rendreModele(cle: string, locale: Locale, vars: Variables, contenuForce?: ContenuEmail | null) {
   const modele = modeleEmail(cle)
-  const contenu = await contenuModele(cle, locale)
+  const contenu = contenuForce ?? await contenuModele(cle, locale)
   const corps = corpsAvecMotPersonnel(contenu.corps, vars.mot_personnel as string | undefined)
   return { objet: rendreObjet(contenu.objet, vars), html: rendreCorps(corps, vars, modele.facultatives) }
 }
@@ -87,9 +89,10 @@ export async function envoyerModele(options: {
   vars: Variables
   desinscription?: string
   etiquette?: string
+  contenu?: ContenuEmail | null
 }): Promise<boolean> {
   const modele = modeleEmail(options.cle)
-  const { objet, html } = await rendreModele(options.cle, options.locale, options.vars)
+  const { objet, html } = await rendreModele(options.cle, options.locale, options.vars, options.contenu)
   const pied = modele.rappel && options.desinscription ? piedDePageRappel(options.desinscription, options.locale) : ''
   return envoyerMail({ to: options.to, subject: objet, body: html + pied, etiquette: options.etiquette ?? modele.etiquette })
 }
