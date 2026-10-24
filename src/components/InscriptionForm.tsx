@@ -245,19 +245,19 @@ export default function InscriptionForm({
 
         <div className="space-y-3">
           <div className="flex items-start gap-3 p-3 rounded-lg" style={{ background: 'var(--brand-tint, #fdeef4)' }}>
-            <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--brand)' }} />
+            <Lock className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--brand)' }} />
             <p className="text-sm" style={{ color: 'var(--ink-2)' }}>
               <EditableText id="inscription.chiffrement" multiline>Toutes vos réponses aux questions de ce programme ne sont visibles que par vous deux et sont chiffrées sur nos serveurs. Ni l&apos;équipe YES BOX ni aucune intelligence artificielle n&apos;y a accès.</EditableText>
             </p>
           </div>
           <label className="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" name="age_minimum" required className="mt-1 flex-shrink-0" />
+            <input type="checkbox" name="age_minimum" required className="mt-1 shrink-0" />
             <span className="text-sm text-gray-600">
               <EditableText id="inscription.age">Je certifie avoir 15 ans ou plus.</EditableText>
             </span>
           </label>
           <label className="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" name="consentement_sensible" required className="mt-1 flex-shrink-0" />
+            <input type="checkbox" name="consentement_sensible" required className="mt-1 shrink-0" />
             <span className="text-sm text-gray-600">
               <EditableText id="inscription.consentement" multiline>J&apos;accepte que mes réponses aux modules, qui peuvent concerner ma vie intime ou mes convictions religieuses, soient enregistrées pour le fonctionnement du programme. Elles ne sont visibles que par mon couple, et je peux retirer ce consentement à tout moment en supprimant mon compte.</EditableText>{' '}
               <Link href="/confidentialite" target="_blank" className="text-magenta hover:underline">{t('Politique de confidentialité', 'Privacy policy')}</Link>

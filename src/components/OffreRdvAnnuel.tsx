@@ -90,7 +90,7 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
       <div className="space-y-2 mb-6">
         {AVANTAGES.map((a, i) => (
           <div key={i} className="flex gap-2 items-start">
-            <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.85)' }} />
+            <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,.85)' }} />
             <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,.92)' }}>{t(a, AVANTAGES_EN[i])}</span>
           </div>
         ))}

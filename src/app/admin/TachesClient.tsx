@@ -107,7 +107,7 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
             {' · '}envoi {quand(tache.joursAvantEnvoi)}{tache.joursAvantEnvoi > 1 ? ` (${dateLongue(tache.envoiLe)})` : ''}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <span style={{ fontSize: 11, fontWeight: 600, color: valide ? 'var(--sage)' : '#d97706' }}>
             {valide ? '✓ Validé' : 'À valider'}
           </span>

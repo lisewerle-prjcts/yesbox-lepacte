@@ -221,7 +221,7 @@ function QuestionInput({ q, value, onChange }: { q: Question; value: string; onC
                 border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--line)'}`,
                 color: isOn ? 'var(--brand)' : 'var(--ink)',
               }}>
-              <span className="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
+              <span className="w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center"
                 style={{ borderColor: isOn ? 'var(--brand)' : 'var(--muted-2)', background: isOn ? 'var(--brand)' : 'transparent' }}>
                 {isOn && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
               </span>
@@ -253,7 +253,7 @@ function QuestionInput({ q, value, onChange }: { q: Question; value: string; onC
                 border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--line)'}`,
                 color: isOn ? 'var(--brand)' : 'var(--ink)',
               }}>
-              <span className="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+              <span className="w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center"
                 style={{ borderColor: isOn ? 'var(--brand)' : 'var(--muted-2)', background: isOn ? 'var(--brand)' : 'transparent' }}>
                 {isOn && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
               </span>

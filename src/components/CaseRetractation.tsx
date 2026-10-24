@@ -19,14 +19,14 @@ export default function CaseRetractation({ onChange, clair = false }: { onChange
   return (
     <div className="mb-4 space-y-2">
       <label className="flex gap-2 items-start cursor-pointer" style={style}>
-        <input type="checkbox" checked={cgv} onChange={e => { setCgv(e.target.checked); onChange(e.target.checked && renonciation) }} className="mt-0.5 flex-shrink-0" />
+        <input type="checkbox" checked={cgv} onChange={e => { setCgv(e.target.checked); onChange(e.target.checked && renonciation) }} className="mt-0.5 shrink-0" />
         <span>
           {t('J’ai lu et j’accepte les', 'I have read and accept the')}{' '}
           <Link href="/cgv" target="_blank" style={{ color: couleur, textDecoration: 'underline' }}>{t('CGV', 'terms of sale')}</Link>
         </span>
       </label>
       <label className="flex gap-2 items-start cursor-pointer" style={style}>
-        <input type="checkbox" checked={renonciation} onChange={e => { setRenonciation(e.target.checked); onChange(cgv && e.target.checked) }} className="mt-0.5 flex-shrink-0" />
+        <input type="checkbox" checked={renonciation} onChange={e => { setRenonciation(e.target.checked); onChange(cgv && e.target.checked) }} className="mt-0.5 shrink-0" />
         <span>{t('Je demande l’accès immédiat et renonce à mon droit de rétractation dès cet accès', 'I request immediate access and waive my right of withdrawal as of that access')}</span>
       </label>
     </div>

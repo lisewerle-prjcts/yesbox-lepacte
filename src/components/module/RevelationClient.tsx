@@ -61,7 +61,7 @@ function ChampConclusion({ c, value, onChange, disabled }: { c: ConclusionTexte;
               border: `1.5px solid ${isOn ? 'var(--brand)' : 'var(--dark-line)'}`,
               color: 'var(--dark-paper)',
             }}>
-            <span className="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center"
+            <span className="w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center"
               style={{ borderColor: isOn ? 'var(--brand)' : 'var(--dark-muted)', background: isOn ? 'var(--brand)' : 'transparent' }}>
               {isOn && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
             </span>

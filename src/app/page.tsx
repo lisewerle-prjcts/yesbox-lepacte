@@ -162,11 +162,11 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight md:leading-none mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
           <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
         </h1>
-        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
+        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed md:leading-7" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
           <p><EditableText id="home.hero.intro.programme" multiline>YES BOX est un programme de développement personnel pour les couples. Avec des modules simples à faire à son rythme, depuis la maison et sans jugement (pas d&apos;analyse IA, ni de conseil de tierce personne). L&apos;objectif : prendre soin de sa relation, échanger à deux et renouveler ses engagements en conscience, chaque année.</EditableText></p>
           <p><EditableText id="home.hero.intro.questions" multiline>Des questions simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire. Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, en douceur.</EditableText></p>
         </div>
@@ -220,7 +220,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pourQuiList.map((item, i) => (
               <div key={item.titre} className="card p-6 flex gap-3">
-                <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'var(--sage-soft)' }}>
+                <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: 'var(--sage-soft)' }}>
                   <Check className="w-3.5 h-3.5" style={{ color: 'var(--sage)' }} />
                 </span>
                 <div>
@@ -247,7 +247,7 @@ export default function LandingPage() {
               <p><EditableText id="home.constat.texte.2.v2" multiline>Accumulées pendant des années, elles finissent par trop peser.</EditableText></p>
             </div>
             <div className="card p-6 flex gap-5 items-center mt-8">
-              <div className="font-serif font-bold flex-shrink-0" style={{ fontSize: 36, color: 'var(--brand)', lineHeight: 1 }}><EditableText id="home.constat.chiffre.n">45 %</EditableText></div>
+              <div className="font-serif font-bold shrink-0" style={{ fontSize: 36, color: 'var(--brand)', lineHeight: 1 }}><EditableText id="home.constat.chiffre.n">45 %</EditableText></div>
               <div style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5 }}><EditableText id="home.constat.chiffre.l" multiline>des mariages se terminent par un divorce (Insee, 2022).</EditableText></div>
             </div>
           </div>
@@ -310,7 +310,7 @@ export default function LandingPage() {
               <ul className="mt-6 space-y-3">
                 {pacteList.map((item, i) => (
                   <li key={i} className="flex gap-3 items-start">
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
+                    <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
                     <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.pacte.list.${i}`}>{item}</EditableText></span>
                   </li>
                 ))}
@@ -353,7 +353,7 @@ export default function LandingPage() {
             {modules.map((m, i) => {
               return (
               <div key={m.slug} className="card flex items-center gap-5 p-5">
-                <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
+                <span className="font-mono text-xs font-bold shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${m.slug}.titre`}>{m.titre}</EditableText></span>
@@ -361,8 +361,8 @@ export default function LandingPage() {
                   </div>
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
                 </div>
-                {m.free && <span className="tag-sage flex-shrink-0">{t('Gratuit', 'Free')}</span>}
-                {m.n === 10 && <span className="tag-muted flex-shrink-0">{t('Annuel', 'Yearly')}</span>}
+                {m.free && <span className="tag-sage shrink-0">{t('Gratuit', 'Free')}</span>}
+                {m.n === 10 && <span className="tag-muted shrink-0">{t('Annuel', 'Yearly')}</span>}
               </div>
             )})}
           </div>

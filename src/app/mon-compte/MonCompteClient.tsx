@@ -183,7 +183,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
 
       {compteResilie ? (
         <div className="flex items-start gap-3 p-3 rounded-lg" style={{ background: '#fdf2f2' }}>
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
           <p className="text-sm" style={{ color: '#8a2c2c' }}>
             {t(
               "Ce compte a été clos. L'abonnement ne peut plus être réactivé ici : il faut recommencer avec un nouveau compte.",
@@ -301,7 +301,7 @@ function AjouterCodeCard() {
           onChange={setCode}
           onEntree={() => { if (code.trim() && status !== 'saving') valider() }}
         />
-        <button onClick={valider} disabled={status === 'saving' || !code.trim()} className="btn-secondary text-sm py-2 px-4 flex-shrink-0">
+        <button onClick={valider} disabled={status === 'saving' || !code.trim()} className="btn-secondary text-sm py-2 px-4 shrink-0">
           {status === 'saving' ? '…' : t('Valider', 'Apply')}
         </button>
       </div>
@@ -328,7 +328,7 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
   }
 
   const boutonCopier = (quoi: 'code' | 'lien') => (
-    <button onClick={() => copier(quoi)} className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1.5 flex-shrink-0">
+    <button onClick={() => copier(quoi)} className="btn-secondary text-sm py-1.5 px-3 flex items-center gap-1.5 shrink-0">
       {copie === quoi ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
       {copie === quoi ? t('Copié', 'Copied') : t('Copier', 'Copy')}
     </button>

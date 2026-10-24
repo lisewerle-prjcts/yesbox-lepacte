@@ -21,7 +21,7 @@ import type { Locale } from '@/lib/i18n/locale'
 function inscriptionSchema(locale: Locale) {
   return z.object({
     prenom: z.string().min(2, t(locale, 'Le prénom doit contenir au moins 2 caractères', 'First name must be at least 2 characters')),
-    email: z.string().email(t(locale, 'Email invalide', 'Invalid email')),
+    email: z.email(t(locale, 'Email invalide', 'Invalid email')),
     password: z.string().min(8, t(locale, 'Le mot de passe doit contenir au moins 8 caractères', 'Password must be at least 8 characters')),
     passwordConfirm: z.string(),
   }).refine((data) => data.password === data.passwordConfirm, {
@@ -32,7 +32,7 @@ function inscriptionSchema(locale: Locale) {
 
 function connexionSchema(locale: Locale) {
   return z.object({
-    email: z.string().email(t(locale, 'Email invalide', 'Invalid email')),
+    email: z.email(t(locale, 'Email invalide', 'Invalid email')),
     password: z.string().min(1, t(locale, 'Le mot de passe est requis', 'Password is required')),
   })
 }
@@ -49,7 +49,7 @@ export async function inscription(formData: FormData) {
   })
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const { prenom, email, password } = parsed.data
@@ -173,7 +173,7 @@ export async function connexion(formData: FormData) {
   })
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const { email, password } = parsed.data
@@ -250,7 +250,7 @@ export async function connexion(formData: FormData) {
 
 export async function renvoyerConfirmation(email: string) {
   const locale = await getLocale()
-  const parsed = z.string().email().safeParse(email)
+  const parsed = z.email().safeParse(email)
   if (!parsed.success) {
     return { error: t(locale, 'Email invalide', 'Invalid email') }
   }

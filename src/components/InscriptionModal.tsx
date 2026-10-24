@@ -13,7 +13,7 @@ export default function InscriptionModal({ onClose }: { onClose: () => void }) {
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box slide-up">
         <div className="flex justify-end -mt-2 -mr-2">
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream transition-colors flex-shrink-0" aria-label="Fermer">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream transition-colors shrink-0" aria-label="Fermer">
             <X className="w-5 h-5" style={{ color: 'var(--muted)' }} />
           </button>
         </div>

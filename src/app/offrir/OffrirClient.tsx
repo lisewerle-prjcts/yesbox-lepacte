@@ -97,7 +97,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
                   <button key={String(c.valeur)} type="button" onClick={() => setPourSoi(c.valeur)}
                     className="rounded-xl p-4 text-left transition-all flex gap-3 items-start"
                     style={{ border: `2px solid ${actif ? 'var(--brand)' : 'var(--line)'}`, background: actif ? 'var(--brand-tint)' : 'white' }}>
-                    <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ border: `2px solid ${actif ? 'var(--brand)' : 'var(--line-2)'}`, background: actif ? 'var(--brand)' : 'white' }}>
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ border: `2px solid ${actif ? 'var(--brand)' : 'var(--line-2)'}`, background: actif ? 'var(--brand)' : 'white' }}>
                       {actif && <Check className="w-3 h-3" style={{ color: 'white' }} />}
                     </span>
                     <span>
@@ -135,7 +135,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
           {/* Paiement */}
           <section style={{ borderTop: '1px solid var(--line)', paddingTop: 24 }}>
             <label className="flex gap-2 items-start cursor-pointer mb-4" style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-2)' }}>
-              <input type="checkbox" checked={cgv} onChange={e => setCgv(e.target.checked)} className="mt-0.5 flex-shrink-0" />
+              <input type="checkbox" checked={cgv} onChange={e => setCgv(e.target.checked)} className="mt-0.5 shrink-0" />
               <span>
                 {t('J’ai lu et j’accepte les', 'I have read and accept the')}{' '}
                 <Link href="/cgv#cartes-cadeaux" target="_blank" style={{ textDecoration: 'underline' }}>{t('CGV', 'terms of sale')}</Link>

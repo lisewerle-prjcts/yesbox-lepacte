@@ -339,7 +339,7 @@ function CoupleCard({
             <button
               onClick={assign}
               disabled={!assignChoice || busy}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium flex-shrink-0"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium shrink-0"
               style={{ background: 'var(--brand-tint)', border: '1px solid var(--brand-soft)', color: 'var(--brand)', opacity: (!assignChoice || busy) ? 0.5 : 1 }}
             >
               <UserPlus className="w-3.5 h-3.5" /> Assigner
@@ -453,7 +453,7 @@ function MemberRow({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <button onClick={() => setEditing(e => !e)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs" style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>
             <Pencil className="w-3 h-3" />
           </button>
