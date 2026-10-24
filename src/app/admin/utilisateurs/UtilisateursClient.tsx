@@ -248,7 +248,10 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                       {loading[`confirm-manuel-${user.id}`] ? 'Confirmation…' : 'Confirmer l\'adresse manuellement'}
                     </button>
                   )}
-                  {user.hasCouple && (
+                  {/* Utile seulement à qui a confirmé son adresse sans jamais venir
+                      sur le site : une fois connecté·e, le code couple est sur le
+                      tableau de bord. */}
+                  {user.hasCouple && user.emailConfirme && !user.derniereConnexion && (
                     <button
                       disabled={loading[`bienvenue-${user.id}`]}
                       onClick={() => resendWelcome(user)}
