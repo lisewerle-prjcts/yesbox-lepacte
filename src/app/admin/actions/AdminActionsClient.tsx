@@ -27,6 +27,9 @@ export default function AdminActionsClient({
   modeles: ModeleComposeur[]
 }) {
   const [selectedCouple, setSelectedCouple] = useState(defaultCoupleId || couples[0]?.id || '')
+  // Le bloc des modules ne s'ouvre qu'au clic sur OK (ou en arrivant depuis
+  // le bouton « Actions » d'un couple), pour garder la page compacte.
+  const [modulesOuverts, setModulesOuverts] = useState(!!defaultCoupleId)
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [done, setDone] = useState<Record<string, boolean>>({})
   const [erreur, setErreur] = useState<string | null>(null)
@@ -81,21 +84,32 @@ export default function AdminActionsClient({
       {/* Sélection couple */}
       <div className="card p-5">
         <h2 className="font-semibold mb-3" style={{ fontSize: 15 }}>Sélectionner un couple</h2>
-        <select
-          className="field"
-          value={selectedCouple}
-          onChange={e => { setSelectedCouple(e.target.value); setErreur(null) }}
-        >
-          {couples.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.members.map(m => m.prenom || m.email).join(' & ')} — {new Date(c.created_at).toLocaleDateString('fr-FR')}
-            </option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          <select
+            className="field"
+            value={selectedCouple}
+            onChange={e => { setSelectedCouple(e.target.value); setErreur(null); setModulesOuverts(false) }}
+          >
+            {couples.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.members.map(m => m.prenom || m.email).join(' & ')} — {new Date(c.created_at).toLocaleDateString('fr-FR')}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setModulesOuverts(o => !o)}
+            disabled={!selectedCouple}
+            className="btn-secondary text-sm px-4"
+            style={{ flexShrink: 0 }}
+          >
+            {modulesOuverts ? 'Masquer' : 'OK'}
+          </button>
+        </div>
       </div>
 
       {/* Actions sur modules */}
-      {selectedCouple && (
+      {selectedCouple && modulesOuverts && (
         <div className="card p-5">
           <h2 className="font-semibold mb-1" style={{ fontSize: 15 }}>Modules — <em style={{ color: 'var(--brand)', fontStyle: 'normal' }}>{coupleLabel}</em></h2>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Déclenche manuellement les transitions de chaque module.</p>
