@@ -370,7 +370,7 @@ export async function adminCreateEmptyCouple() {
   return { success: true, coupleId: data.id, numero: refreshed?.numero }
 }
 
-export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null; pairing_code?: string | null }) {
+export async function adminUpdateCouple(coupleId: string, fields: { nom_couple?: string | null; date_anniversaire?: string | null; date_mariage?: string | null; pairing_code?: string | null }) {
   await assertAdmin()
   const admin = createAdminClient()
   const { error } = await admin.from('couples').update(fields).eq('id', coupleId)

@@ -36,9 +36,9 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Finalité | Créer et gérer les comptes, associer les deux membres d'un couple, faire fonctionner les modules, les révélations, le journal et le pacte |
 | Base légale | Exécution du contrat (art. 6.1.b) |
 | Personnes concernées | Utilisatrices et utilisateurs inscrits (15 ans ou plus) |
-| Données | Prénom, e-mail, mot de passe (chiffré), nom et date du couple, code couple, code de parrainage, progression dans les modules |
+| Données | Prénom, e-mail, mot de passe (chiffré), nom du couple, grandes dates facultatives (date de rencontre `couples.date_anniversaire`, date de mariage `couples.date_mariage`), code couple, code de parrainage, progression dans les modules |
 | Données sensibles | Non (voir fiche 2) |
-| Destinataires | Le ou la partenaire du couple (réponses des modules révélés, journal, pacte) ; l'administration du site (compte et progression, sans le contenu des réponses) ; sous-traitants Vercel et Supabase |
+| Destinataires | Le ou la partenaire du couple (réponses des modules révélés, journal, pacte) ; l'administration du site (compte, grandes dates du couple — visibles dans Admin > Couples, avec une alerte par e-mail à l'équipe un mois avant chaque anniversaire pour préparer les e-mails —, et progression, sans le contenu des réponses) ; sous-traitants Vercel et Supabase |
 | Transferts hors UE | Base de données dans l'UE (Irlande). Hébergement du site : États-Unis (Vercel, voir tableau) |
 | Durée de conservation | Tant que le compte est utilisé. Après 24 mois d'inactivité (aucune visite ni connexion d'un membre du couple, aucune réponse, plus d'accès payé ou offert en cours) : suppression des comptes et effacement de toutes les données, avec e-mail d'avertissement 2 mois, 1 mois, 1 semaine et la veille (date de dernière visite : `profiles.derniere_visite_le` ; date d'effacement : `couples.effacement_prevu_le`, tâche planifiée quotidienne). Suppression immédiate sur demande (bouton « Supprimer mon compte ») |
 | Mesures de sécurité | HTTPS, mots de passe chiffrés, isolement de chaque couple par des règles d'accès en base (Row Level Security), droits en écriture limités aux champs modifiables, limitation des tentatives de connexion, double authentification disponible pour l'administration, purge automatique quotidienne |
