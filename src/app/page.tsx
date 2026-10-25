@@ -353,10 +353,10 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-3">
             {modules.map((m, i) => {
-              // Le pacte (beige plus foncé) et le rendez-vous annuel (beige plus
-              // marqué encore) se distinguent des 8 modules du pack initial.
+              // Le pacte (rose) et le rendez-vous annuel (beige soutenu) se
+              // distinguent des 8 modules du pack initial.
               const ton = m.n === 9
-                ? { background: 'var(--cream-2)', borderColor: '#ddd2bf', numero: 'var(--brand)' }
+                ? { background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)', numero: 'var(--brand)' }
                 : m.n === 10
                 ? { background: '#e4d8c3', borderColor: '#d3c4aa', numero: 'var(--sage)' }
                 : null
