@@ -30,7 +30,7 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | `/journal` | Notre Pacte — document partagé et signature |
 | `/rdv-annuels` | Nos rdv annuels — réponses aux questions du mois et bilan annuel (module 10) |
 | `/mon-compte` | Infos personnelles, mot de passe, ajout d'un code |
-| `/offrir` | Offrir une carte cadeau (1, 2 ou 3 mois) |
+| `/offrir` | Offrir une carte cadeau YES BOX (58 €) |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |
 
 ## Les 7 modules
@@ -69,29 +69,40 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 # Abonnements (Stripe)
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_ID_ABONNEMENT_MENSUEL=price_...
+# YES BOX (format initial) : prix à paiement unique à 58 €
+STRIPE_PRICE_ID_YESBOX=price_...
 # « Pacte – notre rendez-vous annuel » : prix récurrent annuel à 19 €
 STRIPE_PRICE_ID_ABONNEMENT_ANNUEL=price_...
-# Cartes cadeaux (page /offrir) : prix Stripe à paiement unique
-STRIPE_PRICE_ID_CARTE_CADEAU_1_MOIS=price_...
-STRIPE_PRICE_ID_CARTE_CADEAU_2_MOIS=price_...
-STRIPE_PRICE_ID_CARTE_CADEAU_3_MOIS=price_...
+# Carte cadeau YES BOX (page /offrir) : prix à paiement unique à 58 €
+STRIPE_PRICE_ID_CARTE_CADEAU_YESBOX=price_...
+# Ancien abonnement mensuel (29 €/mois), plus vendu : à garder tant que des
+# couples y sont abonnés
+STRIPE_PRICE_ID_ABONNEMENT_MENSUEL=price_...
 # Sécurise les tâches planifiées (effacement des comptes inactifs, rappels)
 CRON_SECRET=...
 ```
 
 ## Abonnement Stripe
 
-- Offre : abonnement mensuel (29 €/mois), proposé aux couples à la fin du
-  module 1 gratuit (`/abonnement`), payé et géré via Stripe Checkout.
-- Offre « Pacte – notre rendez-vous annuel » (19 €/an), proposée une fois le
-  pacte signé (page Notre Pacte, `/abonnement`, lien depuis `/mon-compte`).
-  Un couple au mensuel valide la bascule : elle est programmée (planning
-  d'abonnement Stripe) à la fin du mois déjà payé, où les 19 € sont prélevés
-  sur la carte enregistrée ; « Rester au mensuel » (Mon compte) l'annule.
-  Sans abonnement en cours, paiement immédiat via Stripe Checkout. Résiliable à
-  tout moment : l'accès reste ouvert jusqu'au dernier jour de l'année payée.
-  Dans Stripe, activer l'e-mail de rappel avant renouvellement des
+- Module 1 gratuit, puis **YES BOX à 58 €** (`/abonnement`), payée via
+  Stripe Checkout : accès à tous les modules jusqu'au pacte pendant 1 an.
+  Une seule session Checkout en mode abonnement : le prix unique
+  `STRIPE_PRICE_ID_YESBOX` (58 €) est facturé tout de suite, avec
+  l'abonnement annuel `STRIPE_PRICE_ID_ABONNEMENT_ANNUEL` (19 €/an) dont
+  les 365 premiers jours sont inclus (`trial_period_days`). Un an après
+  l'achat, les 19 € sont prélevés automatiquement, puis chaque année.
+  Résiliable à tout moment : l'accès reste ouvert jusqu'au dernier jour de
+  l'année payée.
+- Un mois avant chaque renouvellement à 19 €, un e-mail l'annonce
+  (`renouvellement_annuel_annonce`, tâche `rappels-email`).
+- « Pacte – notre rendez-vous annuel » (19 €/an) seul : proposé une fois le
+  pacte signé ou la YES BOX déjà obtenue (première année terminée, carte
+  cadeau), sans abonnement en cours (page Notre Pacte, `/abonnement`).
+- Couples encore à l'ancien abonnement mensuel (29 €/mois, plus vendu) : à la signature du
+  pacte, la bascule vers l'annuel est programmée (planning d'abonnement
+  Stripe) à la fin du mois déjà payé, où les 19 € sont prélevés sur la carte
+  enregistrée ; « Rester au mensuel » (Mon compte) l'annule.
+- Dans Stripe, activer l'e-mail de rappel avant renouvellement des
   abonnements (promis dans les conditions d'utilisation).
 - Webhook Stripe à configurer sur `POST /api/webhooks/stripe` (événements
   `checkout.session.completed`, `customer.subscription.updated`,
@@ -124,9 +135,9 @@ couple, aucune réponse, plus d'accès payé ou offert en cours
 
 ## Cartes cadeaux (page /offrir)
 
-- Onglet « Offrir » (accueil et espace connecté) : 1, 2 ou 3 mois
-  d'abonnement, pour un autre couple ou pour son propre couple, payés via
-  Stripe Checkout (paiement unique, prix `STRIPE_PRICE_ID_CARTE_CADEAU_*`).
+- Onglet « Offrir » (accueil et espace connecté) : la carte cadeau YES BOX
+  (58 €), pour un autre couple ou pour son propre couple, payée via Stripe
+  Checkout (paiement unique, prix `STRIPE_PRICE_ID_CARTE_CADEAU_YESBOX`).
 - Après le paiement, un code `YES-XXXX-XXXX` est créé (webhook
   `checkout.session.completed` ou page `/offrir/merci`, une seule fois),
   envoyé par e-mail à la personne qui l'achète, avec la carte à imprimer
@@ -134,8 +145,10 @@ couple, aucune réponse, plus d'accès payé ou offert en cours
   paysage via l'impression du navigateur).
 - Valable 1 an, pour un seul couple : à l'inscription (champ code), sur
   `/abonnement` ou dans Mon compte > « Ajouter un code ». Le couple reçoit
-  les mois offerts (crédit Stripe s'il paie déjà, sinon accès gratuit
-  prolongé).
+  12 mois d'accès à tous les modules (ou, s'il paie déjà, les 58 € en
+  crédit Stripe déduit de ses prochains prélèvements). Un mois avant la fin,
+  un e-mail lui propose de continuer à 19 €/an (`fin_yesbox_offerte`).
+- Les anciennes cartes de 1, 2 ou 3 mois restent utilisables.
 - Admin > Cartes cadeaux : tous les codes, date d'achat, utilisation.
 - Nécessite le bloc « CARTES CADEAUX » de `supabase/schema.sql`.
 
@@ -165,7 +178,13 @@ Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.
 - **Après la signature du pacte** : un e-mail par mois (thème différent
   chaque mois), et l'annonce du rendez-vous annuel dans le mois qui le
   précède. Arrêtés quand l'accès est terminé.
-- **Passage à l'abonnement annuel** : une fois le pacte signé, 5 jours avant
+- **Renouvellement à 19 €/an** : un mois avant chaque renouvellement de
+  l'abonnement annuel (fin de la première année de la YES BOX, puis chaque
+  année), annonce du prélèvement, envoyée même si les rappels sont
+  désactivés ; un mois avant la fin d'une YES BOX offerte (carte cadeau),
+  proposition de continuer à 19 €/an. Nécessite le dernier bloc de
+  `supabase/schema.sql`.
+- **Passage à l'abonnement annuel** (couples encore au mensuel) : une fois le pacte signé, 5 jours avant
   la fin du mois payé, proposition de basculer de l'abonnement mensuel vers
   « Pacte – notre rendez-vous annuel » (lien vers l'offre de la page Notre
   Pacte, bascule programmée dans Stripe). Une seule fois par fin de mois,
@@ -185,9 +204,8 @@ Tâche planifiée quotidienne `GET /api/cron/rappels-email` (7 h UTC, cf.
 - **Parrainage** : chaque couple a un code et un lien à partager (carte
   « Parrainage » sur `/mon-compte`, aussi utilisable via `/inscription?parrain=CODE`).
   Au 5ᵉ couple parrainé qui s'inscrit (et à chaque palier de 5 suivant), le
-  parrain reçoit automatiquement 1 mois offert, ou 1 an s'il a signé son
-  pacte : crédité sur sa prochaine facture Stripe s'il paie déjà (1 mois de
-  mensuel, ou 1 an de « Pacte – notre rendez-vous annuel »), sinon ajouté à
-  son accès gratuit. Un
+  parrain reçoit automatiquement 10 € de réduction, crédités sur son compte
+  client Stripe (créé au besoin) et déduits de son prochain paiement (les
+  58 € de la YES BOX, ou un renouvellement à 19 €). Un
   couple inscrit sans code peut saisir celui de son parrain après coup
   (Mon compte > « Ajouter un code »).

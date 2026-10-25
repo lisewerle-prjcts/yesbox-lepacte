@@ -1,5 +1,5 @@
 import type { CarteCadeau } from '@/lib/cartes-cadeaux'
-import { formaterDateCarte } from '@/lib/cartes-cadeaux'
+import { estCarteYesBox, formaterDateCarte } from '@/lib/cartes-cadeaux'
 import { t as traduire, type Locale } from '@/lib/i18n/locale'
 
 // Visuel de la carte cadeau (modèle « Carte cadeau — YES BOX »), au format
@@ -67,12 +67,21 @@ export default function CarteCadeauImprimable({ carte, locale }: {
           )}
 
           <div className={libelle} style={{ ...libelleStyle, marginTop: '2.8cqw' }}>{t('Votre cadeau', 'Your gift')}</div>
-          <div style={{ marginTop: '1.2cqw', display: 'flex', alignItems: 'baseline', gap: '1.2cqw' }}>
-            <span className="font-serif" style={{ fontSize: '4.6cqw', fontWeight: 800, color: '#c5256e', lineHeight: 1 }}>{carte.duree_mois}</span>
-            <span style={{ fontSize: '1.85cqw', lineHeight: 1.35 }}>
-              {t('mois d’abonnement au programme YES BOX – Le Pacte', `month${carte.duree_mois > 1 ? 's' : ''} of subscription to the YES BOX – Le Pacte program`)}
-            </span>
-          </div>
+          {estCarteYesBox(carte.duree_mois) ? (
+            <div style={{ marginTop: '1.2cqw', display: 'flex', alignItems: 'baseline', gap: '1.2cqw' }}>
+              <span className="font-serif" style={{ fontSize: '4.6cqw', fontWeight: 800, color: '#c5256e', lineHeight: 1 }}>YES BOX</span>
+              <span style={{ fontSize: '1.85cqw', lineHeight: 1.35 }}>
+                {t('le parcours complet jusqu’à votre pacte, pendant 1 an', 'the full program up to your pact, for 1 year')}
+              </span>
+            </div>
+          ) : (
+            <div style={{ marginTop: '1.2cqw', display: 'flex', alignItems: 'baseline', gap: '1.2cqw' }}>
+              <span className="font-serif" style={{ fontSize: '4.6cqw', fontWeight: 800, color: '#c5256e', lineHeight: 1 }}>{carte.duree_mois}</span>
+              <span style={{ fontSize: '1.85cqw', lineHeight: 1.35 }}>
+                {t('mois d’abonnement au programme YES BOX – Le Pacte', `month${carte.duree_mois > 1 ? 's' : ''} of subscription to the YES BOX – Le Pacte program`)}
+              </span>
+            </div>
+          )}
 
           <div className={libelle} style={{ ...libelleStyle, marginTop: '2.8cqw' }}>{t('Code cadeau', 'Gift code')}</div>
           <div className="font-mono" style={{ marginTop: '1cqw', alignSelf: 'flex-start', border: '2px dashed #c5256e', borderRadius: '1.2cqw', background: 'white', padding: '1cqw 2.6cqw', fontSize: '3cqw', letterSpacing: '.14em', fontWeight: 500 }}>

@@ -231,7 +231,7 @@ export default function RevelationClient({ moduleInfo, moduleData, mesReponses, 
               // le texte général.
               const debut = "Écris ici ta conclusion. Découvre ensuite celle de l'autre. Elles seront toutes les deux compilées sur la page « Notre Pacte » : note bien tout ce que tu veux garder en mémoire au moment de rédiger votre pacte."
               if (moduleInfo.slug === 'toi') {
-                return <EditableText id="revelation.conclusion.souscritre.premier" multiline>{`${debut} Une fois vos conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque.`}</EditableText>
+                return <EditableText id="revelation.conclusion.souscritre.premier.v2" multiline>{`${debut} Une fois vos conclusions écrites, et avec votre YES BOX, le module suivant se débloque.`}</EditableText>
               }
               if (moduleInfo.slug === 'conflits') {
                 return <EditableText id="revelation.conclusion.souscritre.avantpacte" multiline>{`${debut} Il est maintenant temps de passer au module final, celui de votre pacte de couple.`}</EditableText>

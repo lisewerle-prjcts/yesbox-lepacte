@@ -219,7 +219,7 @@ export default async function TableauDeBordPage({
             </div>
             <Link href={abonnementRequis ? '/abonnement' : href} className="btn-brand">
               {abonnementRequis
-                ? <EditableText id="dashboard.prochaineetape.abonnement">S&apos;abonner pour continuer</EditableText>
+                ? <EditableText id="dashboard.prochaineetape.abonnement.v2">Prendre la YES BOX pour continuer</EditableText>
                 : jaiFini && partenaireFini
                 ? <EditableText id="dashboard.prochaineetape.ouvrirrevelation">Ouvrir la révélation</EditableText>
                 : enAttentePartenaire

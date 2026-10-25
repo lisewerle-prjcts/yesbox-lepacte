@@ -12,7 +12,8 @@ import type { PrixCarteCadeau } from '@/lib/cartes-cadeaux'
 export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix: PrixCarteCadeau[]; connecte: boolean; paiementAnnule: boolean }) {
   const t = useT()
   const { locale } = useLocale()
-  const [duree, setDuree] = useState<number>(prix.find(p => p.duree === 3 && p.configure) ? 3 : (prix.find(p => p.configure)?.duree ?? 1))
+  // Une seule carte aujourd'hui : la YES BOX (58 €).
+  const [duree, setDuree] = useState<number>(prix.find(p => p.configure)?.duree ?? prix[0]?.duree ?? 12)
   const [pourSoi, setPourSoi] = useState<boolean | null>(null)
   const [prenom1, setPrenom1] = useState('')
   const [prenom2, setPrenom2] = useState('')
@@ -59,15 +60,15 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
             <EditableText id="offrir.titre">Offrez YES BOX à un couple</EditableText>
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
-            <EditableText id="offrir.sousTitre" multiline>Des soirées à deux pour mieux se connaître, mieux se parler et choisir de s’engager. Offrez 1, 2 ou 3 mois d’abonnement, avec une jolie carte à imprimer.</EditableText>
+            <EditableText id="offrir.sousTitre.v2" multiline>Des soirées à deux pour mieux se connaître, mieux se parler et choisir de s’engager. Offrez la YES BOX : tous les modules jusqu’au pacte, pendant 1 an, avec une jolie carte à imprimer.</EditableText>
           </p>
         </div>
 
         <div className="card p-6 sm:p-8 space-y-8">
           {/* 1. Durée */}
           <section>
-            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 18, color: 'var(--ink)' }}>1. {t('Combien de mois offrir ?', 'How many months?')}</h2>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <h2 className="font-serif font-bold mb-3" style={{ fontSize: 18, color: 'var(--ink)' }}>1. {t('Votre cadeau', 'Your gift')}</h2>
+            <div className="grid gap-3">
               {prix.map(p => {
                 const actif = duree === p.duree
                 const montant = formater(p)
@@ -75,8 +76,9 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
                   <button key={p.duree} type="button" disabled={!p.configure} onClick={() => setDuree(p.duree)}
                     className="rounded-xl p-4 text-left transition-all"
                     style={{ border: `2px solid ${actif ? 'var(--brand)' : 'var(--line)'}`, background: actif ? 'var(--brand-tint)' : 'white', opacity: p.configure ? 1 : 0.5 }}>
-                    <div className="font-serif font-bold" style={{ fontSize: 22, color: 'var(--ink)' }}>
-                      {p.duree} {t('mois', p.duree > 1 ? 'months' : 'month')}
+                    <div className="font-serif font-bold" style={{ fontSize: 22, color: 'var(--ink)' }}>YES BOX</div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 2 }}>
+                      {t('Tous les modules jusqu’au pacte, pendant 1 an · ensuite 19 €/an si le couple souhaite continuer', 'Every module up to the pact, for 1 year · then €19/year if the couple wants to continue')}
                     </div>
                     <div style={{ fontSize: 14, color: actif ? 'var(--brand)' : 'var(--muted)', fontWeight: 600 }}>
                       {p.configure ? (montant ?? '—') : t('Bientôt disponible', 'Coming soon')}
@@ -147,7 +149,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
               <Gift className="w-4 h-4" />
               {chargement
                 ? t('Redirection vers le paiement…', 'Redirecting to payment…')
-                : prixChoisi ? t(`Offrir ${duree} mois · ${prixChoisi}`, `Give ${duree} month${duree > 1 ? 's' : ''} · ${prixChoisi}`) : t(`Offrir ${duree} mois`, `Give ${duree} month${duree > 1 ? 's' : ''}`)}
+                : prixChoisi ? t(`Offrir la YES BOX · ${prixChoisi}`, `Give YES BOX · ${prixChoisi}`) : t('Offrir la YES BOX', 'Give YES BOX')}
               {!chargement && <ArrowRight className="w-4 h-4" />}
             </button>
             <p className="text-center mt-3" style={{ fontSize: 12, color: 'var(--muted)' }}>

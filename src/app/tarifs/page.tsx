@@ -22,7 +22,7 @@ export default function TarifsPage() {
         <div className="text-center mb-12">
           <div className="eyebrow justify-center mb-3"><EditableText id="tarifs.eyebrow">Tarifs</EditableText></div>
           <h1 className="font-serif" style={{ fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
-            <EditableText id="tarifs.title">Un abonnement simple. Une vie de rendez-vous.</EditableText>
+            <EditableText id="tarifs.title.v2">Un prix simple. Une vie de rendez-vous.</EditableText>
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
             <EditableText id="tarifs.subtitle">Le module 1 est gratuit pour vous deux, jusqu&apos;à la révélation.</EditableText>
@@ -34,7 +34,7 @@ export default function TarifsPage() {
         </div>
 
         <p className="text-center mt-8" style={{ fontSize: 12, color: 'var(--muted)' }}>
-          <EditableText id="tarifs.footer.prefix">Détail des abonnements, résiliation et règles du jeu :</EditableText>{' '}
+          <EditableText id="tarifs.footer.prefix.v2">Détail des offres, résiliation et règles du jeu :</EditableText>{' '}
           <Link href="/cgv" style={{ color: 'var(--brand)' }}><EditableText id="tarifs.footer.link.v2">conditions générales de vente</EditableText></Link>.
         </p>
       </main>

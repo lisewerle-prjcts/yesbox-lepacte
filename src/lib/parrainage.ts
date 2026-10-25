@@ -1,26 +1,24 @@
 import type { createAdminClient } from '@/lib/supabase/server'
-import { getStripe, PRIX_ABONNEMENT_MENSUEL_ID, PRIX_ABONNEMENT_ANNUEL_ID } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { ajouterMois } from '@/lib/dates'
 import { estAbonnementActif } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
-export const FILLEULS_POUR_UN_MOIS_OFFERT = 5
+export const FILLEULS_PAR_RECOMPENSE = 5
+// Récompense de chaque palier de 5 filleuls : 10 € déduits des prochains
+// paiements Stripe du parrain (les 58 € de la YES BOX s'il ne l'a pas encore
+// prise, sinon ses renouvellements à 19 €).
+export const REDUCTION_PARRAINAGE_CENTIMES = 1000
 
-// Un couple qui paie déjà activement via Stripe reçoit un crédit sur son
-// compte client (appliqué automatiquement à sa prochaine facture) plutôt
-// qu'une extension d'accès gratuit, qui ne l'empêcherait pas d'être
-// prélevé par le renouvellement automatique en cours.
-async function crediterMoisStripe(admin: AdminClient, stripeCustomerId: string, nbMois: number, description: string) {
-  const stripe = getStripe()
-  const price = PRIX_ABONNEMENT_MENSUEL_ID ? await stripe.prices.retrieve(PRIX_ABONNEMENT_MENSUEL_ID) : null
-  const montant = price?.unit_amount ?? 2900
-  const devise = price?.currency ?? 'eur'
-  await stripe.customers.createBalanceTransaction(stripeCustomerId, {
-    amount: -montant * nbMois,
+// Crédit sur le solde du compte client Stripe : déduit automatiquement des
+// prochaines factures (achat de la YES BOX, renouvellements annuels).
+async function crediterStripe(stripeCustomerId: string, montantCentimes: number, devise: string, description: string) {
+  await getStripe().customers.createBalanceTransaction(stripeCustomerId, {
+    amount: -montantCentimes,
     currency: devise,
-    description: `${description} : ${nbMois} mois offert${nbMois > 1 ? 's' : ''}`,
+    description,
   })
 }
 
@@ -36,9 +34,14 @@ async function etendreAccesGratuit(admin: AdminClient, coupleId: string, nbMois:
   await admin.from('couples').update({ acces_gratuit_expire_le: ajouterMois(new Date(base), nbMois) }).eq('id', coupleId)
 }
 
-// Renvoie la façon dont les mois ont été accordés : crédit sur la prochaine
-// facture Stripe, ou accès gratuit prolongé.
-export async function accorderMoisGratuits(admin: AdminClient, coupleId: string, nbMois: number, description = 'Parrainage YES BOX'): Promise<'credit_stripe' | 'acces_gratuit'> {
+// Mois offerts par une carte cadeau. Un couple qui paie déjà activement via
+// Stripe reçoit un crédit du montant de la carte sur son compte client
+// (déduit automatiquement de ses prochains prélèvements) plutôt qu'une
+// extension d'accès gratuit, qui ne l'empêcherait pas d'être prélevé par le
+// renouvellement automatique en cours. Renvoie la façon dont les mois ont été
+// accordés : crédit sur les prochaines factures Stripe, ou accès gratuit
+// prolongé.
+export async function accorderMoisGratuits(admin: AdminClient, coupleId: string, nbMois: number, credit: { centimes: number; devise: string }, description: string): Promise<'credit_stripe' | 'acces_gratuit'> {
   if (nbMois <= 0) return 'acces_gratuit'
   const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', coupleId).single()
   if (!couple) return 'acces_gratuit'
@@ -47,10 +50,10 @@ export async function accorderMoisGratuits(admin: AdminClient, coupleId: string,
   // rien, l'accès gratuit prend le relais à la fin de la période payée.
   if (estAbonnementActif(couple) && !couple.subscription_cancel_at_period_end && couple.stripe_customer_id) {
     try {
-      await crediterMoisStripe(admin, couple.stripe_customer_id, nbMois, description)
+      await crediterStripe(couple.stripe_customer_id, credit.centimes, credit.devise, description)
       return 'credit_stripe'
     } catch {
-      // Si Stripe échoue (clé absente, etc.), on ne perd pas la récompense :
+      // Si Stripe échoue (clé absente, etc.), la carte n'est pas perdue :
       // elle est accordée comme accès gratuit à la place.
     }
   }
@@ -58,36 +61,32 @@ export async function accorderMoisGratuits(admin: AdminClient, coupleId: string,
   return 'acces_gratuit'
 }
 
-// Parrain qui a signé son pacte (parcours initial terminé) : chaque palier
-// de 5 filleuls lui offre 1 an au lieu d'1 mois. S'il paie déjà, crédit sur
-// sa prochaine facture Stripe du prix d'une année de « Pacte – notre
-// rendez-vous annuel » ; sinon, 12 mois d'accès gratuit en plus.
-async function accorderAnneesOffertes(admin: AdminClient, coupleId: string, nbAnnees: number) {
-  if (nbAnnees <= 0) return
+// Récompense de parrainage : 10 € par palier franchi, crédités sur le compte
+// client Stripe du parrain (créé au besoin, avec l'adresse d'un membre du
+// couple) et déduits de ses prochains paiements.
+async function accorderReductionParrainage(admin: AdminClient, coupleId: string, nbPaliers: number) {
+  if (nbPaliers <= 0) return
   const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', coupleId).single()
   if (!couple) return
 
-  if (estAbonnementActif(couple) && !couple.subscription_cancel_at_period_end && couple.stripe_customer_id) {
-    try {
-      const stripe = getStripe()
-      const price = PRIX_ABONNEMENT_ANNUEL_ID ? await stripe.prices.retrieve(PRIX_ABONNEMENT_ANNUEL_ID) : null
-      await stripe.customers.createBalanceTransaction(couple.stripe_customer_id, {
-        amount: -(price?.unit_amount ?? 1900) * nbAnnees,
-        currency: price?.currency ?? 'eur',
-        description: `Parrainage YES BOX : ${nbAnnees} an${nbAnnees > 1 ? 's' : ''} offert${nbAnnees > 1 ? 's' : ''}`,
-      })
-      return
-    } catch {
-      // Si Stripe échoue, la récompense est accordée comme accès gratuit.
-    }
+  let customerId = couple.stripe_customer_id
+  if (!customerId) {
+    const { data: membre } = await admin.from('profiles').select('email').eq('couple_id', coupleId).not('email', 'is', null).limit(1).maybeSingle()
+    const customer = await getStripe().customers.create({
+      email: membre?.email ?? undefined,
+      metadata: { couple_id: coupleId },
+    })
+    customerId = customer.id
+    await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', coupleId)
   }
-  await etendreAccesGratuit(admin, coupleId, 12 * nbAnnees)
+  const montant = REDUCTION_PARRAINAGE_CENTIMES * nbPaliers
+  await crediterStripe(customerId, montant, 'eur', `Parrainage YES BOX : ${montant / 100} € de réduction`)
 }
 
 // Rattache un couple qui vient de s'inscrire à son parrain (RPC atomique,
 // cf. supabase/schema.sql v12) et accorde la récompense dès qu'un palier
-// de 5 filleuls est franchi : 1 mois offert, ou 1 an si le parrain a signé
-// son pacte. Best-effort : un code de parrainage invalide
+// de 5 filleuls est franchi : 10 € déduits des prochains paiements Stripe
+// du parrain. Best-effort : un code de parrainage invalide
 // ne bloque jamais l'inscription. Renvoie true si le code était bien un
 // code de parrainage valide.
 export async function enregistrerParrainage(admin: AdminClient, codeParrainage: string, nouveauCoupleId: string): Promise<boolean> {
@@ -100,10 +99,16 @@ export async function enregistrerParrainage(admin: AdminClient, codeParrainage: 
   })
   if (error || !data?.success) return false
 
+  // nouveaux_mois_offerts : nombre de paliers de 5 filleuls franchis (nom
+  // hérité de l'ancienne récompense d'un mois offert).
   if (data.nouveaux_mois_offerts > 0) {
-    const { data: parrain } = await admin.from('couples').select('pacte_signe_le').eq('id', data.parrain_couple_id).maybeSingle()
-    if (parrain?.pacte_signe_le) await accorderAnneesOffertes(admin, data.parrain_couple_id, data.nouveaux_mois_offerts)
-    else await accorderMoisGratuits(admin, data.parrain_couple_id, data.nouveaux_mois_offerts)
+    try {
+      await accorderReductionParrainage(admin, data.parrain_couple_id, data.nouveaux_mois_offerts)
+    } catch (e) {
+      // Le palier est déjà compté (parrainages_recompenses) : la réduction
+      // est à créditer à la main dans Stripe si l'appel échoue.
+      console.error(`[parrainage] réduction de ${REDUCTION_PARRAINAGE_CENTIMES * data.nouveaux_mois_offerts / 100} € non créditée au couple ${data.parrain_couple_id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
   }
   return true
 }

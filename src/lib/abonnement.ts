@@ -87,3 +87,19 @@ export function offreRdvAnnuel(
     mensuelEnCours,
   }
 }
+
+// Carte cadeau YES BOX : le parcours initial et la première année offerts,
+// soit 12 mois d'accès (cf. src/lib/cartes-cadeaux.ts).
+export const DUREE_MOIS_YESBOX = 12
+
+// Le couple a déjà eu sa YES BOX (pacte signé, achat des 58 € avec un
+// abonnement annuel, carte cadeau YES BOX utilisée) : pour continuer, c'est
+// le renouvellement à 19 €/an qui lui est proposé, plus les 58 €.
+export async function aDejaEuLaYesBox(client: SupabaseClient, coupleId: string): Promise<boolean> {
+  const [{ data: couple }, { data: cartes }] = await Promise.all([
+    client.from('couples').select('pacte_signe_le, subscription_formule').eq('id', coupleId).maybeSingle(),
+    client.from('cartes_cadeaux').select('id').eq('utilise_par_couple_id', coupleId).gte('duree_mois', DUREE_MOIS_YESBOX).limit(1),
+  ])
+  if (couple?.pacte_signe_le || couple?.subscription_formule === 'annuel') return true
+  return !!cartes?.length
+}

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
-import { enregistrerCarteCadeau, formaterDateCarte, type CarteCadeau } from '@/lib/cartes-cadeaux'
+import { enregistrerCarteCadeau, formaterDateCarte, libelleCarteCadeau, type CarteCadeau } from '@/lib/cartes-cadeaux'
 import { getLocale, getT } from '@/lib/i18n/server'
 import YesBoxLogo from '@/components/YesBoxLogo'
 import CopierCode from './CopierCode'
@@ -49,8 +49,8 @@ export default async function MerciPage({ searchParams }: { searchParams: Promis
         {carte ? (
           <>
             <p className="mb-6" style={{ color: 'var(--muted)', fontSize: 15 }}>
-              {t(`${carte.duree_mois} mois d’abonnement au programme YES BOX – Le Pacte. Voici votre code, également envoyé par e-mail${carte.acheteur_email ? ` à ${carte.acheteur_email}` : ''} :`,
-                `${carte.duree_mois} month${carte.duree_mois > 1 ? 's' : ''} of subscription to the YES BOX – Le Pacte program. Here is your code, also sent by email${carte.acheteur_email ? ` to ${carte.acheteur_email}` : ''}:`)}
+              {t(`Votre carte offre ${libelleCarteCadeau(carte.duree_mois, locale)}. Voici votre code, également envoyé par e-mail${carte.acheteur_email ? ` à ${carte.acheteur_email}` : ''} :`,
+                `Your card gives ${libelleCarteCadeau(carte.duree_mois, locale)}. Here is your code, also sent by email${carte.acheteur_email ? ` to ${carte.acheteur_email}` : ''}:`)}
             </p>
             <CopierCode code={carte.code} />
             <p className="mt-4 mb-8" style={{ fontSize: 13, color: 'var(--muted)' }}>

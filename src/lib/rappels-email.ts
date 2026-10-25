@@ -2,9 +2,10 @@ import type { createAdminClient } from '@/lib/supabase/server'
 import { mailConfigure } from '@/lib/mailer'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { hasAnsweredAll } from '@/lib/questions'
-import { aAccesComplet, offreRdvAnnuel, peutAccederModule } from '@/lib/abonnement'
+import { aAccesComplet, estAbonnementActif, offreRdvAnnuel, peutAccederModule, DUREE_MOIS_YESBOX } from '@/lib/abonnement'
 import { MODULE_RDV_ANNUEL, MODULE_PACTE, entreesDeFin } from '@/lib/progression'
 import { ABONNEMENT_COLONNES } from '@/types'
+import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
 import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
@@ -30,7 +31,11 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //      depuis la page Notre Pacte) ;
 //   4. avant l'effacement des données (après 24 mois d'inactivité, cf.
 //      src/lib/conservation.ts), un avertissement 2 mois, 1 mois,
-//      1 semaine et la veille.
+//      1 semaine et la veille ;
+//   5. un mois avant le renouvellement à 19 €/an (fin de la première année
+//      de la YES BOX, puis chaque année), l'annonce du prélèvement ; un mois
+//      avant la fin d'une YES BOX offerte par carte cadeau, la proposition
+//      de continuer à 19 €/an.
 // Uniquement pour les couples dont l'accès est en cours (les relances après
 // résiliation viendront plus tard). Chaque membre peut refuser ces rappels
 // (profiles.rappels_email) : lien en bas de chaque e-mail ou Mon compte.
@@ -410,6 +415,101 @@ export async function envoyerAvertissementsEffacement(admin: AdminClient): Promi
       }
     } catch (e) {
       console.error(`[rappels] avertissement d'effacement du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
+
+// ---------------------------------------------------------------------------
+// 5. Un mois avant le renouvellement à 19 €/an
+// ---------------------------------------------------------------------------
+
+const RENOUVELLEMENT_JOURS_AVANT = 30
+
+// Réserve l'envoi pour cette échéance : jamais deux fois le même.
+async function reserverEnvoi(admin: AdminClient, coupleId: string, type: string, cle: string): Promise<boolean> {
+  const { data, error } = await admin
+    .from('rappels_envoyes')
+    .upsert({ couple_id: coupleId, type, cle }, { onConflict: 'couple_id,type,cle', ignoreDuplicates: true })
+    .select('couple_id')
+  if (error) throw new Error(error.message)
+  return !!data?.length
+}
+
+// Abonnement annuel en cours (YES BOX achetée, ou rendez-vous annuel) dont
+// le renouvellement automatique n'est pas arrêté : annonce du prélèvement de
+// 19 € un mois avant. E-mail de service (information avant renouvellement,
+// promise dans les CGV) : envoyé à chaque membre, même si les rappels sont
+// désactivés. Couples dont la YES BOX offerte (carte cadeau) se termine dans
+// un mois, sans abonnement : proposition de continuer à 19 €/an.
+export async function envoyerAnnoncesRenouvellement(admin: AdminClient): Promise<number> {
+  const maintenant = new Date()
+  const aujourdhui = Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())
+  const limite = new Date(aujourdhui + (RENOUVELLEMENT_JOURS_AVANT + 1) * JOUR).toISOString()
+  const dansLaFenetre = (date: string) => {
+    const jours = Math.ceil((new Date(date).getTime() - aujourdhui) / JOUR)
+    return jours >= 1 && jours <= RENOUVELLEMENT_JOURS_AVANT
+  }
+  let envoyes = 0
+
+  const { data: abonnes, error } = await admin
+    .from('couples')
+    .select(`${ABONNEMENT_COLONNES}, subscription_formule`)
+    .is('compte_resilie_le', null)
+    .eq('subscription_status', 'actif')
+    .eq('subscription_formule', 'annuel')
+    .eq('subscription_cancel_at_period_end', false)
+    .gt('subscription_current_period_end', maintenant.toISOString())
+    .lt('subscription_current_period_end', limite)
+  if (error) throw new Error(error.message)
+
+  for (const couple of abonnes ?? []) {
+    try {
+      const echeance = couple.subscription_current_period_end as string
+      if (!dansLaFenetre(echeance)) continue
+      if (!(await reserverEnvoi(admin, couple.id, 'renouvellement_annuel', echeance.slice(0, 10)))) continue
+      for (const d of await membresDuCouple(admin, couple.id)) {
+        if (!d.email) continue
+        const ok = await envoyerModele({
+          to: d.email,
+          cle: 'renouvellement_annuel_annonce',
+          locale: d.langue,
+          vars: { prenom: d.prenom ?? '', date: formaterDate(echeance, d.langue), lien: `${appUrl()}/mon-compte` },
+        })
+        if (ok) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] annonce du renouvellement du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  const { data: offerts, error: offertsError } = await admin
+    .from('couples')
+    .select(ABONNEMENT_COLONNES)
+    .is('compte_resilie_le', null)
+    .gt('acces_gratuit_expire_le', maintenant.toISOString())
+    .lt('acces_gratuit_expire_le', limite)
+    .neq('acces_gratuit_expire_le', ACCES_GRATUIT_ILLIMITE_ISO)
+  if (offertsError) throw new Error(offertsError.message)
+
+  for (const couple of offerts ?? []) {
+    try {
+      const fin = couple.acces_gratuit_expire_le as string
+      if (!dansLaFenetre(fin) || estAbonnementActif(couple as CoupleAbonnement)) continue
+      // Uniquement une YES BOX offerte par carte cadeau (pas les codes
+      // testeurs ni les anciennes cartes de quelques mois).
+      const { data: cartes } = await admin.from('cartes_cadeaux').select('id')
+        .eq('utilise_par_couple_id', couple.id).gte('duree_mois', DUREE_MOIS_YESBOX).limit(1)
+      if (!cartes?.length) continue
+
+      const membres = await membresDuCouple(admin, couple.id)
+      if (!membres.some(m => m.rappels_email && m.email)) continue
+      if (!(await reserverEnvoi(admin, couple.id, 'fin_yesbox_offerte', fin.slice(0, 10)))) continue
+      for (const d of membres) {
+        if (await envoyerRappel(d, 'fin_yesbox_offerte', { date: formaterDate(fin, d.langue), lien: `${appUrl()}/abonnement` })) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] fin de la YES BOX offerte du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes

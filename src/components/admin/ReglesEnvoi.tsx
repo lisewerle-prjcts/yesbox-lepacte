@@ -49,7 +49,9 @@ const FAMILLES: { titre: string; regles: Regle[] }[] = [
   {
     titre: 'Abonnement & cartes cadeaux',
     regles: [
-      { email: 'Proposition de l’abonnement annuel', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Après la signature du pacte, abonnement mensuel en cours, passage à l’annuel pas encore programmé' },
+      { email: 'Annonce du renouvellement à 19 €/an', quand: '1 mois avant chaque renouvellement (fin de la 1re année de la YES BOX, puis chaque année)', qui: 'Les deux membres', notes: 'Renouvellement automatique pas arrêté ; envoyé même si les rappels sont désactivés' },
+      { email: 'Fin de la YES BOX offerte', quand: '1 mois avant la fin de l’année offerte par une carte cadeau YES BOX', qui: 'Les deux membres', notes: 'Sans abonnement en cours ; propose de continuer à 19 €/an' },
+      { email: 'Proposition de l’abonnement annuel', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Couples encore à l’ancien abonnement mensuel : après la signature du pacte, passage à l’annuel pas encore programmé' },
       { email: 'Abonnement annuel programmé', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Quand le passage à l’annuel est déjà programmé : simple information avant le prélèvement' },
       { email: 'Carte cadeau', quand: 'Tout de suite après le paiement', qui: 'La personne qui achète' },
     ],

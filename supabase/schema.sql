@@ -1568,3 +1568,15 @@ create table if not exists public.limites_actions (
 create index if not exists limites_actions_cle_idx on public.limites_actions (cle, cree_le desc);
 alter table public.limites_actions enable row level security;
 -- Aucune policy : accessible uniquement via le service role.
+
+-- ============================================================
+-- Migration : YES BOX à 58 € puis renouvellement à 19 €/an.
+-- E-mails envoyés un mois avant le renouvellement à 19 € (abonnement en
+-- cours) et un mois avant la fin d'une YES BOX offerte par carte cadeau
+-- (rappels_envoyes, types 'renouvellement_annuel' et 'fin_yesbox_offerte' :
+-- un seul envoi par date d'échéance), cf. src/lib/rappels-email.ts.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte'));

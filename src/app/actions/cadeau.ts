@@ -25,9 +25,9 @@ export async function acheterCarteCadeau(choix: {
 }): Promise<{ url: string } | { error: string }> {
   const locale = await getLocale()
   if (!choix.cgvAcceptees) return { error: t(locale, 'Coche la case d’acceptation des CGV avant de payer.', 'Tick the box accepting the terms of sale before paying.') }
-  if (!estDureeCarteCadeau(choix.dureeMois)) return { error: t(locale, 'Choisis une durée : 1, 2 ou 3 mois.', 'Choose a length: 1, 2 or 3 months.') }
+  if (!estDureeCarteCadeau(choix.dureeMois)) return { error: t(locale, 'Cette carte cadeau n’existe plus : rechargez la page.', 'This gift card no longer exists: reload the page.') }
   const prixId = prixCarteCadeauId(choix.dureeMois)
-  if (!prixId) return { error: t(locale, `La carte cadeau de ${choix.dureeMois} mois n'est pas encore configurée (STRIPE_PRICE_ID_CARTE_CADEAU_${choix.dureeMois}_MOIS manquant).`, `The ${choix.dureeMois}-month gift card is not configured yet (missing STRIPE_PRICE_ID_CARTE_CADEAU_${choix.dureeMois}_MOIS).`) }
+  if (!prixId) return { error: t(locale, "La carte cadeau YES BOX n'est pas encore configurée (STRIPE_PRICE_ID_CARTE_CADEAU_YESBOX manquant).", 'The YES BOX gift card is not configured yet (missing STRIPE_PRICE_ID_CARTE_CADEAU_YESBOX).') }
 
   // Personne connectée : son adresse est préremplie sur la page de paiement.
   const supabase = await createClient()
@@ -54,7 +54,7 @@ export async function acheterCarteCadeau(choix: {
       customer_email: user?.email ?? undefined,
       customer_creation: 'if_required',
       metadata,
-      payment_intent_data: { metadata, description: `Carte cadeau YES BOX — ${choix.dureeMois} mois` },
+      payment_intent_data: { metadata, description: 'Carte cadeau YES BOX' },
       locale,
     })
     if (!session.url) return { error: t(locale, 'Impossible de créer la session de paiement', 'Could not create the checkout session') }

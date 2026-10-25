@@ -5,7 +5,7 @@ import OffrirClient from './OffrirClient'
 
 export const metadata: Metadata = {
   title: 'Offrir YES BOX',
-  description: 'Offrez 1, 2 ou 3 mois du programme YES BOX — Le Pacte à un couple, avec une carte cadeau à imprimer.',
+  description: 'Offrez la YES BOX — Le Pacte à un couple (58 €) : le parcours complet jusqu’au pacte, pendant 1 an, avec une carte cadeau à imprimer.',
 }
 
 export const dynamic = 'force-dynamic'
