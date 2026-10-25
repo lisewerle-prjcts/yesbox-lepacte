@@ -79,7 +79,7 @@ export default async function JournalPage() {
         </div>
         <div>
           <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink)' }}><EditableText id="journal.titre">Notre Pacte</EditableText></h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre.v2" multiline>Les réponses finales de chaque module, et vos réponses au module 9, qui constituent votre pacte. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText></p>
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id="journal.souscritre.v3" multiline>Les réponses finales des 8 modules, et vos réponses au module du pacte, qui constituent votre pacte. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText></p>
         </div>
       </div>
 

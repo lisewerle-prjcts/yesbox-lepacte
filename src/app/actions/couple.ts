@@ -137,7 +137,7 @@ export async function signerPacte(dateRdvAnnuel: string) {
     admin.from('modules').select('statut, revealed').eq('couple_id', profile.couple_id).eq('slug', MODULE_RDV_ANNUEL).maybeSingle(),
     admin.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).single(),
   ])
-  if (!pacte?.revealed) return { error: t(locale, 'Le pacte se signe une fois le module 9 terminé.', 'The pact can be signed once module 9 is complete.') }
+  if (!pacte?.revealed) return { error: t(locale, 'Le pacte se signe une fois le module du pacte terminé.', 'The pact can be signed once the pact module is complete.') }
   if (rdv && (rdv.statut !== 'locked' || rdv.revealed)) return { error: t(locale, 'Votre rendez-vous annuel est déjà ouvert.', 'Your yearly date is already open.') }
 
   const { min, max } = bornesRdvAnnuel()
