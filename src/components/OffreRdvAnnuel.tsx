@@ -21,7 +21,8 @@ const AVANTAGES_EN = [
 ]
 
 // Offre « Pacte – notre rendez-vous annuel » (19 €/an), proposée une fois le
-// pacte signé (page Notre Pacte, page Abonnement).
+// pacte signé ou la première année de YES BOX terminée (page Notre Pacte,
+// page Abonnement).
 // mensuelEnCours : un abonnement mensuel Stripe est en cours — le couple
 // valide alors la bascule, qui a lieu à la fin du mois déjà payé (finPeriode) :
 // les 19 € sont prélevés ce jour-là sur la carte déjà enregistrée.
@@ -80,7 +81,7 @@ export default function OffreRdvAnnuel({ mensuelEnCours, finPeriode }: { mensuel
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,.9)', marginBottom: 12 }}>
         {mensuelEnCours
           ? t('Votre parcours initial est terminé : passez de l’abonnement mensuel à votre rendez-vous annuel.', 'Your initial program is complete: switch from the monthly subscription to your yearly date.')
-          : t('Votre parcours initial est terminé : gardez votre rendez-vous annuel à deux.', 'Your initial program is complete: keep your yearly date together.')}
+          : t('Continuez l’aventure à deux : tous les modules et votre rendez-vous annuel, pour 19 € par an.', 'Keep the journey going together: every module and your yearly date, for €19 a year.')}
       </p>
       <div className="mb-4">
         <div className="font-fraunces font-bold" style={{ fontSize: 40, color: 'white' }}>19 <small style={{ fontSize: 18 }}>{t('€/an', '€/year')}</small></div>

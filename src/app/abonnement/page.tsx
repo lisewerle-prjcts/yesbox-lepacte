@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { ABONNEMENT_COLONNES } from '@/types'
-import { aAccesComplet, estCompteResilie } from '@/lib/abonnement'
+import { aAccesComplet, aDejaEuLaYesBox, estCompteResilie } from '@/lib/abonnement'
 import OffreRdvAnnuel from '@/components/OffreRdvAnnuel'
 import AbonnementClient from './AbonnementClient'
 
@@ -17,10 +17,12 @@ export default async function AbonnementPage() {
 
   if (aAccesComplet(couple)) redirect('/tableau-de-bord')
 
-  // Pacte signé (parcours initial terminé) : c'est le rendez-vous annuel qui
-  // est proposé, plus l'abonnement mensuel.
-  const { data: signature } = await supabase.from('couples').select('pacte_signe_le').eq('id', profile.couple_id).maybeSingle()
-  if (signature?.pacte_signe_le && !estCompteResilie(couple)) return <OffreRdvAnnuel mensuelEnCours={false} finPeriode={null} />
+  // YES BOX déjà obtenue (pacte signé, première année achetée ou offerte
+  // terminée) : c'est le renouvellement à 19 €/an qui est proposé, plus les
+  // 58 €. Lecture admin : les cartes cadeaux ne sont pas lisibles par le couple.
+  if (!estCompteResilie(couple) && await aDejaEuLaYesBox(createAdminClient(), profile.couple_id)) {
+    return <OffreRdvAnnuel mensuelEnCours={false} finPeriode={null} />
+  }
 
   return <AbonnementClient compteResilie={estCompteResilie(couple)} />
 }

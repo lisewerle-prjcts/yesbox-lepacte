@@ -13,12 +13,14 @@ const FEATURES = [
   'Sessions de révélation à deux',
   'Journal de couple',
   'Votre pacte de couple personnalisé',
+  'La première année incluse, puis 19 €/an pour votre rendez-vous annuel',
 ]
 const FEATURES_EN = [
   'The full initial program (excluding yearly dates)',
   'Joint reveal sessions',
   "Your couple's journal",
   "Your personalized couple's pact",
+  'The first year included, then €19/year for your yearly date',
 ]
 
 export default function AbonnementClient({ compteResilie }: { compteResilie: boolean }) {
@@ -47,7 +49,7 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           {t('Continuez l’aventure ensemble', 'Continue the journey together')}
         </h1>
         <p className="text-gray-500 text-sm">
-          {t('Le module 1 est terminé. Passez à l’abonnement mensuel pour débloquer la suite.', 'Module 1 is complete. Subscribe monthly to unlock the rest.')}
+          {t('Le module 1 est terminé. Prenez votre YES BOX pour débloquer la suite.', 'Module 1 is complete. Get your YES BOX to unlock the rest.')}
         </p>
       </div>
 
@@ -65,8 +67,8 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
 
       <div className="card p-6" style={{ background: 'var(--brand, #d63e7a)' }}>
         <div className="mb-4">
-          <div className="font-fraunces font-bold" style={{ fontSize: 40, color: 'white' }}>29 <small style={{ fontSize: 18 }}>{t('€/mois', '€/month')}</small></div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>{t('abonnement · résiliable à tout moment', 'subscription · cancel anytime')}</div>
+          <div className="font-fraunces font-bold" style={{ fontSize: 40, color: 'white' }}>58 <small style={{ fontSize: 18 }}>€</small></div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>{t('YES BOX · parcours complet et 1re année · puis 19 €/an, résiliable à tout moment', 'YES BOX · full program and 1st year · then €19/year, cancel anytime')}</div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)', marginBottom: 16 }} />
         <div className="space-y-2 mb-6">
@@ -85,10 +87,10 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           className="w-full flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg"
           style={{ background: 'white', color: 'var(--brand, #d63e7a)', fontSize: 14, opacity: compteResilie || !renonciation ? 0.5 : 1 }}
         >
-          {loading ? t('Redirection…', 'Redirecting…') : <>{t('S’abonner — 29€/mois', 'Subscribe — €29/month')} <ArrowRight className="w-4 h-4" /></>}
+          {loading ? t('Redirection…', 'Redirecting…') : <>{t('Prendre la YES BOX — 58 €', 'Get YES BOX — €58')} <ArrowRight className="w-4 h-4" /></>}
         </button>
         <p className="text-center mt-3" style={{ fontSize: 11, color: 'rgba(255,255,255,.6)' }}>
-          {t('Paiement sécurisé par Stripe · résiliable à tout moment depuis Mon compte · TVA non applicable, art. 293 B du CGI', 'Secure payment via Stripe · cancel anytime from My Account · VAT not applicable, art. 293 B of the French tax code')}
+          {t('Paiement sécurisé par Stripe · renouvellement à 19 €/an un an après l’achat, résiliable à tout moment depuis Mon compte · TVA non applicable, art. 293 B du CGI', 'Secure payment via Stripe · renews at €19/year one year after purchase, cancel anytime from My Account · VAT not applicable, art. 293 B of the French tax code')}
         </p>
       </div>
 

@@ -5,18 +5,28 @@ import { getStripe } from '@/lib/stripe'
 import { envoyerModele } from '@/lib/modeles-email/serveur'
 import { ajouterMois } from '@/lib/dates'
 import { accorderMoisGratuits } from '@/lib/parrainage'
+import { DUREE_MOIS_YESBOX } from '@/lib/abonnement'
 import { t, isLocale, type Locale } from '@/lib/i18n/locale'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
-// Cartes cadeaux (page /offrir) : 1, 2 ou 3 mois d'abonnement offerts,
-// achetés par paiement unique Stripe. Chaque achat crée un code
-// YES-XXXX-XXXX, valable 1 an, utilisable une seule fois par un couple
-// (Mon compte, /abonnement ou inscription). Cf. supabase/schema.sql,
-// bloc « CARTES CADEAUX ».
+// Cartes cadeaux (page /offrir) : la YES BOX à 58 € (parcours initial et
+// première année, soit 12 mois d'accès), achetée par paiement unique
+// Stripe. Chaque achat crée un code YES-XXXX-XXXX, valable 1 an,
+// utilisable une seule fois par un couple (Mon compte, /abonnement ou
+// inscription). Cf. supabase/schema.sql, bloc « CARTES CADEAUX ».
+// Les anciennes cartes de 1, 2 ou 3 mois déjà vendues restent utilisables.
 
-export const DUREES_CARTE_CADEAU = [1, 2, 3] as const
+export const DUREES_CARTE_CADEAU = [DUREE_MOIS_YESBOX] as const
 export type DureeCarteCadeau = (typeof DUREES_CARTE_CADEAU)[number]
+// Durées des cartes vendues un jour (anciennes cartes 1, 2 ou 3 mois).
+const DUREES_CARTE_CADEAU_HISTORIQUES = [1, 2, 3, DUREE_MOIS_YESBOX]
+// Montant de la carte YES BOX, si celui payé n'est pas connu.
+const MONTANT_YESBOX_CENTIMES = 5800
+
+export function estCarteYesBox(dureeMois: number) {
+  return dureeMois >= DUREE_MOIS_YESBOX
+}
 
 export const VALIDITE_CARTE_CADEAU_MOIS = 12
 // Les lignes sont effacées 24 mois après la fin de validité de la carte.
@@ -26,12 +36,10 @@ export function estDureeCarteCadeau(n: number): n is DureeCarteCadeau {
   return (DUREES_CARTE_CADEAU as readonly number[]).includes(n)
 }
 
-// Prix Stripe des trois produits « carte cadeau » (paiement unique).
+// Prix Stripe du produit « carte cadeau YES BOX » (paiement unique, 58 €).
 export function prixCarteCadeauId(duree: DureeCarteCadeau): string | undefined {
   return {
-    1: process.env.STRIPE_PRICE_ID_CARTE_CADEAU_1_MOIS,
-    2: process.env.STRIPE_PRICE_ID_CARTE_CADEAU_2_MOIS,
-    3: process.env.STRIPE_PRICE_ID_CARTE_CADEAU_3_MOIS,
+    [DUREE_MOIS_YESBOX]: process.env.STRIPE_PRICE_ID_CARTE_CADEAU_YESBOX,
   }[duree]
 }
 
@@ -115,7 +123,7 @@ export async function enregistrerCarteCadeau(admin: AdminClient, session: Stripe
   if (existante) return existante
 
   const duree = Number(session.metadata.duree_mois)
-  if (!estDureeCarteCadeau(duree)) return null
+  if (!DUREES_CARTE_CADEAU_HISTORIQUES.includes(duree)) return null
   const acheteLe = new Date(session.created * 1000)
   const locale: Locale = isLocale(session.metadata.langue) ? session.metadata.langue : 'fr'
 
@@ -156,6 +164,8 @@ async function envoyerEmailCarteCadeau(carte: CarteCadeau, locale: Locale) {
     cle: carte.pour_soi ? 'carte_cadeau_pour_soi' : 'carte_cadeau_offerte',
     locale,
     vars: {
+      offre: libelleCarteCadeau(carte.duree_mois, locale),
+      // Ancienne variable, gardée pour les modèles déjà personnalisés.
       mois: t(locale, `${carte.duree_mois} mois`, `${carte.duree_mois} month${carte.duree_mois > 1 ? 's' : ''}`),
       code: carte.code,
       date: formaterDateCarte(carte.expire_le, locale),
@@ -164,15 +174,24 @@ async function envoyerEmailCarteCadeau(carte: CarteCadeau, locale: Locale) {
   })
 }
 
+// Ce qu'offre la carte, tel qu'écrit dans l'e-mail et sur la page de
+// remerciement.
+export function libelleCarteCadeau(dureeMois: number, locale: Locale) {
+  return estCarteYesBox(dureeMois)
+    ? t(locale, 'la YES BOX : tous les modules jusqu’au pacte, pendant 1 an', 'the YES BOX: every module up to the pact, for 1 year')
+    : t(locale, `${dureeMois} mois d’abonnement`, `${dureeMois} month${dureeMois > 1 ? 's' : ''} of subscription`)
+}
+
 export type ErreurCarteCadeau = 'invalide' | 'deja_utilisee' | 'expiree'
 
 // Utilise une carte cadeau pour un couple : la carte est marquée utilisée
-// (une seule fois, même sous concurrence), puis les mois sont accordés
-// (crédit sur la prochaine facture Stripe si le couple paie déjà, sinon
-// accès gratuit prolongé).
+// (une seule fois, même sous concurrence), puis elle est accordée : crédit
+// du montant payé pour la carte, déduit des prochains prélèvements Stripe
+// si le couple paie déjà, sinon accès gratuit prolongé (12 mois pour la
+// YES BOX).
 export async function utiliserCarteCadeau(admin: AdminClient, code: string, coupleId: string):
-  Promise<{ erreur: ErreurCarteCadeau } | { dureeMois: number; mode: 'credit_stripe' | 'acces_gratuit' }> {
-  const { data: carte } = await admin.from('cartes_cadeaux').select('id, duree_mois, expire_le, utilise_le').eq('code', code).maybeSingle()
+  Promise<{ erreur: ErreurCarteCadeau } | { dureeMois: number; montantCentimes: number; mode: 'credit_stripe' | 'acces_gratuit' }> {
+  const { data: carte } = await admin.from('cartes_cadeaux').select('id, duree_mois, montant_centimes, devise, expire_le, utilise_le').eq('code', code).maybeSingle()
   if (!carte) return { erreur: 'invalide' }
   if (carte.utilise_le) return { erreur: 'deja_utilisee' }
   if (new Date(carte.expire_le).getTime() <= Date.now()) return { erreur: 'expiree' }
@@ -184,8 +203,9 @@ export async function utiliserCarteCadeau(admin: AdminClient, code: string, coup
   if (error) throw new Error(error.message)
   if (!reservee?.length) return { erreur: 'deja_utilisee' }
 
-  const mode = await accorderMoisGratuits(admin, coupleId, carte.duree_mois, `Carte cadeau YES BOX ${code}`)
-  return { dureeMois: carte.duree_mois, mode }
+  const montantCentimes = carte.montant_centimes ?? (estCarteYesBox(carte.duree_mois) ? MONTANT_YESBOX_CENTIMES : 0)
+  const mode = await accorderMoisGratuits(admin, coupleId, carte.duree_mois, { centimes: montantCentimes, devise: carte.devise ?? 'eur' }, `Carte cadeau YES BOX ${code}`)
+  return { dureeMois: carte.duree_mois, montantCentimes, mode }
 }
 
 export async function purgerCartesCadeaux(admin: AdminClient): Promise<number> {

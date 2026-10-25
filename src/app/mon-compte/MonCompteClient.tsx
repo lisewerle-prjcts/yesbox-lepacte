@@ -194,7 +194,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
       ) : actif ? (
         <>
           {formule === 'annuel' && (
-            <p className="text-sm font-semibold text-gray-900 mb-1">{t('Pacte – notre rendez-vous annuel', 'Pact – our yearly date')}</p>
+            <p className="text-sm font-semibold text-gray-900 mb-1">{t('YES BOX · Pacte – notre rendez-vous annuel', 'YES BOX · Pact – our yearly date')}</p>
           )}
           <p className="text-sm text-gray-600 mb-1">
             {annuleAPeriodeFin
@@ -207,7 +207,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
             {annuleAPeriodeFin
               ? t('Après cette date, seules les parties déjà réalisées restent consultables.', 'After this date, only the parts you already completed remain viewable.')
               : formule === 'annuel'
-              ? t('19€/an · résiliable à tout moment.', '€19/year · cancel anytime.')
+              ? t('Renouvellement à 19 €/an · résiliable à tout moment.', 'Renews at €19/year · cancel anytime.')
               : t('29€/mois · résiliable à tout moment.', '€29/month · cancel anytime.')}
           </p>
           {annuelPrevuLe && formule !== 'annuel' && !annuleAPeriodeFin && (
@@ -254,7 +254,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
       ) : (
         <>
           <p className="text-sm text-gray-600 mb-4">{t('Aucun abonnement actif pour le moment.', 'No active subscription at the moment.')}</p>
-          <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('S’abonner', 'Subscribe')}</Link>
+          <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('Voir les offres', 'See the offers')}</Link>
         </>
       )}
     </div>
@@ -341,7 +341,7 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
         <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Parrainage', 'Referrals')}</h2>
       </div>
       <p className="text-sm text-gray-600 mb-3">
-        {t('Chaque 5 couples parrainés qui s’inscrivent, vous recevez 1 mois offert, ou un an offert si vous avez signé votre pacte et terminé le programme initial.', 'For every 5 referred couples who sign up, you get 1 month free, or a year free if you have signed your pact and completed the initial program.')}
+        {t('Tous les 5 couples parrainés qui s’inscrivent, vous recevez 10 € de réduction, déduits automatiquement de votre prochain paiement (YES BOX ou renouvellement annuel).', 'For every 5 referred couples who sign up, you get €10 off, automatically deducted from your next payment (YES BOX or yearly renewal).')}
       </p>
       <div className="mb-3 max-w-md">
         <label className="label">{t('Ton code parrain', 'Your referral code')}</label>

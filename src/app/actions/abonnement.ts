@@ -4,11 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
-import { getStripe, PRIX_ABONNEMENT_MENSUEL_ID, PRIX_ABONNEMENT_ANNUEL_ID } from '@/lib/stripe'
-import { estAbonnementActif, estCompteResilie } from '@/lib/abonnement'
+import { getStripe, PRIX_YESBOX_ID, JOURS_INCLUS_YESBOX, PRIX_ABONNEMENT_ANNUEL_ID } from '@/lib/stripe'
+import { estAbonnementActif, estCompteResilie, aDejaEuLaYesBox } from '@/lib/abonnement'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { programmerBasculeAnnuelle } from '@/lib/bascule-annuelle'
-import { normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
+import { estCarteYesBox, normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
 import { enregistrerParrainage } from '@/lib/parrainage'
 
 async function getMonCoupleId() {
@@ -25,6 +25,13 @@ const ERREUR_RENONCIATION = {
   en: 'Tick both boxes before paying.',
 }
 
+// Achat de la YES BOX (format initial), proposé à la fin du module 1
+// gratuit : 58 € payés tout de suite (prix unique STRIPE_PRICE_ID_YESBOX)
+// pour le parcours initial et la première année, puis renouvellement
+// automatique à 19 €/an (abonnement « Pacte – notre rendez-vous annuel »
+// dont la première année est incluse) un an après l'achat, résiliable à
+// tout moment. Un éventuel crédit de parrainage (solde client Stripe) est
+// déduit automatiquement de la facture.
 // renonciationRetractation : cases « J'ai lu et j'accepte les CGV » et « Je
 // demande l'accès immédiat et renonce à mon droit de rétractation dès cet
 // accès » cochées avant le paiement (date conservée dans les métadonnées
@@ -34,7 +41,7 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
   if (!renonciationRetractation) return { error: t(locale, ERREUR_RENONCIATION.fr, ERREUR_RENONCIATION.en) }
   const ctx = await getMonCoupleId()
   if ('error' in ctx) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
-  if (!PRIX_ABONNEMENT_MENSUEL_ID) return { error: t(locale, "L'abonnement n'est pas encore configuré (STRIPE_PRICE_ID_ABONNEMENT_MENSUEL manquant).", 'Subscriptions are not configured yet (missing STRIPE_PRICE_ID_ABONNEMENT_MENSUEL).') }
+  if (!PRIX_YESBOX_ID || !PRIX_ABONNEMENT_ANNUEL_ID) return { error: t(locale, "La YES BOX n'est pas encore configurée (STRIPE_PRICE_ID_YESBOX ou STRIPE_PRICE_ID_ABONNEMENT_ANNUEL manquant).", 'YES BOX is not configured yet (missing STRIPE_PRICE_ID_YESBOX or STRIPE_PRICE_ID_ABONNEMENT_ANNUEL).') }
 
   const admin = createAdminClient()
   const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', ctx.coupleId).single()
@@ -68,14 +75,20 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
       await stripe.customers.update(customerId, { preferred_locales: [locale] }).catch(() => {})
     }
 
+    const metadata = { couple_id: ctx.coupleId, formule: 'annuel', offre: 'yesbox', cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() }
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
-      line_items: [{ price: PRIX_ABONNEMENT_MENSUEL_ID, quantity: 1 }],
+      // 58 € facturés immédiatement (prix unique) ; les 19 €/an ne sont
+      // prélevés qu'à la fin de la première année, incluse dans les 58 €.
+      line_items: [
+        { price: PRIX_YESBOX_ID, quantity: 1 },
+        { price: PRIX_ABONNEMENT_ANNUEL_ID, quantity: 1 },
+      ],
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/abonnement?abonnement=annule`,
-      subscription_data: { metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() } },
-      metadata: { couple_id: ctx.coupleId, cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() },
+      subscription_data: { trial_period_days: JOURS_INCLUS_YESBOX, metadata },
+      metadata,
       allow_promotion_codes: true,
       // Page de paiement dans la langue du site.
       locale,
@@ -88,8 +101,9 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
   }
 }
 
-// Bascule vers « Pacte – notre rendez-vous annuel » (19 €/an), proposée une
-// fois le pacte signé (et programmée d'office à la seconde signature, cf.
+// Renouvellement « Pacte – notre rendez-vous annuel » (19 €/an), proposé
+// une fois le pacte signé ou la YES BOX déjà obtenue (achat terminé, carte
+// cadeau), et bascule des anciens abonnements mensuels (programmée d'office à la seconde signature, cf.
 // signerPacteModule). Deux cas :
 //   - abonnement mensuel Stripe en cours : la bascule est programmée
 //     (subscription schedule) à la fin du mois déjà payé. Rien ne change d'ici là ; à cette date, les 19 € sont prélevés sur la
@@ -105,12 +119,12 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
   if (!PRIX_ABONNEMENT_ANNUEL_ID) return { error: t(locale, "Le rendez-vous annuel n'est pas encore configuré (STRIPE_PRICE_ID_ABONNEMENT_ANNUEL manquant).", 'The yearly date is not configured yet (missing STRIPE_PRICE_ID_ABONNEMENT_ANNUEL).') }
 
   const admin = createAdminClient()
-  const [{ data: couple }, { data: signature }] = await Promise.all([
+  const [{ data: couple }, dejaEuLaYesBox] = await Promise.all([
     admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', ctx.coupleId).single(),
-    admin.from('couples').select('pacte_signe_le').eq('id', ctx.coupleId).single(),
+    aDejaEuLaYesBox(admin, ctx.coupleId),
   ])
   if (!couple) return { error: t(locale, 'Couple introuvable', 'Couple not found') }
-  if (!signature?.pacte_signe_le) return { error: t(locale, 'Le rendez-vous annuel se propose une fois votre pacte signé.', 'The yearly date is available once your pact is signed.') }
+  if (!dejaEuLaYesBox) return { error: t(locale, 'Le rendez-vous annuel se propose une fois votre pacte signé ou votre première année YES BOX terminée.', 'The yearly date is available once your pact is signed or your first YES BOX year is over.') }
   if (estCompteResilie(couple)) {
     return { error: t(locale,
       "Ce compte a été clos : l'abonnement ne peut pas être réactivé sur cet espace. Il faut recommencer avec un nouveau compte.",
@@ -266,11 +280,14 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
       const res = await utiliserCarteCadeau(admin, codeCadeau, ctx.coupleId)
       if ('dureeMois' in res) {
         rafraichir()
+        const euros = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: res.montantCentimes % 100 ? 2 : 0 }).format(res.montantCentimes / 100)
         const mois = t(locale, `${res.dureeMois} mois`, `${res.dureeMois} month${res.dureeMois > 1 ? 's' : ''}`)
         return {
           success: true,
           message: res.mode === 'credit_stripe'
-            ? t(locale, `Carte cadeau activée : ${mois} offert${res.dureeMois > 1 ? 's' : ''}, déduit${res.dureeMois > 1 ? 's' : ''} de vos prochains prélèvements.`, `Gift card activated: ${mois} free, deducted from your next payments.`)
+            ? t(locale, `Carte cadeau activée : ${euros} déduits de vos prochains prélèvements.`, `Gift card activated: ${euros} deducted from your next payments.`)
+            : estCarteYesBox(res.dureeMois)
+            ? t(locale, 'Carte cadeau activée : votre YES BOX est ouverte, avec le parcours complet et votre première année.', 'Gift card activated: your YES BOX is open, with the full program and your first year.')
             : t(locale, `Carte cadeau activée : ${mois} d’accès complet offert${res.dureeMois > 1 ? 's' : ''}.`, `Gift card activated: ${mois} of full access for free.`),
         }
       }

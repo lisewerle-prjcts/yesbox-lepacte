@@ -14,7 +14,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
   { cle: 'mensuels', nom: 'Rendez-vous mensuels & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé, et l’annonce du rendez-vous annuel.' },
   { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
-  { cle: 'abonnement', nom: 'Abonnement & cartes cadeaux', description: 'Passage à l’abonnement annuel, cartes cadeaux.' },
+  { cle: 'abonnement', nom: 'Abonnement & cartes cadeaux', description: 'Renouvellement à 19 €/an, passage à l’abonnement annuel, cartes cadeaux.' },
 ]
 
 export interface ContenuEmail { objet: string; corps: string }
@@ -52,7 +52,8 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   rappel_rdv: 'phrase sur le prochain rendez-vous annuel (vide s’il n’y en a pas)',
   precision_rdv: '« , le 12 mars 2027 » (vide sans rendez-vous fixé)',
   phrase_abonnement: 'phrase sur le passage à l’abonnement annuel (vide si rien n’est programmé)',
-  mois: 'durée de la carte cadeau',
+  offre: 'ce qu’offre la carte cadeau (la YES BOX…)',
+  mois: 'durée de la carte cadeau (ancienne variable)',
   mot_de_passe: 'nouveau mot de passe',
   annees: '« 1 an », « 5 ans »',
   matiere: 'matière des noces (coton, bois…)',
@@ -905,12 +906,66 @@ If you'd rather not continue, you can cancel this switch or your subscription an
 ${EQUIPE.en}` },
   },
   {
+    cle: 'renouvellement_annuel_annonce', famille: 'abonnement', nom: 'Annonce du renouvellement à 19 €/an',
+    quand: 'Un mois avant chaque renouvellement à 19 € (fin de la première année de la YES BOX, puis chaque année), si le renouvellement automatique n’est pas arrêté. Envoyé même si les rappels sont désactivés (information avant renouvellement).',
+    obligatoires: ['date'],
+    fr: { objet: 'Votre YES BOX se renouvelle le {date}', corps: `${BONJOUR.fr}
+
+Petit message pour vous prévenir : le {date}, votre accès YES BOX se renouvelle automatiquement pour un an avec « Pacte – notre rendez-vous annuel ». **19 €** seront prélevés ce jour-là sur la carte déjà enregistrée. Vous n’avez rien à faire.
+
+Cette nouvelle année vous donne accès à tous les modules (pour terminer votre parcours ou le refaire), à votre journal et à votre pacte, et au module « Notre rendez-vous annuel » à la date que vous avez choisie.
+
+Si vous préférez ne pas continuer, vous pouvez arrêter le renouvellement en un clic depuis Mon compte, avant le {date}.
+
+[bouton: Mon compte | {lien}]
+
+${EQUIPE.fr}` },
+    en: { objet: 'Your YES BOX renews on {date}', corps: `${BONJOUR.en}
+
+Just a quick note to let you know: on {date}, your YES BOX access renews automatically for one year with "Pact – our yearly date". **€19** will be charged that day to the card already on file. There's nothing for you to do.
+
+This new year gives you access to every module (to finish your program or go through it again), to your journal and your pact, and to the "Our Yearly Date" module on the date you chose.
+
+If you'd rather not continue, you can stop the renewal in one click from My Account, before {date}.
+
+[bouton: My Account | {lien}]
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'fin_yesbox_offerte', famille: 'abonnement', nom: 'Fin de la YES BOX offerte — continuer à 19 €/an', rappel: true,
+    quand: 'Un mois avant la fin de l’année d’accès offerte par une carte cadeau YES BOX, sans abonnement en cours.',
+    obligatoires: ['date'],
+    fr: { objet: 'Votre YES BOX offerte se termine le {date}', corps: `${BONJOUR.fr}
+
+L’année d’accès offerte par votre carte cadeau YES BOX se termine le {date}.
+
+Pour continuer l’aventure (terminer votre parcours, le refaire, garder votre rendez-vous annuel), prenez « Pacte – notre rendez-vous annuel » : **19 € par an**, résiliable à tout moment depuis Mon compte.
+
+Sans abonnement, les parties déjà réalisées restent consultables.
+
+[bouton: Continuer pour 19 €/an | {lien}]
+
+${EQUIPE.fr}` },
+    en: { objet: 'Your gifted YES BOX ends on {date}', corps: `${BONJOUR.en}
+
+The year of access given by your YES BOX gift card ends on {date}.
+
+To keep going (finish your program, go through it again, keep your yearly date), take "Pact – our yearly date": **€19 per year**, cancel anytime from My Account.
+
+Without a subscription, the parts you've already completed stay viewable.
+
+[bouton: Continue for €19/year | {lien}]
+
+${EQUIPE.en}` },
+  },
+  {
     cle: 'carte_cadeau_offerte', famille: 'abonnement', nom: 'Carte cadeau achetée pour l’offrir',
     quand: 'Après l’achat d’une carte cadeau destinée à un autre couple. Envoyé à la personne qui achète.',
     obligatoires: ['code'],
     fr: { objet: 'Votre carte cadeau YES BOX : {code}', corps: `Bonjour,
 
-Merci pour votre achat ! Voici votre carte cadeau YES BOX : **{mois} d’abonnement** au programme YES BOX – Le Pacte.
+Merci pour votre achat ! Voici votre carte cadeau YES BOX : **{offre}**, au programme YES BOX – Le Pacte.
 
 [code: {code}]
 
@@ -923,7 +978,7 @@ Valable jusqu’au {date}, pour un seul couple.
 ${EQUIPE.fr}` },
     en: { objet: 'Your YES BOX gift card: {code}', corps: `Hello,
 
-Thank you for your purchase! Here is your YES BOX gift card: **{mois} of subscription** to the YES BOX – Le Pacte program.
+Thank you for your purchase! Here is your YES BOX gift card: **{offre}**, from the YES BOX – Le Pacte program.
 
 [code: {code}]
 
@@ -941,7 +996,7 @@ ${EQUIPE.en}` },
     obligatoires: ['code'],
     fr: { objet: 'Votre carte cadeau YES BOX : {code}', corps: `Bonjour,
 
-Merci pour votre achat ! Voici votre carte cadeau YES BOX : **{mois} d’abonnement** au programme YES BOX – Le Pacte.
+Merci pour votre achat ! Voici votre carte cadeau YES BOX : **{offre}**, au programme YES BOX – Le Pacte.
 
 [code: {code}]
 
@@ -954,7 +1009,7 @@ Valable jusqu’au {date}, pour un seul couple.
 ${EQUIPE.fr}` },
     en: { objet: 'Your YES BOX gift card: {code}', corps: `Hello,
 
-Thank you for your purchase! Here is your YES BOX gift card: **{mois} of subscription** to the YES BOX – Le Pacte program.
+Thank you for your purchase! Here is your YES BOX gift card: **{offre}**, from the YES BOX – Le Pacte program.
 
 [code: {code}]
 

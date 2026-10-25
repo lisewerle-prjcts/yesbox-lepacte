@@ -80,7 +80,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.abonnementannuel.titre">Pacte – notre rendez-vous annuel</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.abonnementannuel.texte.v2" multiline>Une fois votre pacte signé par vous deux, l&apos;abonnement mensuel laisse automatiquement la place à l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an), sans démarche de votre part. La bascule a lieu à la fin du mois déjà payé, et un e-mail vous prévient quelques jours avant. Vous pouvez l&apos;annuler depuis MON COMPTE. Cet abonnement donne accès au module « Notre rendez-vous annuel » et à tous les modules si vous souhaitez les refaire. Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
+              <EditableText id="regles.abonnementannuel.texte.v3" multiline>Votre YES BOX (58 €) comprend le parcours initial et votre première année. Un an après l&apos;achat, elle se renouvelle automatiquement avec l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an), sans démarche de votre part : un e-mail vous prévient un mois avant. Cet abonnement donne accès au module « Notre rendez-vous annuel » et à tous les modules si vous souhaitez les refaire. Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
             </p>
           </li>
           <li>
