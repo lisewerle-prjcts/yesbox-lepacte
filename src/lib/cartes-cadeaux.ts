@@ -178,7 +178,7 @@ async function envoyerEmailCarteCadeau(carte: CarteCadeau, locale: Locale) {
 // remerciement.
 export function libelleCarteCadeau(dureeMois: number, locale: Locale) {
   return estCarteYesBox(dureeMois)
-    ? t(locale, 'la YES BOX : tous les modules jusqu’au pacte, pendant 1 an', 'the YES BOX: every module up to the pact, for 1 year')
+    ? t(locale, 'le pack initial YES BOX : les 8 modules et le module Pacte de couple, avec un an pour le réaliser', 'the YES BOX starter pack: the 8 modules and the Couple’s Pact module, with one year to complete it')
     : t(locale, `${dureeMois} mois d’abonnement`, `${dureeMois} month${dureeMois > 1 ? 's' : ''} of subscription`)
 }
 
