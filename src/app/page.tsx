@@ -353,12 +353,12 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-3">
             {modules.map((m, i) => {
-              // Le pacte (rose) et le rendez-vous annuel (vert sauge) se
-              // distinguent des 8 modules du pack initial.
+              // Le pacte et le rendez-vous annuel, sur un fond beige plus foncé,
+              // se distinguent des 8 modules du pack initial.
               const ton = m.n === 9
-                ? { background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)', numero: 'var(--brand)' }
+                ? { background: 'var(--cream-2)', borderColor: '#ddd2bf', numero: 'var(--brand)' }
                 : m.n === 10
-                ? { background: 'var(--sage-soft)', borderColor: '#c9dacd', numero: 'var(--sage)' }
+                ? { background: 'var(--cream-2)', borderColor: '#ddd2bf', numero: 'var(--sage)' }
                 : null
               return (
               <div key={m.slug} className="card flex items-center gap-5 p-5" style={ton ? { background: ton.background, borderColor: ton.borderColor } : undefined}>
