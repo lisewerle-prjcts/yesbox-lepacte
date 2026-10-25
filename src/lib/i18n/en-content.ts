@@ -362,6 +362,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.constat.options.1.desc': 'Around €20, often read by only one of the two partners, and you have to translate it all into your own story yourselves.',
   'home.constat.options.2.titre': 'We see a therapist',
   'home.constat.options.2.desc': "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.",
+  'home.constat.options.2.desc.v2': "It's essential when things are really bad. YES BOX can be a great complement to the work done in a therapist's office, or perhaps a starting point.",
   'home.constat.reveal.titre': 'What was missing: a regular date, just the two of you.',
   'home.constat.reveal.texte.0.v2': 'YES BOX starts from a simple idea: a couple that lasts and thrives is something you choose, and something you nurture, regularly and gently.',
   'home.constat.reveal.texte.programme.v2': "YES BOX is a self-guided personal development program for every couple.",

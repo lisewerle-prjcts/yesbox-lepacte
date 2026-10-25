@@ -41,7 +41,9 @@ const NAV_LINKS = (t: (fr: string, en: string) => string) => [
 const OPTIONS = (t: (fr: string, en: string) => string) => [
   { titre: t('On ne dit rien', 'We say nothing'), desc: t("C'est gratuit… sur le moment. Les non-dits, eux, s'accumulent.", 'It costs nothing… in the moment. But the things left unsaid keep piling up.') },
   { titre: t('On achète un livre', 'We buy a book'), desc: t('Environ 20 €, souvent lu par un seul des deux membres du couple, et il faut tout transposer soi-même dans sa propre histoire.', "Around €20, often read by only one of the two partners, and you have to translate it all into your own story yourselves.") },
-  { titre: t('On consulte', 'We see a therapist'), desc: t("C'est indispensable quand ça va vraiment mal. Il faut compter 80 à 150 € la séance, sur plusieurs mois. Tout le monde n'a pas envie de se confier à une personne extérieure dès le départ.", "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.") },
+  // descId : nouvel identifiant quand le texte change (l'ancien texte peut
+  // être enregistré en mode édition).
+  { titre: t('On consulte', 'We see a therapist'), descId: 'desc.v2', desc: t("C'est indispensable quand ça va vraiment mal. YES BOX peut être un bon complément au travail fait en cabinet, ou peut-être un point de départ.", "It's essential when things are really bad. YES BOX can be a great complement to the work done in a therapist's office, or perhaps a starting point.") },
 ]
 
 const ETAPES = (t: (fr: string, en: string) => string) => [
@@ -259,7 +261,7 @@ export default function LandingPage() {
               {optionsList.map((o, i) => (
                 <div key={i} className="card p-6">
                   <h4 className="font-semibold mb-1.5" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`home.constat.options.${i}.titre`}>{o.titre}</EditableText></h4>
-                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.constat.options.${i}.desc`} multiline>{o.desc}</EditableText></p>
+                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.constat.options.${i}.${'descId' in o ? o.descId : 'desc'}`} multiline>{o.desc}</EditableText></p>
                 </div>
               ))}
             </div>
