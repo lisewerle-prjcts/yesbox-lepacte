@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff, CalendarHeart } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff, CalendarHeart, ArrowUp, ArrowDown } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
   adminUpdateCouple, adminDeleteCouple, adminUpdateProfile,
@@ -65,6 +65,43 @@ function texteRecherche(couple: Couple) {
 // Cases « rendez-vous annuel » affichées sous la grille des modules.
 const RDV_ANNUELS_AFFICHES = 9
 
+// Tri de la liste : la valeur de chaque couple pour le critère choisi ;
+// null (jamais connecté, aucun module terminé) reste toujours en fin de liste.
+type CritereTri = 'numero' | 'module' | 'activite' | 'inscription'
+const LIBELLES_TRI: Record<CritereTri, string> = {
+  numero: 'Numéro de couple',
+  module: 'Dernier module terminé',
+  activite: 'Dernière activité',
+  inscription: 'Date d\'inscription',
+}
+
+// Dernier module terminé : le plus avancé du parcours, puis le plus
+// récemment terminé à égalité.
+function valeurTri(couple: Couple, critere: CritereTri, moduleSlugs: string[]): [number, string] | null {
+  if (critere === 'numero') return [couple.numero, '']
+  if (critere === 'activite') return couple.derniere_connexion ? [0, couple.derniere_connexion] : null
+  if (critere === 'inscription') return [0, couple.created_at]
+  let rang = -1
+  let le = ''
+  for (const m of couple.modules) {
+    const i = moduleSlugs.indexOf(m.slug)
+    if (i < 0 || !m.termine_le) continue
+    if (i > rang || (i === rang && m.termine_le > le)) { rang = i; le = m.termine_le }
+  }
+  return rang < 0 ? null : [rang, le]
+}
+
+function trierCouples(couples: Couple[], critere: CritereTri, croissant: boolean, moduleSlugs: string[]) {
+  const valeurs = new Map(couples.map(c => [c.id, valeurTri(c, critere, moduleSlugs)]))
+  return [...couples].sort((a, b) => {
+    const va = valeurs.get(a.id) ?? null
+    const vb = valeurs.get(b.id) ?? null
+    if (!va || !vb) return va ? -1 : vb ? 1 : b.numero - a.numero
+    const ecart = va[0] - vb[0] || va[1].localeCompare(vb[1]) || a.numero - b.numero
+    return croissant ? ecart : -ecart
+  })
+}
+
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
 export default function CouplesClient({
@@ -86,11 +123,14 @@ export default function CouplesClient({
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
   const [recherche, setRecherche] = useState('')
+  const [critereTri, setCritereTri] = useState<CritereTri>('numero')
+  const [croissant, setCroissant] = useState(false)
 
   const index = useMemo(() => couples.map(couple => ({ couple, texte: texteRecherche(couple) })), [couples])
   // Chaque mot saisi doit apparaître (ex : « lise octobre »).
   const mots = normaliser(recherche).split(/\s+/).filter(Boolean)
-  const couplesFiltres = mots.length ? index.filter(({ texte }) => mots.every(m => texte.includes(m))).map(({ couple }) => couple) : couples
+  const couplesTrouves = mots.length ? index.filter(({ texte }) => mots.every(m => texte.includes(m))).map(({ couple }) => couple) : couples
+  const couplesFiltres = trierCouples(couplesTrouves, critereTri, croissant, moduleSlugs)
 
   async function addCouple() {
     setAdding(true)
@@ -121,6 +161,22 @@ export default function CouplesClient({
               <X className="w-4 h-4" style={{ color: 'var(--muted)' }} />
             </button>
           )}
+        </div>
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <label htmlFor="tri-couples" style={{ fontSize: 12, color: 'var(--muted)' }}>Trier par</label>
+          <select id="tri-couples" className="field" style={{ width: 'auto', flex: '1 1 200px', maxWidth: 260 }} value={critereTri} onChange={e => setCritereTri(e.target.value as CritereTri)}>
+            {(Object.keys(LIBELLES_TRI) as CritereTri[]).map(c => <option key={c} value={c}>{LIBELLES_TRI[c]}</option>)}
+          </select>
+          <button
+            type="button"
+            onClick={() => setCroissant(v => !v)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium shrink-0"
+            style={{ background: 'var(--brand-tint)', border: '1px solid var(--brand-soft)', color: 'var(--brand)' }}
+            aria-label={croissant ? 'Ordre croissant, passer en décroissant' : 'Ordre décroissant, passer en croissant'}
+          >
+            {croissant ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+            {croissant ? 'Croissant' : 'Décroissant'}
+          </button>
         </div>
         {mots.length > 0 && (
           <p className="mt-3" style={{ fontSize: 12, color: 'var(--muted)' }}>
