@@ -10,7 +10,7 @@ import { changerRappelsEmail } from '@/app/actions/rappels'
 import { memoriserLangue } from '@/app/actions/langue'
 import { annulerAbonnement, reprendreAbonnement, annulerBasculeAnnuelle, utiliserCode } from '@/app/actions/abonnement'
 import type { CoupleAbonnement } from '@/types'
-import { estCompteResilie, aAccesGratuitActif } from '@/lib/abonnement'
+import { estCompteResilie, aAccesGratuitActif, aPackInitialActif } from '@/lib/abonnement'
 import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
 import Link from 'next/link'
 import ChampCode from '@/components/ChampCode'
@@ -18,7 +18,7 @@ import ChampCode from '@/components/ChampCode'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, codeParrainage, filleulsCount, rappelsEmail, langue,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, offreRdvAnnuelDispo, codeParrainage, filleulsCount, rappelsEmail, langue,
 }: {
   prenom: string
   email: string
@@ -31,6 +31,8 @@ export default function MonCompteClient({
   annuelPrevuLe: string | null
   /** Pacte signé et abonnement mensuel en cours : proposer la bascule. */
   proposerAnnuel: boolean
+  /** Pacte signé, sans abonnement : proposer l'abonnement annuel (19 €/an). */
+  offreRdvAnnuelDispo: boolean
   codeParrainage: string | null
   filleulsCount: number
   rappelsEmail: boolean
@@ -48,7 +50,7 @@ export default function MonCompteClient({
       <div className="space-y-5">
         <MesInfosCard prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
-        <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} />
+        <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} offreRdvAnnuelDispo={offreRdvAnnuelDispo} />
         {!estCompteResilie(abonnement) && <AjouterCodeCard />}
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
         <LangueCard langueInitiale={langue} />
@@ -138,7 +140,7 @@ function RappelsCard({ actifInitial }: { actifInitial: boolean }) {
   )
 }
 
-function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: { abonnement: CoupleAbonnement | null; formule: 'mensuel' | 'annuel' | null; annuelPrevuLe: string | null; proposerAnnuel: boolean }) {
+function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel, offreRdvAnnuelDispo }: { abonnement: CoupleAbonnement | null; formule: 'mensuel' | 'annuel' | null; annuelPrevuLe: string | null; proposerAnnuel: boolean; offreRdvAnnuelDispo: boolean }) {
   const t = useT()
   const { locale } = useLocale()
   const [status, setStatus] = useState<SaveStatus>('idle')
@@ -149,6 +151,14 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
   const compteResilie = estCompteResilie(abonnement)
   const gratuitActif = !actif && aAccesGratuitActif(abonnement)
   const gratuitIllimite = abonnement?.acces_gratuit_expire_le === ACCES_GRATUIT_ILLIMITE_ISO
+  const packActif = !actif && !gratuitActif && aPackInitialActif(abonnement)
+  const lienRdvAnnuel = offreRdvAnnuelDispo && (
+    <p className="text-sm mt-3">
+      <Link href="/journal#rdv-annuel-offre" className="text-magenta font-semibold">
+        {t('Prendre l’abonnement annuel (19 €/an) pour votre rendez-vous annuel', 'Get the yearly subscription (€19/year) for your yearly date')}
+      </Link>
+    </p>
+  )
 
   async function stopper() {
     setError('')
@@ -194,7 +204,7 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
       ) : actif ? (
         <>
           {formule === 'annuel' && (
-            <p className="text-sm font-semibold text-gray-900 mb-1">{t('YES BOX · Pacte – notre rendez-vous annuel', 'YES BOX · Pact – our yearly date')}</p>
+            <p className="text-sm font-semibold text-gray-900 mb-1">{t('Pacte – notre rendez-vous annuel', 'Pact – our yearly date')}</p>
           )}
           <p className="text-sm text-gray-600 mb-1">
             {annuleAPeriodeFin
@@ -251,10 +261,24 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel }: 
             {t('Offert (carte cadeau, code gratuit ou parrainage) — aucun paiement en cours.', 'Granted (gift card, free code or referral) — no payment in progress.')}
           </p>
         </>
+      ) : packActif ? (
+        <>
+          <p className="text-sm font-semibold text-gray-900 mb-1">{t('Pack initial YES BOX – Le Pacte', 'YES BOX – Le Pacte starter pack')}</p>
+          <p className="text-sm text-gray-600 mb-1">
+            {t('Accès aux 8 modules et au pacte jusqu’au', 'Access to the 8 modules and the pact until')}{' '}
+            <strong>{abonnement?.pack_initial_expire_le ? formatDate(abonnement.pack_initial_expire_le, locale) : '—'}</strong>
+          </p>
+          <p className="text-xs text-gray-400">
+            {t('Paiement unique, sans abonnement. L’abonnement annuel (19 €/an) est facultatif : il ouvre le module « Notre rendez-vous annuel » à votre date.', 'One-time payment, no subscription. The yearly subscription (€19/year) is optional: it opens the "Our Yearly Date" module on your date.')}
+          </p>
+          {lienRdvAnnuel}
+        </>
       ) : (
         <>
           <p className="text-sm text-gray-600 mb-4">{t('Aucun abonnement actif pour le moment.', 'No active subscription at the moment.')}</p>
-          <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('Voir les offres', 'See the offers')}</Link>
+          {offreRdvAnnuelDispo
+            ? lienRdvAnnuel
+            : <Link href="/abonnement" className="btn-primary text-sm py-2 px-4 inline-block">{t('Voir les offres', 'See the offers')}</Link>}
         </>
       )}
     </div>

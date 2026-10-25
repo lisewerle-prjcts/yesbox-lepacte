@@ -34,7 +34,7 @@ export async function sauvegarderReponse(moduleId: string, questionSlug: string,
   if (!moduleInfo?.questions.some(q => q.slug === questionSlug)) return { error: t(locale, 'Question introuvable', 'Question not found') }
   if (!moduleInfo.free) {
     const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', mod.couple_id).single()
-    if (!peutAccederModule(moduleInfo, mod, couple)) return { error: t(locale, 'Un abonnement est nécessaire pour ce module.', 'A subscription is required for this module.') }
+    if (!peutAccederModule(moduleInfo, mod, couple)) return { error: t(locale, 'Ce module n’est pas compris dans votre accès actuel.', 'This module is not included in your current access.') }
   }
 
   const { error } = await supabase.from('reponses').upsert(

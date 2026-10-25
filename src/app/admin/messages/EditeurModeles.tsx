@@ -28,7 +28,7 @@ const EXEMPLE: Record<string, string> = {
   module: 'Nos valeurs', numero: '3', total: '10', date: '12 mars 2027', quand: 'le 12 mars 2027', jours: '12 jours',
   rappel_rdv: 'Prochain rendez-vous annuel : le 12 mars 2027.', precision_rdv: ', le 12 mars 2027',
   phrase_abonnement: 'À la fin de votre mois d’abonnement, le 12 mars 2027, vous passerez automatiquement à l’abonnement annuel.',
-  mois: '6 mois', offre: 'le pack initial YES BOX – Le Pacte : les 8 modules et le module Pacte de couple, avec un an pour le réaliser', mot_de_passe: 'k3Rm-92xa', annees: '5 ans', matiere: 'bois', autour_matiere: 'du bois', noces: 'noces de bois',
+  mois: '6 mois', abonnement_rdv: 'Pour ouvrir ce module, il faut l’abonnement « Pacte – notre rendez-vous annuel » (19 € par an), à prendre depuis votre page Notre Pacte.', offre: 'le pack initial YES BOX – Le Pacte : les 8 modules et le module Pacte de couple, avec un an pour le réaliser', mot_de_passe: 'k3Rm-92xa', annees: '5 ans', matiere: 'bois', autour_matiere: 'du bois', noces: 'noces de bois',
   idees_cadeau: 'un objet sculpté, une boîte à souvenirs gravée, ou un arbre à planter ensemble', invite_par: 'Camille', mot_personnel: 'Un petit mot de l’équipe : merci de faire partie de l’aventure YES BOX !',
 }
 

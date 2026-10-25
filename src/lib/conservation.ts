@@ -74,7 +74,7 @@ export async function appliquerConservation(admin: AdminClient): Promise<{ dates
   for (let debut = 0; ; debut += 1000) {
     const { data: couples, error } = await admin
       .from('couples')
-      .select('id, created_at, derniere_activite_le, subscription_current_period_end, acces_gratuit_expire_le, effacement_prevu_le')
+      .select('id, created_at, derniere_activite_le, subscription_current_period_end, acces_gratuit_expire_le, pack_initial_expire_le, effacement_prevu_le')
       .range(debut, debut + 999)
     if (error) throw new Error(error.message)
 
@@ -91,7 +91,7 @@ export async function appliquerConservation(admin: AdminClient): Promise<{ dates
 
       const accesGratuit = c.acces_gratuit_expire_le === ACCES_GRATUIT_ILLIMITE_ISO ? null : c.acces_gratuit_expire_le
       const derniereActivite = Math.max(
-        plusTard(c.created_at, c.derniere_activite_le, c.subscription_current_period_end, accesGratuit),
+        plusTard(c.created_at, c.derniere_activite_le, c.subscription_current_period_end, accesGratuit, c.pack_initial_expire_le),
         ...membresCouple.map(activiteMembre),
       )
       const cible = new Date(ajouterMois(new Date(derniereActivite), INACTIVITE_MOIS)).getTime()

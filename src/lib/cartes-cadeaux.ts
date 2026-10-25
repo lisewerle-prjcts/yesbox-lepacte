@@ -5,14 +5,16 @@ import { getStripe } from '@/lib/stripe'
 import { envoyerModele } from '@/lib/modeles-email/serveur'
 import { ajouterMois } from '@/lib/dates'
 import { accorderMoisGratuits } from '@/lib/parrainage'
-import { DUREE_MOIS_YESBOX } from '@/lib/abonnement'
+import { DUREE_MOIS_YESBOX, estAbonnementActif } from '@/lib/abonnement'
+import { offrirPackInitial } from '@/lib/pack-initial'
+import { ABONNEMENT_COLONNES } from '@/types'
 import { t, isLocale, type Locale } from '@/lib/i18n/locale'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
-// Cartes cadeaux (page /offrir) : la YES BOX à 58 € (parcours initial et
-// première année, soit 12 mois d'accès), achetée par paiement unique
-// Stripe. Chaque achat crée un code YES-XXXX-XXXX, valable 1 an,
+// Cartes cadeaux (page /offrir) : le pack initial YES BOX – Le Pacte à 58 €
+// (modules 2 à 9, jusqu'au pacte, avec 1 an pour les réaliser), acheté par
+// paiement unique Stripe. Chaque achat crée un code YES-XXXX-XXXX, valable 1 an,
 // utilisable une seule fois par un couple (Mon compte, /abonnement ou
 // inscription). Cf. supabase/schema.sql, bloc « CARTES CADEAUX ».
 // Les anciennes cartes de 1, 2 ou 3 mois déjà vendues restent utilisables.
@@ -185,12 +187,13 @@ export function libelleCarteCadeau(dureeMois: number, locale: Locale) {
 export type ErreurCarteCadeau = 'invalide' | 'deja_utilisee' | 'expiree'
 
 // Utilise une carte cadeau pour un couple : la carte est marquée utilisée
-// (une seule fois, même sous concurrence), puis elle est accordée : crédit
-// du montant payé pour la carte, déduit des prochains prélèvements Stripe
-// si le couple paie déjà, sinon accès gratuit prolongé (12 mois pour la
-// YES BOX).
+// (une seule fois, même sous concurrence), puis elle est accordée. Carte du
+// pack initial : pack ouvert pour 1 an (ou prolongé), sauf pour un couple
+// déjà abonné à l'année, qui reçoit le montant de la carte en crédit Stripe
+// (déduit de ses prochains prélèvements). Anciennes cartes de 1 à 3 mois :
+// crédit Stripe si le couple paie déjà, sinon accès gratuit prolongé.
 export async function utiliserCarteCadeau(admin: AdminClient, code: string, coupleId: string):
-  Promise<{ erreur: ErreurCarteCadeau } | { dureeMois: number; montantCentimes: number; mode: 'credit_stripe' | 'acces_gratuit' }> {
+  Promise<{ erreur: ErreurCarteCadeau } | { dureeMois: number; montantCentimes: number; mode: 'credit_stripe' | 'acces_gratuit' | 'pack_initial' }> {
   const { data: carte } = await admin.from('cartes_cadeaux').select('id, duree_mois, montant_centimes, devise, expire_le, utilise_le').eq('code', code).maybeSingle()
   if (!carte) return { erreur: 'invalide' }
   if (carte.utilise_le) return { erreur: 'deja_utilisee' }
@@ -204,6 +207,14 @@ export async function utiliserCarteCadeau(admin: AdminClient, code: string, coup
   if (!reservee?.length) return { erreur: 'deja_utilisee' }
 
   const montantCentimes = carte.montant_centimes ?? (estCarteYesBox(carte.duree_mois) ? MONTANT_YESBOX_CENTIMES : 0)
+  if (estCarteYesBox(carte.duree_mois)) {
+    const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', coupleId).single()
+    const abonneAnnuel = couple && estAbonnementActif(couple) && !couple.subscription_cancel_at_period_end && couple.stripe_customer_id
+    if (!abonneAnnuel) {
+      await offrirPackInitial(admin, coupleId)
+      return { dureeMois: carte.duree_mois, montantCentimes, mode: 'pack_initial' }
+    }
+  }
   const mode = await accorderMoisGratuits(admin, coupleId, carte.duree_mois, { centimes: montantCentimes, devise: carte.devise ?? 'eur' }, `Carte cadeau YES BOX ${code}`)
   return { dureeMois: carte.duree_mois, montantCentimes, mode }
 }

@@ -57,9 +57,9 @@ const FAQ = (t: (fr: string, en: string) => string) => [
   { q: t('Combien de temps ça prend ?', 'How long does it take?'), r: t('Comptez 30 à 60 minutes à deux par module, selon les discussions qui en découlent. Vous avancez à votre rythme : un module par semaine, ou plusieurs si vous en avez envie.', 'Allow 30 to 60 minutes together per module, depending on the conversations it sparks. You go at your own pace: one module a week, or more if you feel like it.') },
   { q: t('Qui peut lire nos réponses ?', 'Who can read our answers?'), r: t("Vous deux, et personne d'autre. Vos réponses sont chiffrées sur nos serveurs, et l'équipe YES BOX n'y a pas accès. Aucun·e thérapeute ni aucune intelligence artificielle ne les analyse.", 'Just the two of you. Your answers are encrypted on our servers, and the YES BOX team has no access to them. No therapist and no artificial intelligence analyzes them.') },
   { q: t('Et si une réponse fait mal ?', 'What if an answer hurts?'), r: t("Ça peut arriver : certaines questions touchent à des sujets sensibles. Prenez le temps d'en parler, sans vous presser, et revenez-y plus tard si besoin. YES BOX n'est pas une thérapie : si une discussion révèle une souffrance profonde, n'hésitez pas à vous faire accompagner par un·e professionnel·le.", "It can happen: some questions touch on sensitive topics. Take time to talk about it, without rushing, and come back to it later if needed. YES BOX is not therapy: if a conversation reveals deep pain, don't hesitate to get support from a professional.") },
-  { q: t('Peut-on arrêter quand on veut ?', 'Can we stop whenever we want?'), r: t("Oui. La YES BOX se paie une fois (58 €) et comprend votre première année ; le renouvellement à 19 €/an est sans engagement et s'arrête en un clic depuis Mon compte. L'accès reste ouvert jusqu'à la fin de la période déjà payée.", 'Yes. YES BOX is a one-time payment (€58) that includes your first year; the €19/year renewal has no commitment and can be stopped in one click from My Account. Access stays open until the end of the period already paid for.') },
+  { q: t('Peut-on arrêter quand on veut ?', 'Can we stop whenever we want?'), r: t("Oui. Le pack initial se paie une fois (58 €), sans abonnement. L'abonnement annuel (19 €/an), facultatif, sert à ouvrir votre rendez-vous annuel : il est sans engagement et s'arrête en un clic depuis Mon compte. L'accès reste ouvert jusqu'à la fin de la période déjà payée.", 'Yes. The starter pack is a one-time payment (€58), with no subscription. The optional yearly subscription (€19/year) opens your yearly date: it has no commitment and can be stopped in one click from My Account. Access stays open until the end of the period already paid for.') },
   { q: t('Combien de temps gardez-vous nos données ?', 'How long do you keep our data?'), r: t("Tant que vous utilisez YES BOX. Après 24 mois d'inactivité (aucune connexion et plus d'abonnement en cours), vos comptes et vos réponses sont définitivement effacés. Un e-mail vous prévient 2 mois, 1 mois, 1 semaine et la veille : il suffit de vous connecter pour les garder. Vous pouvez aussi télécharger vos données ou supprimer votre compte à tout moment depuis Mon compte.", 'For as long as you use YES BOX. After 24 months of inactivity (no login and no subscription in progress), your accounts and answers are permanently deleted. An email warns you 2 months, 1 month, 1 week and the day before: just log in to keep them. You can also download your data or delete your account at any time from My Account.') },
-  { q: t('Peut-on offrir YES BOX ?', 'Can we give YES BOX as a gift?'), r: t("Oui ! Depuis la page Offrir, offrez la YES BOX (58 €) : le parcours complet et sa première année. Vous recevez aussitôt un code (YES-XXXX-XXXX) et une carte cadeau à imprimer. Le couple active le code à son inscription ou plus tard dans Mon compte, dans l'année qui suit l'achat. Vous faites partie du couple ? Vous pouvez aussi vous l'offrir à vous deux.", "Yes! From the Give as a gift page, give the YES BOX (€58): the full program and its first year. You instantly receive a code (YES-XXXX-XXXX) and a printable gift card. The couple activates the code when signing up or later in My Account, within a year of purchase. Are you part of the couple? You can also treat the two of you.") },
+  { q: t('Peut-on offrir YES BOX ?', 'Can we give YES BOX as a gift?'), r: t("Oui ! Depuis la page Offrir, offrez le pack initial YES BOX – Le Pacte (58 €) : les 8 modules et la signature du pacte, avec un an pour les réaliser. Vous recevez aussitôt un code (YES-XXXX-XXXX) et une carte cadeau à imprimer. Le couple active le code à son inscription ou plus tard dans Mon compte, dans l'année qui suit l'achat. Vous faites partie du couple ? Vous pouvez aussi vous l'offrir à vous deux.", "Yes! From the Give as a gift page, give the YES BOX – Le Pacte starter pack (€58): the 8 modules and signing the pact, with one year to complete them. You instantly receive a code (YES-XXXX-XXXX) and a printable gift card. The couple activates the code when signing up or later in My Account, within a year of purchase. Are you part of the couple? You can also treat the two of you.") },
 ]
 
 const PACTE_LIST = (t: (fr: string, en: string) => string) => [
@@ -353,9 +353,16 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-3">
             {modules.map((m, i) => {
+              // Le pacte (rose) et le rendez-vous annuel (vert sauge) se
+              // distinguent des 8 modules du pack initial.
+              const ton = m.n === 9
+                ? { background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)', numero: 'var(--brand)' }
+                : m.n === 10
+                ? { background: 'var(--sage-soft)', borderColor: '#c9dacd', numero: 'var(--sage)' }
+                : null
               return (
-              <div key={m.slug} className="card flex items-center gap-5 p-5">
-                <span className="font-mono text-xs font-bold shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
+              <div key={m.slug} className="card flex items-center gap-5 p-5" style={ton ? { background: ton.background, borderColor: ton.borderColor } : undefined}>
+                <span className="font-mono text-xs font-bold shrink-0" style={{ color: ton?.numero ?? 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${m.slug}.titre`}>{m.titre}</EditableText></span>
@@ -364,8 +371,8 @@ export default function LandingPage() {
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
                 </div>
                 {m.free && <span className="tag-sage shrink-0">{t('Gratuit', 'Free')}</span>}
-                {m.n === 9 && <span className="tag-brand shrink-0">{t('Le pacte', 'The pact')}</span>}
-                {m.n === 10 && <span className="tag-muted shrink-0">{t('19 €/an', '€19/year')}</span>}
+                {m.n === 9 && <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'white', color: 'var(--brand)' }}>{t('Le pacte', 'The pact')}</span>}
+                {m.n === 10 && <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'white', color: 'var(--sage)' }}>{t('19 €/an', '€19/year')}</span>}
               </div>
             )})}
           </div>

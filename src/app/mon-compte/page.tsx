@@ -23,6 +23,7 @@ export default async function MonComptePage() {
   let formule: 'mensuel' | 'annuel' | null = null
   let annuelPrevuLe: string | null = null
   let proposerAnnuel = false
+  let offreRdvAnnuelDispo = false
   let rappelsEmail = true
   let langue: 'fr' | 'en' = 'fr'
   let filleulsCount = 0
@@ -47,6 +48,8 @@ export default async function MonComptePage() {
     annuelPrevuLe = formuleLue.annuelPrevuLe
     const offre = offreRdvAnnuel(coupAbo, formuleLue, !!signature?.pacte_signe_le)
     proposerAnnuel = offre.afficher && offre.mensuelEnCours
+    // Pacte signé, sans abonnement : l'abonnement annuel est proposé.
+    offreRdvAnnuelDispo = offre.afficher && !offre.mensuelEnCours
     couple = coup
     coupleAbonnement = coupAbo
     coupleParrainage = coupParr
@@ -72,6 +75,7 @@ export default async function MonComptePage() {
       formule={formule}
       annuelPrevuLe={annuelPrevuLe}
       proposerAnnuel={proposerAnnuel}
+      offreRdvAnnuelDispo={offreRdvAnnuelDispo}
       codeParrainage={coupleParrainage?.code_parrainage ?? null}
       filleulsCount={filleulsCount}
       rappelsEmail={rappelsEmail}

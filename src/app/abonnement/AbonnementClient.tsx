@@ -9,16 +9,16 @@ import CaseRetractation from '@/components/CaseRetractation'
 import ChampCode from '@/components/ChampCode'
 
 const FEATURES = [
-  'Les 8 modules du parcours initial et votre pacte de couple',
-  'Sessions de révélation à deux',
-  'Journal de couple',
-  'La première année incluse, puis 19 €/an pour votre rendez-vous annuel',
+  'Les 8 modules du pack initial',
+  'Accès à vos réponses individuelles et révélations de couple',
+  'Votre journal de couple',
+  'La signature du pacte de couple',
 ]
 const FEATURES_EN = [
-  "The 8 modules of the initial program and your couple's pact",
-  'Joint reveal sessions',
+  'The 8 modules of the starter pack',
+  'Access to your individual answers and couple reveals',
   "Your couple's journal",
-  'The first year included, then €19/year for your yearly date',
+  "Signing your couple's pact",
 ]
 
 export default function AbonnementClient({ compteResilie }: { compteResilie: boolean }) {
@@ -47,7 +47,7 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           {t('Continuez l’aventure ensemble', 'Continue the journey together')}
         </h1>
         <p className="text-gray-500 text-sm">
-          {t('Le module 1 est terminé. Prenez votre YES BOX pour débloquer la suite.', 'Module 1 is complete. Get your YES BOX to unlock the rest.')}
+          {t('Le module 1 est terminé. Prenez le pack initial YES BOX – Le Pacte pour débloquer la suite.', 'Module 1 is complete. Get the YES BOX – Le Pacte starter pack to unlock the rest.')}
         </p>
       </div>
 
@@ -66,7 +66,7 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
       <div className="card p-6" style={{ background: 'var(--brand, #d63e7a)' }}>
         <div className="mb-4">
           <div className="font-fraunces font-bold" style={{ fontSize: 40, color: 'white' }}>58 <small style={{ fontSize: 18 }}>€</small></div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>{t('YES BOX · parcours complet et 1re année · puis 19 €/an, résiliable à tout moment', 'YES BOX · full program and 1st year · then €19/year, cancel anytime')}</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>{t('Pack initial YES BOX – Le Pacte · paiement unique · 1 an pour réaliser votre parcours', 'YES BOX – Le Pacte starter pack · one-time payment · 1 year to complete your program')}</div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)', marginBottom: 16 }} />
         <div className="space-y-2 mb-6">
@@ -85,10 +85,10 @@ export default function AbonnementClient({ compteResilie }: { compteResilie: boo
           className="w-full flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg"
           style={{ background: 'white', color: 'var(--brand, #d63e7a)', fontSize: 14, opacity: compteResilie || !renonciation ? 0.5 : 1 }}
         >
-          {loading ? t('Redirection…', 'Redirecting…') : <>{t('Prendre la YES BOX — 58 €', 'Get YES BOX — €58')} <ArrowRight className="w-4 h-4" /></>}
+          {loading ? t('Redirection…', 'Redirecting…') : <>{t('Prendre le pack initial — 58 €', 'Get the starter pack — €58')} <ArrowRight className="w-4 h-4" /></>}
         </button>
         <p className="text-center mt-3" style={{ fontSize: 11, color: 'rgba(255,255,255,.6)' }}>
-          {t('Paiement sécurisé par Stripe · renouvellement à 19 €/an un an après l’achat, résiliable à tout moment depuis Mon compte · TVA non applicable, art. 293 B du CGI', 'Secure payment via Stripe · renews at €19/year one year after purchase, cancel anytime from My Account · VAT not applicable, art. 293 B of the French tax code')}
+          {t('Paiement unique sécurisé par Stripe, sans abonnement · ensuite, l’abonnement annuel (19 €/an) est facultatif, pour votre rendez-vous annuel · TVA non applicable, art. 293 B du CGI', 'One-time secure payment via Stripe, no subscription · afterwards, the yearly subscription (€19/year) is optional, for your yearly date · VAT not applicable, art. 293 B of the French tax code')}
         </p>
       </div>
 

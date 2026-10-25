@@ -1580,3 +1580,69 @@ alter table public.limites_actions enable row level security;
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte'));
+
+-- ============================================================
+-- Migration : pack initial YES BOX – Le Pacte (58 €, paiement unique) et
+-- abonnement annuel facultatif (19 €/an) pour le module « Notre
+-- rendez-vous annuel ».
+-- 1. couples.pack_initial_expire_le : modules 2 à 9 (jusqu'au pacte)
+--    ouverts jusqu'à cette date, 1 an après l'achat ou l'activation d'une
+--    carte cadeau. Le module de renouvellement demande l'abonnement annuel.
+-- 2. Le pack suit le compte quand un membre rejoint son ou sa partenaire
+--    (migrer_abonnement_solo_vers_couple).
+-- 3. E-mails : fin de l'année du pack sans pacte signé, et proposition de
+--    l'abonnement annuel 2 mois avant la date du rendez-vous annuel
+--    (rappels_envoyes, types 'fin_pack_initial' et 'proposition_rdv_annuel').
+-- À exécuter AVANT de déployer le code correspondant.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists pack_initial_expire_le timestamptz;
+
+create or replace function public.migrer_abonnement_solo_vers_couple(p_ancien_couple_id uuid, p_nouveau_couple_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_ancien public.couples;
+  v_nouveau public.couples;
+begin
+  if p_ancien_couple_id is null or p_ancien_couple_id = p_nouveau_couple_id then
+    return;
+  end if;
+
+  select * into v_ancien from public.couples where id = p_ancien_couple_id;
+  select * into v_nouveau from public.couples where id = p_nouveau_couple_id;
+  if v_ancien.id is null or v_nouveau.id is null then
+    return;
+  end if;
+
+  if v_ancien.stripe_subscription_id is not null and v_nouveau.stripe_subscription_id is null then
+    update public.couples set
+      stripe_customer_id = v_ancien.stripe_customer_id,
+      stripe_subscription_id = v_ancien.stripe_subscription_id,
+      subscription_status = v_ancien.subscription_status,
+      subscription_current_period_end = v_ancien.subscription_current_period_end,
+      subscription_cancel_at_period_end = v_ancien.subscription_cancel_at_period_end,
+      subscription_canceled_at = v_ancien.subscription_canceled_at,
+      data_retention_until = v_ancien.data_retention_until
+    where id = p_nouveau_couple_id;
+  end if;
+
+  if v_ancien.acces_gratuit_expire_le is not null
+     and (v_nouveau.acces_gratuit_expire_le is null or v_ancien.acces_gratuit_expire_le > v_nouveau.acces_gratuit_expire_le) then
+    update public.couples set acces_gratuit_expire_le = v_ancien.acces_gratuit_expire_le where id = p_nouveau_couple_id;
+  end if;
+
+  if v_ancien.pack_initial_expire_le is not null
+     and (v_nouveau.pack_initial_expire_le is null or v_ancien.pack_initial_expire_le > v_nouveau.pack_initial_expire_le) then
+    update public.couples set
+      pack_initial_expire_le = v_ancien.pack_initial_expire_le,
+      stripe_customer_id = coalesce(v_nouveau.stripe_customer_id, v_ancien.stripe_customer_id)
+    where id = p_nouveau_couple_id;
+  end if;
+end;
+$$;
+revoke execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) to service_role;
+
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel'));

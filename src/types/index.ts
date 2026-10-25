@@ -42,6 +42,9 @@ export interface Couple {
   /** Date d'effacement après 24 mois d'inactivité (cf. src/lib/conservation.ts). */
   effacement_prevu_le?: string | null
   acces_gratuit_expire_le: string | null
+  /** Pack initial YES BOX – Le Pacte (58 €, ou carte cadeau) : modules 2 à 9
+   *  ouverts jusqu'à cette date (1 an après l'achat ou l'activation). */
+  pack_initial_expire_le?: string | null
   code_parrainage: string | null
   parrain_couple_id: string | null
   parrainages_recompenses: number
@@ -57,11 +60,11 @@ export type CoupleAbonnement = Pick<Couple,
   | 'id' | 'stripe_customer_id' | 'stripe_subscription_id' | 'subscription_status'
   | 'subscription_current_period_end' | 'subscription_cancel_at_period_end'
   | 'subscription_canceled_at' | 'data_retention_until' | 'compte_resilie_le'
-  | 'acces_gratuit_expire_le'
+  | 'acces_gratuit_expire_le' | 'pack_initial_expire_le'
 >
 
 export const ABONNEMENT_COLONNES =
-  'id, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, subscription_canceled_at, data_retention_until, compte_resilie_le, acces_gratuit_expire_le'
+  'id, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, subscription_canceled_at, data_retention_until, compte_resilie_le, acces_gratuit_expire_le, pack_initial_expire_le'
 
 export type CoupleParrainage = Pick<Couple, 'id' | 'code_parrainage' | 'parrain_couple_id' | 'parrainages_recompenses'>
 
