@@ -69,7 +69,7 @@ export default function CarteCadeauImprimable({ carte, locale }: {
           <div className={libelle} style={{ ...libelleStyle, marginTop: '2.8cqw' }}>{t('Votre cadeau', 'Your gift')}</div>
           {estCarteYesBox(carte.duree_mois) ? (
             <div style={{ marginTop: '1.2cqw' }}>
-              <div className="font-serif" style={{ fontSize: '3.6cqw', fontWeight: 800, color: '#c5256e', lineHeight: 1.1 }}>{t('Le pack initial', 'The starter pack')}</div>
+              <div className="font-serif" style={{ fontSize: '3cqw', fontWeight: 800, color: '#c5256e', lineHeight: 1.15 }}>{t('Le pack initial YES BOX – Le Pacte', 'The YES BOX – Le Pacte starter pack')}</div>
               <p style={{ fontSize: '1.85cqw', lineHeight: 1.45, marginTop: '.8cqw' }}>
                 {t('Accès aux 8 modules du programme YES BOX initial et au module Pacte de couple. Un an pour le réaliser, à votre rythme.', 'Access to the 8 modules of the initial YES BOX program and to the Couple’s Pact module. One year to complete it, at your own pace.')}
               </p>
