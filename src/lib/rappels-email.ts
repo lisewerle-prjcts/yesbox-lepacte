@@ -2,10 +2,9 @@ import type { createAdminClient } from '@/lib/supabase/server'
 import { mailConfigure } from '@/lib/mailer'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { hasAnsweredAll } from '@/lib/questions'
-import { aAccesComplet, estAbonnementActif, offreRdvAnnuel, peutAccederModule, DUREE_MOIS_YESBOX } from '@/lib/abonnement'
+import { aAccesComplet, offreRdvAnnuel, peutAccederModule } from '@/lib/abonnement'
 import { MODULE_RDV_ANNUEL, MODULE_PACTE, entreesDeFin } from '@/lib/progression'
 import { ABONNEMENT_COLONNES } from '@/types'
-import { ACCES_GRATUIT_ILLIMITE_ISO } from '@/lib/dates'
 import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
@@ -32,12 +31,14 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //   4. avant l'effacement des données (après 24 mois d'inactivité, cf.
 //      src/lib/conservation.ts), un avertissement 2 mois, 1 mois,
 //      1 semaine et la veille ;
-//   5. un mois avant le renouvellement à 19 €/an (fin de la première année
-//      de la YES BOX, puis chaque année), l'annonce du prélèvement ; un mois
-//      avant la fin d'une YES BOX offerte par carte cadeau, la proposition
-//      de continuer à 19 €/an.
-// Uniquement pour les couples dont l'accès est en cours (les relances après
-// résiliation viendront plus tard). Chaque membre peut refuser ces rappels
+//   5. un mois avant chaque renouvellement de l'abonnement annuel (19 €),
+//      l'annonce du prélèvement ; un mois avant la fin du pack initial sans
+//      pacte signé, la proposition de continuer à 19 €/an ;
+//   6. deux mois avant la date du rendez-vous annuel, sans abonnement, la
+//      proposition de l'abonnement annuel pour ouvrir le module de
+//      renouvellement.
+// Les relances de parcours ne partent que si le module en cours est ouvert ;
+// les e-mails du mois partent à tous les couples qui ont signé leur pacte. Chaque membre peut refuser ces rappels
 // (profiles.rappels_email) : lien en bas de chaque e-mail ou Mon compte.
 // Les textes sont des modèles modifiables depuis l'admin
 // (src/lib/modeles-email/catalogue.ts).
@@ -216,7 +217,9 @@ export function moisDepuis(debut: Date, maintenant: Date) {
 }
 
 
-function modeleMensuel(mois: number, rdvLe: string | null, joursAvantRdv: number | null, locale: Locale): { cle: string; vars: Variables } {
+// abonne : abonnement annuel (ou accès gratuit) en cours, qui ouvre le module
+// de renouvellement ; sinon, l'annonce du rendez-vous le rappelle.
+function modeleMensuel(mois: number, rdvLe: string | null, joursAvantRdv: number | null, abonne: boolean, locale: Locale): { cle: string; vars: Variables } {
   const base = appUrl()
   if (rdvLe && joursAvantRdv !== null && joursAvantRdv > 0 && joursAvantRdv <= 31) {
     return {
@@ -224,7 +227,10 @@ function modeleMensuel(mois: number, rdvLe: string | null, joursAvantRdv: number
       vars: {
         date: formaterDate(rdvLe, locale),
         jours: t(locale, `${joursAvantRdv} jour${joursAvantRdv > 1 ? 's' : ''}`, `${joursAvantRdv} day${joursAvantRdv > 1 ? 's' : ''}`),
-        lien: `${base}/journal`,
+        lien: abonne ? `${base}/journal` : `${base}/journal#rdv-annuel-offre`,
+        abonnement_rdv: abonne ? '' : t(locale,
+          'Pour ouvrir ce module, il faut l’abonnement « Pacte – notre rendez-vous annuel » (19 € par an), à prendre depuis votre page Notre Pacte.',
+          'To open this module, you need the "Pact – our yearly date" subscription (€19 per year), available from your Our Pact page.'),
       },
     }
   }
@@ -249,9 +255,8 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
   let envoyes = 0
   for (const couple of couples ?? []) {
     try {
-      // E-mails arrêtés quand l'accès est terminé (relances après
-      // résiliation : plus tard).
-      if (!aAccesComplet(couple as CoupleAbonnement)) continue
+      // Envoyés à tous les couples qui ont signé leur pacte, avec ou sans
+      // abonnement annuel (2 par mois au maximum).
       const mois = moisDepuis(new Date(couple.pacte_signe_le as string), maintenant)
       if (mois < 1) continue
 
@@ -273,7 +278,7 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
 
       for (const d of membres) {
         const autre = membres.find(m => m.id !== d.id)
-        const { cle, vars } = modeleMensuel(mois, rdvLe, joursAvantRdv, d.langue)
+        const { cle, vars } = modeleMensuel(mois, rdvLe, joursAvantRdv, aAccesComplet(couple as CoupleAbonnement), d.langue)
         if (await envoyerRappel(d, cle, { ...vars, partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple') })) envoyes++
       }
     } catch (e) {
@@ -421,7 +426,7 @@ export async function envoyerAvertissementsEffacement(admin: AdminClient): Promi
 }
 
 // ---------------------------------------------------------------------------
-// 5. Un mois avant le renouvellement à 19 €/an
+// 5. Un mois avant le renouvellement de l'abonnement annuel, ou la fin du pack
 // ---------------------------------------------------------------------------
 
 const RENOUVELLEMENT_JOURS_AVANT = 30
@@ -436,12 +441,11 @@ async function reserverEnvoi(admin: AdminClient, coupleId: string, type: string,
   return !!data?.length
 }
 
-// Abonnement annuel en cours (YES BOX achetée, ou rendez-vous annuel) dont
-// le renouvellement automatique n'est pas arrêté : annonce du prélèvement de
-// 19 € un mois avant. E-mail de service (information avant renouvellement,
-// promise dans les CGV) : envoyé à chaque membre, même si les rappels sont
-// désactivés. Couples dont la YES BOX offerte (carte cadeau) se termine dans
-// un mois, sans abonnement : proposition de continuer à 19 €/an.
+// Abonnement annuel en cours dont le renouvellement automatique n'est pas
+// arrêté : annonce du prélèvement de 19 € un mois avant. E-mail de service
+// (information avant renouvellement, promise dans les CGV) : envoyé à chaque
+// membre, même si les rappels sont désactivés. Pack initial qui se termine
+// dans un mois sans pacte signé : proposition de continuer à 19 €/an.
 export async function envoyerAnnoncesRenouvellement(admin: AdminClient): Promise<number> {
   const maintenant = new Date()
   const aujourdhui = Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())
@@ -483,33 +487,72 @@ export async function envoyerAnnoncesRenouvellement(admin: AdminClient): Promise
     }
   }
 
-  const { data: offerts, error: offertsError } = await admin
+  // Pack initial (acheté ou offert) qui se termine dans un mois, pacte pas
+  // encore signé et sans abonnement : proposition de continuer à 19 €/an.
+  const { data: packs, error: packsError } = await admin
     .from('couples')
-    .select(ABONNEMENT_COLONNES)
+    .select(`${ABONNEMENT_COLONNES}, pacte_signe_le`)
     .is('compte_resilie_le', null)
-    .gt('acces_gratuit_expire_le', maintenant.toISOString())
-    .lt('acces_gratuit_expire_le', limite)
-    .neq('acces_gratuit_expire_le', ACCES_GRATUIT_ILLIMITE_ISO)
-  if (offertsError) throw new Error(offertsError.message)
+    .is('pacte_signe_le', null)
+    .gt('pack_initial_expire_le', maintenant.toISOString())
+    .lt('pack_initial_expire_le', limite)
+  if (packsError) throw new Error(packsError.message)
 
-  for (const couple of offerts ?? []) {
+  for (const couple of packs ?? []) {
     try {
-      const fin = couple.acces_gratuit_expire_le as string
-      if (!dansLaFenetre(fin) || estAbonnementActif(couple as CoupleAbonnement)) continue
-      // Uniquement une YES BOX offerte par carte cadeau (pas les codes
-      // testeurs ni les anciennes cartes de quelques mois).
-      const { data: cartes } = await admin.from('cartes_cadeaux').select('id')
-        .eq('utilise_par_couple_id', couple.id).gte('duree_mois', DUREE_MOIS_YESBOX).limit(1)
-      if (!cartes?.length) continue
-
+      const fin = couple.pack_initial_expire_le as string
+      if (!dansLaFenetre(fin) || aAccesComplet(couple as CoupleAbonnement)) continue
       const membres = await membresDuCouple(admin, couple.id)
       if (!membres.some(m => m.rappels_email && m.email)) continue
-      if (!(await reserverEnvoi(admin, couple.id, 'fin_yesbox_offerte', fin.slice(0, 10)))) continue
+      if (!(await reserverEnvoi(admin, couple.id, 'fin_pack_initial', fin.slice(0, 10)))) continue
       for (const d of membres) {
-        if (await envoyerRappel(d, 'fin_yesbox_offerte', { date: formaterDate(fin, d.langue), lien: `${appUrl()}/abonnement` })) envoyes++
+        if (await envoyerRappel(d, 'fin_pack_initial', { date: formaterDate(fin, d.langue), lien: `${appUrl()}/abonnement` })) envoyes++
       }
     } catch (e) {
-      console.error(`[rappels] fin de la YES BOX offerte du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+      console.error(`[rappels] fin du pack initial du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
+
+// ---------------------------------------------------------------------------
+// 6. Deux mois avant le rendez-vous annuel : proposition de l'abonnement
+// ---------------------------------------------------------------------------
+
+const PROPOSITION_RDV_JOURS_AVANT = 61
+
+// Pacte signé, sans abonnement annuel (ni accès gratuit) : 2 mois avant la
+// date du rendez-vous annuel choisie par le couple, rappel que le module de
+// renouvellement demande l'abonnement « Pacte – notre rendez-vous annuel »
+// (19 €/an). Une seule fois par date de rendez-vous.
+export async function envoyerPropositionsRdvAnnuel(admin: AdminClient): Promise<number> {
+  const maintenant = new Date()
+  const aujourdhui = Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())
+  const limite = new Date(aujourdhui + (PROPOSITION_RDV_JOURS_AVANT + 1) * JOUR).toISOString().slice(0, 10)
+  const { data: couples, error } = await admin
+    .from('couples')
+    .select(`${ABONNEMENT_COLONNES}, pacte_signe_le, rdv_annuel_le`)
+    .not('pacte_signe_le', 'is', null)
+    .is('compte_resilie_le', null)
+    .gt('rdv_annuel_le', new Date(aujourdhui).toISOString().slice(0, 10))
+    .lt('rdv_annuel_le', limite)
+  if (error) throw new Error(error.message)
+
+  let envoyes = 0
+  for (const couple of couples ?? []) {
+    try {
+      const rdvLe = couple.rdv_annuel_le as string
+      const jours = Math.ceil((new Date(`${rdvLe.slice(0, 10)}T00:00:00Z`).getTime() - aujourdhui) / JOUR)
+      if (jours < 1 || jours > PROPOSITION_RDV_JOURS_AVANT) continue
+      if (aAccesComplet(couple as CoupleAbonnement)) continue
+      const membres = await membresDuCouple(admin, couple.id)
+      if (!membres.some(m => m.rappels_email && m.email)) continue
+      if (!(await reserverEnvoi(admin, couple.id, 'proposition_rdv_annuel', rdvLe.slice(0, 10)))) continue
+      for (const d of membres) {
+        if (await envoyerRappel(d, 'rdv_annuel_abonnement', { date: formaterDate(rdvLe, d.langue), lien: `${appUrl()}/journal#rdv-annuel-offre` })) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] proposition de l'abonnement annuel du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes

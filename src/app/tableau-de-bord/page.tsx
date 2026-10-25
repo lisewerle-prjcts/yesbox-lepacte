@@ -218,8 +218,10 @@ export default async function TableauDeBordPage({
               <p style={{ fontSize: 13, color: 'var(--muted)' }}><EditableText id={`module.${next.slug}.description`} multiline>{description}</EditableText></p>
             </div>
             <Link href={abonnementRequis ? '/abonnement' : href} className="btn-brand">
-              {abonnementRequis
-                ? <EditableText id="dashboard.prochaineetape.abonnement.v2">Prendre la YES BOX pour continuer</EditableText>
+              {abonnementRequis && next.slug === MODULE_RDV_ANNUEL
+                ? <EditableText id="dashboard.prochaineetape.abonnementannuel">Prendre l&apos;abonnement annuel (19 €/an)</EditableText>
+                : abonnementRequis
+                ? <EditableText id="dashboard.prochaineetape.abonnement.v3">Prendre le pack initial pour continuer</EditableText>
                 : jaiFini && partenaireFini
                 ? <EditableText id="dashboard.prochaineetape.ouvrirrevelation">Ouvrir la révélation</EditableText>
                 : enAttentePartenaire

@@ -21,12 +21,25 @@ export function aAccesGratuitActif(couple: CoupleAbonnement | null | undefined):
   return new Date(couple.acces_gratuit_expire_le).getTime() > Date.now()
 }
 
-// Accès complet à l'app : abonnement Stripe actif OU accès gratuit en
-// cours (code testeur, mois offert par le parrainage). C'est ce qu'il faut
-// utiliser pour toute décision d'accès (gating des modules, page /abonnement).
+// Accès complet à l'app, module « Notre rendez-vous annuel » compris :
+// abonnement Stripe actif (« Pacte – notre rendez-vous annuel », 19 €/an, ou
+// ancien mensuel) OU accès gratuit en cours (code testeur).
 export function aAccesComplet(couple: CoupleAbonnement | null | undefined): boolean {
   return estAbonnementActif(couple) || aAccesGratuitActif(couple)
 }
+
+// Pack initial YES BOX – Le Pacte en cours (58 € ou carte cadeau) : les
+// modules 2 à 9, jusqu'au pacte, pendant 1 an. Ne donne pas accès au module
+// de renouvellement, qui demande l'abonnement annuel.
+export function aPackInitialActif(couple: CoupleAbonnement | null | undefined): boolean {
+  if (!couple?.pack_initial_expire_le) return false
+  return new Date(couple.pack_initial_expire_le).getTime() > Date.now()
+}
+
+// Module « Notre rendez-vous annuel » (= MODULE_RDV_ANNUEL de
+// src/lib/progression.ts, non importé ici : ce fichier sert aussi côté
+// navigateur).
+const SLUG_RDV_ANNUEL = 'renouvellement'
 
 // Le compte a été clos par l'ancienne règle de conservation (réponses
 // effacées un an après la fin de l'accès payé) : plus aucune réactivation
@@ -38,16 +51,18 @@ export function estCompteResilie(couple: CoupleAbonnement | null | undefined): b
 }
 
 // Un module payant reste consultable une fois révélé (« partie réalisée »)
-// même après résiliation ; seul l'accès à de nouveaux modules payants est
-// bloqué sans abonnement actif.
+// même après la fin de l'accès ; seul l'accès à de nouveaux modules payants
+// est bloqué. Modules du parcours initial : pack initial ou accès complet.
+// Module de renouvellement : abonnement annuel (ou accès gratuit) seulement.
 export function peutAccederModule(
-  moduleInfo: Pick<ModuleInfo, 'free'>,
+  moduleInfo: Pick<ModuleInfo, 'free' | 'slug'>,
   moduleData: Pick<Module, 'revealed'> | null | undefined,
   couple: CoupleAbonnement | null | undefined
 ): boolean {
   if (moduleInfo.free) return true
   if (moduleData?.revealed) return true
-  return aAccesComplet(couple)
+  if (moduleInfo.slug === SLUG_RDV_ANNUEL) return aAccesComplet(couple)
+  return aAccesComplet(couple) || aPackInitialActif(couple)
 }
 
 // Formule de l'abonnement Stripe (mensuel / annuel) et date de bascule
@@ -88,18 +103,19 @@ export function offreRdvAnnuel(
   }
 }
 
-// Carte cadeau YES BOX : le parcours initial et la première année offerts,
-// soit 12 mois d'accès (cf. src/lib/cartes-cadeaux.ts).
+// Pack initial (achat ou carte cadeau) : 1 an pour réaliser le parcours
+// (cf. src/lib/pack-initial.ts et src/lib/cartes-cadeaux.ts).
 export const DUREE_MOIS_YESBOX = 12
 
-// Le couple a déjà eu sa YES BOX (pacte signé, achat des 58 € avec un
-// abonnement annuel, carte cadeau YES BOX utilisée) : pour continuer, c'est
-// le renouvellement à 19 €/an qui lui est proposé, plus les 58 €.
+// Le couple a déjà eu son pack initial (pack acheté ou offert, en cours ou
+// terminé, pacte signé, ou abonnement annuel) : pour continuer, c'est
+// l'abonnement annuel à 19 €/an qui lui est proposé, plus les 58 €.
 export async function aDejaEuLaYesBox(client: SupabaseClient, coupleId: string): Promise<boolean> {
-  const [{ data: couple }, { data: cartes }] = await Promise.all([
+  const [{ data: couple }, { data: pack }, { data: cartes }] = await Promise.all([
     client.from('couples').select('pacte_signe_le, subscription_formule').eq('id', coupleId).maybeSingle(),
+    client.from('couples').select('pack_initial_expire_le').eq('id', coupleId).maybeSingle(),
     client.from('cartes_cadeaux').select('id').eq('utilise_par_couple_id', coupleId).gte('duree_mois', DUREE_MOIS_YESBOX).limit(1),
   ])
-  if (couple?.pacte_signe_le || couple?.subscription_formule === 'annuel') return true
+  if (couple?.pacte_signe_le || couple?.subscription_formule === 'annuel' || pack?.pack_initial_expire_le) return true
   return !!cartes?.length
 }

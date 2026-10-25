@@ -60,7 +60,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
             <EditableText id="offrir.titre">Offrez YES BOX à un couple</EditableText>
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
-            <EditableText id="offrir.sousTitre.v2" multiline>Des soirées à deux pour mieux se connaître, mieux se parler et choisir de s’engager. Offrez la YES BOX : tous les modules jusqu’au pacte, pendant 1 an, avec une jolie carte à imprimer.</EditableText>
+            <EditableText id="offrir.sousTitre.v3" multiline>Des soirées à deux pour mieux se connaître, mieux se parler et choisir de s’engager. Offrez le pack initial YES BOX – Le Pacte : les 8 modules et la signature du pacte, avec un an pour les réaliser, et une jolie carte à imprimer.</EditableText>
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
                     style={{ border: `2px solid ${actif ? 'var(--brand)' : 'var(--line)'}`, background: actif ? 'var(--brand-tint)' : 'white', opacity: p.configure ? 1 : 0.5 }}>
                     <div className="font-serif font-bold" style={{ fontSize: 22, color: 'var(--ink)' }}>{t('Le pack initial YES BOX – Le Pacte', 'The YES BOX – Le Pacte starter pack')}</div>
                     <div style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 2 }}>
-                      {t('Les 8 modules et le module Pacte de couple, un an pour le réaliser · ensuite 19 €/an si le couple souhaite continuer', 'The 8 modules and the Couple’s Pact module, one year to complete it · then €19/year if the couple wants to continue')}
+                      {t('Les 8 modules et le module Pacte de couple, un an pour le réaliser · le rendez-vous annuel ensuite en option, à 19 €/an', 'The 8 modules and the Couple’s Pact module, one year to complete it · the yearly date afterwards as an option, at €19/year')}
                     </div>
                     <div style={{ fontSize: 14, color: actif ? 'var(--brand)' : 'var(--muted)', fontWeight: 600 }}>
                       {p.configure ? (montant ?? '—') : t('Bientôt disponible', 'Coming soon')}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { envoyerAlertesGrandesDates, envoyerEmailsAnniversaires, envoyerRappelsValidation } from '@/lib/grandes-dates'
-import { envoyerRelancesInactivite, envoyerRappelsMensuels, envoyerPropositionsAnnuel, envoyerAnnoncesRenouvellement, envoyerAvertissementsEffacement, rappelsConfigures } from '@/lib/rappels-email'
+import { envoyerRelancesInactivite, envoyerRappelsMensuels, envoyerPropositionsAnnuel, envoyerAnnoncesRenouvellement, envoyerPropositionsRdvAnnuel, envoyerAvertissementsEffacement, rappelsConfigures } from '@/lib/rappels-email'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -9,7 +9,8 @@ export const maxDuration = 60
 // Tâche planifiée quotidienne (voir vercel.json) : relances après 10 jours
 // sans avancer, e-mails mensuels une fois le pacte signé et proposition de
 // l'abonnement annuel 5 jours avant la fin du mois, annonce du
-// renouvellement à 19 €/an un mois avant, avertissements avant
+// renouvellement à 19 €/an un mois avant, proposition de l'abonnement annuel
+// 2 mois avant le rendez-vous annuel, avertissements avant
 // l'effacement des données (cf. src/lib/rappels-email.ts) ; alerte à
 // l'équipe un mois avant les grandes dates des couples, e-mails d'anniversaire
 // de couple (jour J) et de mariage (J-7) une fois validés, rappel à l'équipe
@@ -27,11 +28,12 @@ export async function GET(req: Request) {
     const mensuels = await envoyerRappelsMensuels(admin)
     const propositionsAnnuel = await envoyerPropositionsAnnuel(admin)
     const annoncesRenouvellement = await envoyerAnnoncesRenouvellement(admin)
+    const propositionsRdvAnnuel = await envoyerPropositionsRdvAnnuel(admin)
     const avertissementsEffacement = await envoyerAvertissementsEffacement(admin)
     const alertesGrandesDates = await envoyerAlertesGrandesDates(admin)
     const anniversaires = await envoyerEmailsAnniversaires(admin)
     const rappelsValidation = await envoyerRappelsValidation(admin)
-    return NextResponse.json({ relances, mensuels, propositionsAnnuel, annoncesRenouvellement, avertissementsEffacement, alertesGrandesDates, anniversaires, rappelsValidation })
+    return NextResponse.json({ relances, mensuels, propositionsAnnuel, annoncesRenouvellement, propositionsRdvAnnuel, avertissementsEffacement, alertesGrandesDates, anniversaires, rappelsValidation })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }

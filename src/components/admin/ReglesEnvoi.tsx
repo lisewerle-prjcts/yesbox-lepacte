@@ -35,7 +35,7 @@ const FAMILLES: { titre: string; regles: Regle[] }[] = [
   {
     titre: 'Rendez-vous mensuels & bilan annuel',
     regles: [
-      { email: 'E-mail du mois (11 thèmes)', quand: 'Chaque mois, le même jour que la signature du pacte', qui: 'Les deux membres', notes: 'Tant que l’accès est en cours (abonnement ou accès offert) ; après le 11e mois, les thèmes repartent du 2e' },
+      { email: 'E-mail du mois (11 thèmes)', quand: 'Chaque mois, le même jour que la signature du pacte', qui: 'Les deux membres', notes: 'À tous les couples qui ont signé leur pacte, avec ou sans abonnement ; après le 11e mois, les thèmes repartent du 2e' },
       { email: 'Le rendez-vous annuel approche', quand: 'À la place de l’e-mail du mois, quand le rendez-vous annuel tombe dans les 31 jours', qui: 'Les deux membres' },
     ],
   },
@@ -49,8 +49,9 @@ const FAMILLES: { titre: string; regles: Regle[] }[] = [
   {
     titre: 'Abonnement & cartes cadeaux',
     regles: [
-      { email: 'Annonce du renouvellement à 19 €/an', quand: '1 mois avant chaque renouvellement (fin de la 1re année de la YES BOX, puis chaque année)', qui: 'Les deux membres', notes: 'Renouvellement automatique pas arrêté ; envoyé même si les rappels sont désactivés' },
-      { email: 'Fin de la YES BOX offerte', quand: '1 mois avant la fin de l’année offerte par une carte cadeau YES BOX', qui: 'Les deux membres', notes: 'Sans abonnement en cours ; propose de continuer à 19 €/an' },
+      { email: 'Rendez-vous annuel dans 2 mois — abonnement', quand: '2 mois avant la date du rendez-vous annuel choisie par le couple', qui: 'Les deux membres', notes: 'Pacte signé, sans abonnement annuel : il faut l’abonnement (19 €/an) pour ouvrir le module de renouvellement' },
+      { email: 'Annonce du renouvellement à 19 €/an', quand: '1 mois avant chaque renouvellement de l’abonnement annuel', qui: 'Les deux membres', notes: 'Renouvellement automatique pas arrêté ; envoyé même si les rappels sont désactivés' },
+      { email: 'Fin de l’année du pack initial', quand: '1 mois avant la fin de l’année du pack (acheté ou offert)', qui: 'Les deux membres', notes: 'Pacte pas encore signé, sans abonnement ; propose de continuer à 19 €/an' },
       { email: 'Proposition de l’abonnement annuel', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Couples encore à l’ancien abonnement mensuel : après la signature du pacte, passage à l’annuel pas encore programmé' },
       { email: 'Abonnement annuel programmé', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Quand le passage à l’annuel est déjà programmé : simple information avant le prélèvement' },
       { email: 'Carte cadeau', quand: 'Tout de suite après le paiement', qui: 'La personne qui achète' },

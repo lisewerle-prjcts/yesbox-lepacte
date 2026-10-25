@@ -52,7 +52,8 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   rappel_rdv: 'phrase sur le prochain rendez-vous annuel (vide s’il n’y en a pas)',
   precision_rdv: '« , le 12 mars 2027 » (vide sans rendez-vous fixé)',
   phrase_abonnement: 'phrase sur le passage à l’abonnement annuel (vide si rien n’est programmé)',
-  offre: 'ce qu’offre la carte cadeau (la YES BOX…)',
+  offre: 'ce qu’offre la carte cadeau (le pack initial…)',
+  abonnement_rdv: 'phrase sur l’abonnement annuel nécessaire (vide si le couple est abonné)',
   mois: 'durée de la carte cadeau (ancienne variable)',
   mot_de_passe: 'nouveau mot de passe',
   annees: '« 1 an », « 5 ans »',
@@ -687,10 +688,13 @@ ${EQUIPE.en}` },
   })),
   {
     cle: 'rdv_annuel_approche', famille: 'mensuels', nom: 'Le rendez-vous annuel approche', rappel: true,
-    quand: 'À la place de l’e-mail du mois quand le rendez-vous annuel (bilan) tombe dans le mois qui suit.',
+    quand: 'À la place de l’e-mail du mois quand le rendez-vous annuel (bilan) tombe dans le mois qui suit. Sans abonnement annuel, rappelle qu’il faut le prendre pour ouvrir le module.',
+    facultatives: ['abonnement_rdv'],
     fr: { objet: 'Votre rendez-vous annuel approche : le {date}', corps: `${BONJOUR.fr}
 
 Dans {jours}, c’est votre rendez-vous annuel. Le module « Notre rendez-vous annuel » s’ouvrira le {date} : vous y regarderez ensemble votre année, ce qui a marché, ce qui a été dur, ce que vous voulez pour la suite.
+
+{abonnement_rdv}
 
 Vous aviez choisi ensemble qui l’organise : c’est peut-être le moment de réserver le lieu ou de bloquer la soirée !
 
@@ -700,6 +704,8 @@ ${EQUIPE.fr}` },
     en: { objet: 'Your yearly date is coming up: {date}', corps: `${BONJOUR.en}
 
 In {jours}, it’s your yearly date. The "Our Yearly Date" module will open on {date}: you’ll look back on your year together, what worked, what was hard, and what you want next.
+
+{abonnement_rdv}
 
 You chose together who would organize it: maybe it’s time to book the place or block the evening!
 
@@ -906,25 +912,25 @@ If you'd rather not continue, you can cancel this switch or your subscription an
 ${EQUIPE.en}` },
   },
   {
-    cle: 'renouvellement_annuel_annonce', famille: 'abonnement', nom: 'Annonce du renouvellement à 19 €/an',
-    quand: 'Un mois avant chaque renouvellement à 19 € (fin de la première année de la YES BOX, puis chaque année), si le renouvellement automatique n’est pas arrêté. Envoyé même si les rappels sont désactivés (information avant renouvellement).',
+    cle: 'renouvellement_annuel_annonce', famille: 'abonnement', nom: 'Annonce du renouvellement de l’abonnement annuel (19 €)',
+    quand: 'Un mois avant chaque renouvellement de l’abonnement « Pacte – notre rendez-vous annuel », si le renouvellement automatique n’est pas arrêté. Envoyé même si les rappels sont désactivés (information avant renouvellement).',
     obligatoires: ['date'],
-    fr: { objet: 'Votre YES BOX se renouvelle le {date}', corps: `${BONJOUR.fr}
+    fr: { objet: 'Votre abonnement annuel se renouvelle le {date}', corps: `${BONJOUR.fr}
 
-Petit message pour vous prévenir : le {date}, votre accès YES BOX se renouvelle automatiquement pour un an avec « Pacte – notre rendez-vous annuel ». **19 €** seront prélevés ce jour-là sur la carte déjà enregistrée. Vous n’avez rien à faire.
+Petit message pour vous prévenir : le {date}, votre abonnement « Pacte – notre rendez-vous annuel » se renouvelle automatiquement pour un an. **19 €** seront prélevés ce jour-là sur la carte déjà enregistrée. Vous n’avez rien à faire.
 
-Cette nouvelle année vous donne accès à tous les modules (pour terminer votre parcours ou le refaire), à votre journal et à votre pacte, et au module « Notre rendez-vous annuel » à la date que vous avez choisie.
+Cette nouvelle année vous donne accès au module « Notre rendez-vous annuel » à la date que vous avez choisie, et à tous les modules si vous souhaitez les refaire.
 
 Si vous préférez ne pas continuer, vous pouvez arrêter le renouvellement en un clic depuis Mon compte, avant le {date}.
 
 [bouton: Mon compte | {lien}]
 
 ${EQUIPE.fr}` },
-    en: { objet: 'Your YES BOX renews on {date}', corps: `${BONJOUR.en}
+    en: { objet: 'Your yearly subscription renews on {date}', corps: `${BONJOUR.en}
 
-Just a quick note to let you know: on {date}, your YES BOX access renews automatically for one year with "Pact – our yearly date". **€19** will be charged that day to the card already on file. There's nothing for you to do.
+Just a quick note to let you know: on {date}, your "Pact – our yearly date" subscription renews automatically for one year. **€19** will be charged that day to the card already on file. There's nothing for you to do.
 
-This new year gives you access to every module (to finish your program or go through it again), to your journal and your pact, and to the "Our Yearly Date" module on the date you chose.
+This new year gives you access to the "Our Yearly Date" module on the date you chose, and to every module if you want to go through them again.
 
 If you'd rather not continue, you can stop the renewal in one click from My Account, before {date}.
 
@@ -933,25 +939,52 @@ If you'd rather not continue, you can stop the renewal in one click from My Acco
 ${EQUIPE.en}` },
   },
   {
-    cle: 'fin_yesbox_offerte', famille: 'abonnement', nom: 'Fin de la YES BOX offerte — continuer à 19 €/an', rappel: true,
-    quand: 'Un mois avant la fin de l’année d’accès offerte par une carte cadeau YES BOX, sans abonnement en cours.',
+    cle: 'rdv_annuel_abonnement', famille: 'abonnement', nom: 'Rendez-vous annuel dans 2 mois — proposition de l’abonnement', rappel: true,
+    quand: 'Deux mois avant la date du rendez-vous annuel choisie par le couple, pacte signé, sans abonnement annuel en cours.',
     obligatoires: ['date'],
-    fr: { objet: 'Votre YES BOX offerte se termine le {date}', corps: `${BONJOUR.fr}
+    fr: { objet: 'Votre rendez-vous annuel, le {date} : on continue ?', corps: `${BONJOUR.fr}
 
-L’année d’accès offerte par votre carte cadeau YES BOX se termine le {date}.
+Dans deux mois, le {date}, c’est votre rendez-vous annuel : le moment de relire votre pacte à deux, de regarder votre année et de le faire évoluer.
 
-Pour continuer l’aventure (terminer votre parcours, le refaire, garder votre rendez-vous annuel), prenez « Pacte – notre rendez-vous annuel » : **19 € par an**, résiliable à tout moment depuis Mon compte.
+Pour ouvrir le module « Notre rendez-vous annuel » ce jour-là, il vous faut l’abonnement « Pacte – notre rendez-vous annuel » : **19 € par an**, résiliable à tout moment depuis Mon compte. Il vous donne aussi accès à tous les modules si vous souhaitez les refaire.
+
+Sans abonnement, votre pacte et tout ce que vous avez déjà réalisé restent consultables, et vous continuez à recevoir nos petits messages.
+
+[bouton: Prendre l’abonnement annuel | {lien}]
+
+${EQUIPE.fr}` },
+    en: { objet: 'Your yearly date on {date}: shall we keep going?', corps: `${BONJOUR.en}
+
+In two months, on {date}, it's your yearly date: the moment to reread your pact together, look back on your year and make it grow.
+
+To open the "Our Yearly Date" module that day, you need the "Pact – our yearly date" subscription: **€19 per year**, cancel anytime from My Account. It also gives you access to every module if you want to go through them again.
+
+Without a subscription, your pact and everything you've already completed stay viewable, and you keep receiving our little messages.
+
+[bouton: Get the yearly subscription | {lien}]
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'fin_pack_initial', famille: 'abonnement', nom: 'Fin de l’année du pack initial — continuer à 19 €/an', rappel: true,
+    quand: 'Un mois avant la fin de l’année du pack initial (acheté ou offert), si le pacte n’est pas encore signé et sans abonnement en cours.',
+    obligatoires: ['date'],
+    fr: { objet: 'Votre pack initial se termine le {date}', corps: `${BONJOUR.fr}
+
+L’année prévue pour réaliser votre pack initial YES BOX – Le Pacte se termine le {date}, et votre pacte n’est pas encore signé.
+
+Pour prendre le temps de terminer votre parcours, passez à l’abonnement « Pacte – notre rendez-vous annuel » : **19 € par an**, résiliable à tout moment depuis Mon compte. Il vous donne accès à tous les modules, puis au module « Notre rendez-vous annuel » à la date que vous choisirez.
 
 Sans abonnement, les parties déjà réalisées restent consultables.
 
 [bouton: Continuer pour 19 €/an | {lien}]
 
 ${EQUIPE.fr}` },
-    en: { objet: 'Your gifted YES BOX ends on {date}', corps: `${BONJOUR.en}
+    en: { objet: 'Your starter pack ends on {date}', corps: `${BONJOUR.en}
 
-The year of access given by your YES BOX gift card ends on {date}.
+The year set aside to complete your YES BOX – Le Pacte starter pack ends on {date}, and your pact isn't signed yet.
 
-To keep going (finish your program, go through it again, keep your yearly date), take "Pact – our yearly date": **€19 per year**, cancel anytime from My Account.
+To take the time to finish your program, switch to the "Pact – our yearly date" subscription: **€19 per year**, cancel anytime from My Account. It gives you access to every module, then to the "Our Yearly Date" module on the date you choose.
 
 Without a subscription, the parts you've already completed stay viewable.
 

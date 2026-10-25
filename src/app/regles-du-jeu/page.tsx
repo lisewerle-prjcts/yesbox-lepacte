@@ -39,7 +39,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.revelation.titre">La révélation</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.revelation.texte.v4" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si votre YES BOX est active, le module suivant se débloque. Vos réponses aux questions de chaque module se retrouvent au fur et à mesure dans PROGRESSION ; les réponses finales des 8 modules et vos réponses au module du pacte, qui constituent votre pacte, se trouvent dans NOTRE PACTE. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText>
+              <EditableText id="regles.revelation.texte.v5" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si votre pack initial est actif, le module suivant se débloque. Vos réponses aux questions de chaque module se retrouvent au fur et à mesure dans PROGRESSION ; les réponses finales des 8 modules et vos réponses au module du pacte, qui constituent votre pacte, se trouvent dans NOTRE PACTE. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText>
             </p>
           </li>
           <li>
@@ -80,7 +80,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.abonnementannuel.titre">Pacte – notre rendez-vous annuel</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.abonnementannuel.texte.v3" multiline>Votre YES BOX (58 €) comprend le parcours initial et votre première année. Un an après l&apos;achat, elle se renouvelle automatiquement avec l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an), sans démarche de votre part : un e-mail vous prévient un mois avant. Cet abonnement donne accès au module « Notre rendez-vous annuel » et à tous les modules si vous souhaitez les refaire. Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
+              <EditableText id="regles.abonnementannuel.texte.v4" multiline>Votre pack initial YES BOX – Le Pacte (58 €, paiement unique) comprend les 8 modules et la signature de votre pacte, avec un an pour les réaliser. Ensuite, l&apos;abonnement « Pacte – notre rendez-vous annuel » (19 €/an) est facultatif : il est nécessaire pour ouvrir le module « Notre rendez-vous annuel » à la date que vous avez choisie, et un e-mail vous le rappelle deux mois avant. Il donne aussi accès à tous les modules si vous souhaitez les refaire. Sans abonnement, votre pacte et ce que vous avez réalisé restent consultables, et vous continuez à recevoir nos e-mails (2 par mois au maximum). Résiliable à tout moment depuis MON COMPTE : l&apos;accès reste ouvert jusqu&apos;au dernier jour de l&apos;année payée.</EditableText>
             </p>
           </li>
           <li>
