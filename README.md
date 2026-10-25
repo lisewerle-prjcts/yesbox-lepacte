@@ -26,22 +26,32 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | `/rejoindre?token=...` | Rejoindre un couple via token |
 | `/tableau-de-bord` | Accueil — carte couple (code, invitation, anniversaire) |
 | `/module/[slug]` | Parcours questions d'un module |
-| `/pacte` | Progression — suivi des 7 modules |
+| `/pacte` | Progression — suivi des 8 modules et du pacte |
 | `/journal` | Notre Pacte — document partagé et signature |
-| `/rdv-annuels` | Nos rdv annuels — réponses aux questions du mois et bilan annuel (module 10) |
+| `/rdv-annuels` | Nos rdv annuels — réponses aux questions du mois et bilan annuel (rendez-vous annuel) |
 | `/mon-compte` | Infos personnelles, mot de passe, ajout d'un code |
 | `/offrir` | Offrir une carte cadeau YES BOX (58 €) |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |
 
-## Les 7 modules
+## Le programme : 8 modules, le pacte, puis le rendez-vous annuel
 
-1. 💎 **Nos Valeurs** — Le socle commun
-2. 💬 **Notre Communication** — Rituels de dialogue
-3. ❤️ **Notre Intimité** — Besoins affectifs
-4. 💰 **Nos Finances** — Alignement financier
-5. 🚀 **Nos Projets** — L'avenir ensemble
-6. 🏡 **Notre Famille** — Visions familiales
-7. 🌱 **Notre Croissance** — Développement mutuel
+Pack initial YES BOX — Le Pacte (module 1 gratuit, puis 58 €) :
+
+1. 👁️ **Toi et Moi** — Se (re)découvrir (gratuit)
+2. 💑 **Nous** — Notre histoire
+3. 🏠 **Le quotidien** — La vie commune
+4. 🎯 **Argent et projets** — Argent, travail, avenir
+5. 🌳 **Famille et croyances**
+6. 💬 **Gestion des émotions et communication** — Se parler, vraiment
+7. 🔥 **Tendresse et intimité** — Tendresse et désir
+8. ⚡ **Les disputes** — Désamorcer, grandir
+
+Puis 📜 **Notre pacte de couple** (module `engagement`, n° 9 en interne),
+écrit et signé à deux.
+
+Ensuite, 🌱 **Notre rendez-vous annuel** (module `renouvellement`, n° 10 en
+interne), à la date choisie à la signature du pacte : compris dans la
+première année de la YES BOX, puis 19 €/an à chaque renouvellement.
 
 ## Installation
 

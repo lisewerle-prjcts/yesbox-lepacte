@@ -76,9 +76,9 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
                   <button key={p.duree} type="button" disabled={!p.configure} onClick={() => setDuree(p.duree)}
                     className="rounded-xl p-4 text-left transition-all"
                     style={{ border: `2px solid ${actif ? 'var(--brand)' : 'var(--line)'}`, background: actif ? 'var(--brand-tint)' : 'white', opacity: p.configure ? 1 : 0.5 }}>
-                    <div className="font-serif font-bold" style={{ fontSize: 22, color: 'var(--ink)' }}>YES BOX</div>
+                    <div className="font-serif font-bold" style={{ fontSize: 22, color: 'var(--ink)' }}>{t('Le pack initial YES BOX – Le Pacte', 'The YES BOX – Le Pacte starter pack')}</div>
                     <div style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 2 }}>
-                      {t('Tous les modules jusqu’au pacte, pendant 1 an · ensuite 19 €/an si le couple souhaite continuer', 'Every module up to the pact, for 1 year · then €19/year if the couple wants to continue')}
+                      {t('Les 8 modules et le module Pacte de couple, un an pour le réaliser · ensuite 19 €/an si le couple souhaite continuer', 'The 8 modules and the Couple’s Pact module, one year to complete it · then €19/year if the couple wants to continue')}
                     </div>
                     <div style={{ fontSize: 14, color: actif ? 'var(--brand)' : 'var(--muted)', fontWeight: 600 }}>
                       {p.configure ? (montant ?? '—') : t('Bientôt disponible', 'Coming soon')}
@@ -149,7 +149,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
               <Gift className="w-4 h-4" />
               {chargement
                 ? t('Redirection vers le paiement…', 'Redirecting to payment…')
-                : prixChoisi ? t(`Offrir la YES BOX · ${prixChoisi}`, `Give YES BOX · ${prixChoisi}`) : t('Offrir la YES BOX', 'Give YES BOX')}
+                : prixChoisi ? t(`Offrir le pack initial YES BOX – Le Pacte · ${prixChoisi}`, `Give the YES BOX – Le Pacte starter pack · ${prixChoisi}`) : t('Offrir le pack initial YES BOX – Le Pacte', 'Give the YES BOX – Le Pacte starter pack')}
               {!chargement && <ArrowRight className="w-4 h-4" />}
             </button>
             <p className="text-center mt-3" style={{ fontSize: 12, color: 'var(--muted)' }}>

@@ -9,17 +9,15 @@ import CaseRetractation from '@/components/CaseRetractation'
 import ChampCode from '@/components/ChampCode'
 
 const FEATURES = [
-  "L'ensemble des modules du parcours initial (hors rendez-vous annuels)",
+  'Les 8 modules du parcours initial et votre pacte de couple',
   'Sessions de révélation à deux',
   'Journal de couple',
-  'Votre pacte de couple personnalisé',
   'La première année incluse, puis 19 €/an pour votre rendez-vous annuel',
 ]
 const FEATURES_EN = [
-  'The full initial program (excluding yearly dates)',
+  "The 8 modules of the initial program and your couple's pact",
   'Joint reveal sessions',
   "Your couple's journal",
-  "Your personalized couple's pact",
   'The first year included, then €19/year for your yearly date',
 ]
 

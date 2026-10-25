@@ -41,13 +41,15 @@ const NAV_LINKS = (t: (fr: string, en: string) => string) => [
 const OPTIONS = (t: (fr: string, en: string) => string) => [
   { titre: t('On ne dit rien', 'We say nothing'), desc: t("C'est gratuit… sur le moment. Les non-dits, eux, s'accumulent.", 'It costs nothing… in the moment. But the things left unsaid keep piling up.') },
   { titre: t('On achète un livre', 'We buy a book'), desc: t('Environ 20 €, souvent lu par un seul des deux membres du couple, et il faut tout transposer soi-même dans sa propre histoire.', "Around €20, often read by only one of the two partners, and you have to translate it all into your own story yourselves.") },
-  { titre: t('On consulte', 'We see a therapist'), desc: t("C'est indispensable quand ça va vraiment mal. Il faut compter 80 à 150 € la séance, sur plusieurs mois. Tout le monde n'a pas envie de se confier à une personne extérieure dès le départ.", "It's essential when things are really bad. Expect €80 to €150 per session, over several months. And not everyone wants to confide in an outsider right from the start.") },
+  // descId : nouvel identifiant quand le texte change (l'ancien texte peut
+  // être enregistré en mode édition).
+  { titre: t('On consulte', 'We see a therapist'), descId: 'desc.v2', desc: t("C'est indispensable quand ça va vraiment mal. YES BOX peut être un bon complément au travail fait en cabinet, ou peut-être un point de départ.", "It's essential when things are really bad. YES BOX can be a great complement to the work done in a therapist's office, or perhaps a starting point.") },
 ]
 
 const ETAPES = (t: (fr: string, en: string) => string) => [
   { titre: t('Chacun·e répond de son côté', 'You each answer on your own'), desc: t("Sur votre téléphone ou votre ordinateur, vous répondez aux questions du module, à votre rythme. Vous ne voyez pas les réponses de l'autre.", "On your phone or computer, you answer the module's questions at your own pace. You can't see each other's answers.") },
   { titre: t('Vous découvrez vos réponses ensemble', 'You discover your answers together'), desc: t("Une fois vos deux réponses enregistrées, la révélation s'ouvre : vous les lisez côte à côte et vous en parlez.", 'Once both your answers are in, the reveal opens: you read them side by side and talk about them.') },
-  { titre: t('Vous écrivez votre pacte', 'You write your pact'), desc: t('Au bout des 9 modules, vous rédigez et signez votre pacte de couple, et vous choisissez la date de votre rendez-vous annuel.', 'After the 9 modules, you write and sign your couple’s pact, and choose the date of your yearly date.') },
+  { titre: t('Vous écrivez votre pacte', 'You write your pact'), desc: t('Au bout des 8 modules, vous rédigez et signez votre pacte de couple, et vous choisissez la date de votre rendez-vous annuel.', 'After the 8 modules, you write and sign your couple’s pact, and choose the date of your yearly date.') },
 ]
 
 const FAQ = (t: (fr: string, en: string) => string) => [
@@ -259,7 +261,7 @@ export default function LandingPage() {
               {optionsList.map((o, i) => (
                 <div key={i} className="card p-6">
                   <h4 className="font-semibold mb-1.5" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={`home.constat.options.${i}.titre`}>{o.titre}</EditableText></h4>
-                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.constat.options.${i}.desc`} multiline>{o.desc}</EditableText></p>
+                  <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}><EditableText id={`home.constat.options.${i}.${'descId' in o ? o.descId : 'desc'}`} multiline>{o.desc}</EditableText></p>
                 </div>
               ))}
             </div>
@@ -339,14 +341,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* LES 10 MODULES */}
+      {/* LE PROGRAMME : 8 MODULES, LE PACTE, PUIS LE RENDEZ-VOUS ANNUEL */}
       <section id="modules" className="py-20" style={{ background: 'var(--paper)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <div className="eyebrow justify-center mb-3"><EditableText id="home.modules.eyebrow">Le programme</EditableText></div>
             <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-              <EditableText id="home.modules.title.line1">Neuf modules pour poser les bases.</EditableText><br />
-              <EditableText id="home.modules.title.line2">Un dixième pour les faire durer.</EditableText>
+              <EditableText id="home.modules.title.line1.v2">Huit modules et votre pacte pour poser les bases.</EditableText><br />
+              <EditableText id="home.modules.title.line2.v2">Puis un rendez-vous chaque année pour le faire durer.</EditableText>
             </h2>
           </div>
           <div className="flex flex-col gap-3">
@@ -362,13 +364,14 @@ export default function LandingPage() {
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
                 </div>
                 {m.free && <span className="tag-sage shrink-0">{t('Gratuit', 'Free')}</span>}
-                {m.n === 10 && <span className="tag-muted shrink-0">{t('Annuel', 'Yearly')}</span>}
+                {m.n === 9 && <span className="tag-brand shrink-0">{t('Le pacte', 'The pact')}</span>}
+                {m.n === 10 && <span className="tag-muted shrink-0">{t('19 €/an', '€19/year')}</span>}
               </div>
             )})}
           </div>
           <div className="text-center" style={{ maxWidth: 680, margin: '40px auto 0', fontSize: 14.5, lineHeight: 1.7, color: 'var(--muted)' }}>
             <p>
-              <EditableText id="home.modules.duree.v2" multiline>Chaque module compte une dizaine de questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée.</EditableText>
+              <EditableText id="home.modules.duree.v3" multiline>Chaque module compte une dizaine de questions. À deux, il faut compter entre 30 et 60 minutes, en fonction des discussions qui vont en découler. Il faut donc y dédier 9 petits bouts de soirée : un par module, et un pour votre pacte.</EditableText>
             </p>
             <p style={{ marginTop: 20, fontSize: 16, lineHeight: 1.6, color: 'var(--ink-2)' }}>
               <EditableText id="home.modules.confidentialite" multiline>Personne d&apos;autre ne lit vos réponses : elles restent visibles uniquement pour vous deux et sont chiffrées sur nos serveurs. Vous pouvez les télécharger à tout moment, et les effacer quand vous quittez le programme.</EditableText>

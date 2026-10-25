@@ -15,10 +15,9 @@ const DECOUVERTE = [
   'Espace couple privé',
 ]
 const ACCES_COMPLET = [
-  "L'ensemble des modules du parcours initial (hors rendez-vous annuels)",
+  'Les 8 modules du parcours initial et votre pacte',
   'Sessions de révélation à deux',
   'Journal de couple',
-  'Votre pacte de couple',
   'La première année incluse (rendez-vous annuel compris)',
 ]
 const BAC = [
@@ -71,7 +70,7 @@ export default function OffresTarifs({ onInscription }: { onInscription: () => v
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)' }}><EditableText id="offres.complet.desc.v2">paiement unique · parcours complet et 1re année incluse</EditableText></div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.2)' }} />
-        <Avantages prefixe="offres.complet.avantages.v2" items={ACCES_COMPLET} couleurCoche="rgba(255,255,255,.8)" couleurTexte="rgba(255,255,255,.9)" />
+        <Avantages prefixe="offres.complet.avantages.v3" items={ACCES_COMPLET} couleurCoche="rgba(255,255,255,.8)" couleurTexte="rgba(255,255,255,.9)" />
         <button onClick={onInscription} className="mt-auto flex items-center justify-center gap-2 font-semibold py-3 px-5 rounded-lg" style={{ background: 'white', color: 'var(--brand)', fontSize: 14 }}>
           <EditableText id="offres.complet.cta">Je m&apos;inscris</EditableText> <ArrowRight className="w-4 h-4" />
         </button>

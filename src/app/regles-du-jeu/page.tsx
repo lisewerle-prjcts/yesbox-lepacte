@@ -39,7 +39,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.revelation.titre">La révélation</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.revelation.texte.v3" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si vous êtes à jour de votre abonnement, le module suivant se débloque. Vos réponses aux questions de chaque module se retrouvent au fur et à mesure dans PROGRESSION ; les réponses finales de chaque module et vos réponses au module 9, qui constituent votre pacte, se trouvent dans NOTRE PACTE. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText>
+              <EditableText id="regles.revelation.texte.v4" multiline>Un module n&apos;est révélé que lorsque les deux membres ont terminé leurs réponses. C&apos;est à ce moment que vous pouvez découvrir ensemble vos réponses. En fin de module, chaque membre écrit sa conclusion dans votre journal, en répondant à deux courtes questions sur ce que le module lui a apporté. Une fois vos deux conclusions écrites, et si votre YES BOX est active, le module suivant se débloque. Vos réponses aux questions de chaque module se retrouvent au fur et à mesure dans PROGRESSION ; les réponses finales des 8 modules et vos réponses au module du pacte, qui constituent votre pacte, se trouvent dans NOTRE PACTE. Chacun·e peut compléter ses réponses finales à tout moment.</EditableText>
             </p>
           </li>
           <li>
@@ -72,7 +72,7 @@ export default function ReglesDuJeuPage() {
               <EditableText id="regles.pacte.titre">Le pacte de couple</EditableText>
             </p>
             <p style={{ color: 'var(--muted)' }}>
-              <EditableText id="regles.pacte.texte.v3" multiline>Écrit à deux à la fin du parcours initial (module 9), il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. En le signant, vous choisissez la date de votre rendez-vous annuel, idéalement un an plus tard (entre 6 et 18 mois) : dans un an, à la Saint-Valentin ou à une date qui vous est propre. Ce jour-là, le module « Notre rendez-vous annuel » s&apos;ouvre pour le relire ensemble et le faire évoluer avec vous.</EditableText>
+              <EditableText id="regles.pacte.texte.v4" multiline>Écrit à deux après les 8 modules du parcours initial, il reprend ce qui compte le plus parmi ce que vous avez vu au fil des modules. En le signant, vous choisissez la date de votre rendez-vous annuel, idéalement un an plus tard (entre 6 et 18 mois) : dans un an, à la Saint-Valentin ou à une date qui vous est propre. Ce jour-là, le module « Notre rendez-vous annuel » s&apos;ouvre pour le relire ensemble et le faire évoluer avec vous.</EditableText>
             </p>
           </li>
           <li>
