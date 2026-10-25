@@ -353,9 +353,16 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-3">
             {modules.map((m, i) => {
+              // Le pacte (rose) et le rendez-vous annuel (vert sauge) se
+              // distinguent des 8 modules du pack initial.
+              const ton = m.n === 9
+                ? { background: 'var(--brand-tint)', borderColor: 'var(--brand-soft)', numero: 'var(--brand)' }
+                : m.n === 10
+                ? { background: 'var(--sage-soft)', borderColor: '#c9dacd', numero: 'var(--sage)' }
+                : null
               return (
-              <div key={m.slug} className="card flex items-center gap-5 p-5">
-                <span className="font-mono text-xs font-bold shrink-0" style={{ color: 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
+              <div key={m.slug} className="card flex items-center gap-5 p-5" style={ton ? { background: ton.background, borderColor: ton.borderColor } : undefined}>
+                <span className="font-mono text-xs font-bold shrink-0" style={{ color: ton?.numero ?? 'var(--brand)', width: 28 }}>{String(m.n).padStart(2, '0')}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-3 flex-wrap">
                     <span className="font-serif font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}><EditableText id={`module.${m.slug}.titre`}>{m.titre}</EditableText></span>
@@ -364,8 +371,8 @@ export default function LandingPage() {
                   <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 2 }}><EditableText id={`module.${m.slug}.description`} multiline>{m.description}</EditableText></p>
                 </div>
                 {m.free && <span className="tag-sage shrink-0">{t('Gratuit', 'Free')}</span>}
-                {m.n === 9 && <span className="tag-brand shrink-0">{t('Le pacte', 'The pact')}</span>}
-                {m.n === 10 && <span className="tag-muted shrink-0">{t('19 €/an', '€19/year')}</span>}
+                {m.n === 9 && <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'white', color: 'var(--brand)' }}>{t('Le pacte', 'The pact')}</span>}
+                {m.n === 10 && <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'white', color: 'var(--sage)' }}>{t('19 €/an', '€19/year')}</span>}
               </div>
             )})}
           </div>
