@@ -681,18 +681,31 @@ function genererCodeAleatoire() {
   return code
 }
 
+// Montant d'un code de réduction, en centimes : de 1 centime à 1 000 €.
+function erreurMontant(montantCentimes: number | null | undefined) {
+  if (!montantCentimes || !Number.isInteger(montantCentimes) || montantCentimes < 1 || montantCentimes > 100000) {
+    return 'Indique un montant de réduction en euros (entre 0,01 € et 1 000 €).'
+  }
+  return null
+}
+
 export async function adminCreerCodeGratuit(fields: {
-  code?: string; offre?: OffreCodeGratuit; dureeMois?: number | null; usagesMax: number; note?: string
+  code?: string; offre?: OffreCodeGratuit; dureeMois?: number | null; montantCentimes?: number | null; usagesMax: number; note?: string
 }) {
   await assertAdmin()
   const admin = createAdminClient()
 
   const code = (fields.code?.trim() || genererCodeAleatoire()).toUpperCase()
   const offre = fields.offre ?? 'acces'
+  if (offre === 'reduction') {
+    const erreur = erreurMontant(fields.montantCentimes)
+    if (erreur) return { error: erreur }
+  }
   const { data, error } = await admin.from('codes_gratuits').insert({
     code,
     offre,
     duree_mois: offre === 'pack_initial' ? null : fields.dureeMois ?? null,
+    montant_centimes: offre === 'reduction' ? fields.montantCentimes : null,
     usages_max: fields.usagesMax,
     note: fields.note?.trim() || null,
   }).select('id').single()
@@ -711,15 +724,36 @@ export async function adminBasculerCodeGratuit(id: string, actif: boolean) {
   return { success: true }
 }
 
-// Offre d'un code gratuit : accès complet ('acces', durée ou illimité) ou
-// pack initial offert ('pack_initial'). Ne vaut que pour les prochaines
+// Offre d'un code gratuit : accès complet ('acces', durée ou illimité),
+// pack initial offert ('pack_initial') ou réduction d'un montant
+// ('reduction', montant obligatoire). Ne vaut que pour les prochaines
 // utilisations : les couples qui l'ont déjà utilisé gardent leur accès.
-export async function adminModifierOffreCode(id: string, offre: OffreCodeGratuit) {
+export async function adminModifierOffreCode(id: string, offre: OffreCodeGratuit, montantCentimes?: number | null) {
   await assertAdmin()
-  if (offre !== 'acces' && offre !== 'pack_initial') return { error: 'Offre inconnue.' }
+  if (offre !== 'acces' && offre !== 'pack_initial' && offre !== 'reduction') return { error: 'Offre inconnue.' }
+  if (offre === 'reduction') {
+    const erreur = erreurMontant(montantCentimes)
+    if (erreur) return { error: erreur }
+  }
   const admin = createAdminClient()
-  const { error } = await admin.from('codes_gratuits')
-    .update(offre === 'pack_initial' ? { offre, duree_mois: null } : { offre }).eq('id', id)
+  const { error } = await admin.from('codes_gratuits').update(
+    offre === 'pack_initial' ? { offre, duree_mois: null, montant_centimes: null }
+    : offre === 'reduction' ? { offre, montant_centimes: montantCentimes }
+    : { offre, montant_centimes: null }
+  ).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/codes')
+  return { success: true }
+}
+
+// Montant d'un code de réduction. Lu au moment du paiement : vaut aussi pour
+// les couples qui ont saisi le code sans avoir encore payé.
+export async function adminModifierMontantCode(id: string, montantCentimes: number) {
+  await assertAdmin()
+  const erreur = erreurMontant(montantCentimes)
+  if (erreur) return { error: erreur }
+  const admin = createAdminClient()
+  const { error } = await admin.from('codes_gratuits').update({ montant_centimes: montantCentimes }).eq('id', id).eq('offre', 'reduction')
   if (error) return { error: error.message }
   revalidatePath('/admin/codes')
   return { success: true }
@@ -758,16 +792,18 @@ export async function adminModifierUsagesMaxCode(id: string, usagesMax: number) 
 // vaut que pour les prochaines utilisations ; avec `appliquerAuxCouples`, la
 // date de fin d'accès des couples qui l'ont déjà utilisé est décalée d'autant
 // (ce qui garde les mois ajoutés entre-temps par une carte cadeau ou un
-// parrainage).
+// parrainage). Pour un code de réduction, c'est la durée de validité après
+// la saisie, lue au moment du paiement : elle vaut pour tous les couples.
 export async function adminModifierDureeCode(id: string, dureeMois: number | null, appliquerAuxCouples: boolean) {
   await assertAdmin()
   if (dureeMois !== null && (!Number.isInteger(dureeMois) || dureeMois < 1 || dureeMois > 240)) {
     return { error: 'La durée doit être un nombre entier de mois (1 à 240), ou vide pour un accès illimité.' }
   }
   const admin = createAdminClient()
-  const { data: code, error: lectureError } = await admin.from('codes_gratuits').select('duree_mois').eq('id', id).single()
+  const { data: code, error: lectureError } = await admin.from('codes_gratuits').select('duree_mois, offre').eq('id', id).single()
   if (lectureError || !code) return { error: lectureError?.message || 'Code introuvable.' }
   const ancienne = code.duree_mois as number | null
+  if (code.offre === 'reduction') appliquerAuxCouples = false
 
   const { error } = await admin.from('codes_gratuits').update({ duree_mois: dureeMois }).eq('id', id)
   if (error) return { error: error.message }

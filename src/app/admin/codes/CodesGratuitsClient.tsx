@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode, adminModifierOffreCode, adminSupprimerCodeGratuit } from '@/app/actions/admin'
+import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode, adminModifierOffreCode, adminModifierMontantCode, adminSupprimerCodeGratuit } from '@/app/actions/admin'
 import type { OffreCodeGratuit } from '@/types'
 
 interface CodeGratuit {
@@ -9,11 +9,67 @@ interface CodeGratuit {
   code: string
   offre: OffreCodeGratuit
   duree_mois: number | null
+  montant_centimes: number | null
   usages_max: number
   usages: number
   actif: boolean
   note: string | null
   created_at: string
+}
+
+// Montant saisi en euros (« 10 », « 9,50 ») → centimes, ou null si invalide.
+function enCentimes(euros: string): number | null {
+  const n = Number(euros.trim().replace(',', '.'))
+  return euros.trim() && Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null
+}
+
+function enEuros(centimes: number) {
+  return (centimes / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+}
+
+// Montant d'un code de réduction : lu au moment du paiement, il vaut aussi
+// pour les couples qui ont saisi le code sans avoir encore payé.
+function Montant({ code, onModifie }: { code: CodeGratuit; onModifie: (montantCentimes: number) => void }) {
+  const [valeur, setValeur] = useState(code.montant_centimes ? enEuros(code.montant_centimes) : '')
+  const [enregistrement, setEnregistrement] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null)
+  const nouveau = enCentimes(valeur)
+  const modifie = nouveau !== code.montant_centimes
+
+  async function enregistrer() {
+    setMessage(null)
+    if (!nouveau) { setMessage({ ok: false, texte: 'Montant invalide.' }); return }
+    setEnregistrement(true)
+    const res = await adminModifierMontantCode(code.id, nouveau)
+    setEnregistrement(false)
+    if (res.error) { setMessage({ ok: false, texte: res.error }); return }
+    onModifie(nouveau)
+    setMessage({ ok: true, texte: code.usages ? 'Enregistré, y compris pour les couples qui n’ont pas encore payé.' : 'Enregistré.' })
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="text"
+          inputMode="decimal"
+          className="field py-1 px-2"
+          style={{ width: 72 }}
+          value={valeur}
+          onChange={e => { setValeur(e.target.value); setMessage(null) }}
+          onKeyDown={e => e.key === 'Enter' && modifie && enregistrer()}
+          aria-label={`Montant de la réduction du code ${code.code}`}
+        />
+        <span className="text-xs text-gray-500">€</span>
+        {modifie && (
+          <button onClick={enregistrer} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">
+            {enregistrement ? '…' : 'OK'}
+          </button>
+        )}
+      </div>
+      {message && <p className={`text-xs mt-1 ${message.ok ? 'text-green-600' : 'text-red-600'}`}>{message.texte}</p>}
+    </div>
+  )
 }
 
 function UsagesMax({ code, onModifie }: { code: CodeGratuit; onModifie: (usagesMax: number) => void }) {
@@ -57,7 +113,8 @@ function UsagesMax({ code, onModifie }: { code: CodeGratuit; onModifie: (usagesM
 }
 
 // Durée du code (mois, vide = illimité). Si des couples l'ont déjà utilisé,
-// on demande si leur date de fin d'accès change aussi.
+// on demande si leur date de fin d'accès change aussi. Pour un code de
+// réduction, c'est la validité après la saisie, qui vaut pour tous les couples.
 function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: number | null) => void }) {
   const [valeur, setValeur] = useState(code.duree_mois ? String(code.duree_mois) : '')
   const [choix, setChoix] = useState(false)
@@ -65,6 +122,8 @@ function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: 
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null)
   const nouvelle = valeur.trim() ? Number(valeur) : null
   const modifie = nouvelle !== code.duree_mois
+  const reduction = code.offre === 'reduction'
+  const demander = !!code.usages && !reduction
 
   async function enregistrer(appliquerAuxCouples: boolean) {
     setMessage(null)
@@ -74,7 +133,9 @@ function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: 
     setChoix(false)
     if (res.error) { setMessage({ ok: false, texte: res.error }); return }
     onModifie(nouvelle)
-    setMessage({ ok: true, texte: appliquerAuxCouples
+    setMessage({ ok: true, texte: reduction
+      ? (code.usages ? 'Enregistré, y compris pour les couples qui n’ont pas encore payé.' : 'Enregistré.')
+      : appliquerAuxCouples
       ? `Enregistré : fin d’accès mise à jour pour ${res.couplesModifies} couple${(res.couplesModifies ?? 0) > 1 ? 's' : ''}.`
       : 'Enregistré pour les prochaines utilisations.' })
   }
@@ -90,12 +151,12 @@ function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: 
           value={valeur}
           placeholder="∞"
           onChange={e => { setValeur(e.target.value); setChoix(false); setMessage(null) }}
-          onKeyDown={e => e.key === 'Enter' && modifie && (code.usages ? setChoix(true) : enregistrer(false))}
+          onKeyDown={e => e.key === 'Enter' && modifie && (demander ? setChoix(true) : enregistrer(false))}
           aria-label={`Durée en mois du code ${code.code}`}
         />
-        <span className="text-xs text-gray-500">{nouvelle ? 'mois' : 'illimité'}</span>
+        <span className="text-xs text-gray-500">{nouvelle ? 'mois' : reduction ? 'sans limite' : 'illimité'}</span>
         {modifie && !choix && (
-          <button onClick={() => (code.usages ? setChoix(true) : enregistrer(false))} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">
+          <button onClick={() => (demander ? setChoix(true) : enregistrer(false))} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">
             {enregistrement ? '…' : 'OK'}
           </button>
         )}
@@ -117,20 +178,29 @@ function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: 
 const LIBELLES_OFFRE: Record<OffreCodeGratuit, string> = {
   pack_initial: 'Pack initial offert',
   acces: 'Accès complet gratuit',
+  reduction: 'Réduction (montant)',
 }
 
 // Offre du code, modifiable : ne change que les prochaines utilisations.
-function Offre({ code, onModifie }: { code: CodeGratuit; onModifie: (offre: OffreCodeGratuit) => void }) {
+// Passer à une réduction demande son montant.
+function Offre({ code, onModifie }: { code: CodeGratuit; onModifie: (offre: OffreCodeGratuit, montantCentimes: number | null) => void }) {
   const [enregistrement, setEnregistrement] = useState(false)
   const [erreur, setErreur] = useState('')
 
   async function changer(offre: OffreCodeGratuit) {
     setErreur('')
+    let montant: number | null = null
+    if (offre === 'reduction') {
+      const saisie = window.prompt(`Montant de la réduction du code ${code.code}, en euros :`, '10')
+      if (saisie === null) return
+      montant = enCentimes(saisie)
+      if (!montant) { setErreur('Montant invalide.'); return }
+    }
     setEnregistrement(true)
-    const res = await adminModifierOffreCode(code.id, offre)
+    const res = await adminModifierOffreCode(code.id, offre, montant)
     setEnregistrement(false)
     if (res.error) { setErreur(res.error); return }
-    onModifie(offre)
+    onModifie(offre, montant)
   }
 
   return (
@@ -154,6 +224,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
   const [codeInput, setCodeInput] = useState('')
   const [offre, setOffre] = useState<OffreCodeGratuit>('pack_initial')
   const [dureeMois, setDureeMois] = useState('')
+  const [montant, setMontant] = useState('')
   const [usagesMax, setUsagesMax] = useState('1')
   const [note, setNote] = useState('')
   const [creating, setCreating] = useState(false)
@@ -161,21 +232,25 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
 
   async function creer() {
     setError('')
+    const montantCentimes = offre === 'reduction' ? enCentimes(montant) : null
+    if (offre === 'reduction' && !montantCentimes) { setError('Indique le montant de la réduction, en euros.'); return }
+    const duree = offre !== 'pack_initial' && dureeMois ? Number(dureeMois) : null
     setCreating(true)
     const res = await adminCreerCodeGratuit({
       code: codeInput || undefined,
       offre,
-      dureeMois: offre === 'acces' && dureeMois ? Number(dureeMois) : null,
+      dureeMois: duree,
+      montantCentimes,
       usagesMax: Number(usagesMax) || 1,
       note,
     })
     setCreating(false)
     if (res.error) { setError(res.error); return }
     setCodes(cs => [{
-      id: res.id ?? crypto.randomUUID(), code: res.code!, offre, duree_mois: offre === 'acces' && dureeMois ? Number(dureeMois) : null,
+      id: res.id ?? crypto.randomUUID(), code: res.code!, offre, duree_mois: duree, montant_centimes: montantCentimes,
       usages_max: Number(usagesMax) || 1, usages: 0, actif: true, note: note || null, created_at: new Date().toISOString(),
     }, ...cs])
-    setCodeInput(''); setDureeMois(''); setUsagesMax('1'); setNote('')
+    setCodeInput(''); setDureeMois(''); setMontant(''); setUsagesMax('1'); setNote('')
   }
 
   async function basculer(id: string, actif: boolean) {
@@ -198,7 +273,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
     <div className="space-y-6">
       <div className="card p-5">
         <h2 className="font-semibold mb-3" style={{ fontSize: 15 }}>Créer un code</h2>
-        <div className="grid sm:grid-cols-5 gap-3 mb-3">
+        <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
           <div>
             <label className="text-xs text-gray-500 block mb-1">Code (vide = généré)</label>
             <input className="field uppercase" placeholder="YESLAUNCH26" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
@@ -210,9 +285,15 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Durée (mois, vide = illimité)</label>
-            {offre === 'acces'
-              ? <input type="number" min={1} className="field" placeholder="12" value={dureeMois} onChange={e => setDureeMois(e.target.value)} />
+            <label className="text-xs text-gray-500 block mb-1">Montant de la réduction (€)</label>
+            {offre === 'reduction'
+              ? <input type="text" inputMode="decimal" className="field" placeholder="10" value={montant} onChange={e => setMontant(e.target.value)} />
+              : <p className="text-xs text-gray-500 pt-2">—</p>}
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">{offre === 'reduction' ? 'Validité (mois, vide = sans limite)' : 'Durée (mois, vide = illimité)'}</label>
+            {offre !== 'pack_initial'
+              ? <input type="number" min={1} className="field" placeholder={offre === 'reduction' ? '3' : '12'} value={dureeMois} onChange={e => setDureeMois(e.target.value)} />
               : <p className="text-xs text-gray-500 pt-2">1 an pour réaliser le pack</p>}
           </div>
           <div>
@@ -240,6 +321,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
               <tr className="text-left text-xs text-gray-400 border-b">
                 <th className="py-2">Code</th>
                 <th className="py-2">Offre</th>
+                <th className="py-2">Montant</th>
                 <th className="py-2">Durée</th>
                 <th className="py-2">Usages</th>
                 <th className="py-2">Note</th>
@@ -252,11 +334,16 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
                 <tr key={c.id} className="border-b last:border-0">
                   <td className="py-2 font-mono font-semibold">{c.code}</td>
                   <td className="py-2">
-                    <Offre code={c} onModifie={offre => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, offre, duree_mois: offre === 'pack_initial' ? null : x.duree_mois } : x))} />
+                    <Offre code={c} onModifie={(offre, montantCentimes) => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, offre, montant_centimes: montantCentimes, duree_mois: offre === 'pack_initial' ? null : x.duree_mois } : x))} />
                   </td>
                   <td className="py-2">
-                    {c.offre === 'acces'
-                      ? <Duree key={`${c.id}-${c.duree_mois}`} code={c} onModifie={dureeMois => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, duree_mois: dureeMois } : x))} />
+                    {c.offre === 'reduction'
+                      ? <Montant key={`${c.id}-${c.montant_centimes}`} code={c} onModifie={montantCentimes => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, montant_centimes: montantCentimes } : x))} />
+                      : <span className="text-xs text-gray-500">—</span>}
+                  </td>
+                  <td className="py-2">
+                    {c.offre !== 'pack_initial'
+                      ? <Duree key={`${c.id}-${c.duree_mois}-${c.offre}`} code={c} onModifie={dureeMois => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, duree_mois: dureeMois } : x))} />
                       : <span className="text-xs text-gray-500">1 an</span>}
                   </td>
                   <td className="py-2">

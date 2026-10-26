@@ -184,5 +184,6 @@ export interface ModuleInfo {
 }
 
 // Codes gratuits (Admin > Codes gratuits) : accès complet gratuit (durée ou
-// illimité) ou pack initial offert. Cf. codes_gratuits.offre.
-export type OffreCodeGratuit = 'acces' | 'pack_initial'
+// illimité), pack initial offert, ou réduction d'un montant en euros sur le
+// prochain paiement. Cf. codes_gratuits.offre.
+export type OffreCodeGratuit = 'acces' | 'pack_initial' | 'reduction'
