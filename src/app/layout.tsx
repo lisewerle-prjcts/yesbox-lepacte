@@ -8,6 +8,8 @@ import { EditModeProvider } from '@/components/edit-mode/EditModeContext'
 import EditModeToggle from '@/components/edit-mode/EditModeToggle'
 import { LocaleProvider } from '@/components/i18n/LocaleContext'
 import GlobalLocaleSwitcher from '@/components/i18n/GlobalLocaleSwitcher'
+import { SITE_URL } from '@/lib/site'
+import { jsonLd, organisation, siteWeb } from '@/lib/donnees-structurees'
 
 const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
 const dmMono = DM_Mono({ subsets: ['latin'], variable: '--font-geist-mono', weight: ['400', '500'], display: 'swap' })
@@ -22,14 +24,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: 'https://yesbox-lepacte.fr',
     siteName: 'YES BOX — Le Pacte',
     title: 'YES BOX — Le pacte des couples qui tiennent',
     description: 'Des modules simples et ludiques pour parler de ce qui compte, sans thérapeute et sans pression. Module 1 gratuit.',
   },
   twitter: { card: 'summary_large_image', title: 'YES BOX — Le Pacte', description: 'Le programme pour les couples qui tiennent.' },
   robots: { index: true, follow: true },
-  metadataBase: new URL('https://yesbox-lepacte.fr'),
+  metadataBase: new URL(SITE_URL),
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -48,6 +49,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} className={`${dmSans.variable} ${dmMono.variable} ${playfair.variable}`}>
       <body>
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(organisation)} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(siteWeb)} />
         <LocaleProvider initialLocale={locale}>
           <EditModeProvider isAdmin={isAdmin} initialContent={content}>
             {children}

@@ -42,6 +42,16 @@ const nextConfig = {
       bodySizeLimit: '5mb',
     },
   },
+  // Une seule adresse officielle : la version sans www est redirigée (301)
+  // vers https://www.yesbox-lepacte.fr (voir src/lib/site.ts).
+  async redirects() {
+    return [{
+      source: '/:path*',
+      has: [{ type: 'host', value: 'yesbox-lepacte.fr' }],
+      destination: 'https://www.yesbox-lepacte.fr/:path*',
+      statusCode: 301,
+    }]
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },

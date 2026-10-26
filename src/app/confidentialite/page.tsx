@@ -6,6 +6,7 @@ import { getLocale, getT } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'Politique de confidentialité',
   description: 'Comment YES BOX — Le Pacte collecte, utilise et protège vos données personnelles.',
+  alternates: { canonical: '/confidentialite' },
 }
 
 const CONTACT = 'lise.yesbox@gmail.com'
