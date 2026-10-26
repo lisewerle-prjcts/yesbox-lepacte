@@ -10,6 +10,8 @@ export const config = {
     // Les routes /api/* (webhook Stripe, tâche planifiée) se protègent elles-mêmes
     // (signature Stripe, secret de cron) et ne doivent jamais être redirigées vers
     // /connexion faute de cookie de session — elles n'en ont jamais.
-    '/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // robots.txt, sitemap.xml et l'image de partage doivent rester lisibles par
+    // les robots (moteurs, IA, réseaux sociaux), qui ne sont jamais connectés.
+    '/((?!api/|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
