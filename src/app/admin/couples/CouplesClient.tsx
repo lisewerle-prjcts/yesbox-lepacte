@@ -25,11 +25,20 @@ interface Couple {
   rdv_annuel_le: string | null
   created_at: string
   derniere_connexion: string | null
+  a_commence: boolean
   emails: EmailEnvoye[]
   members: MemberProgress[]
   modules: ModuleStatus[]
   rdvAnnuels: { valides: (string | null)[]; enCours: boolean; prevuLe: string | null }
 }
+
+// Cases « Masquer… » au-dessus de la liste des couples.
+type Masque = 'pacteSigne' | 'nonPaire' | 'nonCommence'
+const MASQUES: { cle: Masque; libelle: string }[] = [
+  { cle: 'pacteSigne', libelle: 'Masquer les couples qui ont déjà signé le pacte' },
+  { cle: 'nonPaire', libelle: 'Masquer les couples pas encore pairés' },
+  { cle: 'nonCommence', libelle: 'Masquer les couples qui n’ont pas encore commencé' },
+]
 
 const STATUS_COLOR: Record<string, string> = { locked: '#e6dfd1', en_cours: '#fceef4', complete: '#e2ece4', revealed: 'var(--sage)' }
 const dateLongue = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -125,12 +134,22 @@ export default function CouplesClient({
   const [recherche, setRecherche] = useState('')
   const [critereTri, setCritereTri] = useState<CritereTri>('numero')
   const [croissant, setCroissant] = useState(false)
+  const [masques, setMasques] = useState<Record<Masque, boolean>>({ pacteSigne: false, nonPaire: false, nonCommence: false })
 
   const index = useMemo(() => couples.map(couple => ({ couple, texte: texteRecherche(couple) })), [couples])
   // Chaque mot saisi doit apparaître (ex : « lise octobre »).
   const mots = normaliser(recherche).split(/\s+/).filter(Boolean)
   const couplesTrouves = mots.length ? index.filter(({ texte }) => mots.every(m => texte.includes(m))).map(({ couple }) => couple) : couples
-  const couplesFiltres = trierCouples(couplesTrouves, critereTri, croissant, moduleSlugs)
+  // Pacte signé = module du pacte terminé (signé par les deux) ; pairé = deux
+  // membres ; commencé = au moins une réponse enregistrée.
+  const correspond: Record<Masque, (c: Couple) => boolean> = {
+    pacteSigne: c => !!c.modules.find(m => m.slug === pacteSlug)?.termine_le,
+    nonPaire: c => c.members.length < 2,
+    nonCommence: c => !c.a_commence,
+  }
+  const masquesActifs = MASQUES.filter(m => masques[m.cle])
+  const couplesVisibles = couplesTrouves.filter(c => !masquesActifs.some(m => correspond[m.cle](c)))
+  const couplesFiltres = trierCouples(couplesVisibles, critereTri, croissant, moduleSlugs)
 
   async function addCouple() {
     setAdding(true)
@@ -178,7 +197,15 @@ export default function CouplesClient({
             {croissant ? 'Croissant' : 'Décroissant'}
           </button>
         </div>
-        {mots.length > 0 && (
+        <div className="flex flex-col gap-1.5 mt-3">
+          {MASQUES.map(m => (
+            <label key={m.cle} className="flex items-center gap-2 cursor-pointer" style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+              <input type="checkbox" checked={masques[m.cle]} onChange={e => setMasques(v => ({ ...v, [m.cle]: e.target.checked }))} />
+              {m.libelle} ({couples.filter(correspond[m.cle]).length})
+            </label>
+          ))}
+        </div>
+        {(mots.length > 0 || masquesActifs.length > 0) && (
           <p className="mt-3" style={{ fontSize: 12, color: 'var(--muted)' }}>
             {couplesFiltres.length} résultat{couplesFiltres.length > 1 ? 's' : ''} sur {couples.length}
           </p>
@@ -195,7 +222,7 @@ export default function CouplesClient({
       {couples.length === 0 ? (
         <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple pour l&apos;instant.</div>
       ) : couplesFiltres.length === 0 ? (
-        <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>Aucun couple ne correspond à cette recherche.</div>
+        <div className="card p-8 text-center" style={{ color: 'var(--muted)', fontSize: 14 }}>{masquesActifs.length && !mots.length ? 'Aucun couple à afficher avec ces filtres.' : 'Aucun couple ne correspond à cette recherche.'}</div>
       ) : (
         couplesFiltres.map(couple => (
           <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} moduleSlugs={moduleSlugs} pacteSlug={pacteSlug} />
