@@ -55,13 +55,15 @@ export async function creditDisponible(customerId: string): Promise<number> {
   return Math.max(0, -(customer.balance ?? 0))
 }
 
-export async function reductionCredit(montantCentimes: number): Promise<string> {
+// Réduction à usage unique sur un paiement (crédit de parrainage et/ou code
+// de réduction, cf. src/lib/reduction-code.ts).
+export async function creerReduction(montantCentimes: number, nom: string): Promise<string> {
   const coupon = await getStripe().coupons.create({
     amount_off: montantCentimes,
     currency: 'eur',
     duration: 'once',
     max_redemptions: 1,
-    name: 'Crédit parrainage YES BOX',
+    name: nom,
   })
   return coupon.id
 }

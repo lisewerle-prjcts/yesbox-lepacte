@@ -6,7 +6,8 @@ import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { getStripe, PRIX_YESBOX_ID, PRIX_ABONNEMENT_ANNUEL_ID } from '@/lib/stripe'
 import { aAccesComplet, aPackInitialActif, estAbonnementActif, estCompteResilie, aDejaEuLaYesBox } from '@/lib/abonnement'
-import { creditDisponible, reductionCredit } from '@/lib/pack-initial'
+import { creditDisponible, creerReduction } from '@/lib/pack-initial'
+import { reductionDisponible } from '@/lib/reduction-code'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { programmerBasculeAnnuelle } from '@/lib/bascule-annuelle'
 import { estCarteYesBox, normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
@@ -75,14 +76,22 @@ export async function demarrerAbonnement(renonciationRetractation: boolean) {
       await stripe.customers.update(customerId, { preferred_locales: [locale] }).catch(() => {})
     }
 
-    // Crédit de parrainage : réduction sur le pack, en laissant au moins
-    // 0,50 € à payer (minimum Stripe d'un paiement).
+    // Code de réduction puis crédit de parrainage : réduction sur le pack,
+    // en laissant au moins 0,50 € à payer (minimum Stripe d'un paiement).
     const prix = await stripe.prices.retrieve(PRIX_YESBOX_ID)
-    const credit = Math.min(await creditDisponible(customerId), Math.max(0, (prix.unit_amount ?? 0) - 50))
-    const coupon = credit > 0 ? await reductionCredit(credit) : null
+    const plafond = Math.max(0, (prix.unit_amount ?? 0) - 50)
+    const reduction = await reductionDisponible(admin, ctx.coupleId)
+    const montantCode = Math.min(reduction?.montantCentimes ?? 0, plafond)
+    const credit = Math.min(await creditDisponible(customerId), plafond - montantCode)
+    const nomReduction = [montantCode > 0 && `Code ${reduction!.code}`, credit > 0 && 'Crédit parrainage YES BOX'].filter(Boolean).join(' + ')
+    const coupon = montantCode + credit > 0 ? await creerReduction(montantCode + credit, nomReduction) : null
 
     const maintenant = new Date().toISOString()
-    const metadata = { type: 'pack_initial', couple_id: ctx.coupleId, credit_parrainage_centimes: String(credit), cgv_acceptees_le: maintenant, renonciation_retractation_le: maintenant }
+    const metadata = {
+      type: 'pack_initial', couple_id: ctx.coupleId, credit_parrainage_centimes: String(credit),
+      ...(montantCode > 0 ? { reduction_code_centimes: String(montantCode), reduction_utilisation_id: reduction!.utilisationId } : {}),
+      cgv_acceptees_le: maintenant, renonciation_retractation_le: maintenant,
+    }
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer: customerId,
@@ -169,6 +178,16 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
       await stripe.customers.update(customerId, { preferred_locales: [locale] }).catch(() => {})
     }
 
+    // Code de réduction sur le premier paiement annuel, en laissant au moins
+    // 0,50 € à payer (le crédit de parrainage, lui, est déduit par Stripe).
+    const reduction = await reductionDisponible(admin, ctx.coupleId)
+    let montantCode = 0
+    if (reduction) {
+      const prix = await stripe.prices.retrieve(PRIX_ABONNEMENT_ANNUEL_ID)
+      montantCode = Math.min(reduction.montantCentimes, Math.max(0, (prix.unit_amount ?? 0) - 50))
+    }
+    const coupon = montantCode > 0 ? await creerReduction(montantCode, `Code ${reduction!.code}`) : null
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
@@ -176,8 +195,11 @@ export async function passerAuRendezVousAnnuel(renonciationRetractation = false)
       success_url: `${appUrl}/mon-compte?abonnement=succes`,
       cancel_url: `${appUrl}/journal?abonnement=annule`,
       subscription_data: { metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() } },
-      metadata: { couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString() },
-      allow_promotion_codes: true,
+      metadata: {
+        couple_id: ctx.coupleId, formule: 'annuel', cgv_acceptees_le: new Date().toISOString(), renonciation_retractation_le: new Date().toISOString(),
+        ...(coupon ? { reduction_code_centimes: String(montantCode), reduction_utilisation_id: reduction!.utilisationId } : {}),
+      },
+      ...(coupon ? { discounts: [{ coupon }] } : { allow_promotion_codes: true }),
       // Page de paiement dans la langue du site.
       locale,
     })
@@ -328,6 +350,13 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
   }
 
   rafraichir()
+  if (data.offre === 'reduction') {
+    const euros = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: data.montant_centimes % 100 ? 2 : 0 }).format(data.montant_centimes / 100)
+    const jusquau = data.expire_le ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'fr-FR', { dateStyle: 'long' }).format(new Date(data.expire_le)) : null
+    return { success: true, message: jusquau
+      ? t(locale, `Code activé : ${euros} de réduction sur votre prochain paiement, jusqu’au ${jusquau}.`, `Code activated: ${euros} off your next payment, until ${jusquau}.`)
+      : t(locale, `Code activé : ${euros} de réduction sur votre prochain paiement.`, `Code activated: ${euros} off your next payment.`) }
+  }
   if (data.offre === 'pack_initial') {
     return { success: true, message: t(locale, 'Code activé : votre pack initial YES BOX – Le Pacte est ouvert, avec un an pour le réaliser.', 'Code activated: your YES BOX – Le Pacte starter pack is open, with one year to complete it.') }
   }

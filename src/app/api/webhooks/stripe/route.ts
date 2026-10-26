@@ -6,6 +6,7 @@ import { ajouterMois } from '@/lib/dates'
 import { INACTIVITE_MOIS } from '@/lib/conservation'
 import { enregistrerCarteCadeau } from '@/lib/cartes-cadeaux'
 import { enregistrerPackInitial, consommerCredit } from '@/lib/pack-initial'
+import { marquerReductionUtilisee } from '@/lib/reduction-code'
 
 export const runtime = 'nodejs'
 
@@ -82,13 +83,15 @@ export async function POST(req: Request) {
           break
         }
         // Achat du pack initial (paiement unique, /abonnement) : le pack est
-        // ouvert pour 1 an, et le crédit de parrainage appliqué en réduction
-        // est retiré du solde Stripe (une seule fois : événement idempotent).
+        // ouvert pour 1 an, le crédit de parrainage appliqué en réduction
+        // est retiré du solde Stripe et le code de réduction marqué utilisé
+        // (une seule fois : événement idempotent).
         if (session.mode === 'payment' && session.metadata?.type === 'pack_initial') {
           await enregistrerPackInitial(admin, session)
           const credit = Number(session.metadata.credit_parrainage_centimes) || 0
           const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
           if (credit > 0 && customerId && session.payment_status === 'paid') await consommerCredit(customerId, credit)
+          if (session.payment_status === 'paid') await marquerReductionUtilisee(admin, session.metadata.reduction_utilisation_id)
           break
         }
         if (session.mode !== 'subscription' || !session.subscription) break
@@ -107,6 +110,7 @@ export async function POST(req: Request) {
           subscription_canceled_at: null,
         }).eq('id', coupleId))
         await enregistrerFormule(admin, coupleId, subscription)
+        await marquerReductionUtilisee(admin, session.metadata?.reduction_utilisation_id)
         break
       }
 
