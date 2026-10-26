@@ -284,54 +284,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PACTE DE COUPLE */}
-      <section className="py-20" style={{ background: 'var(--brand-tint)', borderTop: '1px solid var(--brand-soft)', borderBottom: '1px solid var(--brand-soft)' }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="eyebrow mb-4">
-                <EditableText id="home.pacte.eyebrow">— Notre rituel</EditableText>
-              </div>
-              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
-                <EditableText id="home.pacte.title.prefix">Un</EditableText>{' '}
-                <EditableText id="home.pacte.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>pacte de couple</EditableText>,<br />
-                <EditableText id="home.pacte.title.suffix">à renouveler chaque année.</EditableText>
-              </h2>
-              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)', marginTop: 20 }}>
-                <EditableText id="home.pacte.paragraph" multiline>À la fin du programme, vous écrivez ensemble votre pacte de couple, avec ce qui compte pour vous, ce à quoi vous vous engagez et vos projets pour l&apos;année qui vient. Puis, chaque année à votre date anniversaire, vous vous offrez un rendez-vous rien qu&apos;à vous deux : comme une promesse que vous vous faites. Une soirée pour regarder l&apos;année écoulée, dire ce qui a pesé avant que ça ne s&apos;installe, et vous choisir à nouveau.</EditableText>
-              </p>
-              <ul className="mt-6 space-y-3">
-                {pacteList.map((item, i) => (
-                  <li key={i} className="flex gap-3 items-start">
-                    <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
-                    <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.pacte.list.${i}`}>{item}</EditableText></span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div style={{ background: 'var(--paper)', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}>
-              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'var(--muted-2)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
-                <EditableText id="home.pacte.card.eyebrow">Notre pacte</EditableText>
-              </p>
-              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'var(--ink)' }}>
-                <EditableText id="home.pacte.card.title">Le pacte de couple</EditableText>
-              </h3>
-              {pacteRows.map((row, idx) => (
-                <div key={idx} className="flex justify-between gap-4 py-3" style={{ borderBottom: idx < pacteRows.length - 1 ? '1px solid var(--line)' : 'none', fontSize: 13 }}>
-                  <span className="font-mono uppercase" style={{ color: 'var(--muted-2)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.pacte.card.rows.${idx}.k`}>{row.k}</EditableText></span>
-                  <span className="text-right" style={{ color: 'var(--ink)', fontWeight: 500 }}><EditableText id={`home.pacte.card.rows.${idx}.v`}>{row.v}</EditableText></span>
-                </div>
-              ))}
-              <div className="flex justify-end mt-4">
-                <div className="flex items-center justify-center text-center font-bold" style={{ width: 112, height: 112, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.25, padding: 14 }}>
-                  <EditableText id="home.pacte.card.pastille" multiline>Un pacte à deux, un rendez-vous chaque année.</EditableText>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* LE PROGRAMME : 8 MODULES, LE PACTE, PUIS LE RENDEZ-VOUS ANNUEL */}
       <section id="modules" className="py-20" style={{ background: 'var(--paper)' }}>
         <div className="max-w-6xl mx-auto px-6">
@@ -381,6 +333,54 @@ export default function LandingPage() {
               <EditableText id="home.modules.infos.prefix">Pour plus d&apos;informations, lire les</EditableText>{' '}
               <Link href="/cgv" style={{ color: 'var(--brand)', textDecoration: 'underline' }}><EditableText id="home.modules.infos.link.v2">conditions générales de vente</EditableText></Link>.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* PACTE DE COUPLE */}
+      <section className="py-20" style={{ background: 'var(--brand-tint)', borderTop: '1px solid var(--brand-soft)', borderBottom: '1px solid var(--brand-soft)' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="eyebrow mb-4">
+                <EditableText id="home.pacte.eyebrow">— Notre rituel</EditableText>
+              </div>
+              <h2 className="font-serif" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
+                <EditableText id="home.pacte.title.prefix">Un</EditableText>{' '}
+                <EditableText id="home.pacte.title.highlight" as="em" style={{ color: 'var(--brand)', fontStyle: 'italic' }}>pacte de couple</EditableText>,<br />
+                <EditableText id="home.pacte.title.suffix">à renouveler chaque année.</EditableText>
+              </h2>
+              <p style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--muted)', marginTop: 20 }}>
+                <EditableText id="home.pacte.paragraph" multiline>À la fin du programme, vous écrivez ensemble votre pacte de couple, avec ce qui compte pour vous, ce à quoi vous vous engagez et vos projets pour l&apos;année qui vient. Puis, chaque année à votre date anniversaire, vous vous offrez un rendez-vous rien qu&apos;à vous deux : comme une promesse que vous vous faites. Une soirée pour regarder l&apos;année écoulée, dire ce qui a pesé avant que ça ne s&apos;installe, et vous choisir à nouveau.</EditableText>
+              </p>
+              <ul className="mt-6 space-y-3">
+                {pacteList.map((item, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--sage)' }} />
+                    <span style={{ fontSize: 14, color: 'var(--ink-2)' }}><EditableText id={`home.pacte.list.${i}`}>{item}</EditableText></span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ background: 'var(--paper)', borderRadius: 'var(--r-lg)', padding: '32px', border: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}>
+              <p className="font-mono text-center mb-1" style={{ fontSize: 10, color: 'var(--muted-2)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
+                <EditableText id="home.pacte.card.eyebrow">Notre pacte</EditableText>
+              </p>
+              <h3 className="font-serif text-center mb-6" style={{ fontSize: 22, color: 'var(--ink)' }}>
+                <EditableText id="home.pacte.card.title">Le pacte de couple</EditableText>
+              </h3>
+              {pacteRows.map((row, idx) => (
+                <div key={idx} className="flex justify-between gap-4 py-3" style={{ borderBottom: idx < pacteRows.length - 1 ? '1px solid var(--line)' : 'none', fontSize: 13 }}>
+                  <span className="font-mono uppercase" style={{ color: 'var(--muted-2)', letterSpacing: '.08em', fontSize: 11 }}><EditableText id={`home.pacte.card.rows.${idx}.k`}>{row.k}</EditableText></span>
+                  <span className="text-right" style={{ color: 'var(--ink)', fontWeight: 500 }}><EditableText id={`home.pacte.card.rows.${idx}.v`}>{row.v}</EditableText></span>
+                </div>
+              ))}
+              <div className="flex justify-end mt-4">
+                <div className="flex items-center justify-center text-center font-bold" style={{ width: 112, height: 112, borderRadius: '50%', background: 'var(--brand)', color: 'white', fontSize: 11, lineHeight: 1.25, padding: 14 }}>
+                  <EditableText id="home.pacte.card.pastille" multiline>Un pacte à deux, un rendez-vous chaque année.</EditableText>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
