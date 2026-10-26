@@ -5,7 +5,7 @@ export default async function AdminCodesPage() {
   const admin = createAdminClient()
   const { data: codes } = await admin
     .from('codes_gratuits')
-    .select('id, code, duree_mois, usages_max, usages, actif, note, created_at')
+    .select('id, code, offre, duree_mois, usages_max, usages, actif, note, created_at')
     .order('created_at', { ascending: false })
 
   return (
@@ -13,7 +13,7 @@ export default async function AdminCodesPage() {
       <div className="mb-6">
         <h1 className="font-serif text-3xl font-bold mb-1" style={{ color: 'var(--ink)' }}>Codes gratuits</h1>
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-          Distribue des codes donnant un accès complet gratuit (testeurs), sans passer par Stripe. Un couple ne peut utiliser qu&apos;un seul code.
+          Distribue des codes donnant le pack initial offert ou un accès complet gratuit, sans passer par Stripe. Un couple ne peut utiliser qu&apos;un seul code.
         </p>
       </div>
       <CodesGratuitsClient codes={codes || []} />

@@ -328,6 +328,9 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
   }
 
   rafraichir()
+  if (data.offre === 'pack_initial') {
+    return { success: true, message: t(locale, 'Code activé : votre pack initial YES BOX – Le Pacte est ouvert, avec un an pour le réaliser.', 'Code activated: your YES BOX – Le Pacte starter pack is open, with one year to complete it.') }
+  }
   return { success: true, message: t(locale, 'Code activé : votre accès gratuit est ouvert.', 'Code activated: your free access is open.') }
 }
 
