@@ -182,3 +182,7 @@ export interface ModuleInfo {
   sousTitre_en?: string
   description_en?: string
 }
+
+// Codes gratuits (Admin > Codes gratuits) : accès complet gratuit (durée ou
+// illimité) ou pack initial offert. Cf. codes_gratuits.offre.
+export type OffreCodeGratuit = 'acces' | 'pack_initial'

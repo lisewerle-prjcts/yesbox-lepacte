@@ -22,7 +22,7 @@ import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
-import type { QuestionType } from '@/types'
+import type { OffreCodeGratuit, QuestionType } from '@/types'
 
 function revalidateModuleLists() {
   revalidatePath('/admin/contenu')
@@ -682,15 +682,17 @@ function genererCodeAleatoire() {
 }
 
 export async function adminCreerCodeGratuit(fields: {
-  code?: string; dureeMois?: number | null; usagesMax: number; note?: string
+  code?: string; offre?: OffreCodeGratuit; dureeMois?: number | null; usagesMax: number; note?: string
 }) {
   await assertAdmin()
   const admin = createAdminClient()
 
   const code = (fields.code?.trim() || genererCodeAleatoire()).toUpperCase()
+  const offre = fields.offre ?? 'acces'
   const { data, error } = await admin.from('codes_gratuits').insert({
     code,
-    duree_mois: fields.dureeMois ?? null,
+    offre,
+    duree_mois: offre === 'pack_initial' ? null : fields.dureeMois ?? null,
     usages_max: fields.usagesMax,
     note: fields.note?.trim() || null,
   }).select('id').single()
@@ -706,6 +708,34 @@ export async function adminBasculerCodeGratuit(id: string, actif: boolean) {
   const { error } = await admin.from('codes_gratuits').update({ actif }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/codes')
+  return { success: true }
+}
+
+// Offre d'un code gratuit : accès complet ('acces', durée ou illimité) ou
+// pack initial offert ('pack_initial'). Ne vaut que pour les prochaines
+// utilisations : les couples qui l'ont déjà utilisé gardent leur accès.
+export async function adminModifierOffreCode(id: string, offre: OffreCodeGratuit) {
+  await assertAdmin()
+  if (offre !== 'acces' && offre !== 'pack_initial') return { error: 'Offre inconnue.' }
+  const admin = createAdminClient()
+  const { error } = await admin.from('codes_gratuits')
+    .update(offre === 'pack_initial' ? { offre, duree_mois: null } : { offre }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/codes')
+  return { success: true }
+}
+
+// Supprime un code gratuit et la trace de ses utilisations (cascade). Les
+// couples qui l'ont utilisé gardent l'accès déjà reçu et pourront saisir un
+// autre code.
+export async function adminSupprimerCodeGratuit(id: string) {
+  await assertAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('codes_gratuits').delete().eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/codes')
+  revalidatePath('/admin/utilisateurs')
+  revalidatePath('/admin/actions')
   return { success: true }
 }
 

@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode } from '@/app/actions/admin'
+import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode, adminModifierOffreCode, adminSupprimerCodeGratuit } from '@/app/actions/admin'
+import type { OffreCodeGratuit } from '@/types'
 
 interface CodeGratuit {
   id: string
   code: string
+  offre: OffreCodeGratuit
   duree_mois: number | null
   usages_max: number
   usages: number
@@ -112,9 +114,45 @@ function Duree({ code, onModifie }: { code: CodeGratuit; onModifie: (dureeMois: 
   )
 }
 
+const LIBELLES_OFFRE: Record<OffreCodeGratuit, string> = {
+  pack_initial: 'Pack initial offert',
+  acces: 'Accès complet gratuit',
+}
+
+// Offre du code, modifiable : ne change que les prochaines utilisations.
+function Offre({ code, onModifie }: { code: CodeGratuit; onModifie: (offre: OffreCodeGratuit) => void }) {
+  const [enregistrement, setEnregistrement] = useState(false)
+  const [erreur, setErreur] = useState('')
+
+  async function changer(offre: OffreCodeGratuit) {
+    setErreur('')
+    setEnregistrement(true)
+    const res = await adminModifierOffreCode(code.id, offre)
+    setEnregistrement(false)
+    if (res.error) { setErreur(res.error); return }
+    onModifie(offre)
+  }
+
+  return (
+    <div>
+      <select
+        className="field py-1 px-2 text-sm"
+        value={code.offre}
+        disabled={enregistrement}
+        onChange={e => changer(e.target.value as OffreCodeGratuit)}
+        aria-label={`Offre du code ${code.code}`}
+      >
+        {(Object.keys(LIBELLES_OFFRE) as OffreCodeGratuit[]).map(o => <option key={o} value={o}>{LIBELLES_OFFRE[o]}</option>)}
+      </select>
+      {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
+    </div>
+  )
+}
+
 export default function CodesGratuitsClient({ codes: initialCodes }: { codes: CodeGratuit[] }) {
   const [codes, setCodes] = useState(initialCodes)
   const [codeInput, setCodeInput] = useState('')
+  const [offre, setOffre] = useState<OffreCodeGratuit>('pack_initial')
   const [dureeMois, setDureeMois] = useState('')
   const [usagesMax, setUsagesMax] = useState('1')
   const [note, setNote] = useState('')
@@ -126,14 +164,15 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
     setCreating(true)
     const res = await adminCreerCodeGratuit({
       code: codeInput || undefined,
-      dureeMois: dureeMois ? Number(dureeMois) : null,
+      offre,
+      dureeMois: offre === 'acces' && dureeMois ? Number(dureeMois) : null,
       usagesMax: Number(usagesMax) || 1,
       note,
     })
     setCreating(false)
     if (res.error) { setError(res.error); return }
     setCodes(cs => [{
-      id: res.id ?? crypto.randomUUID(), code: res.code!, duree_mois: dureeMois ? Number(dureeMois) : null,
+      id: res.id ?? crypto.randomUUID(), code: res.code!, offre, duree_mois: offre === 'acces' && dureeMois ? Number(dureeMois) : null,
       usages_max: Number(usagesMax) || 1, usages: 0, actif: true, note: note || null, created_at: new Date().toISOString(),
     }, ...cs])
     setCodeInput(''); setDureeMois(''); setUsagesMax('1'); setNote('')
@@ -144,18 +183,37 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
     await adminBasculerCodeGratuit(id, actif)
   }
 
+  async function supprimer(c: CodeGratuit) {
+    const suite = c.usages
+      ? `\n\n${c.usages} couple${c.usages > 1 ? 's l’ont' : ' l’a'} déjà utilisé : l’accès déjà reçu est conservé.`
+      : ''
+    if (!window.confirm(`Supprimer définitivement le code ${c.code} ?${suite}`)) return
+    setError('')
+    const res = await adminSupprimerCodeGratuit(c.id)
+    if (res.error) { setError(res.error); return }
+    setCodes(cs => cs.filter(x => x.id !== c.id))
+  }
+
   return (
     <div className="space-y-6">
       <div className="card p-5">
         <h2 className="font-semibold mb-3" style={{ fontSize: 15 }}>Créer un code</h2>
-        <div className="grid sm:grid-cols-4 gap-3 mb-3">
+        <div className="grid sm:grid-cols-5 gap-3 mb-3">
           <div>
             <label className="text-xs text-gray-500 block mb-1">Code (vide = généré)</label>
-            <input className="field uppercase" placeholder="BETA2026" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
+            <input className="field uppercase" placeholder="YESLAUNCH26" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Offre</label>
+            <select className="field" value={offre} onChange={e => setOffre(e.target.value as OffreCodeGratuit)}>
+              {(Object.keys(LIBELLES_OFFRE) as OffreCodeGratuit[]).map(o => <option key={o} value={o}>{LIBELLES_OFFRE[o]}</option>)}
+            </select>
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Durée (mois, vide = illimité)</label>
-            <input type="number" min={1} className="field" placeholder="12" value={dureeMois} onChange={e => setDureeMois(e.target.value)} />
+            {offre === 'acces'
+              ? <input type="number" min={1} className="field" placeholder="12" value={dureeMois} onChange={e => setDureeMois(e.target.value)} />
+              : <p className="text-xs text-gray-500 pt-2">1 an pour réaliser le pack</p>}
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Nombre max d&apos;utilisations</label>
@@ -181,6 +239,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
             <thead>
               <tr className="text-left text-xs text-gray-400 border-b">
                 <th className="py-2">Code</th>
+                <th className="py-2">Offre</th>
                 <th className="py-2">Durée</th>
                 <th className="py-2">Usages</th>
                 <th className="py-2">Note</th>
@@ -193,7 +252,12 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
                 <tr key={c.id} className="border-b last:border-0">
                   <td className="py-2 font-mono font-semibold">{c.code}</td>
                   <td className="py-2">
-                    <Duree code={c} onModifie={dureeMois => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, duree_mois: dureeMois } : x))} />
+                    <Offre code={c} onModifie={offre => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, offre, duree_mois: offre === 'pack_initial' ? null : x.duree_mois } : x))} />
+                  </td>
+                  <td className="py-2">
+                    {c.offre === 'acces'
+                      ? <Duree key={`${c.id}-${c.duree_mois}`} code={c} onModifie={dureeMois => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, duree_mois: dureeMois } : x))} />
+                      : <span className="text-xs text-gray-500">1 an</span>}
                   </td>
                   <td className="py-2">
                     <UsagesMax code={c} onModifie={usagesMax => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, usages_max: usagesMax } : x))} />
@@ -201,9 +265,14 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
                   <td className="py-2 text-gray-500">{c.note || '—'}</td>
                   <td className="py-2">{c.actif ? <span className="text-green-600">Actif</span> : <span className="text-gray-400">Désactivé</span>}</td>
                   <td className="py-2">
-                    <button onClick={() => basculer(c.id, !c.actif)} className="btn-ghost text-xs py-1 px-2">
-                      {c.actif ? 'Désactiver' : 'Réactiver'}
-                    </button>
+                    <div className="flex gap-1.5">
+                      <button onClick={() => basculer(c.id, !c.actif)} className="btn-ghost text-xs py-1 px-2">
+                        {c.actif ? 'Désactiver' : 'Réactiver'}
+                      </button>
+                      <button onClick={() => supprimer(c)} className="btn-ghost text-xs py-1 px-2 text-red-600">
+                        Supprimer
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

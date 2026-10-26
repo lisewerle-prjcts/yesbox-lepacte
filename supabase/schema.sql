@@ -1646,3 +1646,76 @@ grant execute on function public.migrer_abonnement_solo_vers_couple(uuid, uuid) 
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel'));
+
+-- ============================================================
+-- Migration : codes gratuits « pack initial ».
+-- 1. codes_gratuits.offre : 'acces' (accès complet gratuit, durée_mois
+--    ou illimité, comme avant) ou 'pack_initial' (pack initial YES BOX –
+--    Le Pacte offert : modules 2 à 9 pendant 12 mois, sans le module
+--    « Notre rendez-vous annuel », comme un pack acheté 58 €).
+-- 2. utiliser_code_gratuit ouvre le pack pour les codes 'pack_initial'
+--    (sans jamais raccourcir un pack déjà plus long) et renvoie l'offre.
+-- 3. Codes existants : YESLAUNCH26, BETAFACEBOOK26 et BETANLR26 passent au
+--    pack initial offert ; ROUND#1, DELAVAL, LISEJE2026 et LAMICHE2026 à
+--    l'accès gratuit illimité, y compris pour les couples qui les ont déjà
+--    utilisés. Les couples qui ont déjà utilisé un code passé au pack
+--    initial gardent l'accès qu'ils ont reçu.
+-- À exécuter AVANT de déployer le code correspondant.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.codes_gratuits add column if not exists offre text not null default 'acces';
+alter table public.codes_gratuits drop constraint if exists codes_gratuits_offre_check;
+alter table public.codes_gratuits add constraint codes_gratuits_offre_check check (offre in ('acces', 'pack_initial'));
+
+create or replace function public.utiliser_code_gratuit(p_code text, p_couple_id uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_code public.codes_gratuits;
+  v_expire timestamptz;
+begin
+  select * into v_code from public.codes_gratuits
+  where code = upper(trim(p_code)) and actif = true
+  for update;
+
+  if not found then
+    return json_build_object('success', false, 'error', 'invalide');
+  end if;
+  if v_code.usages >= v_code.usages_max then
+    return json_build_object('success', false, 'error', 'epuise');
+  end if;
+  if exists (select 1 from public.codes_gratuits_utilisations where couple_id = p_couple_id) then
+    return json_build_object('success', false, 'error', 'deja_utilise');
+  end if;
+
+  update public.codes_gratuits set usages = usages + 1 where id = v_code.id;
+  insert into public.codes_gratuits_utilisations (code_id, couple_id) values (v_code.id, p_couple_id);
+
+  if v_code.offre = 'pack_initial' then
+    -- 12 mois = DUREE_MOIS_YESBOX (src/lib/abonnement.ts).
+    select greatest(coalesce(pack_initial_expire_le, now()), now() + interval '12 months') into v_expire
+    from public.couples where id = p_couple_id;
+    update public.couples set pack_initial_expire_le = v_expire where id = p_couple_id;
+  else
+    v_expire := case
+      when v_code.duree_mois is null then timestamptz '2999-01-01'
+      else now() + (v_code.duree_mois || ' months')::interval
+    end;
+    update public.couples set acces_gratuit_expire_le = v_expire where id = p_couple_id;
+  end if;
+
+  return json_build_object('success', true, 'offre', v_code.offre, 'expire_le', v_expire);
+end;
+$$;
+revoke execute on function public.utiliser_code_gratuit(text, uuid) from public, anon, authenticated;
+grant execute on function public.utiliser_code_gratuit(text, uuid) to service_role;
+
+update public.codes_gratuits set offre = 'pack_initial', duree_mois = null
+where code in ('YESLAUNCH26', 'BETAFACEBOOK26', 'BETANLR26');
+update public.codes_gratuits set offre = 'acces', duree_mois = null
+where code in ('ROUND#1', 'DELAVAL', 'LISEJE2026', 'LAMICHE2026');
+update public.couples set acces_gratuit_expire_le = timestamptz '2999-01-01'
+where id in (
+  select u.couple_id from public.codes_gratuits_utilisations u
+  join public.codes_gratuits c on c.id = u.code_id
+  where c.code in ('ROUND#1', 'DELAVAL', 'LISEJE2026', 'LAMICHE2026')
+);
