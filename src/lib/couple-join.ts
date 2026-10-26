@@ -3,6 +3,7 @@ import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { enregistrerParrainage } from '@/lib/parrainage'
 import { normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
+import { dateFinPassee } from '@/lib/dates'
 import { ouvrirPremierModuleSiBesoin } from '@/lib/progression'
 import { checkLoginLock, registerFailedLogin, clearLoginAttempts } from '@/lib/rate-limit'
 
@@ -52,9 +53,9 @@ export async function codeInscriptionValide(code: string) {
     if (carte) return !carte.utilise_le && new Date(carte.expire_le).getTime() > Date.now()
   }
 
-  const { data: gratuit } = await admin.from('codes_gratuits').select('usages, usages_max')
+  const { data: gratuit } = await admin.from('codes_gratuits').select('usages, usages_max, actif_jusqu_au')
     .eq('code', clean).eq('actif', true).maybeSingle()
-  return !!gratuit && gratuit.usages < gratuit.usages_max
+  return !!gratuit && gratuit.usages < gratuit.usages_max && !dateFinPassee(gratuit.actif_jusqu_au)
 }
 
 export async function creerCoupleSolo(userId: string, codeAvantage?: string | null) {

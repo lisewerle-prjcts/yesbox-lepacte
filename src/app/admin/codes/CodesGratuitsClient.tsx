@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode, adminModifierOffreCode, adminModifierMontantCode, adminSupprimerCodeGratuit } from '@/app/actions/admin'
+import { adminCreerCodeGratuit, adminBasculerCodeGratuit, adminModifierUsagesMaxCode, adminModifierDureeCode, adminModifierOffreCode, adminModifierMontantCode, adminModifierFinCode, adminSupprimerCodeGratuit } from '@/app/actions/admin'
+import { dateFinPassee } from '@/lib/dates'
 import type { OffreCodeGratuit } from '@/types'
 
 interface CodeGratuit {
@@ -10,6 +11,7 @@ interface CodeGratuit {
   offre: OffreCodeGratuit
   duree_mois: number | null
   montant_centimes: number | null
+  actif_jusqu_au: string | null
   usages_max: number
   usages: number
   actif: boolean
@@ -67,6 +69,48 @@ function Montant({ code, onModifie }: { code: CodeGratuit; onModifie: (montantCe
           </button>
         )}
       </div>
+      {message && <p className={`text-xs mt-1 ${message.ok ? 'text-green-600' : 'text-red-600'}`}>{message.texte}</p>}
+    </div>
+  )
+}
+
+// Date de fin du code (incluse, vide = sans date de fin) : passé ce jour, il
+// ne peut plus être saisi.
+function Fin({ code, onModifie }: { code: CodeGratuit; onModifie: (actifJusquAu: string | null) => void }) {
+  const [valeur, setValeur] = useState(code.actif_jusqu_au ?? '')
+  const [enregistrement, setEnregistrement] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null)
+  const nouvelle = valeur || null
+  const modifie = nouvelle !== code.actif_jusqu_au
+
+  async function enregistrer() {
+    setMessage(null)
+    setEnregistrement(true)
+    const res = await adminModifierFinCode(code.id, nouvelle)
+    setEnregistrement(false)
+    if (res.error) { setMessage({ ok: false, texte: res.error }); return }
+    onModifie(nouvelle)
+    setMessage({ ok: true, texte: 'Enregistré.' })
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="date"
+          className="field py-1 px-2"
+          style={{ width: 150 }}
+          value={valeur}
+          onChange={e => { setValeur(e.target.value); setMessage(null) }}
+          aria-label={`Date de fin du code ${code.code}`}
+        />
+        {modifie && (
+          <button onClick={enregistrer} disabled={enregistrement} className="btn-primary text-xs py-1 px-2">
+            {enregistrement ? '…' : 'OK'}
+          </button>
+        )}
+      </div>
+      {!valeur && <p className="text-xs text-gray-500 mt-1">Sans date de fin</p>}
       {message && <p className={`text-xs mt-1 ${message.ok ? 'text-green-600' : 'text-red-600'}`}>{message.texte}</p>}
     </div>
   )
@@ -225,6 +269,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
   const [offre, setOffre] = useState<OffreCodeGratuit>('pack_initial')
   const [dureeMois, setDureeMois] = useState('')
   const [montant, setMontant] = useState('')
+  const [actifJusquAu, setActifJusquAu] = useState('')
   const [usagesMax, setUsagesMax] = useState('1')
   const [note, setNote] = useState('')
   const [creating, setCreating] = useState(false)
@@ -241,16 +286,17 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
       offre,
       dureeMois: duree,
       montantCentimes,
+      actifJusquAu: actifJusquAu || null,
       usagesMax: Number(usagesMax) || 1,
       note,
     })
     setCreating(false)
     if (res.error) { setError(res.error); return }
     setCodes(cs => [{
-      id: res.id ?? crypto.randomUUID(), code: res.code!, offre, duree_mois: duree, montant_centimes: montantCentimes,
+      id: res.id ?? crypto.randomUUID(), code: res.code!, offre, duree_mois: duree, montant_centimes: montantCentimes, actif_jusqu_au: actifJusquAu || null,
       usages_max: Number(usagesMax) || 1, usages: 0, actif: true, note: note || null, created_at: new Date().toISOString(),
     }, ...cs])
-    setCodeInput(''); setDureeMois(''); setMontant(''); setUsagesMax('1'); setNote('')
+    setCodeInput(''); setDureeMois(''); setMontant(''); setActifJusquAu(''); setUsagesMax('1'); setNote('')
   }
 
   async function basculer(id: string, actif: boolean) {
@@ -273,7 +319,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
     <div className="space-y-6">
       <div className="card p-5">
         <h2 className="font-semibold mb-3" style={{ fontSize: 15 }}>Créer un code</h2>
-        <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
+        <div className="grid sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-3">
           <div>
             <label className="text-xs text-gray-500 block mb-1">Code (vide = généré)</label>
             <input className="field uppercase" placeholder="YESLAUNCH26" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
@@ -295,6 +341,10 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
             {offre !== 'pack_initial'
               ? <input type="number" min={1} className="field" placeholder={offre === 'reduction' ? '3' : '12'} value={dureeMois} onChange={e => setDureeMois(e.target.value)} />
               : <p className="text-xs text-gray-500 pt-2">1 an pour réaliser le pack</p>}
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Actif jusqu&apos;au (vide = sans fin)</label>
+            <input type="date" className="field" value={actifJusquAu} onChange={e => setActifJusquAu(e.target.value)} />
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Nombre max d&apos;utilisations</label>
@@ -323,6 +373,7 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
                 <th className="py-2">Offre</th>
                 <th className="py-2">Montant</th>
                 <th className="py-2">Durée</th>
+                <th className="py-2">Actif jusqu&apos;au</th>
                 <th className="py-2">Usages</th>
                 <th className="py-2">Note</th>
                 <th className="py-2">Statut</th>
@@ -347,10 +398,17 @@ export default function CodesGratuitsClient({ codes: initialCodes }: { codes: Co
                       : <span className="text-xs text-gray-500">1 an</span>}
                   </td>
                   <td className="py-2">
+                    <Fin key={`${c.id}-${c.actif_jusqu_au}`} code={c} onModifie={actifJusquAu => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, actif_jusqu_au: actifJusquAu } : x))} />
+                  </td>
+                  <td className="py-2">
                     <UsagesMax code={c} onModifie={usagesMax => setCodes(cs => cs.map(x => x.id === c.id ? { ...x, usages_max: usagesMax } : x))} />
                   </td>
                   <td className="py-2 text-gray-500">{c.note || '—'}</td>
-                  <td className="py-2">{c.actif ? <span className="text-green-600">Actif</span> : <span className="text-gray-400">Désactivé</span>}</td>
+                  <td className="py-2">
+                    {!c.actif ? <span className="text-gray-400">Désactivé</span>
+                      : dateFinPassee(c.actif_jusqu_au) ? <span className="text-orange-600">Expiré</span>
+                      : <span className="text-green-600">Actif</span>}
+                  </td>
                   <td className="py-2">
                     <div className="flex gap-1.5">
                       <button onClick={() => basculer(c.id, !c.actif)} className="btn-ghost text-xs py-1 px-2">

@@ -1789,3 +1789,65 @@ end;
 $$;
 revoke execute on function public.utiliser_code_gratuit(text, uuid) from public, anon, authenticated;
 grant execute on function public.utiliser_code_gratuit(text, uuid) to service_role;
+
+-- ============================================================
+-- Migration : date de fin des codes gratuits.
+-- codes_gratuits.actif_jusqu_au (date, incluse, heure de Paris ; null =
+-- sans date de fin) : passé ce jour, le code ne peut plus être saisi ni
+-- attribué. Pour un code de réduction, une réduction déjà saisie mais pas
+-- encore utilisée ne s'applique plus non plus (src/lib/reduction-code.ts).
+-- Les couples qui ont déjà reçu un accès ou un pack le gardent.
+-- À exécuter AVANT de déployer le code correspondant.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.codes_gratuits add column if not exists actif_jusqu_au date;
+
+create or replace function public.utiliser_code_gratuit(p_code text, p_couple_id uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_code public.codes_gratuits;
+  v_expire timestamptz;
+begin
+  select * into v_code from public.codes_gratuits
+  where code = upper(trim(p_code)) and actif = true
+  for update;
+
+  if not found then
+    return json_build_object('success', false, 'error', 'invalide');
+  end if;
+  if v_code.actif_jusqu_au is not null and (now() at time zone 'Europe/Paris')::date > v_code.actif_jusqu_au then
+    return json_build_object('success', false, 'error', 'expire');
+  end if;
+  if v_code.usages >= v_code.usages_max then
+    return json_build_object('success', false, 'error', 'epuise');
+  end if;
+  if exists (select 1 from public.codes_gratuits_utilisations where couple_id = p_couple_id) then
+    return json_build_object('success', false, 'error', 'deja_utilise');
+  end if;
+
+  update public.codes_gratuits set usages = usages + 1 where id = v_code.id;
+  insert into public.codes_gratuits_utilisations (code_id, couple_id) values (v_code.id, p_couple_id);
+
+  if v_code.offre = 'reduction' then
+    -- Rien à ouvrir : la réduction est appliquée au prochain paiement
+    -- (src/lib/reduction-code.ts).
+    v_expire := case when v_code.duree_mois is null then null
+      else now() + (v_code.duree_mois || ' months')::interval end;
+  elsif v_code.offre = 'pack_initial' then
+    -- 12 mois = DUREE_MOIS_YESBOX (src/lib/abonnement.ts).
+    select greatest(coalesce(pack_initial_expire_le, now()), now() + interval '12 months') into v_expire
+    from public.couples where id = p_couple_id;
+    update public.couples set pack_initial_expire_le = v_expire where id = p_couple_id;
+  else
+    v_expire := case
+      when v_code.duree_mois is null then timestamptz '2999-01-01'
+      else now() + (v_code.duree_mois || ' months')::interval
+    end;
+    update public.couples set acces_gratuit_expire_le = v_expire where id = p_couple_id;
+  end if;
+
+  return json_build_object('success', true, 'offre', v_code.offre, 'expire_le', v_expire, 'montant_centimes', v_code.montant_centimes);
+end;
+$$;
+revoke execute on function public.utiliser_code_gratuit(text, uuid) from public, anon, authenticated;
+grant execute on function public.utiliser_code_gratuit(text, uuid) to service_role;
