@@ -68,6 +68,7 @@ export default async function AdminCouples() {
     ? await supabase.from('reponses').select('module_id, user_id').in('module_id', moduleIds)
     : { data: [] }
 
+  const modulesAvecReponses = new Set((reponses || []).map(r => r.module_id))
   const allProfiles = profiles || []
   const unassigned = allProfiles.filter(p => !p.couple_id).map(p => ({ id: p.id, prenom: p.prenom, nom: p.nom, email: p.email, role: p.role }))
 
@@ -127,6 +128,8 @@ export default async function AdminCouples() {
       rdv_annuel_le: rdvAnnuelParCouple.get(couple.id) ?? null,
       created_at: couple.created_at,
       derniere_connexion: derniereConnexion,
+      // A commencé : au moins une réponse enregistrée, par l'un ou l'autre.
+      a_commence: coupleModules.some(m => modulesAvecReponses.has(m.id)),
       emails,
       members: membersWithProgress,
       modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, termine_le: terminesParCouple.get(couple.id)?.[m.slug] ?? null })),
