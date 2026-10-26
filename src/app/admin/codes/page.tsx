@@ -5,7 +5,7 @@ export default async function AdminCodesPage() {
   const admin = createAdminClient()
   const { data: codes } = await admin
     .from('codes_gratuits')
-    .select('id, code, offre, duree_mois, montant_centimes, usages_max, usages, actif, note, created_at')
+    .select('id, code, offre, duree_mois, montant_centimes, actif_jusqu_au, usages_max, usages, actif, note, created_at')
     .order('created_at', { ascending: false })
 
   return (

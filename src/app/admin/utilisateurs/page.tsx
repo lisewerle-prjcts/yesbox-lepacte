@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import UtilisateursClient from './UtilisateursClient'
+import { aujourdhuiParis } from '@/lib/dates'
 
 export default async function AdminUtilisateurs() {
   const supabase = createAdminClient()
@@ -11,7 +12,8 @@ export default async function AdminUtilisateurs() {
       .order('created_at', { ascending: false }),
     supabase.from('couples').select('id, numero, acces_gratuit_expire_le'),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
-    supabase.from('codes_gratuits').select('code, usages, usages_max').eq('actif', true).order('created_at', { ascending: false }),
+    supabase.from('codes_gratuits').select('code, usages, usages_max').eq('actif', true)
+      .or(`actif_jusqu_au.is.null,actif_jusqu_au.gte.${aujourdhuiParis()}`).order('created_at', { ascending: false }),
     supabase.from('codes_gratuits_utilisations').select('couple_id, codes_gratuits(code)'),
     // Qui a commencé à répondre (au moins une réponse enregistrée).
     supabase.from('reponses').select('user_id'),

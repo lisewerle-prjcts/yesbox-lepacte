@@ -18,7 +18,7 @@ import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel } from '@/lib/desinscription'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
-import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois } from '@/lib/dates'
+import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
@@ -689,8 +689,14 @@ function erreurMontant(montantCentimes: number | null | undefined) {
   return null
 }
 
+// Date de fin d'un code (AAAA-MM-JJ, incluse) ou null.
+function erreurDateFin(date: string | null | undefined) {
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return 'Date de fin invalide.'
+  return null
+}
+
 export async function adminCreerCodeGratuit(fields: {
-  code?: string; offre?: OffreCodeGratuit; dureeMois?: number | null; montantCentimes?: number | null; usagesMax: number; note?: string
+  code?: string; offre?: OffreCodeGratuit; dureeMois?: number | null; montantCentimes?: number | null; actifJusquAu?: string | null; usagesMax: number; note?: string
 }) {
   await assertAdmin()
   const admin = createAdminClient()
@@ -701,11 +707,14 @@ export async function adminCreerCodeGratuit(fields: {
     const erreur = erreurMontant(fields.montantCentimes)
     if (erreur) return { error: erreur }
   }
+  const erreurDate = erreurDateFin(fields.actifJusquAu)
+  if (erreurDate) return { error: erreurDate }
   const { data, error } = await admin.from('codes_gratuits').insert({
     code,
     offre,
     duree_mois: offre === 'pack_initial' ? null : fields.dureeMois ?? null,
     montant_centimes: offre === 'reduction' ? fields.montantCentimes : null,
+    actif_jusqu_au: fields.actifJusquAu || null,
     usages_max: fields.usagesMax,
     note: fields.note?.trim() || null,
   }).select('id').single()
@@ -770,6 +779,21 @@ export async function adminSupprimerCodeGratuit(id: string) {
   revalidatePath('/admin/codes')
   revalidatePath('/admin/utilisateurs')
   revalidatePath('/admin/actions')
+  return { success: true }
+}
+
+// Date de fin d'un code (incluse, null = sans date de fin) : passé ce jour,
+// il ne peut plus être saisi ; une réduction saisie mais pas encore utilisée
+// ne s'applique plus. Les accès et packs déjà reçus sont conservés.
+export async function adminModifierFinCode(id: string, actifJusquAu: string | null) {
+  await assertAdmin()
+  const erreur = erreurDateFin(actifJusquAu)
+  if (erreur) return { error: erreur }
+  const admin = createAdminClient()
+  const { error } = await admin.from('codes_gratuits').update({ actif_jusqu_au: actifJusquAu || null }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/codes')
+  revalidatePath('/admin/utilisateurs')
   return { success: true }
 }
 
@@ -844,8 +868,9 @@ export async function adminAttribuerCode(userId: string, code: string, remplacer
   if (!profile?.couple_id) return { error: 'Cette personne n\'a pas encore d\'espace couple : impossible de lui attribuer un code.' }
   const coupleId = profile.couple_id as string
 
-  const { data: nouveau } = await admin.from('codes_gratuits').select('id, actif, usages, usages_max').eq('code', cleanCode).maybeSingle()
+  const { data: nouveau } = await admin.from('codes_gratuits').select('id, actif, usages, usages_max, actif_jusqu_au').eq('code', cleanCode).maybeSingle()
   if (!nouveau || !nouveau.actif) return { error: 'Code invalide ou désactivé.' }
+  if (dateFinPassee(nouveau.actif_jusqu_au)) return { error: 'Ce code a dépassé sa date de fin : prolonge-la dans Codes gratuits.' }
   if (nouveau.usages >= nouveau.usages_max) return { error: 'Ce code a atteint son nombre maximum d\'utilisations : augmente-le dans Codes gratuits.' }
 
   const { data: existant } = await admin.from('codes_gratuits_utilisations').select('id, code_id, codes_gratuits(code, usages)').eq('couple_id', coupleId).maybeSingle()
@@ -862,7 +887,7 @@ export async function adminAttribuerCode(userId: string, code: string, remplacer
   const { data, error } = await admin.rpc('utiliser_code_gratuit', { p_code: cleanCode, p_couple_id: coupleId })
   if (error) return { error: error.message }
   if (!data?.success) {
-    const messages: Record<string, string> = { invalide: 'Code invalide', epuise: 'Ce code a atteint son nombre maximum d\'utilisations', deja_utilise: 'Ce couple a déjà un code' }
+    const messages: Record<string, string> = { invalide: 'Code invalide', expire: 'Ce code a dépassé sa date de fin', epuise: 'Ce code a atteint son nombre maximum d\'utilisations', deja_utilise: 'Ce couple a déjà un code' }
     return { error: messages[data?.error] ?? 'Code invalide' }
   }
 

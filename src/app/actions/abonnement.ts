@@ -342,6 +342,7 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
   const messages: Record<string, { fr: string; en: string }> = {
     invalide: { fr: 'Code invalide', en: 'Invalid code' },
     epuise: { fr: 'Ce code a atteint son nombre maximum d’utilisations', en: 'This code has reached its usage limit' },
+    expire: { fr: 'Ce code n’est plus valable', en: 'This code is no longer valid' },
     deja_utilise: { fr: 'Ton couple a déjà utilisé un code gratuit', en: 'Your couple already redeemed a free code' },
   }
   if (!data?.success) {
