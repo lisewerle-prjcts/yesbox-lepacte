@@ -17,6 +17,7 @@ import { cookies } from 'next/headers'
 import { t, DEFAULT_LOCALE, LOCALE_COOKIE } from '@/lib/i18n/locale'
 import { z } from 'zod'
 import { adresseIp, limiteDepassee, verifierAntiRobot } from '@/lib/limites'
+import { ouvrirAccesSansConfirmation } from '@/lib/adresse-confirmee'
 import type { Locale } from '@/lib/i18n/locale'
 
 function inscriptionSchema(locale: Locale) {
@@ -83,10 +84,12 @@ export async function inscription(formData: FormData) {
     return { error: t(locale, 'Merci d’accepter la charte de participation à la bêta.', 'Please accept the beta participation charter.'), charteBeta: true }
   }
 
-  // Avec Gmail configuré, Supabase crée le compte et génère le lien sans
-  // envoyer de mail : c'est nous qui l'envoyons (cf. lib/confirmation-email).
+  // Avec l'envoi de mails configuré, Supabase crée le compte sans envoyer de
+  // mail : c'est nous qui envoyons le lien de confirmation (cf.
+  // lib/confirmation-email), et la personne entre tout de suite dans son
+  // espace (cf. lib/adresse-confirmee).
   const { data, error } = gmailConfigure()
-    ? await inscrireAvecNotreMail(email, password, prenom, locale)
+    ? await inscrireAvecNotreMail(supabase, email, password, prenom, locale)
     : await supabase.auth.signUp({
         email,
         password,
@@ -158,19 +161,28 @@ export async function inscription(formData: FormData) {
   redirect('/tableau-de-bord')
 }
 
-async function inscrireAvecNotreMail(email: string, password: string, prenom: string, locale: Locale) {
-  const { data, error } = await createAdminClient().auth.admin.generateLink({
-    type: 'signup',
+async function inscrireAvecNotreMail(supabase: Awaited<ReturnType<typeof createClient>>, email: string, password: string, prenom: string, locale: Locale) {
+  const admin = createAdminClient()
+  const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
-    options: { data: { prenom } },
+    user_metadata: { prenom },
+    email_confirm: true,
+    app_metadata: { adresse_a_confirmer: true },
   })
   if (error || !data.user) return { data: { user: null, session: null }, error: error ?? new Error('Inscription impossible') }
-  const envoye = await envoyerMailConfirmation(email, prenom, lienConfirmation(data.properties.hashed_token, 'signup'), locale)
+
+  // Lien de connexion à usage unique : l'ouvrir prouve que l'adresse est
+  // bien la sienne (cf. /auth/confirm).
+  const { data: lien } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
+  const envoye = !!lien?.properties?.hashed_token
+    && await envoyerMailConfirmation(email, prenom, lienConfirmation(lien.properties.hashed_token, 'magiclink'), locale)
   // Le compte existe : même si l'envoi échoue, la personne pourra redemander
-  // le mail depuis l'écran « Vérifie ta boîte mail ».
+  // le mail depuis le bandeau du tableau de bord.
   if (!envoye) console.error('Envoi du mail de confirmation échoué pour', email)
-  return { data: { user: data.user, session: null }, error: null }
+
+  const { data: connexion } = await supabase.auth.signInWithPassword({ email, password })
+  return { data: { user: data.user, session: connexion.session }, error: null }
 }
 
 export async function connexion(formData: FormData) {
@@ -204,9 +216,17 @@ export async function connexion(formData: FormData) {
   if (error) {
     if (error.message.includes('Invalid login credentials')) {
       await registerFailedLogin(email)
-      return { error: t(locale, 'Email ou mot de passe incorrect', 'Incorrect email or password') }
+      return { error: t(locale, 'Email ou mot de passe incorrect', 'Incorrect email or password'), motDePasseIncorrect: true }
     }
     if (error.message.includes('Email not confirmed')) {
+      // Compte créé avant l'accès sans confirmation : Supabase ne répond
+      // « Email not confirmed » qu'une fois le mot de passe vérifié. On ouvre
+      // l'accès (le bandeau demandera de confirmer l'adresse) et on réessaie.
+      const { data: profil } = await createAdminClient().from('profiles').select('id').eq('email', email.toLowerCase()).maybeSingle()
+      if (profil && !(await ouvrirAccesSansConfirmation(createAdminClient(), profil.id)).error) {
+        const { error: nouvelEssai } = await supabase.auth.signInWithPassword({ email, password })
+        if (!nouvelEssai) return finirConnexion(supabase, email)
+      }
       return {
         error: t(
           locale,
@@ -220,6 +240,10 @@ export async function connexion(formData: FormData) {
     return { error: error.message }
   }
 
+  return finirConnexion(supabase, email)
+}
+
+async function finirConnexion(supabase: Awaited<ReturnType<typeof createClient>>, email: string) {
   await clearLoginAttempts(email)
 
   // Étapes annexes : un échec ici ne doit jamais faire échouer la connexion,

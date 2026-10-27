@@ -4,6 +4,8 @@ import { isCouplePaired } from '@/lib/couple-status'
 import DashboardNav from '@/components/dashboard/DashboardNav'
 import { aDonneSonConsentement } from '@/lib/consentement'
 import { charteBetaManquante } from '@/lib/charte-beta'
+import { adresseConfirmee } from '@/lib/adresse-confirmee'
+import BandeauConfirmationAdresse from '@/components/dashboard/BandeauConfirmationAdresse'
 
 export const metadata = { title: 'Accueil' }
 
@@ -18,7 +20,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div style={{ minHeight: '100vh' }}>
       <DashboardNav profile={profile} paired={paired} />
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 24px' }}>{children}</main>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 24px' }}>
+        {!adresseConfirmee(user) && user.email && <BandeauConfirmationAdresse email={user.email} />}
+        {children}
+      </main>
     </div>
   )
 }

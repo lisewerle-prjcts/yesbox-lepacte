@@ -10,6 +10,7 @@ import { assertAdmin } from '@/lib/admin-mail'
 import { envoyerMail, mailConfigure } from '@/lib/mailer'
 import { sendWelcomeEmail, envoyerBienvenueSiEnAttente } from '@/lib/welcome-email'
 import { renvoyerMailConfirmation } from '@/lib/confirmation-email'
+import { adresseConfirmee, marquerAdresseConfirmee } from '@/lib/adresse-confirmee'
 import { langueDuProfil, languesDesProfils } from '@/lib/i18n/langue-profil'
 import type { Locale } from '@/lib/i18n/locale'
 import { supprimerCompte } from '@/lib/suppression-compte'
@@ -580,9 +581,9 @@ export async function adminConfirmerEmail(userId: string) {
 
   const { data } = await admin.auth.admin.getUserById(userId)
   if (!data?.user) return { error: 'Utilisateur introuvable' }
-  if (data.user.email_confirmed_at) return { error: 'Adresse déjà confirmée' }
+  if (adresseConfirmee(data.user)) return { error: 'Adresse déjà confirmée' }
 
-  const { error } = await admin.auth.admin.updateUserById(userId, { email_confirm: true })
+  const { error } = await marquerAdresseConfirmee(admin, userId)
   if (error) return { error: error.message }
 
   const bienvenue = await envoyerBienvenueSiEnAttente(userId)

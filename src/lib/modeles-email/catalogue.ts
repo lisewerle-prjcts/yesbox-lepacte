@@ -83,7 +83,7 @@ const INSCRIPTION: ModeleEmail[] = [
     obligatoires: ['lien'],
     fr: { objet: 'Confirme ton adresse e-mail — YES BOX', corps: `${BONJOUR.fr}
 
-Pour activer ton compte YES BOX — Le Pacte, confirme ton adresse e-mail en cliquant sur le bouton ci-dessous :
+Pour confirmer que cette adresse est bien la tienne et recevoir ton code couple, clique sur le bouton ci-dessous :
 
 [bouton: Confirmer mon adresse | {lien}]
 
@@ -92,7 +92,7 @@ petit: Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur : {lien
 petit: Si tu n'es pas à l'origine de cette inscription, ignore simplement ce message.` },
     en: { objet: 'Confirm your email address — YES BOX', corps: `${BONJOUR.en}
 
-To activate your YES BOX — Le Pacte account, confirm your email address by clicking the button below:
+To confirm this email address is yours and receive your couple code, click the button below:
 
 [bouton: Confirm my address | {lien}]
 

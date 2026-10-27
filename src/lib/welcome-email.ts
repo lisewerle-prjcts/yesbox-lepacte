@@ -3,6 +3,7 @@ import { mailConfigure } from '@/lib/mailer'
 import { envoyerModele } from '@/lib/modeles-email/serveur'
 import type { Locale } from '@/lib/i18n/locale'
 import { langueDuProfil } from '@/lib/i18n/langue-profil'
+import { adresseConfirmee } from '@/lib/adresse-confirmee'
 
 // Texte : modèle « bienvenue » (src/lib/modeles-email/catalogue.ts),
 // modifiable depuis l'admin.
@@ -32,7 +33,7 @@ export async function envoyerBienvenueSiEnAttente(userId: string): Promise<Resul
   if (!profile.couple_id) return 'sans_couple'
 
   const { data: auth } = await admin.auth.admin.getUserById(userId)
-  if (!auth?.user?.email_confirmed_at) return 'non_confirme'
+  if (!auth?.user || !adresseConfirmee(auth.user)) return 'non_confirme'
 
   const { data: couple } = await admin.from('couples').select('pairing_code').eq('id', profile.couple_id).single()
   if (!couple?.pairing_code) return 'sans_code'

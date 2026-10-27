@@ -239,8 +239,8 @@ function DateCouple({
       <label className="flabel">{label}</label>
       {hint && <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: -2, marginBottom: 6 }}>{hint}</p>}
       <div className="flex gap-2">
-        <input type="date" className="field" value={date} onChange={e => setDate(e.target.value)} />
-        <button onClick={enregistrer} disabled={status === 'saving'} className="btn-secondary text-sm px-3" style={{ flexShrink: 0 }}>
+        <ChoixDate value={date} onChange={setDate} />
+        <button onClick={enregistrer} disabled={status === 'saving' || (!!date && !/^\d{4}-\d{2}-\d{2}$/.test(date))} className="btn-secondary text-sm px-3" style={{ flexShrink: 0 }}>
           {status === 'saved' ? <Check className="w-4 h-4" /> : 'OK'}
         </button>
       </div>
@@ -255,6 +255,55 @@ function DateCouple({
           <strong>{prochain.years}</strong>{t(` an${prochain.years > 1 ? 's' : ''}`, ` year${prochain.years > 1 ? 's' : ''}`)}
         </p>
       )}
+    </div>
+  )
+}
+
+// Jour, mois et année en trois listes : le calendrier du navigateur obligeait
+// à remonter mois par mois jusqu'à l'année de la rencontre. Tant qu'une des
+// trois manque, la valeur reste incomplète (« 2015-03- ») et OK est grisé.
+function ChoixDate({ value, onChange }: { value: string; onChange: (date: string) => void }) {
+  const t = useT()
+  const [a = '', m = '', j = ''] = value ? value.split('-') : []
+  const [annee, setAnnee] = useState(a)
+  const [mois, setMois] = useState(m)
+  const [jour, setJour] = useState(j)
+
+  const anneeCourante = new Date().getFullYear()
+  // Quelques années à venir : un mariage peut être prévu.
+  const annees = Array.from({ length: 83 }, (_, i) => String(anneeCourante + 3 - i))
+  const nomsMois = Array.from({ length: 12 }, (_, i) =>
+    new Date(2000, i, 1).toLocaleDateString(t('fr-FR', 'en-US'), { month: 'long' }))
+  const joursDansMois = annee && mois ? new Date(Number(annee), Number(mois), 0).getDate() : 31
+
+  function changer(nouveau: { annee?: string; mois?: string; jour?: string }) {
+    const an = nouveau.annee ?? annee
+    const mo = nouveau.mois ?? mois
+    let jo = nouveau.jour ?? jour
+    // 31 → 30 (ou 28/29) si le mois choisi est plus court.
+    const max = an && mo ? new Date(Number(an), Number(mo), 0).getDate() : 31
+    if (jo && Number(jo) > max) jo = String(max).padStart(2, '0')
+    setAnnee(an)
+    setMois(mo)
+    setJour(jo)
+    onChange(an || mo || jo ? `${an}-${mo}-${jo}` : '')
+  }
+
+  const style = { flex: 1, minWidth: 0, paddingLeft: 8, paddingRight: 4 }
+  return (
+    <div className="flex gap-1.5" style={{ flex: 1, minWidth: 0 }}>
+      <select className="field" style={{ ...style, flex: '0 0 4.2rem' }} value={jour} onChange={e => changer({ jour: e.target.value })} aria-label={t('Jour', 'Day')}>
+        <option value="">{t('Jour', 'Day')}</option>
+        {Array.from({ length: joursDansMois }, (_, i) => String(i + 1).padStart(2, '0')).map(d => <option key={d} value={d}>{Number(d)}</option>)}
+      </select>
+      <select className="field" style={style} value={mois} onChange={e => changer({ mois: e.target.value })} aria-label={t('Mois', 'Month')}>
+        <option value="">{t('Mois', 'Month')}</option>
+        {nomsMois.map((nom, i) => <option key={i} value={String(i + 1).padStart(2, '0')}>{nom}</option>)}
+      </select>
+      <select className="field" style={{ ...style, flex: '0 0 5rem' }} value={annee} onChange={e => changer({ annee: e.target.value })} aria-label={t('Année', 'Year')}>
+        <option value="">{t('Année', 'Year')}</option>
+        {annees.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
     </div>
   )
 }

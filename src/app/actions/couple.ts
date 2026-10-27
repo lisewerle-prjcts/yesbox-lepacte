@@ -9,6 +9,7 @@ import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
 import { mailConfigure } from '@/lib/mailer'
 import { envoyerModele } from '@/lib/modeles-email/serveur'
+import { adresseConfirmee } from '@/lib/adresse-confirmee'
 
 export async function creerCouple(formData: FormData) {
   const supabase = await createClient()
@@ -166,6 +167,11 @@ export async function envoyerInvitationPartenaire(email: string) {
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: t(locale, 'Non authentifié', 'Not authenticated') }
+  // Sans adresse vérifiée, n'importe qui pourrait faire partir des e-mails
+  // de chez nous vers n'importe quelle adresse.
+  if (!adresseConfirmee(user)) {
+    return { error: t(locale, 'Confirme d’abord ton adresse e-mail (lien reçu à l’inscription), puis tu pourras inviter ton/ta partenaire. Tu peux aussi lui partager le lien ou le code directement.', 'Please confirm your email address first (link sent when you signed up), then you can invite your partner. You can also share the link or code with them directly.') }
+  }
 
   const destinataire = email.trim().toLowerCase()
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destinataire) || destinataire.length > 254) {

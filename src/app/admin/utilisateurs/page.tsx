@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import UtilisateursClient from './UtilisateursClient'
 import { aujourdhuiParis } from '@/lib/dates'
+import { adresseConfirmee } from '@/lib/adresse-confirmee'
 
 export default async function AdminUtilisateurs() {
   const supabase = createAdminClient()
@@ -31,7 +32,7 @@ export default async function AdminUtilisateurs() {
   const confirmeById: Record<string, boolean> = {}
   const derniereConnexionById: Record<string, string | null> = {}
   for (const u of authUsers?.users || []) {
-    confirmeById[u.id] = !!u.email_confirmed_at
+    confirmeById[u.id] = adresseConfirmee(u)
     derniereConnexionById[u.id] = u.last_sign_in_at ?? null
   }
 
