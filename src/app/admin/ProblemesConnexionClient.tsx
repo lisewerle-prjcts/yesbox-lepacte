@@ -63,13 +63,14 @@ function LigneNonConfirme({ compte }: { compte: CompteNonConfirme }) {
   const [info, setInfo] = useState<{ ok: boolean; texte: string } | null>(null)
   const [busy, setBusy] = useState(false)
 
-  async function agir(fn: () => Promise<{ success?: boolean; error?: string }>, ok: string) {
+  async function agir(fn: () => Promise<{ success?: boolean; error?: string; avertissement?: string }>, ok: string) {
     setBusy(true)
     setInfo(null)
     const res = await fn()
     setBusy(false)
-    setInfo(res.error ? { ok: false, texte: res.error } : { ok: true, texte: ok })
-    if (!res.error) router.refresh()
+    setInfo(res.error ? { ok: false, texte: res.error } : res.avertissement ? { ok: false, texte: `${ok} Mais ${res.avertissement}.` } : { ok: true, texte: ok })
+    // Avec un avertissement, on garde la ligne affichée pour qu'il reste lisible.
+    if (!res.error && !res.avertissement) router.refresh()
   }
 
   return (
