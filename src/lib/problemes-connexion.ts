@@ -1,5 +1,7 @@
 import type { createAdminClient } from '@/lib/supabase/server'
 
+import { adresseConfirmee } from '@/lib/adresse-confirmee'
+
 type AdminClient = ReturnType<typeof createAdminClient>
 
 // Encart « Problèmes de connexion et d'e-mails » de la vue d'ensemble admin :
@@ -27,7 +29,7 @@ export async function chargerProblemesConnexion(admin: AdminClient) {
   const profilParId = new Map((profils ?? []).map(p => [p.id, p]))
 
   const nonConfirmes: CompteNonConfirme[] = (auth?.users ?? [])
-    .filter(u => !u.email_confirmed_at && maintenant - new Date(u.created_at).getTime() > NON_CONFIRME_APRES_HEURES * 60 * 60_000)
+    .filter(u => !adresseConfirmee(u) && maintenant - new Date(u.created_at).getTime() > NON_CONFIRME_APRES_HEURES * 60 * 60_000)
     .map(u => ({ id: u.id, email: u.email ?? profilParId.get(u.id)?.email ?? '—', prenom: profilParId.get(u.id)?.prenom ?? null, inscritLe: u.created_at }))
     .sort((a, b) => b.inscritLe.localeCompare(a.inscritLe))
 

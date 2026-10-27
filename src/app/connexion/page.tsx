@@ -32,6 +32,9 @@ export default function ConnexionPage() {
   const [useRecoveryCode, setUseRecoveryCode] = useState(false)
   const [mfaResetNotice, setMfaResetNotice] = useState(false)
   const [callbackNotice, setCallbackNotice] = useState(false)
+  // Après 2 mots de passe refusés, on propose de le réinitialiser avant que
+  // la connexion soit bloquée (8 essais, cf. lib/rate-limit).
+  const [echecs, setEchecs] = useState(0)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -60,9 +63,10 @@ export default function ConnexionPage() {
       }
       return
     }
-    if (result?.error) {
+    if (result && 'error' in result && result.error) {
       setError(result.error)
       if ('emailNotConfirmed' in result && result.emailNotConfirmed && result.email) setEmailNotConfirmed(result.email)
+      if ('motDePasseIncorrect' in result && result.motDePasseIncorrect) setEchecs(n => n + 1)
     } else if (result && 'mfaRequired' in result && result.mfaRequired) {
       setMfaRequired(true)
     } else if (result && 'destination' in result && result.destination) {
@@ -179,6 +183,15 @@ export default function ConnexionPage() {
           {error && (
             <div className="mb-5 space-y-2">
               <Alert type="error" message={error} />
+              {echecs >= 2 && (
+                <p className="text-sm text-gray-600">
+                  {t('Tu ne retrouves pas ton mot de passe ?', "Can't remember your password?")}{' '}
+                  <Link href="/mot-de-passe-oublie" className="text-magenta font-semibold hover:underline">
+                    {t('Choisis-en un nouveau', 'Choose a new one')}
+                  </Link>
+                  {t(' : tu le recevras par e-mail en quelques secondes.', ': you will get a link by email in a few seconds.')}
+                </p>
+              )}
               {emailNotConfirmed && (
                 resendState === 'sent' ? (
                   <Alert type="success" message={t('Email de confirmation renvoyé ! Vérifie ta boîte mail (et tes spams).', 'Confirmation email resent! Check your inbox (and your spam folder).')} />

@@ -3,6 +3,7 @@ import { getEffectiveModules } from '@/lib/modules-effective'
 import { MODULE_RDV_ANNUEL, entreesDeFin } from '@/lib/progression'
 import { dechiffrerLignes } from '@/lib/chiffrement'
 import type { PersonneSegment } from '@/lib/segments'
+import { adresseConfirmee } from '@/lib/adresse-confirmee'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -13,7 +14,7 @@ export async function infosAuth(admin: AdminClient): Promise<Record<string, { de
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
     if (error || !data?.users.length) break
-    for (const u of data.users) resultat[u.id] = { derniereConnexion: u.last_sign_in_at ?? null, emailConfirme: !!u.email_confirmed_at }
+    for (const u of data.users) resultat[u.id] = { derniereConnexion: u.last_sign_in_at ?? null, emailConfirme: adresseConfirmee(u) }
     if (data.users.length < 1000) break
   }
   return resultat

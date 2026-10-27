@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 
-const MAX_ATTEMPTS = 5
+const MAX_ATTEMPTS = 8
 const LOCK_MINUTES = 15
 
 export async function checkLoginLock(email: string) {
