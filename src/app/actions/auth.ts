@@ -14,7 +14,7 @@ import { gmailConfigure, envoyerMailConfirmation, renvoyerMailConfirmation, lien
 import { getLocale, getLocaleExplicite } from '@/lib/i18n/server'
 import { enregistrerLangueProfil, langueDuProfil } from '@/lib/i18n/langue-profil'
 import { cookies } from 'next/headers'
-import { t, DEFAULT_LOCALE, LOCALE_COOKIE } from '@/lib/i18n/locale'
+import { t, LOCALE_COOKIE } from '@/lib/i18n/locale'
 import { z } from 'zod'
 import { adresseIp, limiteDepassee, verifierAntiRobot } from '@/lib/limites'
 import { ouvrirAccesSansConfirmation } from '@/lib/adresse-confirmee'
@@ -257,10 +257,10 @@ async function finirConnexion(supabase: Awaited<ReturnType<typeof createClient>>
     const langueChoisie = await getLocaleExplicite()
     if (connecte && langueChoisie) await enregistrerLangueProfil(createAdminClient(), connecte.id, langueChoisie)
     // Nouveau navigateur (aucune langue choisie) : le site reprend la langue
-    // préférée du profil (Mon compte).
+    // préférée du profil (Mon compte), si elle diffère de celle du navigateur.
     if (connecte && !langueChoisie) {
       const langueProfil = await langueDuProfil(createAdminClient(), connecte.id)
-      if (langueProfil !== DEFAULT_LOCALE) {
+      if (langueProfil !== await getLocale()) {
         ;(await cookies()).set(LOCALE_COOKIE, langueProfil, { path: '/', maxAge: 31536000, sameSite: 'lax' })
       }
     }
