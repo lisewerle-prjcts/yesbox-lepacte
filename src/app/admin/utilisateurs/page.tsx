@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import UtilisateursClient from './UtilisateursClient'
 import { aujourdhuiParis } from '@/lib/dates'
 import { adresseConfirmee } from '@/lib/adresse-confirmee'
+import { isLocale, type Locale } from '@/lib/i18n/locale'
 
 export default async function AdminUtilisateurs() {
   const supabase = createAdminClient()
@@ -21,6 +22,10 @@ export default async function AdminUtilisateurs() {
     // Connexions bloquées en ce moment après trop d'essais.
     supabase.from('login_attempts').select('email').gt('locked_until', new Date().toISOString()),
   ])
+
+  // À part : si la colonne langue manque en base, le reste s'affiche.
+  const { data: languesProfils } = await supabase.from('profiles').select('id, langue')
+  const langues = new Map((languesProfils || []).filter(p => isLocale(p.langue)).map(p => [p.id, p.langue as Locale]))
 
   const codeParCouple: Record<string, string> = {}
   for (const u of utilisations || []) {
@@ -61,6 +66,7 @@ export default async function AdminUtilisateurs() {
     aCommence: aRepondu.has(p.id),
     bloque: bloques.has(p.email.toLowerCase()),
     finAcces: p.couple_id ? finAccesByCoupleId[p.couple_id] ?? null : null,
+    langue: langues.get(p.id) ?? 'fr',
   }))
 
   return (

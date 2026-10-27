@@ -953,6 +953,31 @@ export async function adminAnnulerValidationEmail(coupleId: string, type: TypeGr
 
 // Débloque une connexion (ou la saisie du code couple) verrouillée après
 // trop d'essais (Admin > Vue d'ensemble > Problèmes de connexion).
+// Langue des e-mails d'une personne (profiles.langue), modifiable depuis
+// Admin > Utilisateurs.
+export async function adminChangerLangue(userId: string, langue: Locale) {
+  await assertAdmin()
+  if (langue !== 'fr' && langue !== 'en') return { error: 'Langue inconnue' }
+  const { error } = await createAdminClient().from('profiles').update({ langue }).eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/utilisateurs')
+  return { success: true }
+}
+
+// Journal des e-mails envoyés à une adresse (table emails_envoyes), du plus
+// récent au plus ancien.
+export async function adminEmailsUtilisateur(email: string) {
+  await assertAdmin()
+  const { data, error } = await createAdminClient()
+    .from('emails_envoyes')
+    .select('sujet, ok, erreur, envoye_le')
+    .ilike('destinataire', email.replace(/[\\%_]/g, '\\$&'))
+    .order('envoye_le', { ascending: false })
+    .limit(100)
+  if (error) return { error: error.message, emails: [] }
+  return { emails: (data ?? []) as { sujet: string; ok: boolean; erreur: string | null; envoye_le: string }[] }
+}
+
 export async function adminDebloquerConnexion(cle: string) {
   await assertAdmin()
   const { error } = await createAdminClient().from('login_attempts').delete().eq('email', cle)
