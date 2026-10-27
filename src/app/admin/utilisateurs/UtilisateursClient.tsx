@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BadgeCheck, KeyRound, LockOpen, Mail, MailCheck, Search, Ticket, Trash2, X } from 'lucide-react'
-import { adminAttribuerCode, adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser, adminDebloquerConnexion } from '@/app/actions/admin'
+import { BadgeCheck, ChevronDown, ChevronRight, KeyRound, LockOpen, Mail, MailCheck, Search, Ticket, Trash2, X } from 'lucide-react'
+import { adminAttribuerCode, adminResetAndSendPassword, adminRenvoyerBienvenue, adminRenvoyerConfirmation, adminConfirmerEmail, adminDeleteUser, adminDebloquerConnexion, adminChangerLangue, adminEmailsUtilisateur } from '@/app/actions/admin'
+import type { Locale } from '@/lib/i18n/locale'
 
 interface User {
   id: string
@@ -22,6 +23,8 @@ interface User {
   bloque: boolean
   /** Fin de l'accès offert au couple (code gratuit, carte cadeau, parrainage). */
   finAcces: string | null
+  /** Langue des e-mails. */
+  langue: Locale
 }
 
 interface CodeDisponible { code: string; restants: number }
@@ -189,7 +192,10 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                       ? <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>(Couple {user.coupleNumero})</span>
                       : <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>(sans couple)</span>}
                   </div>
-                  <div className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{user.email}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{user.email}</span>
+                    <LangueEmails user={user} />
+                  </div>
                   <div style={{ fontSize: 11, color: 'var(--muted)' }}>
                     Inscrit·e le {dateLongue(user.createdAt)}
                     {' · '}
@@ -239,6 +245,7 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
                   {!user.emailConfirme && <div style={{ fontSize: 11, color: '#b45309' }}>Adresse e-mail pas encore confirmée</div>}
                   {user.bloque && <div style={{ fontSize: 11, color: '#b45309' }}>Connexion bloquée 15 minutes après trop d’essais de mot de passe</div>}
                   {mailStatus[user.id] && <p style={{ fontSize: 11, color: mailStatus[user.id]!.ok ? 'var(--sage)' : '#dc2626' }} className="mt-1">{mailStatus[user.id]!.message}</p>}
+                  <EmailsEnvoyes email={user.email} />
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {!user.emailConfirme && (
@@ -339,6 +346,83 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Langue des e-mails de la personne : enregistrée dès qu'elle change.
+function LangueEmails({ user }: { user: User }) {
+  const [langue, setLangue] = useState<Locale>(user.langue)
+  const [etat, setEtat] = useState<'idle' | 'enregistre' | 'erreur'>('idle')
+
+  async function changer(nouvelle: Locale) {
+    const avant = langue
+    setLangue(nouvelle)
+    const res = await adminChangerLangue(user.id, nouvelle)
+    if (res.error) setLangue(avant)
+    setEtat(res.error ? 'erreur' : 'enregistre')
+    setTimeout(() => setEtat('idle'), 2500)
+  }
+
+  return (
+    <span className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--muted)' }}>
+      <select
+        value={langue}
+        onChange={e => changer(e.target.value as Locale)}
+        aria-label="Langue des e-mails"
+        title="Langue des e-mails"
+        style={{ fontSize: 11, padding: '1px 4px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--paper)' }}
+      >
+        <option value="fr">E-mails en français</option>
+        <option value="en">E-mails en anglais</option>
+      </select>
+      {etat === 'enregistre' && <span style={{ color: 'var(--sage)' }}>✓</span>}
+      {etat === 'erreur' && <span style={{ color: '#dc2626' }}>échec</span>}
+    </span>
+  )
+}
+
+const dateHeure = (iso: string) => new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
+
+// E-mails envoyés à la personne (journal), chargés à l'ouverture.
+function EmailsEnvoyes({ email }: { email: string }) {
+  const [ouvert, setOuvert] = useState(false)
+  const [emails, setEmails] = useState<{ sujet: string; ok: boolean; erreur: string | null; envoye_le: string }[] | null>(null)
+  const [erreur, setErreur] = useState<string | null>(null)
+
+  async function basculer() {
+    const ouvrir = !ouvert
+    setOuvert(ouvrir)
+    if (ouvrir && emails === null) {
+      const res = await adminEmailsUtilisateur(email)
+      if (res.error) setErreur(res.error)
+      setEmails(res.emails)
+    }
+  }
+
+  return (
+    <div className="mt-1">
+      <button type="button" onClick={basculer} className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--brand)', fontWeight: 600 }}>
+        {ouvert ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        E-mails envoyés{emails ? ` (${emails.length}${emails.length === 100 ? '+' : ''})` : ''}
+      </button>
+      {ouvert && (
+        <div className="mt-1 space-y-0.5" style={{ fontSize: 11 }}>
+          {emails === null && !erreur && <p style={{ color: 'var(--muted)' }}>Chargement…</p>}
+          {erreur && <p style={{ color: '#dc2626' }}>{erreur}</p>}
+          {emails?.length === 0 && <p style={{ color: 'var(--muted)' }}>Aucun e-mail dans le journal.</p>}
+          {emails?.map((e, i) => (
+            <div key={i}>
+              <span className="font-mono" style={{ color: 'var(--muted)' }}>{dateHeure(e.envoye_le)}</span>{' '}
+              <span style={{ color: e.ok ? 'var(--ink-2)' : '#dc2626' }}>{e.ok ? '' : 'Échec — '}{e.sujet}</span>
+              {e.erreur && <div style={{ color: '#dc2626', marginLeft: 12 }}>{e.erreur}</div>}
+            </div>
+          ))}
+          {emails && emails.length > 0 && (
+            <p style={{ color: 'var(--muted)' }}>Pour savoir si un e-mail est bien arrivé (spams, rebond), cherche l’adresse dans Resend.</p>
+          )}
         </div>
       )}
     </div>
