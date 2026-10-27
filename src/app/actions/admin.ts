@@ -17,7 +17,7 @@ import { supprimerCompte } from '@/lib/suppression-compte'
 import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
-import { piedDePageRappel } from '@/lib/desinscription'
+import { piedDePageRappel, entetesDesinscription } from '@/lib/desinscription'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
@@ -204,7 +204,7 @@ export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, message:
     const ctx = contexte.get(p.id)
     const langue: Locale = mode === 'langue' ? ctx?.langue ?? 'fr' : mode
     const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? p.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '' })
-    const ok = await envoyerMail({ to: p.email, subject: objet, body: html + piedDePageRappel(p.id, langue), etiquette: etiquetteManuelle(message) })
+    const ok = await envoyerMail({ to: p.email, subject: objet, body: html + piedDePageRappel(p.id, langue), etiquette: etiquetteManuelle(message), entetes: entetesDesinscription(p.id) })
     if (ok) { envoyes += 1; parLangue[langue] += 1 }
     else echecs.push(p.email)
     // Reste sous la limite d'envoi de Resend (quelques e-mails par seconde).

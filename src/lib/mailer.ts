@@ -74,6 +74,8 @@ interface Mail {
   nom?: string
   /** Mot-clé ajouté à l'objet dans le journal des e-mails (ex. conseil envoyé). */
   etiquette?: string
+  /** En-têtes ajoutés (ex. List-Unsubscribe pour les rappels). */
+  entetes?: Record<string, string>
 }
 
 // Renvoie true si l'e-mail est parti, false sinon (aucun envoi configuré ou erreur).
@@ -91,7 +93,7 @@ export async function envoyerMailDetail(mail: Mail): Promise<{ ok: boolean; erre
   return resultat
 }
 
-async function envoyer({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ ok: boolean; erreur?: string }> {
+async function envoyer({ to, subject, body, nom = 'YES BOX', entetes }: Mail): Promise<{ ok: boolean; erreur?: string }> {
   const html = mailHtml(body)
   const text = `${htmlVersTexte(body)}\n\n--\nYES BOX · yesbox-lepacte.fr`
   const erreurs: string[] = []
@@ -101,7 +103,7 @@ async function envoyer({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ 
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], reply_to: REPONDRE_A, subject, html, text }),
+        body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], reply_to: REPONDRE_A, subject, html, text, ...(entetes ? { headers: entetes } : {}) }),
         signal: AbortSignal.timeout(DELAI_ENVOI_MS),
       })
       if (res.ok) return { ok: true }
@@ -127,6 +129,7 @@ async function envoyer({ to, subject, body, nom = 'YES BOX' }: Mail): Promise<{ 
         subject,
         html,
         text,
+        headers: entetes,
       })
       if (erreurs.length) console.warn(`[mail] Envoyé par Gmail après échec de Resend (${to}) — ${erreurs.join(' | ')}`)
       return { ok: true }
