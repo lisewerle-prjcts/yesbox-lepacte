@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
-import { t } from '@/lib/i18n/locale'
+import { t, isLocale, type Locale } from '@/lib/i18n/locale'
 import { rejoindreCoupleParCode } from '@/lib/couple-join'
 import { ouvrirPremierModuleSiBesoin, MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { bornesRdvAnnuel, estDateValide } from '@/lib/rdv-annuel'
@@ -160,9 +160,10 @@ export async function signerPacte(dateRdvAnnuel: string) {
 const INVITATIONS_PAR_JOUR = 3
 
 // Envoie au ou à la partenaire un e-mail d'invitation avec le lien pour
-// rejoindre le couple et le code de pairage. Écrit dans la langue du site
-// de la personne qui invite. Limité à 3 envois par jour et par couple.
-export async function envoyerInvitationPartenaire(email: string) {
+// rejoindre le couple et le code de pairage, dans la langue choisie par la
+// personne qui invite (par défaut, celle de son site). Limité à 3 envois par
+// jour et par couple.
+export async function envoyerInvitationPartenaire(email: string, langueInvitation?: Locale) {
   const supabase = await createClient()
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()
@@ -207,11 +208,12 @@ export async function envoyerInvitationPartenaire(email: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const lien = `${baseUrl}/rejoindre?token=${couple.invite_token}`
   const prenomBrut = (profile.prenom || '').trim()
+  const langue = isLocale(langueInvitation) ? langueInvitation : locale
   const ok = await envoyerModele({
     to: destinataire,
     cle: 'invitation_partenaire',
-    locale,
-    vars: { invite_par: prenomBrut || t(locale, 'Ton/ta partenaire', 'Your partner'), lien, code: couple.pairing_code ?? '' },
+    locale: langue,
+    vars: { invite_par: prenomBrut || t(langue, 'Ton/ta partenaire', 'Your partner'), lien, code: couple.pairing_code ?? '' },
   })
   if (!ok) return { error: t(locale, "L'e-mail n'a pas pu être envoyé. Réessaie dans quelques minutes.", 'The email could not be sent. Please try again in a few minutes.') }
   return { success: true }

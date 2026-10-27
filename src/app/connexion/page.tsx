@@ -218,7 +218,7 @@ export default function ConnexionPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder={t('marie@exemple.fr', 'alex@example.com')}
+                placeholder={t('camille@exemple.fr', 'alex@example.com')}
                 autoComplete="email"
                 required
                 className="input-field"

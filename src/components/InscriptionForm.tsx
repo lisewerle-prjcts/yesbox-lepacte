@@ -12,6 +12,7 @@ import CharteBetaFenetre from '@/components/CharteBetaFenetre'
 import AntiRobot from '@/components/AntiRobot'
 import { estCodeCharteBeta } from '@/lib/charte-beta'
 import { Eye, EyeOff, MailCheck, Lock, CheckCircle2 } from 'lucide-react'
+import { conseilAdresse, type ConseilAdresse } from '@/lib/conseil-adresse'
 
 // Formulaire d'inscription partagé entre la page /inscription et la fenêtre
 // d'inscription de la page d'accueil et des tarifs (InscriptionModal).
@@ -86,6 +87,7 @@ export default function InscriptionForm({
   const [error, setError] = useState<string | null>(null)
   const [essaiAntiRobot, setEssaiAntiRobot] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
+  const [conseil, setConseil] = useState<ConseilAdresse>(null)
   const [codeAvantage, setCodeAvantage] = useState(codeParrainageInitial)
   // Code des testeurs (BETANLR26, BETAFACEBOOK26) : la charte de la bêta s'ouvre et doit être
   // acceptée avant de créer le compte.
@@ -157,11 +159,19 @@ export default function InscriptionForm({
             id="email"
             name="email"
             type="email"
-            placeholder={t('marie@exemple.fr', 'mary@example.com')}
+            placeholder={t('camille@exemple.fr', 'alex@example.com')}
             autoComplete="email"
             required
             className="input-field"
+            onBlur={e => setConseil(conseilAdresse(e.target.value))}
           />
+          {conseil && (
+            <p className="text-xs text-gray-500 mt-1">
+              {conseil === 'stricte'
+                ? t('Ce fournisseur retient souvent nos e-mails : une adresse Gmail, Outlook ou iCloud est plus sûre. Sinon, pense à regarder dans tes spams.', 'This provider often holds back our emails: a Gmail, Outlook or iCloud address is safer. Otherwise, remember to check your spam folder.')
+                : t('Si c’est une adresse professionnelle, sache qu’elles filtrent parfois nos e-mails : une adresse personnelle est plus sûre.', 'If this is a work address, note that they sometimes filter our emails: a personal address is safer.')}
+            </p>
+          )}
         </div>
 
         <div>

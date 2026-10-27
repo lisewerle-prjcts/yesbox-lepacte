@@ -6,7 +6,8 @@ import Alert from '@/components/ui/Alert'
 import { updatePrenomPartenaire, updateDateAnniversaire, updateDateMariage } from '@/app/actions/compte'
 import { rejoindrePartenaireParCode, envoyerInvitationPartenaire } from '@/app/actions/couple'
 import { getProchainAnniversaire } from '@/lib/anniversaires'
-import { useT } from '@/components/i18n/LocaleContext'
+import { useT, useLocale } from '@/components/i18n/LocaleContext'
+import type { Locale } from '@/lib/i18n/locale'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -36,6 +37,10 @@ export default function VotreCoupleCard({
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const { locale } = useLocale()
+  // Langue de l'e-mail d'invitation : celle du site par défaut, modifiable
+  // quand le ou la partenaire parle une autre langue.
+  const [langueInvitation, setLangueInvitation] = useState<Locale>(locale)
   const t = useT()
 
   async function savePartnerPrenom() {
@@ -71,7 +76,7 @@ export default function VotreCoupleCard({
     e.preventDefault()
     setInviteError(null)
     setInviteStatus('sending')
-    const res = await envoyerInvitationPartenaire(inviteEmail)
+    const res = await envoyerInvitationPartenaire(inviteEmail, langueInvitation)
     if (res.error) {
       setInviteError(res.error)
       setInviteStatus('idle')
@@ -166,6 +171,17 @@ export default function VotreCoupleCard({
                   className="field"
                   style={{ flex: 1 }}
                 />
+                <select
+                  value={langueInvitation}
+                  onChange={e => setLangueInvitation(e.target.value as Locale)}
+                  className="field"
+                  style={{ flex: '0 0 4.5rem', paddingLeft: 8, paddingRight: 4 }}
+                  aria-label={t('Langue de l’e-mail', 'Email language')}
+                  title={t('Langue de l’e-mail', 'Email language')}
+                >
+                  <option value="fr">FR</option>
+                  <option value="en">EN</option>
+                </select>
                 <button type="submit" disabled={inviteStatus === 'sending'} className="btn-brand text-sm px-4" style={{ flexShrink: 0 }}>
                   {inviteStatus === 'sending' ? '…' : t('Envoyer', 'Send')}
                 </button>

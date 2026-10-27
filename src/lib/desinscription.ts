@@ -27,6 +27,15 @@ export function lienDesinscription(userId: string, locale: Locale) {
   return `${appUrl()}/desinscription?u=${encodeURIComponent(userId)}&s=${signatureDesinscription(userId)}&l=${locale}`
 }
 
+// Désinscription en un clic depuis la messagerie (bouton « Se désabonner »
+// de Gmail, Yahoo…) : en-têtes List-Unsubscribe (RFC 8058), que ces
+// messageries demandent désormais. La messagerie envoie un POST à
+// /api/desinscription.
+export function entetesDesinscription(userId: string): Record<string, string> {
+  const url = `${appUrl()}/api/desinscription?u=${encodeURIComponent(userId)}&s=${signatureDesinscription(userId)}`
+  return { 'List-Unsubscribe': `<${url}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
+}
+
 export function piedDePageRappel(userId: string, locale: Locale) {
   return `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(locale, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <a href="${lienDesinscription(userId, locale)}" style="color:#8a8580;">${t(locale, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</a></p>`
 }

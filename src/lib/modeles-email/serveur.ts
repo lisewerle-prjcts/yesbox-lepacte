@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { envoyerMail } from '@/lib/mailer'
 import type { Locale } from '@/lib/i18n/locale'
-import { piedDePageRappel } from '@/lib/desinscription'
+import { piedDePageRappel, entetesDesinscription } from '@/lib/desinscription'
 import { modeleEmail, type ContenuEmail } from './catalogue'
 import { corpsAvecMotPersonnel, rendreCorps, rendreObjet, type Variables } from './rendu'
 
@@ -93,6 +93,13 @@ export async function envoyerModele(options: {
 }): Promise<boolean> {
   const modele = modeleEmail(options.cle)
   const { objet, html } = await rendreModele(options.cle, options.locale, options.vars, options.contenu)
-  const pied = modele.rappel && options.desinscription ? piedDePageRappel(options.desinscription, options.locale) : ''
-  return envoyerMail({ to: options.to, subject: objet, body: html + pied, etiquette: options.etiquette ?? modele.etiquette })
+  const rappel = modele.rappel && options.desinscription
+  const pied = rappel ? piedDePageRappel(options.desinscription!, options.locale) : ''
+  return envoyerMail({
+    to: options.to,
+    subject: objet,
+    body: html + pied,
+    etiquette: options.etiquette ?? modele.etiquette,
+    entetes: rappel ? entetesDesinscription(options.desinscription!) : undefined,
+  })
 }
