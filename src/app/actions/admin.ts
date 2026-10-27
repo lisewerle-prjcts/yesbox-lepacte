@@ -572,7 +572,8 @@ export async function adminRenvoyerConfirmation(userId: string) {
 
 // Confirme l'adresse sans passer par le mail (ex. mail qui n'arrive pas) :
 // la personne peut alors se connecter et commencer les modules. Le mail de
-// bienvenue (avec le code couple) part s'il n'a pas encore été envoyé.
+// bienvenue (avec le code couple) part s'il n'a pas encore été envoyé ; s'il
+// ne part pas, la raison est renvoyée dans `avertissement`.
 export async function adminConfirmerEmail(userId: string) {
   await assertAdmin()
   const admin = createAdminClient()
@@ -584,9 +585,14 @@ export async function adminConfirmerEmail(userId: string) {
   const { error } = await admin.auth.admin.updateUserById(userId, { email_confirm: true })
   if (error) return { error: error.message }
 
-  await envoyerBienvenueSiEnAttente(userId)
+  const bienvenue = await envoyerBienvenueSiEnAttente(userId)
   revalidatePath('/admin/utilisateurs')
-  return { success: true }
+  const avertissements: Partial<Record<typeof bienvenue, string>> = {
+    sans_couple: 'mail de bienvenue non envoyé : cette personne n\'a pas encore de couple',
+    sans_code: 'mail de bienvenue non envoyé : son couple n\'a pas de code',
+    echec: 'le mail de bienvenue n\'a pas pu partir (voir « E-mails qui n\'ont pas pu partir »)',
+  }
+  return { success: true, bienvenueEnvoye: bienvenue === 'envoye', avertissement: avertissements[bienvenue] }
 }
 
 export async function adminDeleteUser(userId: string) {

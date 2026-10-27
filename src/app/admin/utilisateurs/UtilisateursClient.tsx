@@ -116,7 +116,9 @@ export default function UtilisateursClient({ users, codesDisponibles }: { users:
   async function confirmerManuellement(user: User) {
     await run(`confirm-manuel-${user.id}`, async () => {
       const res = await adminConfirmerEmail(user.id)
-      showStatus(user, !res.error, res.error ? `Erreur — ${res.error}` : 'Adresse confirmée : la personne peut se connecter')
+      if (res.error) showStatus(user, false, `Erreur — ${res.error}`)
+      else if (res.avertissement) showStatus(user, false, `Adresse confirmée, mais ${res.avertissement}`)
+      else showStatus(user, true, res.bienvenueEnvoye ? 'Adresse confirmée et mail de bienvenue envoyé' : 'Adresse confirmée : la personne peut se connecter')
     })
   }
 
