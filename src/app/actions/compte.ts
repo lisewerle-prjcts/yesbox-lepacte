@@ -87,7 +87,13 @@ export async function updateDateMariage(dateMariage: string) {
   return updateDateCouple({ date_mariage: dateMariage || null })
 }
 
-async function updateDateCouple(champ: { date_anniversaire: string | null } | { date_mariage: string | null }) {
+// Réponse « nous ne sommes pas marié·es » à la question des grandes dates :
+// on ne repose plus la question de la date de mariage.
+export async function marquerMariageNonConcerne() {
+  return updateDateCouple({ mariage_non_concerne: true })
+}
+
+async function updateDateCouple(champ: { date_anniversaire: string | null } | { date_mariage: string | null } | { mariage_non_concerne: boolean }) {
   const supabase = await createClient()
   const locale = await getLocale()
   const { data: { user } } = await supabase.auth.getUser()

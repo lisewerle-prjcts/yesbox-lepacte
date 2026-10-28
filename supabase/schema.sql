@@ -1851,3 +1851,14 @@ end;
 $$;
 revoke execute on function public.utiliser_code_gratuit(text, uuid) from public, anon, authenticated;
 grant execute on function public.utiliser_code_gratuit(text, uuid) to service_role;
+
+-- ============================================================
+-- Migration : « Pas de mariage » dans « Nos grandes dates ». Les couples
+-- qui n'ont pas renseigné leurs dates se voient poser la question à la
+-- connexion (src/components/dashboard/QuestionGrandesDates.tsx) ; ceux qui
+-- ne sont pas marié·es le disent une fois, pour ne plus être interrogé·es
+-- sur la date de mariage.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+alter table public.couples add column if not exists mariage_non_concerne boolean not null default false;
+grant update (mariage_non_concerne) on public.couples to authenticated;

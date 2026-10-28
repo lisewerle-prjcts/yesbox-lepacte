@@ -278,7 +278,7 @@ function DateCouple({
 // Jour, mois et année en trois listes : le calendrier du navigateur obligeait
 // à remonter mois par mois jusqu'à l'année de la rencontre. Tant qu'une des
 // trois manque, la valeur reste incomplète (« 2015-03- ») et OK est grisé.
-function ChoixDate({ value, onChange }: { value: string; onChange: (date: string) => void }) {
+export function ChoixDate({ value, onChange }: { value: string; onChange: (date: string) => void }) {
   const t = useT()
   const [a = '', m = '', j = ''] = value ? value.split('-') : []
   const [annee, setAnnee] = useState(a)
