@@ -119,7 +119,7 @@ export default function VotreCoupleCard({
         <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>{t('Quelles sont vos dates de couple ?', 'What are your couple dates?')}</p>
         <div className="grid sm:grid-cols-2 gap-4">
           <DateCouple
-            label={t('Date de rencontre', 'Date you met')}
+            label={t('Anniversaire de couple', 'Couple anniversary')}
             hint={t('Le jour où tout a commencé', 'The day it all began')}
             initial={dateAnniversaire}
             save={updateDateAnniversaire}
@@ -278,7 +278,7 @@ function DateCouple({
 // Jour, mois et année en trois listes : le calendrier du navigateur obligeait
 // à remonter mois par mois jusqu'à l'année de la rencontre. Tant qu'une des
 // trois manque, la valeur reste incomplète (« 2015-03- ») et OK est grisé.
-function ChoixDate({ value, onChange }: { value: string; onChange: (date: string) => void }) {
+export function ChoixDate({ value, onChange }: { value: string; onChange: (date: string) => void }) {
   const t = useT()
   const [a = '', m = '', j = ''] = value ? value.split('-') : []
   const [annee, setAnnee] = useState(a)

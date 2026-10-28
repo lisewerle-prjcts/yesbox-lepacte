@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { envoyerAlertesGrandesDates, envoyerEmailsAnniversaires, envoyerRappelsValidation } from '@/lib/grandes-dates'
+import { envoyerAlertesGrandesDates, envoyerRappelsValidation } from '@/lib/grandes-dates'
 import { envoyerRelancesInactivite, envoyerRappelsMensuels, envoyerPropositionsAnnuel, envoyerAnnoncesRenouvellement, envoyerPropositionsRdvAnnuel, envoyerAvertissementsEffacement, rappelsConfigures } from '@/lib/rappels-email'
 
 export const runtime = 'nodejs'
@@ -12,9 +12,10 @@ export const maxDuration = 60
 // renouvellement à 19 €/an un mois avant, proposition de l'abonnement annuel
 // 2 mois avant le rendez-vous annuel, avertissements avant
 // l'effacement des données (cf. src/lib/rappels-email.ts) ; alerte à
-// l'équipe un mois avant les grandes dates des couples, e-mails d'anniversaire
-// de couple (jour J) et de mariage (J-7) une fois validés, rappel à l'équipe
-// s'ils ne le sont pas 3 jours avant (src/lib/grandes-dates.ts).
+// l'équipe un mois avant les grandes dates des couples, rappel à l'équipe si
+// les e-mails d'anniversaire ne sont pas validés 3 jours avant
+// (src/lib/grandes-dates.ts). Les e-mails d'anniversaire eux-mêmes partent
+// plus tôt, par /api/cron/anniversaires.
 export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret || req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
@@ -31,9 +32,8 @@ export async function GET(req: Request) {
     const propositionsRdvAnnuel = await envoyerPropositionsRdvAnnuel(admin)
     const avertissementsEffacement = await envoyerAvertissementsEffacement(admin)
     const alertesGrandesDates = await envoyerAlertesGrandesDates(admin)
-    const anniversaires = await envoyerEmailsAnniversaires(admin)
     const rappelsValidation = await envoyerRappelsValidation(admin)
-    return NextResponse.json({ relances, mensuels, propositionsAnnuel, annoncesRenouvellement, propositionsRdvAnnuel, avertissementsEffacement, alertesGrandesDates, anniversaires, rappelsValidation })
+    return NextResponse.json({ relances, mensuels, propositionsAnnuel, annoncesRenouvellement, propositionsRdvAnnuel, avertissementsEffacement, alertesGrandesDates, rappelsValidation })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }

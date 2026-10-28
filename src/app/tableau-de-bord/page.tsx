@@ -8,6 +8,7 @@ import { localizeModule, localizeModules } from '@/lib/i18n/module-text'
 import { MODULES } from '@/lib/modules-data'
 import EditableText from '@/components/edit-mode/EditableText'
 import VotreCoupleCard from '@/components/dashboard/VotreCoupleCard'
+import QuestionGrandesDates from '@/components/dashboard/QuestionGrandesDates'
 import type { CoupleAbonnement, Module } from '@/types'
 import { ABONNEMENT_COLONNES } from '@/types'
 import { peutAccederModule, estCompteResilie } from '@/lib/abonnement'
@@ -45,12 +46,14 @@ export default async function TableauDeBordPage({
   let partner: { prenom: string | null; email: string; id: string } | null = null
   let couple: { nom_couple: string | null; date_anniversaire: string | null } | null = null
   let dateMariage: string | null = null
+  let mariageNonConcerne = false
+  let mariageLu = false
   let signature: { pacte_signe_le: string | null; rdv_annuel_le: string | null } | null = null
   let coupleAbonnement: CoupleAbonnement | null = null
   let reponses: { module_id: string; user_id: string; question_slug: string; valeur: string | null }[] = []
 
   if (profile?.couple_id) {
-    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }, { data: sig }, { data: mariage }] = await Promise.all([
+    const [{ data: mods }, { data: part }, { data: coup }, { data: coupAbo }, { data: sig }, { data: mariage }, { data: sansMariage }] = await Promise.all([
       supabase.from('modules').select('*').eq('couple_id', profile.couple_id).order('created_at'),
       supabase.from('profiles').select('prenom, email, id').eq('couple_id', profile.couple_id).neq('id', user.id).single(),
       supabase.from('couples').select('nom_couple, date_anniversaire').eq('id', profile.couple_id).single(),
@@ -59,8 +62,12 @@ export default async function TableauDeBordPage({
       supabase.from('couples').select('pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).maybeSingle(),
       // Idem pour la date de mariage (colonne ajoutée par migration).
       supabase.from('couples').select('date_mariage').eq('id', profile.couple_id).maybeSingle(),
+      // Idem pour « nous ne sommes pas marié·es » (question des grandes dates).
+      supabase.from('couples').select('mariage_non_concerne').eq('id', profile.couple_id).maybeSingle(),
     ])
     dateMariage = mariage?.date_mariage ?? null
+    mariageLu = !!mariage
+    mariageNonConcerne = !!sansMariage?.mariage_non_concerne
     signature = sig
     modules = mods || []
     partner = part
@@ -137,6 +144,18 @@ export default async function TableauDeBordPage({
           pairingCode={inviteData.success ? inviteData.pairingCode ?? null : null}
           inviteLink={inviteData.success ? inviteData.link ?? null : null}
           initialCodeError={code_error}
+        />
+      )}
+
+      {/* Dates pas encore renseignées : question posée une fois par connexion.
+          Si la colonne date_mariage manque en base (mariage === null), on ne
+          demande que l'anniversaire de couple. */}
+      {profile?.couple_id && user.last_sign_in_at && (!couple?.date_anniversaire || (!dateMariage && !mariageNonConcerne && mariageLu)) && (
+        <QuestionGrandesDates
+          userId={user.id}
+          connexionLe={user.last_sign_in_at}
+          demanderAnniversaire={!couple?.date_anniversaire}
+          demanderMariage={!dateMariage && !mariageNonConcerne && mariageLu}
         />
       )}
 

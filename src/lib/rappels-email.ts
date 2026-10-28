@@ -239,7 +239,7 @@ function modeleMensuel(mois: number, rdvLe: string | null, joursAvantRdv: number
     : ''
   return {
     cle: cleThemeMensuel(indexTheme(mois)),
-    vars: { rappel_rdv: rappelRdv, lien: `${base}/rdv-annuels`, lien_pacte: `${base}/journal` },
+    vars: { rappel_rdv: rappelRdv, lien: `${base}/rdv-annuels#mois-${mois}`, lien_pacte: `${base}/journal` },
   }
 }
 

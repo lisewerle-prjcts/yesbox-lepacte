@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarHeart, MessageCircleHeart, Sprout } from 'lucide-react'
+import { CalendarHeart, Lock, MessageCircleHeart, Sprout } from 'lucide-react'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { MODULE_RDV_ANNUEL, ouvrirRdvAnnuelSiDate } from '@/lib/progression'
@@ -13,7 +13,7 @@ export const metadata = { title: 'Nos rendez-vous annuels' }
 
 // Nos rendez-vous annuels : une fois le pacte signé, la question de chaque
 // mois (celle de l'e-mail mensuel) avec les réponses des deux membres du
-// couple, et le bilan annuel (module « Notre rendez-vous annuel »).
+// couple, dévoilées quand les deux ont répondu, et le bilan annuel (module « Notre rendez-vous annuel »).
 export default async function RdvAnnuelsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -112,20 +112,36 @@ export default async function RdvAnnuelsPage() {
             <div className="space-y-4">
               {listeMois.map(mois => {
                 const { titre, question } = questionDuMois(mois, locale)
+                // Comme pour les modules : la réponse de l'autre reste cachée
+                // tant que les deux n'ont pas répondu (et n'est pas envoyée
+                // au navigateur), puis les deux sont dévoilées.
+                const maReponse = reponseDe(user.id, mois)
+                const saReponse = reponseDe(autre?.id, mois)
+                const devoilee = !!maReponse.trim() && !!saReponse.trim()
+                const nomAutre = autre?.prenom || t('L’autre membre du couple', 'The other member of the couple')
                 return (
-                  <div key={mois} className="card p-5">
+                  <div key={mois} id={`mois-${mois}`} className="card p-5" style={{ scrollMarginTop: 96 }}>
                     <p className="font-mono text-xs mb-1" style={{ color: 'var(--muted)', letterSpacing: '.08em' }}>
                       {moisFr(mois).toUpperCase()} · {t(`MOIS ${mois}`, `MONTH ${mois}`)}
                     </p>
                     <p className="font-semibold" style={{ fontSize: 13.5, color: 'var(--brand)' }}>{titre}</p>
                     <p className="font-serif mb-4" style={{ fontSize: 17, color: 'var(--ink)', lineHeight: 1.4 }}>{question}</p>
-                    <ReponseMois mois={mois} prenom={moi?.prenom || t('Moi', 'Me')} initiale={reponseDe(user.id, mois)} />
+                    <ReponseMois mois={mois} prenom={moi?.prenom || t('Moi', 'Me')} initiale={maReponse} />
                     {autre && (
                       <div className="mt-3">
-                        <p className="label">{autre.prenom || t('L’autre membre du couple', 'The other member of the couple')}</p>
-                        <p style={{ fontSize: 14, color: reponseDe(autre.id, mois) ? 'var(--ink-2)' : 'var(--muted-2)', whiteSpace: 'pre-wrap', fontStyle: reponseDe(autre.id, mois) ? 'normal' : 'italic' }}>
-                          {reponseDe(autre.id, mois) || t('Pas encore de réponse.', 'No answer yet.')}
-                        </p>
+                        <p className="label">{nomAutre}</p>
+                        {devoilee ? (
+                          <p style={{ fontSize: 14, color: 'var(--ink-2)', whiteSpace: 'pre-wrap' }}>{saReponse}</p>
+                        ) : (
+                          <p className="flex items-center gap-1.5" style={{ fontSize: 14, color: 'var(--muted-2)', fontStyle: 'italic' }}>
+                            <Lock className="w-3.5 h-3.5" style={{ flexShrink: 0 }} />
+                            {saReponse.trim()
+                              ? t('A déjà répondu. Sa réponse sera dévoilée dès que tu auras enregistré la tienne.', 'Has already answered. Their answer will be revealed as soon as you save yours.')
+                              : maReponse.trim()
+                              ? t('Pas encore de réponse. Vos deux réponses seront dévoilées dès que vous aurez répondu tous les deux.', 'No answer yet. Both answers will be revealed once you have both answered.')
+                              : t('Vos deux réponses seront dévoilées dès que vous aurez répondu tous les deux.', 'Both answers will be revealed once you have both answered.')}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

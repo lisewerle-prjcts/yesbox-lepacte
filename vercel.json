@@ -2,6 +2,7 @@
   "framework": "nextjs",
   "crons": [
     { "path": "/api/cron/purger-comptes-expires", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/rappels-email", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/rappels-email", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/anniversaires", "schedule": "0 4 * * *" }
   ]
 }

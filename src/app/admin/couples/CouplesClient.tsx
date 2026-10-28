@@ -381,7 +381,7 @@ function CoupleCard({
             <input type="text" className="field" value={nomCouple} onChange={e => setNomCouple(e.target.value)} placeholder="Ex : Lise & Jérôme" />
           </div>
           <div>
-            <label className="flabel">Date de rencontre</label>
+            <label className="flabel">Anniversaire de couple</label>
             <input type="date" className="field" value={dateAnniversaire} onChange={e => setDateAnniversaire(e.target.value)} />
           </div>
           <div>
