@@ -533,19 +533,29 @@ See you soon, and take care of yourselves and your relationship.
 // ---------------------------------------------------------------------------
 
 // Un thème par mois après la signature du pacte (cf. rappels-email.ts).
-const THEMES: { fr: ContenuEmail; en: ContenuEmail; question: [string, string] }[] = [
+// `suite` : fin d'e-mail propre au thème, à la place du texte et du bouton
+// « Noter nos réponses » communs.
+const THEMES: { fr: ContenuEmail; en: ContenuEmail; question: [string, string]; suite?: { fr: string; en: string } }[] = [
   {
     fr: { objet: 'Un mois que vous avez signé votre pacte 💍', corps: `Il y a un mois, {partenaire} et toi avez signé votre pacte. Bravo : beaucoup de couples n’osent jamais mettre des mots sur ce qui compte vraiment à deux.
 
-Le pacte vit surtout dans les petits gestes du quotidien. Ce mois-ci, une seule question à vous poser à deux :
-
-**« Quel engagement de notre pacte avons-nous le mieux tenu ce mois-ci ? »**` },
+**« Et si vous vous bloquiez un rendez-vous régulier dans l’agenda ?**
+**Une soirée par mois par exemple, rien qu’à vous. Ou une pause déjeuner en semaine. Faites en fonction de ce qui est possible…**
+**Et pourquoi ne pas l’organiser à tour de rôle ? »**` },
     en: { objet: 'One month since you signed your pact 💍', corps: `A month ago, {partenaire} and you signed your pact. Well done: many couples never dare to put into words what truly matters to them as a pair.
 
-Your pact lives mostly in small everyday gestures. This month, just one question to ask each other:
+**"What if you blocked out a regular date in your calendar?**
+**One evening a month, for example, just for the two of you. Or a lunch break during the week. Go with what’s possible…**
+**And why not take turns organising it?"**` },
+    question: ['Et si vous vous bloquiez un rendez-vous régulier dans l’agenda ? Qu’aimerais-tu organiser, et comment aimerais-tu le faire ?', 'What if you blocked out a regular date in your calendar? What would you like to organise, and how would you like to do it?'],
+    suite: {
+      fr: `Cliquez ici pour noter ce que vous aimeriez organiser et comment vous aimeriez le faire. Comme pour le programme initial, comparez vos réponses et lancez-vous !
 
-**"Which commitment in our pact did we keep best this month?"**` },
-    question: ['Quel engagement de notre pacte avons-nous le mieux tenu ce mois-ci ?', 'Which commitment in our pact did we keep best this month?'],
+[bouton: À vous de jouer | {lien}]`,
+      en: `Click here to note what you would like to organise and how you would like to do it. Just like in the initial program, compare your answers and go for it!
+
+[bouton: Your turn | {lien}]`,
+    },
   },
   {
     fr: { objet: 'Et si vous vous disiez merci ?', corps: `Dans votre pacte, vous avez parlé de gratitude. Ce mois-ci, petit défi : dis à {partenaire} une chose précise que tu as appréciée cette semaine. Pas un « merci pour tout », un vrai détail.
@@ -663,9 +673,9 @@ const MENSUELS: ModeleEmail[] = [
 
 ${theme.fr.corps}
 
-Notez vos réponses dans « Nos rendez-vous annuels » : vous les retrouverez pour votre bilan annuel.
+${theme.suite?.fr ?? `Notez vos réponses dans « Nos rendez-vous annuels » : vous les retrouverez pour votre bilan annuel.
 
-[bouton: Noter nos réponses | {lien}]
+[bouton: Noter nos réponses | {lien}]`}
 
 [lien: Relire notre pacte | {lien_pacte}]
 
@@ -676,9 +686,9 @@ ${EQUIPE.fr}` },
 
 ${theme.en.corps}
 
-Note your answers in "Our yearly dates": you’ll find them again for your yearly review.
+${theme.suite?.en ?? `Note your answers in "Our yearly dates": you’ll find them again for your yearly review.
 
-[bouton: Note our answers | {lien}]
+[bouton: Note our answers | {lien}]`}
 
 [lien: Reread our pact | {lien_pacte}]
 
