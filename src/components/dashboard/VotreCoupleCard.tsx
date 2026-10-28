@@ -119,7 +119,7 @@ export default function VotreCoupleCard({
         <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>{t('Quelles sont vos dates de couple ?', 'What are your couple dates?')}</p>
         <div className="grid sm:grid-cols-2 gap-4">
           <DateCouple
-            label={t('Date de rencontre', 'Date you met')}
+            label={t('Anniversaire de couple', 'Couple anniversary')}
             hint={t('Le jour où tout a commencé', 'The day it all began')}
             initial={dateAnniversaire}
             save={updateDateAnniversaire}
