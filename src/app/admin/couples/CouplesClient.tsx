@@ -33,9 +33,10 @@ interface Couple {
 }
 
 // Cases « Masquer… » au-dessus de la liste des couples.
-type Masque = 'pacteSigne' | 'nonPaire' | 'nonCommence'
+type Masque = 'pacteSigne' | 'enCours' | 'nonPaire' | 'nonCommence'
 const MASQUES: { cle: Masque; libelle: string }[] = [
   { cle: 'pacteSigne', libelle: 'Masquer les couples qui ont déjà signé le pacte' },
+  { cle: 'enCours', libelle: 'Masquer les couples en cours de programme initial' },
   { cle: 'nonPaire', libelle: 'Masquer les couples pas encore pairés' },
   { cle: 'nonCommence', libelle: 'Masquer les couples qui n’ont pas encore commencé' },
 ]
@@ -134,16 +135,19 @@ export default function CouplesClient({
   const [recherche, setRecherche] = useState('')
   const [critereTri, setCritereTri] = useState<CritereTri>('numero')
   const [croissant, setCroissant] = useState(false)
-  const [masques, setMasques] = useState<Record<Masque, boolean>>({ pacteSigne: false, nonPaire: false, nonCommence: false })
+  const [masques, setMasques] = useState<Record<Masque, boolean>>({ pacteSigne: false, enCours: false, nonPaire: false, nonCommence: false })
 
   const index = useMemo(() => couples.map(couple => ({ couple, texte: texteRecherche(couple) })), [couples])
   // Chaque mot saisi doit apparaître (ex : « lise octobre »).
   const mots = normaliser(recherche).split(/\s+/).filter(Boolean)
   const couplesTrouves = mots.length ? index.filter(({ texte }) => mots.every(m => texte.includes(m))).map(({ couple }) => couple) : couples
   // Pacte signé = module du pacte terminé (signé par les deux) ; pairé = deux
-  // membres ; commencé = au moins une réponse enregistrée.
+  // membres ; commencé = au moins une réponse enregistrée ; en cours de
+  // programme initial = commencé, pacte pas encore signé.
+  const pacteSigne = (c: Couple) => !!c.modules.find(m => m.slug === pacteSlug)?.termine_le
   const correspond: Record<Masque, (c: Couple) => boolean> = {
-    pacteSigne: c => !!c.modules.find(m => m.slug === pacteSlug)?.termine_le,
+    pacteSigne,
+    enCours: c => c.a_commence && !pacteSigne(c),
     nonPaire: c => c.members.length < 2,
     nonCommence: c => !c.a_commence,
   }
