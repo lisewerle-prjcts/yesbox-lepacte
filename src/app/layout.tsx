@@ -30,6 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', title: 'YES BOX — Le Pacte', description: 'Le programme pour les couples qui tiennent.' },
   robots: { index: true, follow: true },
+  // Validation du site dans Bing Webmaster Tools.
+  verification: { other: { 'msvalidate.01': 'E3E4F89327CE9F06363EFF17E989F742' } },
   metadataBase: new URL(SITE_URL),
 }
 
