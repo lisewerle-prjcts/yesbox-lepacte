@@ -429,7 +429,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.hero.intro.programme': "YES BOX is a personal development program for couples. Simple modules to do at your own pace, from home and without judgment (no AI analysis, no advice from a third party). The goal: take care of your relationship, talk things through together and renew your commitments mindfully, every year.",
   'home.hero.intro.questions': "Simple, playful questions to talk about what matters: what's going well, what's stuck, and what you haven't dared say yet. Because unspoken things build up quietly, YES BOX helps you put them on the table, gently.",
   'home.avis.title': 'What couples say about it.',
-  'home.avis.cta.titre': 'Done YES BOX? Leave a review',
+  'home.avis.cta.titre.v2': 'Loved YES BOX? Leave a review',
   'home.avis.cta.texte': 'Tell us what it changed for you. Once your review is published, you get a €10 discount code.',
   'home.avis.cta.bouton': 'Leave a review',
   'home.tarifs.eyebrow': 'Pricing',
