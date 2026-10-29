@@ -6,6 +6,8 @@ import { tachesEmailsAnniversaire } from '@/lib/grandes-dates'
 import TachesClient from './TachesClient'
 import ProblemesConnexionClient from './ProblemesConnexionClient'
 import { chargerProblemesConnexion } from '@/lib/problemes-connexion'
+import { formaterMoisAvis } from '@/lib/avis'
+import type { AvisAdmin } from './AvisTaches'
 
 export default async function AdminHome() {
   const supabase = createAdminClient()
@@ -25,6 +27,17 @@ export default async function AdminHome() {
   ])
   const { taches, tableManquante } = await tachesEmailsAnniversaire(supabase)
   const problemes = await chargerProblemesConnexion(supabase)
+  const { data: avisRows, error: erreurAvis } = await supabase.from('avis')
+    .select('id, prenom, debut_mois, note, texte, statut, cree_le, code_reduction, code_utilise_le, profiles(email)')
+    .in('statut', ['en_attente', 'publie'])
+    .order('cree_le', { ascending: false })
+  const avis: AvisAdmin[] = (avisRows ?? []).map(a => {
+    const auteur = (Array.isArray(a.profiles) ? a.profiles[0] : a.profiles) as { email: string | null } | null
+    return {
+      id: a.id, prenom: a.prenom, email: auteur?.email ?? null, debut: formaterMoisAvis(a.debut_mois, 'fr'), note: a.note, texte: a.texte,
+      statut: a.statut, creeLe: a.cree_le, code: a.code_reduction, codeUtiliseLe: a.code_utilise_le,
+    }
+  })
 
   // Parcours rendez-vous annuel : programme initial fini (les 8 modules
   // thématiques et le pacte terminés, pacte signé), comme le critère
@@ -61,7 +74,7 @@ export default async function AdminHome() {
         <p style={{ fontSize: 14, color: 'var(--muted)' }}>Tableau de bord administrateur YES BOX</p>
       </div>
 
-      <TachesClient taches={taches} tableManquante={tableManquante} />
+      <TachesClient taches={taches} tableManquante={tableManquante} avis={avis} avisTableManquante={!!erreurAvis} />
       <ProblemesConnexionClient {...problemes} />
 
       {/* KPIs */}

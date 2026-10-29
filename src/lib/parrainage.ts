@@ -61,13 +61,12 @@ export async function accorderMoisGratuits(admin: AdminClient, coupleId: string,
   return 'acces_gratuit'
 }
 
-// Récompense de parrainage : 10 € par palier franchi, crédités sur le compte
-// client Stripe du parrain (créé au besoin, avec l'adresse d'un membre du
-// couple) et déduits de ses prochains paiements.
-async function accorderReductionParrainage(admin: AdminClient, coupleId: string, nbPaliers: number) {
-  if (nbPaliers <= 0) return
+// Réduction créditée sur le compte client Stripe du couple (créé au besoin,
+// avec l'adresse d'un membre du couple) et déduite de ses prochains
+// paiements : récompense de parrainage, code offert pour un avis publié.
+export async function crediterReductionCouple(admin: AdminClient, coupleId: string, montantCentimes: number, description: string) {
   const { data: couple } = await admin.from('couples').select(ABONNEMENT_COLONNES).eq('id', coupleId).single()
-  if (!couple) return
+  if (!couple) throw new Error('Couple introuvable')
 
   let customerId = couple.stripe_customer_id
   if (!customerId) {
@@ -79,8 +78,14 @@ async function accorderReductionParrainage(admin: AdminClient, coupleId: string,
     customerId = customer.id
     await admin.from('couples').update({ stripe_customer_id: customerId }).eq('id', coupleId)
   }
+  await crediterStripe(customerId, montantCentimes, 'eur', description)
+}
+
+// Récompense de parrainage : 10 € par palier franchi.
+async function accorderReductionParrainage(admin: AdminClient, coupleId: string, nbPaliers: number) {
+  if (nbPaliers <= 0) return
   const montant = REDUCTION_PARRAINAGE_CENTIMES * nbPaliers
-  await crediterStripe(customerId, montant, 'eur', `Parrainage YES BOX : ${montant / 100} € de réduction`)
+  await crediterReductionCouple(admin, coupleId, montant, `Parrainage YES BOX : ${montant / 100} € de réduction`)
 }
 
 // Rattache un couple qui vient de s'inscrire à son parrain (RPC atomique,

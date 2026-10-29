@@ -12,6 +12,7 @@ import { ABONNEMENT_COLONNES } from '@/types'
 import { programmerBasculeAnnuelle } from '@/lib/bascule-annuelle'
 import { estCarteYesBox, normaliserCodeCadeau, utiliserCarteCadeau } from '@/lib/cartes-cadeaux'
 import { enregistrerParrainage } from '@/lib/parrainage'
+import { normaliserCodeAvis, utiliserCodeAvis } from '@/lib/avis'
 
 async function getMonCoupleId() {
   const supabase = await createClient()
@@ -275,9 +276,9 @@ export async function annulerAbonnement() {
 }
 
 // Champ « Ajouter un code » (Mon compte, /abonnement) : accepte, à tout
-// moment, une carte cadeau (YES-XXXX-XXXX), un code de parrainage (si le
-// couple ne s'est pas inscrit avec) ou un code gratuit (Admin > Codes
-// gratuits). Renvoie un message de confirmation à afficher.
+// moment, une carte cadeau (YES-XXXX-XXXX), un code reçu pour un avis
+// publié (AVIS-XXXXXX), un code de parrainage (si le couple ne s'est pas
+// inscrit avec) ou un code gratuit (Admin > Codes gratuits). Renvoie un message de confirmation à afficher.
 export async function utiliserCode(code: string): Promise<{ error: string } | { success: true; message: string }> {
   const locale = await getLocale()
   const ctx = await getMonCoupleId()
@@ -325,7 +326,21 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
     }
   }
 
-  // 2. Code de parrainage (couple inscrit sans le code de son parrain)
+  // 2. Code reçu pour un avis publié : 10 € déduits du prochain paiement
+  const codeAvis = normaliserCodeAvis(cleanCode)
+  if (codeAvis) {
+    const res = await utiliserCodeAvis(admin, codeAvis, ctx.coupleId)
+    if (res === 'ok') {
+      rafraichir()
+      return { success: true, message: t(locale, 'Merci pour votre avis : 10 € seront déduits de votre prochain paiement.', 'Thank you for your review: €10 will be deducted from your next payment.') }
+    }
+    if (res === 'deja_utilise') return { error: t(locale, 'Ce code a déjà été utilisé.', 'This code has already been used.') }
+    if (res === 'autre_couple') return { error: t(locale, 'Ce code est réservé au couple de la personne qui a écrit l’avis.', 'This code is reserved for the couple of the person who wrote the review.') }
+    if (res === 'erreur') return { error: t(locale, 'La réduction n’a pas pu être enregistrée : réessayez dans quelques minutes.', 'The discount could not be saved: please try again in a few minutes.') }
+    // Code inconnu : on essaie encore les autres sortes de codes.
+  }
+
+  // 3. Code de parrainage (couple inscrit sans le code de son parrain)
   const { data: parrain } = await admin.from('couples').select('id').eq('code_parrainage', cleanCode.toUpperCase()).maybeSingle()
   if (parrain) {
     if (parrain.id === ctx.coupleId) return { error: t(locale, 'C’est votre propre code de parrainage : partagez-le avec d’autres couples !', 'This is your own referral code: share it with other couples!') }
@@ -335,7 +350,7 @@ export async function utiliserCode(code: string): Promise<{ error: string } | { 
     return { success: true, message: t(locale, 'Code de parrainage enregistré : merci, le couple qui vous a parrainés se rapproche de sa récompense !', 'Referral code saved: thank you, the couple who referred you is one step closer to their reward!') }
   }
 
-  // 3. Code gratuit (Admin > Codes gratuits)
+  // 4. Code gratuit (Admin > Codes gratuits)
   const { data, error } = await admin.rpc('utiliser_code_gratuit', { p_code: cleanCode, p_couple_id: ctx.coupleId })
   if (error) return { error: error.message }
 

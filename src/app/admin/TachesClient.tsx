@@ -8,6 +8,7 @@ import { ApercuEmail } from '@/components/admin/ComposeurEmail'
 import { corpsAvecMotPersonnel } from '@/lib/modeles-email/rendu'
 import type { ContenuPerso, TacheEmailAnniversaire } from '@/lib/grandes-dates'
 import type { ContenuEmail } from '@/lib/modeles-email/catalogue'
+import AvisTaches, { type AvisAdmin } from './AvisTaches'
 
 const dateLongue = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
@@ -15,10 +16,10 @@ function quand(jours: number) {
   return jours === 0 ? "aujourd'hui" : jours === 1 ? 'demain' : `dans ${jours} jours`
 }
 
-// Catégorie « Tâches » de la vue d'ensemble : pour l'instant, la validation
-// des e-mails d'anniversaire avant leur envoi.
-export default function TachesClient({ taches, tableManquante }: { taches: TacheEmailAnniversaire[]; tableManquante: boolean }) {
-  const aValider = taches.filter(t => !t.valideLe).length
+// Catégorie « Tâches » de la vue d'ensemble : les avis à publier, et la
+// validation des e-mails d'anniversaire avant leur envoi.
+export default function TachesClient({ taches, tableManquante, avis, avisTableManquante }: { taches: TacheEmailAnniversaire[]; tableManquante: boolean; avis: AvisAdmin[]; avisTableManquante: boolean }) {
+  const aValider = taches.filter(t => !t.valideLe).length + avis.filter(a => a.statut === 'en_attente').length
   return (
     <div id="taches" className="card p-6 mb-8">
       <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
@@ -27,6 +28,9 @@ export default function TachesClient({ taches, tableManquante }: { taches: Tache
           {aValider ? `${aValider} à valider` : 'Rien à valider'}
         </span>
       </div>
+      <AvisTaches avis={avis} tableManquante={avisTableManquante} />
+
+      <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>E-mails d’anniversaire</h3>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
         E-mails d’anniversaire des 30 prochains jours : relis-les, ajoute un mot si tu veux, puis valide. Sans validation, ils ne partent pas
         (un rappel t’est envoyé 3 jours avant, la veille et le jour même).

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail, Languages, Ticket } from 'lucide-react'
+import { User, KeyRound, Check, Users, Copy, CreditCard, AlertTriangle, Gift, Download, Upload, Trash2, Mail, Languages, Ticket, Star } from 'lucide-react'
 import { useT, useLocale } from '@/components/i18n/LocaleContext'
 import {
   updateMesInfos, updateNomCouple, changerMonMotDePasse, telechargerMesDonnees, importerMesDonnees, supprimerMonCompte,
@@ -53,6 +53,7 @@ export default function MonCompteClient({
         <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} offreRdvAnnuelDispo={offreRdvAnnuelDispo} />
         {!estCompteResilie(abonnement) && <AjouterCodeCard />}
         <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
+        <AvisCard />
         <LangueCard langueInitiale={langue} />
         <RappelsCard actifInitial={rappelsEmail} />
         <PasswordCard />
@@ -391,6 +392,22 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
           ? t(`${filleulsCount} couple(s) parrainé(s) — bravo !`, `${filleulsCount} referred couple(s) — nice!`)
           : t(`${filleulsCount} couple(s) parrainé(s) · encore ${prochainSeuil} avant ta prochaine récompense`, `${filleulsCount} referred couple(s) · ${prochainSeuil} more until your next reward`)}
       </p>
+    </div>
+  )
+}
+
+function AvisCard() {
+  const t = useT()
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Star className="w-4 h-4 text-magenta" />
+        <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Votre avis', 'Your review')}</h2>
+      </div>
+      <p className="text-sm text-gray-600 mb-3">
+        {t('Racontez ce que la YES BOX vous a apporté. Une fois votre avis publié sur le site, vous recevez par e-mail un code de 10 € de réduction, à saisir ci-dessus dans « Ajouter un code ».', 'Tell us what YES BOX has brought you. Once your review is published on the site, you get a €10 discount code by e-mail, to enter above under "Add a code".')}
+      </p>
+      <Link href="/avis" className="btn-secondary text-sm">{t('Donner mon avis', 'Leave my review')}</Link>
     </div>
   )
 }

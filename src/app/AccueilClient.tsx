@@ -10,17 +10,11 @@ import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import LocaleFlagToggle from '@/components/i18n/LocaleFlagToggle'
 import { MODULES } from '@/lib/modules-data'
 import { localizeModules } from '@/lib/i18n/module-text'
-import { ArrowRight, Check, Menu, X } from 'lucide-react'
+import { ArrowRight, Check, Menu, Star, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { FAQ } from '@/lib/faq'
+import { AVIS_ACCUEIL, formaterMoisAvis, type ResumeAvis } from '@/lib/avis-constantes'
 
-
-const TEMOIGNAGES = (t: (fr: string, en: string) => string) => [
-  { texte: t("On a découvert des choses qu'on n'avait jamais osé dire après 24 ans ensemble.", "We discovered things we'd never dared say after 24 years together."), prenom: 'J & J', lieu: t('Octobre 2026', 'October 2026') },
-  { texte: t("On a passé des soirées très sympa en tête à tête ; ça ne nous était jamais arrivé de prendre du temps pour parler de nous, de comment mieux fonctionner", "We spent some really lovely evenings, just the two of us; we'd never before taken the time to talk about ourselves and how to work better together"), prenom: 'Elodie et Romain', lieu: t('Octobre 2026', 'October 2026') },
-  { texte: t("Je recommande à tous les couples qui veulent vraiment s'engager. Une vraie préparation émotionnelle.", 'I recommend it to every couple who truly wants to commit. Real emotional preparation.'), prenom: 'Julie & Antoine', lieu: t('Septembre 2026', 'September 2026') },
-  { texte: t("C'est exactement ce qu'il nous fallait, pour ne pas devenir QUE des parents", "It's exactly what we needed, so we wouldn't become ONLY parents"), prenom: 'M + P', lieu: t('Septembre 2026', 'September 2026') },
-]
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
   { titre: t('Tout va bien, et vous voulez que ça dure', "Everything's fine, and you want it to last"), desc: t("Pas besoin d'une crise pour prendre soin de votre couple. Juste l'envie de mieux vous connaître.", "You don't need a crisis to take care of your relationship. Just the wish to get to know each other better.") },
@@ -67,7 +61,7 @@ const PACTE_ROWS = (t: (fr: string, en: string) => string) => [
 ]
 
 
-export default function LandingPage() {
+export default function LandingPage({ avis }: { avis: ResumeAvis }) {
   const t = useT()
   const { locale } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
@@ -85,7 +79,6 @@ export default function LandingPage() {
   const optionsList = OPTIONS(t)
   const pacteList = PACTE_LIST(t)
   const pacteRows = PACTE_ROWS(t)
-  const temoignagesList = TEMOIGNAGES(t)
   const etapes = ETAPES(t)
   const faq = FAQ(t)
 
@@ -385,28 +378,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* TÉMOIGNAGES */}
-      <section className="py-20" style={{ background: 'var(--cream-2)' }}>
+      {/* AVIS (validés dans Admin > Vue d'ensemble > Tâches) */}
+      {avis.nombre > 0 && (
+      <section id="avis" className="py-20" style={{ background: 'var(--cream-2)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.temoignages.title.v3">Ce que YES BOX peut changer pour un couple.</EditableText></h2>
+            <h2 className="font-serif text-3xl font-bold" style={{ color: 'var(--ink)' }}><EditableText id="home.avis.title">Ce qu’en disent les couples.</EditableText></h2>
+            <p className="mt-3 flex items-center justify-center gap-2" style={{ fontSize: 15, color: 'var(--ink-2)' }}>
+              <Etoiles note={Math.round(avis.moyenne!)} />
+              <strong>{avis.moyenne!.toLocaleString(locale === 'en' ? 'en-GB' : 'fr-FR')}/5</strong>
+              <span style={{ color: 'var(--muted)' }}>· {t(`${avis.nombre} avis`, `${avis.nombre} review${avis.nombre > 1 ? 's' : ''}`)}</span>
+            </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {temoignagesList.map((item, i) => (
-              <div key={i} className="card p-6 flex flex-col">
-                <div className="mb-3" style={{ color: 'var(--brand)', letterSpacing: 2, fontSize: 14 }}>★★★★★</div>
-                <blockquote className="font-serif flex-1 mb-4" style={{ fontStyle: 'italic', fontSize: 17, lineHeight: 1.5, color: 'var(--ink)' }}>
-                  &laquo; <EditableText id={`home.temoignages.${i}.texte.v3`} multiline>{item.texte}</EditableText> &raquo;
+            {avis.avis.slice(0, AVIS_ACCUEIL).map(item => (
+              <div key={item.id} className="card p-6 flex flex-col">
+                <div className="mb-3"><Etoiles note={item.note} /></div>
+                <blockquote className="font-serif flex-1 mb-4" style={{ fontStyle: 'italic', fontSize: 17, lineHeight: 1.5, color: 'var(--ink)', whiteSpace: 'pre-line' }}>
+                  &laquo;&nbsp;{item.texte}&nbsp;&raquo;
                 </blockquote>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}><EditableText id={`home.temoignages.${i}.prenom.v4`}>{item.prenom}</EditableText></div>
-                  <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}><EditableText id={`home.temoignages.${i}.lieu.v3`}>{item.lieu}</EditableText></div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{item.prenom}</div>
+                  <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                    {t(`Depuis ${formaterMoisAvis(item.debutMois, 'fr')}`, `Since ${formaterMoisAvis(item.debutMois, 'en')}`)}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+          {connecte && (
+            <p className="text-center mt-8" style={{ fontSize: 14 }}>
+              <Link href="/avis" style={{ color: 'var(--brand)', fontWeight: 600 }}>{t('Vous aussi, donnez votre avis →', 'Share your review too →')}</Link>
+            </p>
+          )}
         </div>
       </section>
+      )}
 
       {/* TARIFS */}
       <section id="tarifs" className="py-20" style={{ background: 'var(--paper)' }}>
@@ -480,5 +487,13 @@ export default function LandingPage() {
 
       {modalOpen && <InscriptionModal onClose={() => setModalOpen(false)} />}
     </div>
+  )
+}
+
+function Etoiles({ note }: { note: number }) {
+  return (
+    <span className="inline-flex gap-0.5" style={{ color: 'var(--brand)' }} aria-label={`${note}/5`}>
+      {[1, 2, 3, 4, 5].map(n => <Star key={n} className="w-4 h-4" fill={n <= note ? 'currentColor' : 'none'} aria-hidden />)}
+    </span>
   )
 }

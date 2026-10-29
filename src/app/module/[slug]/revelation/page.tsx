@@ -69,8 +69,10 @@ export default async function RevelationPage({ params }: PageProps) {
   }
 
   if (slug === MODULE_PACTE) {
-    const { data: couple } = await admin.from('couples')
-      .select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single()
+    const [{ data: couple }, { data: avis }] = await Promise.all([
+      admin.from('couples').select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single(),
+      admin.from('avis').select('id').eq('profile_id', user.id).maybeSingle(),
+    ])
     const bornes = bornesRdvAnnuel()
     return (
       <RevelationPacte
@@ -86,6 +88,7 @@ export default async function RevelationPage({ params }: PageProps) {
         partenaireASigne={partenaireConclusionFaite}
         signeLe={couple?.pacte_signe_le ?? null}
         rdvLe={couple?.rdv_annuel_le ?? null}
+        avisDonne={!!avis}
         bornes={{
           ...bornes,
           anniversaire: anniversaireDansBornes(couple?.date_anniversaire ?? null),

@@ -1,5 +1,6 @@
 import { SITE_URL } from '@/lib/site'
 import { FAQ } from '@/lib/faq'
+import { AVIS_ACCUEIL, type ResumeAvis } from '@/lib/avis-constantes'
 
 // Données structurées (JSON-LD, schema.org) : elles décrivent noir sur blanc
 // qui édite le site et ce qui y est vendu, pour Google, Bing et les IA.
@@ -28,7 +29,7 @@ export const siteWeb = {
   publisher: { '@id': ORGANISATION_ID },
 }
 
-export const produit = {
+const produitBase = {
   '@context': 'https://schema.org',
   '@type': 'Product',
   '@id': `${SITE_URL}/#produit`,
@@ -70,6 +71,34 @@ export const produit = {
       },
     },
   ],
+}
+
+/**
+ * Produit, avec la note moyenne et les avis publiés (validés dans Admin >
+ * Vue d'ensemble > Tâches) quand il y en a : Google n'affiche les étoiles
+ * qu'avec aggregateRating et review, qui doivent correspondre aux avis
+ * visibles sur la page.
+ */
+export function produit(avis: ResumeAvis) {
+  if (!avis.nombre || avis.moyenne === null) return produitBase
+  return {
+    ...produitBase,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: avis.moyenne,
+      bestRating: 5,
+      worstRating: 1,
+      ratingCount: avis.nombre,
+      reviewCount: avis.nombre,
+    },
+    review: avis.avis.slice(0, AVIS_ACCUEIL).map(a => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: a.prenom },
+      datePublished: a.publieLe.slice(0, 10),
+      reviewBody: a.texte,
+      reviewRating: { '@type': 'Rating', ratingValue: a.note, bestRating: 5, worstRating: 1 },
+    })),
+  }
 }
 
 /** FAQ de l'accueil, avec les textes modifiés depuis l'admin s'il y en a. */

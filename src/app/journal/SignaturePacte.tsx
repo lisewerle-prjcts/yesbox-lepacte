@@ -8,6 +8,7 @@ import { signerPacte } from '@/app/actions/couple'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import EditableText from '@/components/edit-mode/EditableText'
 import ChoixDateRdv, { formaterDate } from '@/components/pacte/ChoixDateRdv'
+import InvitationAvis from '@/components/InvitationAvis'
 
 export default function SignaturePacte({
   signeLe,
@@ -18,6 +19,7 @@ export default function SignaturePacte({
   parDefaut,
   anniversaire,
   saintValentin,
+  avisDonne,
 }: {
   signeLe: string | null
   rdvLe: string | null
@@ -30,6 +32,8 @@ export default function SignaturePacte({
   anniversaire: string | null
   /** Prochaine Saint-Valentin comprise entre min et max (null sinon). */
   saintValentin: string | null
+  /** La personne a déjà laissé un avis : on ne le lui redemande pas. */
+  avisDonne: boolean
 }) {
   const router = useRouter()
   const t = useT()
@@ -123,6 +127,8 @@ export default function SignaturePacte({
           </div>
         </>
       )}
+
+      {signe && !afficherChoix && !avisDonne && <InvitationAvis />}
     </div>
   )
 }
