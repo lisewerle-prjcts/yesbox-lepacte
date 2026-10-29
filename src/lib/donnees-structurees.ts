@@ -29,6 +29,28 @@ export const siteWeb = {
   publisher: { '@id': ORGANISATION_ID },
 }
 
+// Programme en ligne, sans envoi physique : accès ouvert dès l'inscription
+// ou le paiement, donc livraison gratuite et immédiate.
+const livraison = {
+  '@type': 'OfferShippingDetails',
+  shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'EUR' },
+  shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'FR' },
+  deliveryTime: {
+    '@type': 'ShippingDeliveryTime',
+    handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 0, unitCode: 'DAY' },
+    transitTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 0, unitCode: 'DAY' },
+  },
+}
+
+// Pas de retour : pour payer, on demande l'accès immédiat et on renonce au
+// droit de rétractation dès cet accès (CGV, article 5 ; L221-28 du Code de
+// la consommation).
+const politiqueRetour = {
+  '@type': 'MerchantReturnPolicy',
+  applicableCountry: 'FR',
+  returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+}
+
 const produitBase = {
   '@context': 'https://schema.org',
   '@type': 'Product',
@@ -46,6 +68,8 @@ const produitBase = {
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
       url: `${SITE_URL}/inscription`,
+      shippingDetails: livraison,
+      hasMerchantReturnPolicy: politiqueRetour,
     },
     {
       '@type': 'Offer',
@@ -54,6 +78,8 @@ const produitBase = {
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
       url: `${SITE_URL}/tarifs`,
+      shippingDetails: livraison,
+      hasMerchantReturnPolicy: politiqueRetour,
     },
     {
       '@type': 'Offer',
@@ -62,6 +88,8 @@ const produitBase = {
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
       url: `${SITE_URL}/tarifs`,
+      shippingDetails: livraison,
+      hasMerchantReturnPolicy: politiqueRetour,
       priceSpecification: {
         '@type': 'UnitPriceSpecification',
         price: '19',
