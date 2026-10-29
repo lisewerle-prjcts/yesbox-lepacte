@@ -14,7 +14,7 @@ import { ArrowRight, Check, Menu, Star, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { FAQ } from '@/lib/faq'
 import { AVIS_ACCUEIL, formaterMoisAvis, type ResumeAvis } from '@/lib/avis-constantes'
-import { idsPage, type PageThematique } from '@/lib/pages-thematiques'
+import { idsPage, versionne, type PageThematique } from '@/lib/pages-thematiques'
 
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
@@ -154,7 +154,7 @@ export default function LandingPage({ avis, page }: { avis: ResumeAvis; page?: P
         {page ? (
           <>
             <h1 className="font-serif text-4xl md:text-6xl font-bold leading-tight mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em', textWrap: 'balance' }}>
-              <EditableText id={idsPage(page.slug).h1}>{page.h1.fr}</EditableText>
+              <EditableText id={versionne(idsPage(page.slug).h1, page.h1)}>{page.h1.fr}</EditableText>
             </h1>
             <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed md:leading-7" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
               {page.intro.map((p, i) => <p key={i}><EditableText id={idsPage(page.slug).intro(i)} multiline>{p.fr}</EditableText></p>)}
@@ -553,27 +553,12 @@ function SectionThematique({ page }: { page: PageThematique }) {
               </ul>
             )}
             {s.paragraphes?.map((p, j) => (
-              <p key={j} className="mb-3" style={{ fontSize: 15.5, color: 'var(--ink-2)', lineHeight: 1.7 }}>
-                <EditableText id={ids.sectionParagraphe(i, j)} multiline>{p.fr}</EditableText>
+              <p key={j} className="mb-3" style={{ fontSize: 15.5, color: 'var(--ink-2)', lineHeight: 1.7, fontStyle: p.italique ? 'italic' : undefined }}>
+                <EditableText id={versionne(ids.sectionParagraphe(i, j), p)} multiline>{p.fr}</EditableText>
               </p>
             ))}
           </div>
         ))}
-
-        {page.exemples && (
-          <div>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--ink)' }}>
-              <EditableText id={ids.exemplesTitre}>{page.exemples.titre.fr}</EditableText>
-            </h2>
-            <div className="grid md:grid-cols-2 gap-3">
-              {page.exemples.questions.map((q, i) => (
-                <div key={i} className="card p-4 font-serif" style={{ fontStyle: 'italic', fontSize: 16, color: 'var(--ink)', lineHeight: 1.5 }}>
-                  <EditableText id={ids.exemple(i)} multiline>{q.fr}</EditableText>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div>
           <div className="flex flex-col gap-3">

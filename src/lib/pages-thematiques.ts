@@ -5,7 +5,14 @@
 // « theme.<slug>.… ») ; leur version anglaise par défaut est ajoutée à
 // EN_CONTENT (cf. enDesPagesThematiques).
 
-export interface Texte { fr: string; en: string }
+export interface Texte {
+  fr: string
+  en: string
+  /** Texte modifié après publication : nouvel identifiant EditableText (.v2…). */
+  v?: number
+  /** Paragraphe affiché en italique (avertissement). */
+  italique?: boolean
+}
 
 export interface SectionThematique {
   titre: Texte
@@ -22,17 +29,18 @@ export interface PageThematique {
   h1: Texte
   intro: Texte[]
   sections: SectionThematique[]
-  /** Exemples de vraies questions des modules. */
-  exemples?: { titre: Texte; questions: Texte[] }
   faq: { q: Texte; r: Texte }[]
 }
 
 const tx = (fr: string, en: string): Texte => ({ fr, en })
 
-const URGENCES = tx(
-  'Pour toute situation de violence, contactez le 3919 ou le numéro des urgences 17, 112 ou par SMS au 114 (contact gratuit).',
-  'In any situation of violence, contact 3919 or the emergency numbers 17, 112, or text 114 (free of charge).',
-)
+// Même avertissement que sur l'accueil (home.constat.reveal.avertissement).
+const URGENCES: Texte = {
+  fr: 'Si vous traversez une crise profonde, tournez-vous vers un·e professionnel·le. Et pour toute situation de violence, contactez le 3919 ou le numéro des urgences 17, 112 ou par SMS au 114 (contact gratuit).',
+  en: 'If you are going through a deep crisis, please reach out to a professional. In any situation involving violence, call 3919 or the emergency numbers 17 or 112, or text 114 (free of charge).',
+  v: 2,
+  italique: true,
+}
 
 export const PAGES_THEMATIQUES: PageThematique[] = [
   {
@@ -102,19 +110,6 @@ export const PAGES_THEMATIQUES: PageThematique[] = [
         ],
       },
     ],
-    exemples: {
-      titre: tx('Quelques questions du jeu', 'A few questions from the game'),
-      questions: [
-        tx('Quelle est ta définition du bonheur ?', 'What is your definition of happiness?'),
-        tx('Qu’est-ce qui t’a plu chez l’autre, la toute première fois ?', 'What attracted you to your partner, the very first time?'),
-        tx('Quel est le geste ou l’attention qui te touche le plus, au quotidien, de la part de l’autre ?', 'What gesture or thoughtful act from your partner touches you most in everyday life?'),
-        tx('Es-tu plutôt économe ou dépensier·ère ?', 'Are you more of a saver or a spender?'),
-        tx('Quelles sont les plus belles valeurs que tu as reçues ?', 'What are the most valuable things your family passed down to you?'),
-        tx('Qu’est-ce qui t’apaise vraiment quand ça ne va pas : un câlin, du silence, parler, bouger… ?', 'What really soothes you when things aren’t going well: a hug, silence, talking, moving… ?'),
-        tx('Quels petits gestes de tendresse te font fondre ?', 'What small gestures of affection melt your heart?'),
-        tx('En dispute, quelle image te ressemble le plus : volcan, iceberg, porte qui claque, table de négociation ?', 'In an argument, which image fits you best: volcano, iceberg, slamming door, negotiating table?'),
-      ],
-    },
     faq: [
       {
         q: tx('Faut-il être en couple depuis longtemps pour jouer ?', 'Do you need to have been together for a long time to play?'),
@@ -143,7 +138,7 @@ export const PAGES_THEMATIQUES: PageThematique[] = [
     slug: 'therapie-de-couple',
     metaTitre: 'Thérapie de couple ou programme à deux : par où commencer ?',
     metaDescription: 'Pas encore prêt·es à consulter ? YES BOX – Le Pacte aide tous les couples à se parler, à leur rythme. Un complément, pas une thérapie. Module 1 gratuit.',
-    h1: tx('Thérapie de couple : et si vous commenciez par vous parler ?', 'Couples therapy: what if you started by talking to each other?'),
+    h1: { ...tx('Et si vous commenciez par vous parler ?', 'What if you started by talking to each other?'), v: 2 },
     intro: [
       tx(
         'Consulter un ou une thérapeute de couple est une vraie démarche, parfois indispensable. Mais tous les couples n’en ont pas besoin, ou pas tout de suite : souvent, il s’agit d’abord de se parler vraiment, de ce qui va bien comme de ce qui coince.',
@@ -295,6 +290,9 @@ export function pageThematique(slug: PageThematique['slug']): PageThematique {
   return PAGES_THEMATIQUES.find(p => p.slug === slug)!
 }
 
+// Identifiant EditableText d'un texte, avec sa version s'il a été modifié.
+export const versionne = (id: string, t: Texte) => (t.v ? `${id}.v${t.v}` : id)
+
 // Identifiants EditableText de chaque texte d'une page.
 export const idsPage = (slug: string) => ({
   h1: `theme.${slug}.h1`,
@@ -302,8 +300,6 @@ export const idsPage = (slug: string) => ({
   sectionTitre: (i: number) => `theme.${slug}.section.${i}.titre`,
   sectionParagraphe: (i: number, j: number) => `theme.${slug}.section.${i}.p.${j}`,
   sectionListe: (i: number, j: number) => `theme.${slug}.section.${i}.liste.${j}`,
-  exemplesTitre: `theme.${slug}.exemples.titre`,
-  exemple: (i: number) => `theme.${slug}.exemples.${i}`,
   faqQ: (i: number) => `theme.${slug}.faq.${i}.q`,
   faqR: (i: number) => `theme.${slug}.faq.${i}.r`,
 })
@@ -313,17 +309,13 @@ export function enDesPagesThematiques(): Record<string, string> {
   const en: Record<string, string> = {}
   for (const p of PAGES_THEMATIQUES) {
     const ids = idsPage(p.slug)
-    en[ids.h1] = p.h1.en
+    en[versionne(ids.h1, p.h1)] = p.h1.en
     p.intro.forEach((t, i) => { en[ids.intro(i)] = t.en })
     p.sections.forEach((s, i) => {
       en[ids.sectionTitre(i)] = s.titre.en
-      s.paragraphes?.forEach((t, j) => { en[ids.sectionParagraphe(i, j)] = t.en })
+      s.paragraphes?.forEach((t, j) => { en[versionne(ids.sectionParagraphe(i, j), t)] = t.en })
       s.liste?.forEach((t, j) => { en[ids.sectionListe(i, j)] = t.en })
     })
-    if (p.exemples) {
-      en[ids.exemplesTitre] = p.exemples.titre.en
-      p.exemples.questions.forEach((t, i) => { en[ids.exemple(i)] = t.en })
-    }
     p.faq.forEach((f, i) => { en[ids.faqQ(i)] = f.q.en; en[ids.faqR(i)] = f.r.en })
   }
   return en
