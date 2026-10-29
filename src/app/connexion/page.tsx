@@ -35,12 +35,17 @@ export default function ConnexionPage() {
   // Après 2 mots de passe refusés, on propose de le réinitialiser avant que
   // la connexion soit bloquée (8 essais, cf. lib/rate-limit).
   const [echecs, setEchecs] = useState(0)
+  // Page à ouvrir après la connexion à la place du tableau de bord (?suite=),
+  // limitée à une liste fermée pour ne jamais rediriger ailleurs.
+  const [suite, setSuite] = useState<string | null>(null)
+  const destination = (d: string) => (suite && d === '/tableau-de-bord' ? suite : d)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('mfa_reset') === '1') setMfaResetNotice(true)
     if (params.get('mfa') === '1') setMfaRequired(true)
     if (params.get('error') === 'auth_callback_error') setCallbackNotice(true)
+    if (params.get('suite') === '/avis') setSuite('/avis')
   }, [])
 
   async function handleAction(formData: FormData) {
@@ -57,7 +62,7 @@ export default function ConnexionPage() {
       // tourner en boucle.
       const { data: { session } } = await createBrowserClient().auth.getSession().catch(() => ({ data: { session: null } }))
       if (session) {
-        window.location.assign('/tableau-de-bord')
+        window.location.assign(destination('/tableau-de-bord'))
       } else {
         setError(t('La connexion n’a pas abouti. Réessaie dans un instant ; si cela continue, écris-nous.', 'Signing in did not go through. Please try again in a moment; if it keeps happening, contact us.'))
       }
@@ -70,7 +75,7 @@ export default function ConnexionPage() {
     } else if (result && 'mfaRequired' in result && result.mfaRequired) {
       setMfaRequired(true)
     } else if (result && 'destination' in result && result.destination) {
-      window.location.assign(result.destination)
+      window.location.assign(destination(result.destination))
     }
   }
 
@@ -91,7 +96,7 @@ export default function ConnexionPage() {
     const code = (formData.get('code') as string) || ''
     const result = await verifierCodeMfa(code)
     if (result?.error) setError(result.error)
-    else if (result?.destination) window.location.assign(result.destination)
+    else if (result?.destination) window.location.assign(destination(result.destination))
   }
 
   async function handleRecoveryAction(formData: FormData) {

@@ -406,11 +406,6 @@ export default function LandingPage({ avis }: { avis: ResumeAvis }) {
               </div>
             ))}
           </div>
-          {connecte && (
-            <p className="text-center mt-8" style={{ fontSize: 14 }}>
-              <Link href="/avis" style={{ color: 'var(--brand)', fontWeight: 600 }}>{t('Vous aussi, donnez votre avis →', 'Share your review too →')}</Link>
-            </p>
-          )}
         </div>
       </section>
       )}
@@ -445,6 +440,20 @@ export default function LandingPage({ avis }: { avis: ResumeAvis }) {
                 <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, marginTop: 10 }}><EditableText id={`home.faq.${i}.r`} multiline>{item.r}</EditableText></p>
               </details>
             ))}
+          </div>
+
+          {/* Laisser un avis : connexion demandée, puis retour sur /avis. */}
+          <div className="card p-6 mt-10 text-center">
+            <div className="flex justify-center mb-2"><Etoiles note={5} /></div>
+            <h3 className="font-serif text-xl font-bold" style={{ color: 'var(--ink)' }}>
+              <EditableText id="home.avis.cta.titre">Vous avez fait la YES BOX ? Laissez un avis</EditableText>
+            </h3>
+            <p className="mt-2 mb-5" style={{ fontSize: 14, color: 'var(--muted)' }}>
+              <EditableText id="home.avis.cta.texte" multiline>Racontez ce qu’elle a changé pour vous. Une fois votre avis publié, vous recevez un code de 10 € de réduction.</EditableText>
+            </p>
+            <Link href="/avis" className="btn-brand">
+              <EditableText id="home.avis.cta.bouton">Laisser un avis</EditableText> <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

@@ -70,6 +70,9 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/connexion'
+    // Lien « Laisser un avis » de l'accueil : retour sur /avis après la
+    // connexion (cf. src/app/connexion/page.tsx).
+    if (pathname === '/avis') url.searchParams.set('suite', '/avis')
     return rediriger(url)
   }
 
