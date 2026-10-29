@@ -149,21 +149,48 @@ export default function SegmentClient({
   const [envoi, setEnvoi] = useState<ModeEnvoi | null>(null)
   const [resultat, setResultat] = useState<string | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
+  // Personnes décochées une à une dans la liste : on garde les exclusions
+  // plutôt que la sélection, pour qu'une personne qui entre dans le segment
+  // en changeant les critères soit cochée d'office.
+  const [decochees, setDecochees] = useState<Set<string>>(new Set())
 
   const filtres: FiltresSegment = { avec, sans, respecterDesinscription }
   const segment = useMemo(
     () => filtrerSegment(personnes, { avec, sans, respecterDesinscription }),
     [personnes, avec, sans, respecterDesinscription],
   )
+  const selection = useMemo(() => segment.filter(p => !decochees.has(p.id)), [segment, decochees])
+  const toutCoche = selection.length === segment.length
+  const exclusDuSegment = segment.filter(p => decochees.has(p.id)).map(p => p.id)
+
+  function basculer(id: string) {
+    setDecochees(d => {
+      const n = new Set(d)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
+  function basculerTout() {
+    setDecochees(d => {
+      const n = new Set(d)
+      for (const p of segment) {
+        if (toutCoche) n.add(p.id)
+        else n.delete(p.id)
+      }
+      return n
+    })
+  }
 
   async function envoyer(mode: ModeEnvoi) {
     const version = mode === 'fr' ? 'la version française' : mode === 'en' ? 'la version anglaise' : 'la version de la langue choisie par chaque personne'
-    if (!window.confirm(`Envoyer ${version} à ${segment.length} personne${segment.length > 1 ? 's' : ''} ?`)) return
+    if (!window.confirm(`Envoyer ${version} à ${selection.length} personne${selection.length > 1 ? 's' : ''} ?`)) return
     setErreur(null)
     setResultat(null)
     setEnvoi(mode)
     try {
-      const res = await adminEnvoyerEmailSegment(filtres, message, mode)
+      const res = await adminEnvoyerEmailSegment(filtres, message, mode, exclusDuSegment)
       if (res.error) {
         setErreur(res.error)
       } else {
@@ -216,8 +243,10 @@ export default function SegmentClient({
       <div className="surface p-3 mb-4 flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2" style={{ fontSize: 14 }}>
           <Users className="w-4 h-4" style={{ color: 'var(--brand)' }} />
-          <strong>{segment.length}</strong> personne{segment.length > 1 ? 's' : ''} concernée{segment.length > 1 ? 's' : ''}
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>sur {personnes.length}</span>
+          <strong>{selection.length}</strong> personne{selection.length > 1 ? 's' : ''} sélectionnée{selection.length > 1 ? 's' : ''}
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+            {selection.length < segment.length ? `sur ${segment.length} dans le segment` : `sur ${personnes.length}`}
+          </span>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
@@ -228,10 +257,10 @@ export default function SegmentClient({
             {voirListe ? 'Masquer la liste' : 'Voir la liste'}
           </button>
           <button
-            onClick={() => exporterCsv(segment, modules)}
-            disabled={!segment.length}
+            onClick={() => exporterCsv(selection, modules)}
+            disabled={!selection.length}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-            style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--sage)', opacity: segment.length ? 1 : 0.5 }}
+            style={{ background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--sage)', opacity: selection.length ? 1 : 0.5 }}
           >
             <Download className="w-3.5 h-3.5" /> Exporter pour Excel
           </button>
@@ -243,6 +272,16 @@ export default function SegmentClient({
           <table className="w-full" style={{ fontSize: 12 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'var(--muted)' }}>
+                <th className="py-1 pr-2">
+                  <input
+                    type="checkbox"
+                    checked={segment.length > 0 && toutCoche}
+                    ref={el => { if (el) el.indeterminate = selection.length > 0 && !toutCoche }}
+                    onChange={basculerTout}
+                    aria-label={toutCoche ? 'Tout décocher' : 'Tout cocher'}
+                    title={toutCoche ? 'Tout décocher' : 'Tout cocher'}
+                  />
+                </th>
                 <th className="py-1 pr-3">Personne</th>
                 <th className="py-1 pr-3">E-mail</th>
                 <th className="py-1 pr-3">Couple</th>
@@ -255,7 +294,16 @@ export default function SegmentClient({
             </thead>
             <tbody>
               {segment.map(p => (
-                <tr key={p.id} style={{ borderTop: '1px solid var(--line)' }}>
+                <tr key={p.id} onClick={() => basculer(p.id)} style={{ borderTop: '1px solid var(--line)', cursor: 'pointer', opacity: decochees.has(p.id) ? 0.45 : 1 }}>
+                  <td className="py-1 pr-2">
+                    <input
+                      type="checkbox"
+                      checked={!decochees.has(p.id)}
+                      onChange={() => basculer(p.id)}
+                      onClick={e => e.stopPropagation()}
+                      aria-label={`Inclure ${p.email}`}
+                    />
+                  </td>
                   <td className="py-1 pr-3">{[p.prenom, p.nom].filter(Boolean).join(' ') || '—'}</td>
                   <td className="py-1 pr-3 font-mono">{p.email}</td>
                   <td className="py-1 pr-3">{p.coupleNumero ?? '—'}</td>
@@ -281,7 +329,7 @@ export default function SegmentClient({
           onChange={setMessage}
           aideVariables="Remplacées pour chaque personne : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple)."
         />
-        <BoutonsEnvoi message={segment.length ? message : MESSAGE_VIDE} envoi={envoi} onEnvoyer={envoyer} libelle={`(${segment.length})`} />
+        <BoutonsEnvoi message={selection.length ? message : MESSAGE_VIDE} envoi={envoi} onEnvoyer={envoyer} libelle={`(${selection.length})`} />
       </div>
     </div>
   )
