@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Languages } from 'lucide-react'
+import { adminTraduireEmail } from '@/app/actions/admin'
 import { FAMILLES, type ContenuEmail, type FamilleEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesNonRemplacees } from '@/lib/modeles-email/rendu'
 
@@ -47,7 +48,11 @@ export default function ComposeurEmail({
 }) {
   const [onglet, setOnglet] = useState<Langue>('fr')
   const [apercu, setApercu] = useState(false)
+  const [traduction, setTraduction] = useState<'idle' | 'busy'>('idle')
+  const [erreurTraduction, setErreurTraduction] = useState<string | null>(null)
   const contenu = message[onglet]
+  const frRempli = !!(message.fr.objet.trim() || message.fr.corps.trim())
+  const enVide = !message.en.objet.trim() && !message.en.corps.trim()
   const restantes = useMemo(() => variablesRestantes(message, ['fr', 'en']), [message])
 
   function choisirModele(cle: string) {
@@ -56,6 +61,23 @@ export default function ComposeurEmail({
     if (!cle) { onChange(MESSAGE_VIDE); return }
     const m = modeles.find(x => x.cle === cle)
     if (m) onChange({ fr: { ...m.fr }, en: { ...m.en }, modele: m.cle })
+  }
+
+  // Version anglaise remplie à partir du français (API Claude, côté serveur).
+  async function traduire() {
+    if (!enVide && !window.confirm('Remplacer la version anglaise par une nouvelle traduction du français ?')) return
+    setTraduction('busy')
+    setErreurTraduction(null)
+    const res = await adminTraduireEmail(message.fr)
+    setTraduction('idle')
+    if ('error' in res) { setErreurTraduction(res.error); return }
+    onChange({ ...message, en: res.en })
+  }
+
+  // Ouvrir la version anglaise encore vide la traduit d'office.
+  function ouvrirOnglet(l: Langue) {
+    setOnglet(l)
+    if (l === 'en' && enVide && frRempli && traduction === 'idle') traduire()
   }
 
   function modifier(champ: keyof ContenuEmail, valeur: string) {
@@ -83,7 +105,7 @@ export default function ComposeurEmail({
             <button
               key={l}
               type="button"
-              onClick={() => setOnglet(l)}
+              onClick={() => ouvrirOnglet(l)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium"
               style={{ background: onglet === l ? 'var(--brand)' : 'var(--paper)', color: onglet === l ? 'white' : 'var(--ink-2)', border: '1px solid var(--line)' }}
             >
@@ -91,15 +113,31 @@ export default function ComposeurEmail({
             </button>
           )
         })}
+        {onglet === 'en' && frRempli && (
+          <button
+            type="button"
+            onClick={traduire}
+            disabled={traduction === 'busy'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ml-auto"
+            style={{ background: 'var(--paper)', color: 'var(--brand)', border: '1px solid var(--line)' }}
+          >
+            <Languages className="w-3.5 h-3.5" /> {traduction === 'busy' ? 'Traduction…' : enVide ? 'Traduire le français' : 'Retraduire le français'}
+          </button>
+        )}
       </div>
+      {traduction === 'busy' && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Traduction de la version française en cours…</p>}
+      {erreurTraduction && <p style={{ fontSize: 12, color: '#dc2626' }}>{erreurTraduction}</p>}
+      {onglet === 'en' && !enVide && traduction === 'idle' && (
+        <p style={{ fontSize: 11, color: 'var(--muted)' }}>Relis la traduction avant l’envoi : tu peux la modifier ci-dessous.</p>
+      )}
 
       <div>
         <label className="flabel">Objet ({onglet === 'fr' ? 'FR' : 'EN'})</label>
-        <input type="text" className="field" value={contenu.objet} onChange={e => modifier('objet', e.target.value)} placeholder={onglet === 'fr' ? 'Objet de l’e-mail' : 'Email subject'} />
+        <input type="text" className="field" readOnly={traduction === 'busy'} value={contenu.objet} onChange={e => modifier('objet', e.target.value)} placeholder={onglet === 'fr' ? 'Objet de l’e-mail' : 'Email subject'} />
       </div>
       <div>
         <label className="flabel">Message ({onglet === 'fr' ? 'FR' : 'EN'})</label>
-        <textarea className="field font-mono" rows={10} style={{ fontSize: 12.5 }} value={contenu.corps} onChange={e => modifier('corps', e.target.value)} placeholder={onglet === 'fr' ? 'Bonjour {prenom},\n\n…' : 'Hello {prenom},\n\n…'} />
+        <textarea className="field font-mono" rows={10} style={{ fontSize: 12.5 }} readOnly={traduction === 'busy'} value={contenu.corps} onChange={e => modifier('corps', e.target.value)} placeholder={onglet === 'fr' ? 'Bonjour {prenom},\n\n…' : 'Hello {prenom},\n\n…'} />
         <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
           {aideVariables} Mise en forme : une ligne vide entre deux paragraphes, **gras**, [bouton: Libellé | https://…], [lien: Libellé | https://…].
         </p>
