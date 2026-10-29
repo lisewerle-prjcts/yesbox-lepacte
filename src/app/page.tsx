@@ -3,9 +3,12 @@ import { getSiteContentMap } from '@/lib/site-content'
 import { createAdminClient } from '@/lib/supabase/server'
 import { chargerAvisPublies } from '@/lib/avis'
 import { faqPage, jsonLd, produit } from '@/lib/donnees-structurees'
+import { DESCRIPTION_ACCUEIL, TITRE_ACCUEIL } from '@/lib/site'
 import AccueilClient from './AccueilClient'
 
 export const metadata: Metadata = {
+  title: { absolute: TITRE_ACCUEIL },
+  description: DESCRIPTION_ACCUEIL,
   alternates: { canonical: '/' },
 }
 

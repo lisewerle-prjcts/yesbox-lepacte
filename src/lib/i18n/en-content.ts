@@ -4,7 +4,10 @@
  * L'admin peut toujours surcharger une entrée depuis le mode édition (stockée en base
  * sous la clé "<id>::en") ; cette table ne sert que de valeur par défaut.
  */
+import { enDesPagesThematiques } from '@/lib/pages-thematiques'
+
 export const EN_CONTENT: Record<string, string> = {
+  ...enDesPagesThematiques(),
   // src/app/regles-du-jeu/page.tsx
   'regles.titre': 'Rules of the Game',
   'regles.intro': 'To keep the experience fair and honest for both partners, YES BOX follows these rules:',
@@ -449,9 +452,14 @@ export const EN_CONTENT: Record<string, string> = {
   // src/app/offrir/OffrirClient.tsx
   'offrir.eyebrow': 'Gift card',
   'offrir.titre': 'Give YES BOX to a couple',
+  'offrir.eyebrow.v2': 'Gift card · An original gift for a couple',
   'offrir.sousTitre': 'Evenings for two to get to know each other better, talk better and choose to commit. Give 1, 2 or 3 months of subscription, with a lovely printable card.',
   'offrir.sousTitre.v2': 'Evenings for two to get to know each other better, talk better and choose to commit. Give the YES BOX — the full program and its first year — with a lovely printable card.',
   'offrir.sousTitre.v3': 'Evenings for two to get to know each other better, talk better and choose to commit. Give the YES BOX – Le Pacte starter pack: the 8 modules and signing the pact, with one year to complete them, and a lovely printable card.',
   'home.footer.link.mentions': 'Legal Notice',
+  'home.footer.link.jeu': 'Couples game',
+  'home.footer.link.therapie': 'Couples therapy',
+  'home.footer.link.pacte': 'Couple’s pact',
+  'home.etapes.accroche': 'Playful questions to talk, and take care of your relationship',
   'home.footer.link.confidentialite': 'Privacy',
 }
