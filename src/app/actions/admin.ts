@@ -185,16 +185,18 @@ export async function adminSendEmail(to: string, message: MessageManuel, mode: M
 
 // Envoi d'un même message à toutes les personnes d'un segment. Le segment
 // est recalculé ici à partir des données à jour (jamais pris tel quel du
-// navigateur). Chaque e-mail porte le lien de désinscription des rappels.
-export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, message: MessageManuel, mode: ModeEnvoi) {
+// navigateur), moins les personnes décochées une à une dans la liste.
+// Chaque e-mail porte le lien de désinscription des rappels.
+export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, message: MessageManuel, mode: ModeEnvoi, exclus: string[] = []) {
   await assertAdmin()
   if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
   const erreur = verifierMessage(message, mode)
   if (erreur) return { error: erreur }
 
   const admin = createAdminClient()
-  const personnes = filtrerSegment(await chargerPersonnesSegment(admin), filtres)
-  if (!personnes.length) return { error: 'Aucune personne dans ce segment' }
+  const decochees = new Set(exclus)
+  const personnes = filtrerSegment(await chargerPersonnesSegment(admin), filtres).filter(p => !decochees.has(p.id))
+  if (!personnes.length) return { error: 'Aucune personne sélectionnée dans ce segment' }
   const contexte = await contexteDestinataires(admin, personnes.map(p => p.id))
 
   let envoyes = 0
