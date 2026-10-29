@@ -1,6 +1,7 @@
 import { SITE_URL } from '@/lib/site'
 import { FAQ } from '@/lib/faq'
 import { AVIS_ACCUEIL, type ResumeAvis } from '@/lib/avis-constantes'
+import { PAYS_DU_MONDE } from '@/lib/pays'
 
 // Données structurées (JSON-LD, schema.org) : elles décrivent noir sur blanc
 // qui édite le site et ce qui y est vendu, pour Google, Bing et les IA.
@@ -30,11 +31,11 @@ export const siteWeb = {
 }
 
 // Programme en ligne, sans envoi physique : accès ouvert dès l'inscription
-// ou le paiement, donc livraison gratuite et immédiate.
+// ou le paiement, donc livraison gratuite et immédiate, dans tous les pays.
 const livraison = {
   '@type': 'OfferShippingDetails',
   shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'EUR' },
-  shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'FR' },
+  shippingDestination: PAYS_DU_MONDE.map(pays => ({ '@type': 'DefinedRegion', addressCountry: pays })),
   deliveryTime: {
     '@type': 'ShippingDeliveryTime',
     handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 0, unitCode: 'DAY' },
@@ -45,11 +46,13 @@ const livraison = {
 // Pas de retour : pour payer, on demande l'accès immédiat et on renonce au
 // droit de rétractation dès cet accès (CGV, article 5 ; L221-28 du Code de
 // la consommation).
-const politiqueRetour = {
+// Google accepte 50 pays au plus par politique : une politique identique
+// par groupe de 50 pays.
+const politiqueRetour = Array.from({ length: Math.ceil(PAYS_DU_MONDE.length / 50) }, (_, i) => ({
   '@type': 'MerchantReturnPolicy',
-  applicableCountry: 'FR',
+  applicableCountry: PAYS_DU_MONDE.slice(i * 50, i * 50 + 50),
   returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
-}
+}))
 
 const produitBase = {
   '@context': 'https://schema.org',
