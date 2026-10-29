@@ -115,6 +115,20 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Durée de conservation | 24 mois après la fin de validité de la carte (3 ans après l'achat), effacement automatique. Factures : 10 ans (Stripe) |
 | Mesures de sécurité | Table accessible uniquement côté serveur (RLS sans politique) ; code aléatoire de 8 caractères, utilisable une seule fois |
 
+## Fiche 8 — Avis des couples
+
+| | |
+|---|---|
+| Date de création de la fiche | octobre 2026 |
+| Finalité | Recueillir les avis des personnes inscrites (page /avis, et après la signature du pacte), les publier sur l'accueil après validation, et envoyer à leur auteur un code de 10 € de réduction |
+| Base légale | Consentement (art. 6.1.a) pour la publication, coché avant l'envoi de l'avis et daté |
+| Personnes concernées | Personnes inscrites qui laissent un avis |
+| Données | Prénom ou initiales choisis par la personne, mois où le couple a commencé, note sur 5, texte de l'avis, date du consentement, statut (en attente, publié, refusé), code de réduction et date d'utilisation |
+| Destinataires | Administration du site (Admin > Vue d'ensemble > Tâches) ; public (accueil et données structurées lues par les moteurs de recherche) pour les avis publiés ; sous-traitants Supabase, Resend/Google (e-mails), Stripe (crédit de 10 €) |
+| Transferts hors UE | Voir tableau des sous-traitants |
+| Durée de conservation | Tant que le compte existe ; l'avis est supprimé avec le compte, et retiré de l'accueil sur simple demande |
+| Mesures de sécurité | Table accessible uniquement côté serveur (RLS sans politique) ; un avis par personne ; publication seulement après relecture ; code aléatoire utilisable une seule fois, par le couple de l'auteur |
+
 ## Fiche 6 — Pré-commandes (traitement terminé)
 
 | | |

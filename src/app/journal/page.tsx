@@ -38,9 +38,10 @@ export default async function JournalPage() {
     supabase.from('couples').select('date_anniversaire, pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single(),
     getEffectiveModules(),
   ])
-  const [{ data: coupleAbonnement }, formule] = await Promise.all([
+  const [{ data: coupleAbonnement }, formule, { data: avis }] = await Promise.all([
     supabase.from('couples').select(ABONNEMENT_COLONNES).eq('id', profile.couple_id).single(),
     lireFormule(supabase, profile.couple_id),
+    createAdminClient().from('avis').select('id').eq('profile_id', user.id).maybeSingle(),
   ])
   const offreAnnuelle = offreRdvAnnuel(coupleAbonnement, formule, !!signature?.pacte_signe_le)
   // Bascule vers l'abonnement annuel programmée d'office à la signature.
@@ -210,6 +211,7 @@ export default async function JournalPage() {
           parDefaut={bornesRdv.parDefaut}
           anniversaire={anniversaireDansBornes(signature?.date_anniversaire ?? null)}
           saintValentin={saintValentinDansBornes()}
+          avisDonne={!!avis}
         />
       )}
 

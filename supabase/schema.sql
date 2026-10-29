@@ -1862,3 +1862,36 @@ grant execute on function public.utiliser_code_gratuit(text, uuid) to service_ro
 -- ============================================================
 alter table public.couples add column if not exists mariage_non_concerne boolean not null default false;
 grant update (mariage_non_concerne) on public.couples to authenticated;
+
+-- ============================================================
+-- Migration : avis des couples (page /avis).
+-- Chaque membre connecté peut laisser un avis : prénom ou initiales, mois
+-- où le couple a commencé la YES BOX, note sur 5 et texte, avec son
+-- accord pour la publication. L'équipe le valide dans Admin > Vue
+-- d'ensemble > Tâches : publié, il apparaît sur l'accueil (et dans la
+-- note moyenne des données structurées), et un code de 10 € de réduction
+-- (AVIS-XXXXXX) est envoyé par e-mail à son auteur. Le code, à saisir
+-- dans « Ajouter un code », crédite 10 € sur le compte client Stripe du
+-- couple, comme une récompense de parrainage (cf. src/lib/avis.ts).
+-- Un avis par personne. Écrite uniquement par le serveur (clé service).
+-- À exécuter AVANT de déployer le code correspondant.
+-- Idempotent : peut être relancé sans risque.
+-- ============================================================
+create table if not exists public.avis (
+  id uuid primary key default uuid_generate_v4(),
+  profile_id uuid not null references public.profiles(id) on delete cascade unique, -- compte supprimé : avis supprimé
+  couple_id uuid references public.couples(id) on delete set null,
+  prenom text not null check (char_length(prenom) between 1 and 40),
+  debut_mois date not null, -- 1er jour du mois où le couple a commencé
+  note smallint not null check (note between 1 and 5),
+  texte text not null check (char_length(texte) between 10 and 1500),
+  consentement_publication_le timestamptz not null,
+  statut text not null default 'en_attente' check (statut in ('en_attente', 'publie', 'refuse')),
+  cree_le timestamptz not null default now(),
+  traite_le timestamptz,
+  code_reduction text unique,
+  code_utilise_le timestamptz
+);
+create index if not exists avis_statut_idx on public.avis (statut, cree_le desc);
+alter table public.avis enable row level security;
+-- Aucune policy : accessible uniquement via le service role.

@@ -84,6 +84,7 @@ export async function notifierPartenaire(type: TypeNotification, ctx: Contexte):
         partenaire: auteur.prenom || t(locale, 'Ton binôme', 'Your partner'),
         module: titre,
         lien: `${appUrl()}${chemin}`,
+        lien_avis: `${appUrl()}/avis`,
         phrase_abonnement: ctx.basculeAnnuelleLe
           ? t(locale, `À la fin de votre mois d'abonnement, le ${formaterDate(ctx.basculeAnnuelleLe, locale)}, vous passerez automatiquement à l'abonnement annuel (19 €/an, résiliable à tout moment depuis Mon compte).`, `At the end of your month of subscription, on ${formaterDate(ctx.basculeAnnuelleLe, locale)}, you'll automatically switch to the yearly subscription (€19/year, cancel anytime from My Account).`)
           : '',

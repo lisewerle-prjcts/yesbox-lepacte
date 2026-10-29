@@ -10,6 +10,7 @@ import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import ChoixDateRdv, { formaterDate, type BornesRdv } from '@/components/pacte/ChoixDateRdv'
 import ReponsesCoteACote from '@/components/module/ReponsesCoteACote'
+import InvitationAvis from '@/components/InvitationAvis'
 import type { ModuleInfo, Reponse } from '@/types'
 
 interface Props {
@@ -27,12 +28,14 @@ interface Props {
   signeLe: string | null
   rdvLe: string | null
   bornes: BornesRdv
+  /** La personne a déjà laissé un avis : on ne le lui redemande pas. */
+  avisDonne: boolean
 }
 
 // Module 9 : pas de conclusion. Les réponses s'affichent côte à côte, question
 // par question, puis les deux signent le pacte (et choisissent la date du
 // rendez-vous annuel). Quand les deux ont signé, le module est terminé.
-export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, reponsesPartner, reponsesPartagees, revealed, myName, partnerName, jaiSigne, partenaireASigne, signeLe, rdvLe, bornes }: Props) {
+export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, reponsesPartner, reponsesPartagees, revealed, myName, partnerName, jaiSigne, partenaireASigne, signeLe, rdvLe, bornes, avisDonne }: Props) {
   const router = useRouter()
   const t = useT()
   const { locale } = useLocale()
@@ -144,6 +147,7 @@ export default function RevelationPacte({ moduleInfo, moduleId, mesReponses, rep
                   <Link href="/journal" className="btn-secondary"><EditableText id="pacte.module.voirpacte">Voir notre pacte</EditableText></Link>
                   <Link href="/tableau-de-bord" className="btn-brand"><EditableText id="revelation.retour.dashboard">Retour au tableau de bord</EditableText></Link>
                 </div>
+                {!avisDonne && <InvitationAvis />}
               </>
             ) : jaiSigne ? (
               <>

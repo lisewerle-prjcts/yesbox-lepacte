@@ -31,6 +31,7 @@ Application Next.js 14 pour couples — construisez les fondations de votre rela
 | `/rdv-annuels` | Nos rdv annuels — réponses aux questions du mois et bilan annuel (rendez-vous annuel) |
 | `/mon-compte` | Infos personnelles, mot de passe, ajout d'un code |
 | `/offrir` | Offrir une carte cadeau YES BOX (58 €) |
+| `/avis` | Laisser un avis (validé dans Admin > Vue d'ensemble > Tâches, puis affiché sur l'accueil ; code de 10 € à la publication) |
 | `/mot-de-passe-oublie` | Réinitialisation mot de passe |
 
 ## Le programme : 8 modules, le pacte, puis le rendez-vous annuel

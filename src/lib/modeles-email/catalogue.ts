@@ -14,7 +14,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
   { cle: 'mensuels', nom: 'Rendez-vous mensuels & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé, et l’annonce du rendez-vous annuel.' },
   { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
-  { cle: 'abonnement', nom: 'Abonnement & cartes cadeaux', description: 'Renouvellement à 19 €/an, passage à l’abonnement annuel, cartes cadeaux.' },
+  { cle: 'abonnement', nom: 'Abonnement, cartes cadeaux & avis', description: 'Renouvellement à 19 €/an, passage à l’abonnement annuel, cartes cadeaux, code de réduction offert pour un avis publié.' },
 ]
 
 export interface ContenuEmail { objet: string; corps: string }
@@ -43,6 +43,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   code: 'code (code couple, carte cadeau…)',
   lien: 'lien du bouton',
   lien_pacte: 'lien vers le pacte',
+  lien_avis: 'lien vers la page pour laisser un avis',
   module: 'titre du module',
   numero: 'numéro du module',
   total: 'nombre de modules du parcours',
@@ -507,6 +508,8 @@ Vous recevrez des messages régulièrement tout au long de l'année (2 par mois 
 
 Ce jour-là, un module spécial vous attendra, et nous vous guiderons en amont pour préparer ce rendez-vous comme il se doit. Retrouvez la date de votre rendez-vous annuel sur votre tableau de bord.
 
+Un mot sur votre expérience ? [lien: Laissez votre avis | {lien_avis}] : une fois publié, vous recevez un code de 10 € de réduction.
+
 À bientôt, et prenez soin de vous et de votre couple.
 
 [bouton: Voir notre tableau de bord | {lien}]` },
@@ -521,6 +524,8 @@ Congratulations on everything you've been through together!
 You'll receive messages regularly throughout the year (2 per month at most) to keep strengthening your relationship, until the date you set for your yearly date.
 
 On that day, a special module will be waiting for you, and we'll guide you beforehand so you can prepare for it properly. You'll find the date of your yearly date on your dashboard.
+
+A word about your experience? [lien: Leave your review | {lien_avis}]: once it is published, you get a €10 discount code.
 
 See you soon, and take care of yourselves and your relationship.
 
@@ -1061,6 +1066,37 @@ To activate it, log in at yesbox-lepacte.fr and enter this code in My Account, u
 Valid until {date}, for one couple.
 
 [bouton: Download the printable card | {lien}]
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'avis_publie', famille: 'abonnement', nom: 'Avis publié — code de 10 € de réduction',
+    quand: 'Quand un avis est validé dans Vue d’ensemble > Tâches. Envoyé à la personne qui l’a écrit.',
+    obligatoires: ['code'],
+    fr: { objet: 'Merci pour votre avis : 10 € de réduction', corps: `${BONJOUR.fr}
+
+Merci d’avoir pris le temps de partager votre expérience : votre avis est maintenant publié sur yesbox-lepacte.fr.
+
+Pour vous remercier, voici un code de **10 € de réduction** :
+
+[code: {code}]
+
+Saisissez-le dans Mon compte, rubrique « Ajouter un code » : les 10 € seront déduits automatiquement de votre prochain paiement (pack initial ou rendez-vous annuel). Code utilisable une seule fois, par votre couple.
+
+[bouton: Ajouter mon code | {lien}]
+
+${EQUIPE.fr}` },
+    en: { objet: 'Thank you for your review: €10 off', corps: `${BONJOUR.en}
+
+Thank you for taking the time to share your experience: your review is now published on yesbox-lepacte.fr.
+
+As a thank-you, here is a **€10 discount** code:
+
+[code: {code}]
+
+Enter it in My Account, under "Add a code": the €10 will be automatically deducted from your next payment (starter pack or yearly date). The code can be used once, by your couple.
+
+[bouton: Add my code | {lien}]
 
 ${EQUIPE.en}` },
   },

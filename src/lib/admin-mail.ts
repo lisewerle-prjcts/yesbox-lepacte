@@ -64,3 +64,22 @@ export async function notifierNouvelleInscription(infos: { prenom: string; email
     `,
   }).catch(() => false)
 }
+
+// Prévient l'équipe à chaque avis laissé sur /avis, à valider dans
+// Vue d'ensemble > Tâches. Ne bloque jamais l'envoi de l'avis.
+export async function notifierNouvelAvis(infos: { prenom: string; email: string | null; note: number; texte: string; debutMois: string }) {
+  const destinataire = process.env.ADMIN_NOTIF_EMAIL || 'lise.yesbox@gmail.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app'
+  const etoiles = '★'.repeat(infos.note) + '☆'.repeat(5 - infos.note)
+  await envoyerMail({
+    nom: 'YES BOX Avis',
+    to: destinataire,
+    subject: `Nouvel avis à valider : ${infos.note}/5 de ${infos.prenom.replace(/[\r\n]+/g, ' ')}`,
+    body: `
+      <p>Un nouvel avis attend ta validation.</p>
+      <p><strong>Prénom ou initiales :</strong> ${echapper(infos.prenom)}<br><strong>E-mail :</strong> ${echapper(infos.email ?? '—')}<br><strong>A commencé la YES BOX :</strong> ${echapper(infos.debutMois)}<br><strong>Note :</strong> ${etoiles} (${infos.note}/5)</p>
+      <blockquote style="border-left:3px solid #c5256e;margin:0;padding:4px 12px;font-style:italic;white-space:pre-line;">${echapper(infos.texte)}</blockquote>
+      <p><a href="${appUrl}/admin#taches">Valider ou refuser l'avis dans l'admin</a></p>
+    `,
+  }).catch(() => false)
+}
