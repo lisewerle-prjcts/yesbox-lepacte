@@ -23,6 +23,7 @@ import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/da
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
+import { traductionConfiguree, traduireEmailEnAnglais } from '@/lib/traduction'
 import type { OffreCodeGratuit, QuestionType } from '@/types'
 
 function revalidateModuleLists() {
@@ -986,4 +987,14 @@ export async function adminDebloquerConnexion(cle: string) {
   if (error) return { error: error.message }
   revalidatePath('/admin')
   return { success: true }
+}
+
+// Composeur d'e-mails : remplit la version anglaise à partir de la
+// version française (src/lib/traduction.ts).
+export async function adminTraduireEmail(fr: ContenuEmail): Promise<{ en: ContenuEmail } | { error: string }> {
+  await assertAdmin()
+  if (!traductionConfiguree()) return { error: 'Traduction non configurée : ajoute la variable ANTHROPIC_API_KEY dans Vercel.' }
+  if (!fr.objet.trim() && !fr.corps.trim()) return { error: 'Écris d’abord la version française.' }
+  if (fr.objet.length > 300 || fr.corps.length > 20000) return { error: 'Message trop long pour être traduit.' }
+  return traduireEmailEnAnglais({ objet: fr.objet, corps: fr.corps })
 }
