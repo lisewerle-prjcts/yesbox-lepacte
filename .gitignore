@@ -34,6 +34,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# fichiers générés par le serveur de dev Next.js
+# fichier généré par le serveur de dev Next.js
 /AGENTS.md
-/CLAUDE.md
