@@ -55,7 +55,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
 
       <main className="max-w-3xl mx-auto px-6 py-14">
         <div className="text-center mb-10">
-          <div className="eyebrow justify-center mb-3"><EditableText id="offrir.eyebrow">Carte cadeau</EditableText></div>
+          <div className="eyebrow justify-center mb-3"><EditableText id="offrir.eyebrow.v2">Carte cadeau · Un cadeau original pour un couple</EditableText></div>
           <h1 className="font-serif font-bold mb-3" style={{ fontSize: 'clamp(28px, 5vw, 44px)', color: 'var(--ink)' }}>
             <EditableText id="offrir.titre">Offrez YES BOX à un couple</EditableText>
           </h1>

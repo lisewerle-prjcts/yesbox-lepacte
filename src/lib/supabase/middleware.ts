@@ -60,7 +60,7 @@ export async function updateSession(request: NextRequest) {
   // Routes publiques accessibles sans authentification
   const publicRoutes = [
     '/', '/connexion', '/inscription', '/rejoindre',
-    '/tarifs', '/offrir', '/mentions-legales', '/cgv', '/confidentialite', '/mot-de-passe-oublie', '/auth', '/desinscription', '/charte-beta',
+    '/tarifs', '/offrir', '/jeu-de-couple', '/therapie-de-couple', '/pacte-de-couple', '/mentions-legales', '/cgv', '/confidentialite', '/mot-de-passe-oublie', '/auth', '/desinscription', '/charte-beta',
   ]
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')

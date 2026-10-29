@@ -4,8 +4,8 @@ import { lirePrixCartesCadeaux } from '@/lib/cartes-cadeaux'
 import OffrirClient from './OffrirClient'
 
 export const metadata: Metadata = {
-  title: 'Offrir YES BOX',
-  description: 'Offrez le pack initial YES BOX — Le Pacte à un couple (58 €) : les 8 modules et la signature du pacte, avec un an pour les réaliser, et une carte cadeau à imprimer.',
+  title: 'Un cadeau original pour un couple : offrir YES BOX',
+  description: 'Un cadeau original pour un couple, la Saint-Valentin ou un anniversaire : le pack YES BOX – Le Pacte (58 €), 8 modules ludiques à deux et une carte à imprimer.',
   alternates: { canonical: '/offrir' },
 }
 

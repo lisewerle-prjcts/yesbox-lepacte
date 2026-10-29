@@ -14,6 +14,7 @@ import { ArrowRight, Check, Menu, Star, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { FAQ } from '@/lib/faq'
 import { AVIS_ACCUEIL, formaterMoisAvis, type ResumeAvis } from '@/lib/avis-constantes'
+import { idsPage, type PageThematique } from '@/lib/pages-thematiques'
 
 
 const POUR_QUI = (t: (fr: string, en: string) => string) => [
@@ -61,7 +62,9 @@ const PACTE_ROWS = (t: (fr: string, en: string) => string) => [
 ]
 
 
-export default function LandingPage({ avis }: { avis: ResumeAvis }) {
+// Accueil, et pages thématiques (/jeu-de-couple…) : même page, avec pour
+// celles-ci leur propre titre et introduction, puis leur section de contenu.
+export default function LandingPage({ avis, page }: { avis: ResumeAvis; page?: PageThematique }) {
   const t = useT()
   const { locale } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
@@ -148,14 +151,27 @@ export default function LandingPage({ avis }: { avis: ResumeAvis }) {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight md:leading-none mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-          <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
-          <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
-        </h1>
-        <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed md:leading-7" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
-          <p><EditableText id="home.hero.intro.programme" multiline>YES BOX est un programme de développement personnel pour les couples. Avec des modules simples à faire à son rythme, depuis la maison et sans jugement (pas d&apos;analyse IA, ni de conseil de tierce personne). L&apos;objectif : prendre soin de sa relation, échanger à deux et renouveler ses engagements en conscience, chaque année.</EditableText></p>
-          <p><EditableText id="home.hero.intro.questions" multiline>Des questions simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire. Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, en douceur.</EditableText></p>
-        </div>
+        {page ? (
+          <>
+            <h1 className="font-serif text-4xl md:text-6xl font-bold leading-tight mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em', textWrap: 'balance' }}>
+              <EditableText id={idsPage(page.slug).h1}>{page.h1.fr}</EditableText>
+            </h1>
+            <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed md:leading-7" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
+              {page.intro.map((p, i) => <p key={i}><EditableText id={idsPage(page.slug).intro(i)} multiline>{p.fr}</EditableText></p>)}
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif text-5xl md:text-7xl font-bold leading-tight md:leading-none mb-8" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+              <EditableText id="home.hero.title.line1">Le pacte des couples</EditableText><br />
+              <EditableText id="home.hero.title.line2" as="em" style={{ color: 'var(--brand)' }}>qui tiennent.</EditableText>
+            </h1>
+            <div className="text-base md:text-lg max-w-2xl mx-auto mb-10 space-y-2 leading-relaxed md:leading-7" style={{ color: 'var(--muted)', textWrap: 'balance' }}>
+              <p><EditableText id="home.hero.intro.programme" multiline>YES BOX est un programme de développement personnel pour les couples. Avec des modules simples à faire à son rythme, depuis la maison et sans jugement (pas d&apos;analyse IA, ni de conseil de tierce personne). L&apos;objectif : prendre soin de sa relation, échanger à deux et renouveler ses engagements en conscience, chaque année.</EditableText></p>
+              <p><EditableText id="home.hero.intro.questions" multiline>Des questions simples et ludiques pour parler de ce qui compte : ce qui va bien, ce qui coince, et ce qu&apos;on n&apos;a pas encore osé se dire. Parce que les non-dits s&apos;accumulent sans bruit, YES BOX vous aide à les poser sur la table, en douceur.</EditableText></p>
+            </div>
+          </>
+        )}
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <button onClick={() => setModalOpen(true)} className="btn-brand lg">
             <EditableText id="home.hero.cta.primary.v2">Commencer gratuitement à deux</EditableText> <ArrowRight className="w-4 h-4" />
@@ -172,6 +188,8 @@ export default function LandingPage({ avis }: { avis: ResumeAvis }) {
         </div>
       </section>
 
+      {page && <SectionThematique page={page} />}
+
       {/* COMMENT ÇA MARCHE */}
       <section className="max-w-5xl mx-auto px-6 pb-20">
         <div className="text-center mb-10">
@@ -187,6 +205,9 @@ export default function LandingPage({ avis }: { avis: ResumeAvis }) {
             </div>
           ))}
         </div>
+        <p className="font-serif text-3xl font-bold text-center mt-12" style={{ color: 'var(--brand)', textWrap: 'balance' }}>
+          <EditableText id="home.etapes.accroche">Des questions ludiques pour se parler, et prendre soin de votre couple</EditableText>
+        </p>
       </section>
 
       {/* POUR QUI */}
@@ -487,6 +508,9 @@ export default function LandingPage({ avis }: { avis: ResumeAvis }) {
             <button onClick={() => setModalOpen(true)} style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.inscription">Inscription</EditableText></button>
             <Link href="/tarifs" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.tarifs">Tarifs</EditableText></Link>
             <Link href="/offrir" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.offrir">Offrir</EditableText></Link>
+            <Link href="/jeu-de-couple" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.jeu">Jeu de couple</EditableText></Link>
+            <Link href="/therapie-de-couple" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.therapie">Thérapie de couple</EditableText></Link>
+            <Link href="/pacte-de-couple" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.pacte">Pacte de couple</EditableText></Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.mentions">Mentions légales</EditableText></Link>
             <Link href="/cgv" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.cgv">CGV</EditableText></Link>
             <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.confidentialite">Confidentialité</EditableText></Link>
@@ -504,5 +528,64 @@ function Etoiles({ note }: { note: number }) {
     <span className="inline-flex gap-0.5" style={{ color: 'var(--brand)' }} aria-label={`${note}/5`}>
       {[1, 2, 3, 4, 5].map(n => <Star key={n} className="w-4 h-4" fill={n <= note ? 'currentColor' : 'none'} aria-hidden />)}
     </span>
+  )
+}
+
+// Contenu propre à une page thématique, juste après son introduction.
+function SectionThematique({ page }: { page: PageThematique }) {
+  const ids = idsPage(page.slug)
+  return (
+    <section className="py-16 mb-20" style={{ background: 'var(--cream-2)' }}>
+      <div className="max-w-3xl mx-auto px-6 space-y-12">
+        {page.sections.map((s, i) => (
+          <div key={i}>
+            <h2 className="font-serif text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--ink)' }}>
+              <EditableText id={ids.sectionTitre(i)}>{s.titre.fr}</EditableText>
+            </h2>
+            {s.liste && (
+              <ul className="space-y-2 mb-4">
+                {s.liste.map((l, j) => (
+                  <li key={j} className="flex gap-2" style={{ fontSize: 15.5, color: 'var(--ink-2)', lineHeight: 1.6 }}>
+                    <Check className="w-4 h-4 shrink-0 mt-1" style={{ color: 'var(--brand)' }} />
+                    <EditableText id={ids.sectionListe(i, j)} multiline>{l.fr}</EditableText>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {s.paragraphes?.map((p, j) => (
+              <p key={j} className="mb-3" style={{ fontSize: 15.5, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+                <EditableText id={ids.sectionParagraphe(i, j)} multiline>{p.fr}</EditableText>
+              </p>
+            ))}
+          </div>
+        ))}
+
+        {page.exemples && (
+          <div>
+            <h2 className="font-serif text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--ink)' }}>
+              <EditableText id={ids.exemplesTitre}>{page.exemples.titre.fr}</EditableText>
+            </h2>
+            <div className="grid md:grid-cols-2 gap-3">
+              {page.exemples.questions.map((q, i) => (
+                <div key={i} className="card p-4 font-serif" style={{ fontStyle: 'italic', fontSize: 16, color: 'var(--ink)', lineHeight: 1.5 }}>
+                  <EditableText id={ids.exemple(i)} multiline>{q.fr}</EditableText>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className="flex flex-col gap-3">
+            {page.faq.map((f, i) => (
+              <details key={i} className="card p-5">
+                <summary className="font-semibold cursor-pointer" style={{ fontSize: 15, color: 'var(--ink)' }}><EditableText id={ids.faqQ(i)}>{f.q.fr}</EditableText></summary>
+                <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, marginTop: 10 }}><EditableText id={ids.faqR(i)} multiline>{f.r.fr}</EditableText></p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }

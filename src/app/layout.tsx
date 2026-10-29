@@ -8,7 +8,7 @@ import { EditModeProvider } from '@/components/edit-mode/EditModeContext'
 import EditModeToggle from '@/components/edit-mode/EditModeToggle'
 import { LocaleProvider } from '@/components/i18n/LocaleContext'
 import GlobalLocaleSwitcher from '@/components/i18n/GlobalLocaleSwitcher'
-import { SITE_URL } from '@/lib/site'
+import { DESCRIPTION_ACCUEIL, SITE_URL, TITRE_ACCUEIL } from '@/lib/site'
 import { jsonLd, organisation, siteWeb } from '@/lib/donnees-structurees'
 
 const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
@@ -16,17 +16,17 @@ const dmMono = DM_Mono({ subsets: ['latin'], variable: '--font-geist-mono', weig
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-newsreader', style: ['normal', 'italic'], display: 'swap' })
 
 export const metadata: Metadata = {
-  title: { default: 'YES BOX — Le Pacte des couples qui tiennent', template: '%s | YES BOX' },
-  description: 'Les non-dits s\'accumulent sans bruit. YES BOX aide tous les couples à les poser sur la table, sans thérapeute et sans pression, puis à écrire leur pacte de couple. Module 1 gratuit.',
-  keywords: ['couple', 'mariage', 'préparation mariage', 'non-dits couple', 'programme couple', 'pacte de couple', 'communication couple'],
+  title: { default: TITRE_ACCUEIL, template: '%s | YES BOX' },
+  description: DESCRIPTION_ACCUEIL,
+  keywords: ['jeu de couple', 'jeu de questions couple', 'programme couple', 'pacte de couple', 'communication couple', 'thérapie de couple', 'développement personnel couple'],
   authors: [{ name: 'YES BOX' }],
   creator: 'YES BOX',
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'YES BOX — Le Pacte',
-    title: 'YES BOX — Le pacte des couples qui tiennent',
-    description: 'Des modules simples et ludiques pour parler de ce qui compte, sans thérapeute et sans pression. Module 1 gratuit.',
+    title: TITRE_ACCUEIL,
+    description: DESCRIPTION_ACCUEIL,
   },
   twitter: { card: 'summary_large_image', title: 'YES BOX — Le Pacte', description: 'Le programme pour les couples qui tiennent.' },
   robots: { index: true, follow: true },

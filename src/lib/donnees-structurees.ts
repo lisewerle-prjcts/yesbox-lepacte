@@ -2,6 +2,7 @@ import { SITE_URL } from '@/lib/site'
 import { FAQ } from '@/lib/faq'
 import { AVIS_ACCUEIL, type ResumeAvis } from '@/lib/avis-constantes'
 import { PAYS_DU_MONDE } from '@/lib/pays'
+import { idsPage, type PageThematique } from '@/lib/pages-thematiques'
 
 // Données structurées (JSON-LD, schema.org) : elles décrivent noir sur blanc
 // qui édite le site et ce qui y est vendu, pour Google, Bing et les IA.
@@ -132,17 +133,21 @@ export function produit(avis: ResumeAvis) {
   }
 }
 
-/** FAQ de l'accueil, avec les textes modifiés depuis l'admin s'il y en a. */
-export function faqPage(contenu: Record<string, string>) {
+/**
+ * FAQ de l'accueil, avec les textes modifiés depuis l'admin s'il y en a ;
+ * sur une page thématique, ses propres questions d'abord.
+ */
+export function faqPage(contenu: Record<string, string>, page?: PageThematique) {
   const fr = (texte: string) => texte
+  const question = (q: string, r: string) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: r } })
+  const ids = page && idsPage(page.slug)
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: FAQ(fr).map((item, i) => ({
-      '@type': 'Question',
-      name: contenu[`home.faq.${i}.q`] || item.q,
-      acceptedAnswer: { '@type': 'Answer', text: contenu[`home.faq.${i}.r`] || item.r },
-    })),
+    mainEntity: [
+      ...(page && ids ? page.faq.map((f, i) => question(contenu[ids.faqQ(i)] || f.q.fr, contenu[ids.faqR(i)] || f.r.fr)) : []),
+      ...FAQ(fr).map((item, i) => question(contenu[`home.faq.${i}.q`] || item.q, contenu[`home.faq.${i}.r`] || item.r)),
+    ],
   }
 }
 
