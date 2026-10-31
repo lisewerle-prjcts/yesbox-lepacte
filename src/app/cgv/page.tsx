@@ -40,8 +40,8 @@ export default async function Cgv() {
             </p>
             <p className="mt-2">
               {t(
-                'Le programme est proposé par Lise YESSOUROUR, sous le nom commercial YES BOX, 15 résidence des Charmilles, 78590 Noisy-le-Roi, France — SIREN 514 073 691, RCS Versailles — lise.yesbox@gmail.com. TVA non applicable, article 293 B du Code général des impôts.',
-                'The program is offered by Lise YESSOUROUR, under the trade name YES BOX, 15 résidence des Charmilles, 78590 Noisy-le-Roi, France — SIREN 514 073 691, Versailles Trade and Companies Register — lise.yesbox@gmail.com. VAT not applicable, article 293 B of the French General Tax Code.'
+                'Le programme est proposé par Lise YESSOUROUR, sous le nom commercial YES BOX, SIREN 514 073 691, RCS Versailles — lise.yesbox@gmail.com. TVA non applicable, article 293 B du Code général des impôts.',
+                'The program is offered by Lise YESSOUROUR, under the trade name YES BOX, SIREN 514 073 691, Versailles Trade and Companies Register — lise.yesbox@gmail.com. VAT not applicable, article 293 B of the French General Tax Code.'
               )}
             </p>
             <p className="mt-2">
@@ -156,7 +156,7 @@ export default async function Cgv() {
             <div className="mt-2 p-4" style={{ border: '1px solid var(--line)', borderRadius: 8, color: 'var(--muted)', fontSize: 13.5 }}>
               <p className="font-semibold" style={{ color: 'var(--ink-2)' }}>{t('Formulaire de rétractation', 'Withdrawal form')}</p>
               <p className="mt-1">{t('(Veuillez compléter et renvoyer le présent formulaire uniquement si vous souhaitez vous rétracter du contrat.)', '(Please complete and return this form only if you wish to withdraw from the contract.)')}</p>
-              <p className="mt-1">{t('À l’attention de Lise YESSOUROUR, YES BOX, 15 résidence des Charmilles, 78590 Noisy-le-Roi, France — lise.yesbox@gmail.com :', 'To Lise YESSOUROUR, YES BOX, 15 résidence des Charmilles, 78590 Noisy-le-Roi, France — lise.yesbox@gmail.com:')}</p>
+              <p className="mt-1">{t('À l’attention de Lise YESSOUROUR, YES BOX, lise.yesbox@gmail.com :', 'To Lise YESSOUROUR, YES BOX, lise.yesbox@gmail.com:')}</p>
               <p className="mt-1">{t('Je/Nous (*) vous notifie/notifions (*) par la présente ma/notre (*) rétractation du contrat portant sur la prestation de services ci-dessous :', 'I/We (*) hereby give notice that I/we (*) withdraw from my/our (*) contract for the provision of the following service:')}</p>
               <ul className="mt-1 ml-4 list-disc">
                 <li>{t('Souscrit le :', 'Subscribed on:')}</li>

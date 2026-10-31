@@ -62,7 +62,7 @@ export default async function Confidentialite() {
         <div className="space-y-10" style={{ color: 'var(--ink-2)', lineHeight: 1.8, fontSize: 14.5 }}>
           <section>
             <h2 className={h2} style={h2Style}>{t('Responsable du traitement', 'Data controller')}</h2>
-            <p>Lise YESSOUROUR — 15 résidence des Charmilles, 78590 Noisy-le-Roi, France — {mail}</p>
+            <p>Lise YESSOUROUR — {mail}</p>
           </section>
 
           <section>
