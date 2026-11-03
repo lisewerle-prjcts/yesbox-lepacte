@@ -7,8 +7,20 @@ import { adresseConfirmee } from '@/lib/adresse-confirmee'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
-// Dernière connexion et confirmation de l'e-mail de chaque compte (auth),
-// par identifiant.
+// Date la plus récente parmi celles fournies (null si aucune).
+export function plusRecente(...dates: (string | null | undefined)[]): string | null {
+  let max: string | null = null
+  for (const d of dates) if (d && (!max || new Date(d).getTime() > new Date(max).getTime())) max = d
+  return max
+}
+
+// Dernière connexion et confirmation de l'e-mail de chaque compte, par
+// identifiant. « Dernière connexion » = la plus récente entre la dernière
+// saisie du mot de passe ou du lien magique (auth.last_sign_in_at) et la
+// dernière visite avec une session déjà ouverte (profiles.derniere_visite_le,
+// posée par le proxy au plus toutes les 12 heures). last_sign_in_at seul ne
+// bouge pas tant que la session reste ouverte : une personne active depuis
+// des semaines y paraissait absente.
 export async function infosAuth(admin: AdminClient): Promise<Record<string, { derniereConnexion: string | null; emailConfirme: boolean }>> {
   const resultat: Record<string, { derniereConnexion: string | null; emailConfirme: boolean }> = {}
   for (let page = 1; ; page++) {
@@ -17,10 +29,18 @@ export async function infosAuth(admin: AdminClient): Promise<Record<string, { de
     for (const u of data.users) resultat[u.id] = { derniereConnexion: u.last_sign_in_at ?? null, emailConfirme: adresseConfirmee(u) }
     if (data.users.length < 1000) break
   }
+  for (let debut = 0; ; debut += 1000) {
+    const { data, error } = await admin.from('profiles').select('id, derniere_visite_le').not('derniere_visite_le', 'is', null).range(debut, debut + 999)
+    if (error || !data?.length) break
+    for (const p of data) {
+      if (resultat[p.id]) resultat[p.id].derniereConnexion = plusRecente(resultat[p.id].derniereConnexion, p.derniere_visite_le)
+    }
+    if (data.length < 1000) break
+  }
   return resultat
 }
 
-// Dernière connexion de chaque compte (auth), par identifiant.
+// Dernière connexion (ou visite) de chaque compte, par identifiant.
 export async function dernieresConnexions(admin: AdminClient): Promise<Record<string, string | null>> {
   const infos = await infosAuth(admin)
   return Object.fromEntries(Object.entries(infos).map(([id, i]) => [id, i.derniereConnexion]))

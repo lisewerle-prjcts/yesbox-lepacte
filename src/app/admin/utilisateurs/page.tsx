@@ -3,6 +3,7 @@ import UtilisateursClient from './UtilisateursClient'
 import { aujourdhuiParis } from '@/lib/dates'
 import { adresseConfirmee } from '@/lib/adresse-confirmee'
 import { isLocale, type Locale } from '@/lib/i18n/locale'
+import { plusRecente } from '@/lib/segments-donnees'
 
 export default async function AdminUtilisateurs() {
   const supabase = createAdminClient()
@@ -10,7 +11,7 @@ export default async function AdminUtilisateurs() {
   const [{ data: profiles }, { data: couples }, { data: authUsers }, { data: codes }, { data: utilisations }, { data: reponses }, { data: verrous }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, email, nom, prenom, created_at, couple_id')
+      .select('id, email, nom, prenom, created_at, couple_id, derniere_visite_le')
       .order('created_at', { ascending: false }),
     supabase.from('couples').select('id, numero, acces_gratuit_expire_le'),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
@@ -62,7 +63,8 @@ export default async function AdminUtilisateurs() {
     hasCouple: !!p.couple_id,
     emailConfirme: confirmeById[p.id] ?? true,
     code: p.couple_id ? codeParCouple[p.couple_id] ?? null : null,
-    derniereConnexion: derniereConnexionById[p.id] ?? null,
+    // Connexion ou visite avec une session déjà ouverte : la plus récente.
+    derniereConnexion: plusRecente(derniereConnexionById[p.id], p.derniere_visite_le),
     aCommence: aRepondu.has(p.id),
     bloque: bloques.has(p.email.toLowerCase()),
     finAcces: p.couple_id ? finAccesByCoupleId[p.couple_id] ?? null : null,
