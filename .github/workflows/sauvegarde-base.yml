@@ -1,0 +1,82 @@
+# Sauvegarde chiffrée de la base Supabase, chaque nuit.
+# Méthode officielle Supabase (« Backup and restore using the CLI ») :
+# rôles, structure et données dans trois fichiers SQL, réunis dans une
+# archive chiffrée en AES-256 avec un mot de passe connu de l'équipe seule,
+# puis rangée dans GitHub (onglet Actions) pendant 30 jours. Après 30 jours
+# elle est effacée automatiquement : les comptes supprimés ou purgés
+# finissent ainsi par disparaître aussi des sauvegardes (RGPD).
+# Guide complet (mise en place, restauration) : docs/sauvegarde-base.md
+#
+# Secrets à créer dans GitHub (Settings > Secrets and variables > Actions) :
+#   SUPABASE_DB_URL         adresse « Session pooler » de la base
+#   SAUVEGARDE_MOT_DE_PASSE mot de passe de chiffrement des archives
+name: Sauvegarde de la base
+
+on:
+  schedule:
+    # Chaque nuit à 2 h 17 (UTC), soit vers 3 h ou 4 h à Paris.
+    - cron: '17 2 * * *'
+  # Bouton « Run workflow » pour lancer une sauvegarde à la main.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sauvegarde-base
+  cancel-in-progress: false
+
+jobs:
+  sauvegarde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SAUVEGARDE_MOT_DE_PASSE: ${{ secrets.SAUVEGARDE_MOT_DE_PASSE }}
+    steps:
+      - name: Vérifier les secrets
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$SAUVEGARDE_MOT_DE_PASSE" ]; then
+            echo "::error::Secrets SUPABASE_DB_URL et SAUVEGARDE_MOT_DE_PASSE manquants (cf. docs/sauvegarde-base.md)."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Exporter la base
+        run: |
+          mkdir sauvegarde
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f sauvegarde/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f sauvegarde/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f sauvegarde/data.sql --use-copy --data-only
+          # Une sauvegarde vide ou incomplète doit faire échouer la tâche
+          # (GitHub prévient alors par e-mail).
+          for f in roles schema data; do
+            test -s "sauvegarde/$f.sql" || { echo "::error::$f.sql est vide"; exit 1; }
+          done
+          grep -q '"profiles"' sauvegarde/schema.sql || { echo "::error::table profiles absente de schema.sql"; exit 1; }
+          ls -lh sauvegarde
+
+      - name: Chiffrer
+        run: |
+          NOM="yesbox-base-$(date -u +%Y-%m-%d)"
+          echo "NOM=$NOM" >> "$GITHUB_ENV"
+          tar -czf "$NOM.tar.gz" sauvegarde
+          printf '%s' "$SAUVEGARDE_MOT_DE_PASSE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 -o "$NOM.tar.gz.gpg" "$NOM.tar.gz"
+          # Contrôle : l'archive chiffrée se rouvre bien avec le mot de passe.
+          printf '%s' "$SAUVEGARDE_MOT_DE_PASSE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 \
+            --decrypt "$NOM.tar.gz.gpg" | tar -tz > /dev/null
+          # Rien de lisible ne doit rester sur la machine.
+          rm -rf sauvegarde "$NOM.tar.gz"
+
+      - name: Ranger la sauvegarde (30 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NOM }}
+          path: ${{ env.NOM }}.tar.gz.gpg
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0

@@ -43,6 +43,7 @@ export default async function Confidentialite() {
     ['Stripe Payments Europe, Ltd.', t('Paiement de l’abonnement et des cartes cadeaux (nous ne voyons jamais votre numéro de carte)', 'Payment for subscriptions and gift cards (we never see your card number)'), t('Irlande (UE), avec transferts possibles vers les États-Unis', 'Ireland (EU), with possible transfers to the United States')],
     ['Google LLC (Gmail)', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
     ['Resend Inc.', t('Envoi des e-mails de service', 'Sending service emails'), t('États-Unis', 'United States')],
+    ['GitHub, Inc.', t('Stockage des sauvegardes de la base, chiffrées avant envoi (GitHub ne peut pas les lire), effacées après 30 jours', 'Storage of database backups, encrypted before upload (GitHub cannot read them), deleted after 30 days'), t('États-Unis', 'United States')],
     ['Cloudflare, Inc. (Turnstile)', t('Vérification anti-robot à l’inscription (adresse IP et informations techniques du navigateur, sans cookie publicitaire)', 'Anti-bot check at sign-up (IP address and technical browser information, no advertising cookie)'), t('États-Unis', 'United States')],
   ]
 
@@ -139,6 +140,7 @@ export default async function Confidentialite() {
               <li>{t('Cartes cadeaux : 24 mois après la fin de validité de la carte (soit 3 ans après l’achat).', 'Gift cards: 24 months after the card’s validity ends (i.e. 3 years after purchase).')}</li>
               <li>{t('Factures : 10 ans, conservées par Stripe et pour notre comptabilité (obligation légale).', 'Invoices: 10 years, kept by Stripe and for our accounting (legal obligation).')}</li>
               <li>{t('Suppression de votre compte à votre demande : effacement immédiat.', 'Deleting your account at your request: immediate erasure.')}</li>
+              <li>{t('Sauvegardes de sécurité : une copie chiffrée de la base est faite chaque nuit et conservée 30 jours, puis effacée automatiquement. Des données effacées peuvent donc encore figurer dans ces copies pendant 30 jours au plus ; elles ne servent qu’à restaurer le service en cas d’incident.', 'Security backups: an encrypted copy of the database is made every night and kept for 30 days, then deleted automatically. Deleted data may therefore remain in these copies for up to 30 days; they are only used to restore the service after an incident.')}</li>
             </ul>
           </section>
 
