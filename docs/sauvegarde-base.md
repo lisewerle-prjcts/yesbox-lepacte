@@ -24,7 +24,7 @@ Range au même endroit :
 
 1. Ouvre ton projet sur supabase.com.
 2. Clique sur le bouton **Connect**, en haut de la page.
-3. Choisis **Session pooler** (et non « Direct connection » : avec l'abonnement gratuit, GitHub ne peut pas utiliser la connexion directe).
+3. Clique sur l'onglet **Direct** (« Connection string »), puis, dans la liste du type de connexion, choisis **Session pooler** (et non « Direct connection » : avec l'abonnement gratuit, GitHub ne peut pas utiliser la connexion directe).
 4. Copie l'adresse. Elle ressemble à :
    `postgresql://postgres.abcdefgh:[YOUR-PASSWORD]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres`
 5. Remplace `[YOUR-PASSWORD]` (crochets compris) par le mot de passe de la base.
