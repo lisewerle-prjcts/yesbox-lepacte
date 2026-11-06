@@ -8,9 +8,30 @@ import { envoyerMail } from '@/lib/mailer'
 //   - 'non_activee'  : aucune double authentification sur le compte.
 export type EtatMfaAdmin = 'ok' | 'code_requis' | 'non_activee'
 
+// Une session Supabase n'expire jamais d'elle-même : le jeton se renouvelle
+// tant que le navigateur revient, et garde le niveau aal2. Sans limite, un
+// code saisi une fois ouvrait l'admin pendant des semaines. Le code est donc
+// redemandé quand sa dernière saisie date de plus de 12 heures.
+export const DUREE_MAX_CODE_MFA_HEURES = 12
+
 export async function etatMfaAdmin(supabase: Awaited<ReturnType<typeof createClient>>): Promise<EtatMfaAdmin> {
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-  if (aal?.currentLevel === 'aal2') return 'ok'
+  if (aal?.currentLevel === 'aal2') {
+    // Horodatage (en secondes) de la dernière saisie du code, conservé dans
+    // le jeton au fil des renouvellements et mis à jour à chaque nouveau code.
+    const methodes = (aal.currentAuthenticationMethods ?? []) as Array<string | { method: string; timestamp: number }>
+    const detaillees = methodes.filter((m): m is { method: string; timestamp: number } => typeof m !== 'string')
+    // Format sans horodatage (jamais vu avec Supabase Auth) : on ne peut pas
+    // mesurer l'âge du code, on garde l'ancien comportement plutôt que de
+    // bloquer l'accès en boucle.
+    if (detaillees.length === 0) return 'ok'
+    const saisie = detaillees
+      .filter(m => m.method === 'totp')
+      .reduce((max, m) => Math.max(max, m.timestamp ?? 0), 0)
+    const ageHeures = (Date.now() / 1000 - saisie) / 3600
+    if (saisie > 0 && ageHeures <= DUREE_MAX_CODE_MFA_HEURES) return 'ok'
+    return 'code_requis'
+  }
   if (aal?.nextLevel === 'aal2') return 'code_requis'
   return 'non_activee'
 }
