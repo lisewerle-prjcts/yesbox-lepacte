@@ -35,7 +35,11 @@ export async function limiteDepassee(cle: string, regles: Regle[]): Promise<bool
 
 export async function purgerLimites(): Promise<void> {
   const admin = createAdminClient()
-  await admin.from('limites_actions').delete().lt('cree_le', new Date(Date.now() - 2 * 24 * 60 * 60_000).toISOString())
+  const ilYADeuxJours = new Date(Date.now() - 2 * 24 * 60 * 60_000).toISOString()
+  await admin.from('limites_actions').delete().lt('cree_le', ilYADeuxJours)
+  // Tentatives de connexion échouées non suivies d'une connexion réussie
+  // (qui, elle, les efface aussitôt) : même durée, 2 jours.
+  await admin.from('login_attempts').delete().lt('updated_at', ilYADeuxJours)
 }
 
 // Case anti-robot Cloudflare Turnstile. Sans TURNSTILE_SECRET_KEY (pas

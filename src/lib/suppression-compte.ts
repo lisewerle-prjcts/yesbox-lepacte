@@ -8,13 +8,14 @@ type AdminClient = ReturnType<typeof createAdminClient>
 // s'il n'y reste plus personne. Dans ce cas, l'abonnement Stripe encore en
 // cours est arrêté immédiatement pour ne plus être prélevé. Le client Stripe
 // (factures) est conservé : les factures relèvent d'une obligation légale de
-// conservation comptable.
+// conservation comptable. Le journal des e-mails envoyés à son adresse
+// (Admin > Utilisateurs) est effacé aussi.
 //
 // Ne vérifie aucun droit : à appeler uniquement depuis le serveur, après
 // avoir authentifié la personne (Mon compte), vérifié le rôle admin, ou
 // depuis la tâche de purge.
 export async function supprimerCompte(admin: AdminClient, userId: string): Promise<{ error?: string }> {
-  const { data: profile } = await admin.from('profiles').select('couple_id').eq('id', userId).single()
+  const { data: profile } = await admin.from('profiles').select('couple_id, email').eq('id', userId).single()
   const coupleId = profile?.couple_id ?? null
 
   let coupleVide = false
@@ -38,6 +39,10 @@ export async function supprimerCompte(admin: AdminClient, userId: string): Promi
 
   const { error } = await admin.auth.admin.deleteUser(userId)
   if (error) return { error: error.message }
+
+  if (profile?.email) {
+    await admin.from('emails_envoyes').delete().ilike('destinataire', profile.email.replace(/[\\%_]/g, '\\$&'))
+  }
 
   if (coupleId && coupleVide) {
     await admin.from('couples').delete().eq('id', coupleId)

@@ -269,6 +269,26 @@ export async function telechargerMesDonnees() {
     }
   }
 
+  // Avis laissé sur /avis (table lisible uniquement par le serveur) : fait
+  // partie des données de la personne (droit d'accès, RGPD art. 15).
+  const { data: avis } = await createAdminClient()
+    .from('avis')
+    .select('prenom, debut_mois, note, texte, statut, cree_le, consentement_publication_le, code_reduction')
+    .eq('profile_id', user.id)
+    .maybeSingle()
+  if (avis) {
+    const statut = avis.statut === 'publie' ? t(locale, 'publié', 'published') : avis.statut === 'refuse' ? t(locale, 'non publié', 'not published') : t(locale, 'en attente de validation', 'awaiting review')
+    lines.push('')
+    lines.push(t(locale, '— Mon avis —', '— My review —'))
+    lines.push(`${t(locale, 'Envoyé le', 'Sent on')} : ${new Date(avis.cree_le).toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR')} (${statut})`)
+    lines.push(`${t(locale, 'Signé', 'Signed')} : ${avis.prenom}`)
+    lines.push(`${t(locale, 'Début de la YES BOX', 'Started YES BOX')} : ${avis.debut_mois}`)
+    lines.push(`${t(locale, 'Note', 'Rating')} : ${avis.note}/5`)
+    lines.push(avis.texte)
+    lines.push(`${t(locale, 'Accord pour la publication donné le', 'Consent to publication given on')} ${new Date(avis.consentement_publication_le).toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR')}`)
+    if (avis.code_reduction) lines.push(`${t(locale, 'Code de réduction', 'Discount code')} : ${avis.code_reduction}`)
+  }
+
   if (restauration) {
     lines.push('')
     lines.push('='.repeat(60))

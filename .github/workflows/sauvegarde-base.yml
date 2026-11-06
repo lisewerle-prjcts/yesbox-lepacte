@@ -41,16 +41,55 @@ jobs:
             exit 1
           fi
 
+      # Aide au diagnostic : montre la forme de l'adresse (utilisateur, serveur,
+      # port, base, longueur du mot de passe), jamais le mot de passe lui-même.
+      - name: Vérifier la forme de l'adresse
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          from urllib.parse import urlsplit, unquote
+          brute = os.environ["SUPABASE_DB_URL"]
+          url = brute.strip()
+          pb = []
+          # Espaces autour de l'adresse : sans gravité, retirés à l'étape suivante.
+          if url != brute: print("::warning::espaces ou retour à la ligne autour de l'adresse (retirés automatiquement)")
+          try:
+              u = urlsplit(url)
+              mdp = unquote(u.password or "")
+              print("Schéma       :", u.scheme)
+              print("Utilisateur  :", u.username)
+              print("Serveur      :", u.hostname)
+              print("Port         :", u.port)
+              print("Base         :", u.path.lstrip("/"))
+              print("Mot de passe :", len(mdp), "caractères,",
+                    "lettres et chiffres uniquement" if mdp.isalnum() else "contient des symboles ou des espaces")
+              if mdp and not mdp.isalnum(): print("::warning::le mot de passe contient des symboles ou des espaces : s'il est refusé, choisis-en un avec seulement des lettres et des chiffres")
+              if u.scheme not in ("postgresql", "postgres"): pb.append("l'adresse doit commencer par postgresql://")
+              if not (u.username or "").startswith("postgres."): pb.append("l'utilisateur doit être postgres.<identifiant du projet>")
+              if not (u.hostname or "").endswith("pooler.supabase.com"): pb.append("le serveur doit se terminer par pooler.supabase.com (Session pooler)")
+              if u.port != 5432: pb.append("le port doit être 5432 (Session pooler)")
+              if not mdp: pb.append("mot de passe absent")
+              if "[" in url or "]" in url: pb.append("crochets [ ] encore présents")
+              if mdp.upper() in ("YOUR-PASSWORD", "MOTDEPASSE", "TON_MOT_DE_PASSE"): pb.append("le mot de passe n'a pas été remplacé")
+          except Exception as e:
+              pb.append(f"adresse illisible ({type(e).__name__})")
+          for p in pb: print(f"::error::{p}")
+          sys.exit(1 if pb else 0)
+          PY
+
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Exporter la base
         run: |
+          # Adresse sans espaces autour (copier-coller), masquée dans les journaux.
+          DB_URL="$(printf '%s' "$SUPABASE_DB_URL" | tr -d '[:space:]')"
+          echo "::add-mask::$DB_URL"
           mkdir sauvegarde
-          supabase db dump --db-url "$SUPABASE_DB_URL" -f sauvegarde/roles.sql --role-only
-          supabase db dump --db-url "$SUPABASE_DB_URL" -f sauvegarde/schema.sql
-          supabase db dump --db-url "$SUPABASE_DB_URL" -f sauvegarde/data.sql --use-copy --data-only
+          supabase db dump --db-url "$DB_URL" -f sauvegarde/roles.sql --role-only
+          supabase db dump --db-url "$DB_URL" -f sauvegarde/schema.sql
+          supabase db dump --db-url "$DB_URL" -f sauvegarde/data.sql --use-copy --data-only
           # Une sauvegarde vide ou incomplète doit faire échouer la tâche
           # (GitHub prévient alors par e-mail).
           for f in roles schema data; do

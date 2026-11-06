@@ -33,7 +33,7 @@ export default async function MentionsLegales() {
             <p><EditableText id="mentions.editeur.texte">Le site yesbox-lepacte.fr est édité par :</EditableText></p>
             <ul className="mt-2 space-y-1 ml-4 list-disc" style={{ color: 'var(--muted)' }}>
               <li>{t('Nom commercial :', 'Trade name:')} YES BOX</li>
-              <li>{t('Édité par :', 'Published by:')} Lise YESSOUROUR</li>
+              <li>{t('Édité par :', 'Published by:')} Lise YESSOUROUR EI ({t('entreprise individuelle', 'sole proprietorship')})</li>
               <li>{t('SIREN :', 'Company number (SIREN):')} 514 073 691 — {t('RCS Versailles', 'Versailles Trade and Companies Register (RCS)')}</li>
               <li>{t('Adresse :', 'Address:')} 15 résidence des Charmilles, 78590 Noisy-le-Roi, France</li>
               <li>{t('TVA non applicable, article 293 B du Code général des impôts', 'VAT not applicable, article 293 B of the French General Tax Code')}</li>
@@ -60,7 +60,7 @@ export default async function MentionsLegales() {
           <section>
             <h2 className="font-serif font-bold mb-3" style={{ fontSize: 20, color: 'var(--ink)' }}><EditableText id="mentions.cookies.titre">Cookies</EditableText></h2>
             <p>
-              {t('Le site utilise uniquement des cookies strictement nécessaires : la session qui vous garde connecté·e et la mémorisation de votre langue. Aucun cookie publicitaire ou de mesure d’audience n’est utilisé.', 'The site only uses strictly necessary cookies: the session that keeps you logged in and remembering your language. No advertising or analytics cookies are used.')}
+              {t('Le site utilise uniquement des cookies strictement nécessaires : la session qui vous garde connecté·e, la mémorisation de votre langue et un cookie technique lié à la durée de conservation de vos données (détails dans la politique de confidentialité). Aucun cookie publicitaire ou de mesure d’audience n’est utilisé.', 'The site only uses strictly necessary cookies: the session that keeps you logged in, remembering your language and a technical cookie linked to the retention period of your data (details in the privacy policy). No advertising or analytics cookies are used.')}
             </p>
           </section>
           <section>

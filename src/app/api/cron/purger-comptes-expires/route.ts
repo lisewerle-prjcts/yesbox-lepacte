@@ -13,6 +13,8 @@ type AdminClient = ReturnType<typeof createAdminClient>
 
 // Pré-commandes (ancien formulaire) : effacées 1 an après leur envoi.
 const PRECOMMANDES_CONSERVATION_MOIS = 12
+// Journal des e-mails envoyés (destinataire, objet, date) : 12 mois.
+const EMAILS_ENVOYES_CONSERVATION_MOIS = 12
 
 // Tâche planifiée quotidienne (voir vercel.json) appliquant les durées de
 // conservation annoncées dans la politique de confidentialité :
@@ -22,6 +24,7 @@ const PRECOMMANDES_CONSERVATION_MOIS = 12
 //   2. Pré-commandes (ancien formulaire) : effacées 1 an après leur envoi.
 //   3. Cartes cadeaux : effacées 24 mois après la fin de leur validité.
 //   4. Chiffrement des contenus encore en clair (cf. src/lib/chiffrement.ts).
+//   5. Journal des e-mails envoyés : effacé après 12 mois.
 export async function GET(req: Request) {
   // Refuse tout appel si CRON_SECRET n'est pas configuré : sans secret, la
   // route (qui efface des données) serait ouverte à n'importe qui.
@@ -37,7 +40,8 @@ export async function GET(req: Request) {
     const cartesCadeauxSupprimees = await purgerCartesCadeaux(admin)
     const chiffres = await chiffrerDonneesEnClair(admin)
     await purgerLimites()
-    return NextResponse.json({ datesMisesAJour, comptesEffaces, precommandesSupprimees, cartesCadeauxSupprimees, chiffres })
+    const emailsEnvoyesSupprimes = await purgerEmailsEnvoyes(admin)
+    return NextResponse.json({ datesMisesAJour, comptesEffaces, precommandesSupprimees, cartesCadeauxSupprimees, chiffres, emailsEnvoyesSupprimes })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
@@ -48,4 +52,11 @@ async function purgerPrecommandes(admin: AdminClient) {
   const { data, error } = await admin.from('precommandes').delete().lt('created_at', limite).select('id')
   if (error) throw new Error(error.message)
   return data?.length ?? 0
+}
+
+async function purgerEmailsEnvoyes(admin: AdminClient) {
+  const limite = ajouterMois(new Date(), -EMAILS_ENVOYES_CONSERVATION_MOIS)
+  const { count, error } = await admin.from('emails_envoyes').delete({ count: 'exact' }).lt('envoye_le', limite)
+  if (error) throw new Error(error.message)
+  return count ?? 0
 }
