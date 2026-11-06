@@ -1895,3 +1895,34 @@ create table if not exists public.avis (
 create index if not exists avis_statut_idx on public.avis (statut, cree_le desc);
 alter table public.avis enable row level security;
 -- Aucune policy : accessible uniquement via le service role.
+
+-- ============================================================
+-- SÉCURITÉ : DOUBLE AUTHENTIFICATION EXIGÉE AUSSI PAR LA BASE
+-- Les règles « settings_admin » et « precommande_admin_select » ne
+-- vérifiaient que is_admin. Avec le mot de passe seul (sans le code
+-- Authenticator), un compte admin pouvait donc lire et modifier les
+-- réglages (contenus du site, modèles d'e-mails, adresse de secours…)
+-- en appelant directement l'API Supabase, sans passer par l'app.
+-- Ces règles « restrictives » s'ajoutent aux existantes : un compte qui a
+-- activé la double authentification doit avoir saisi son code (aal2).
+-- Un compte sans double authentification n'est pas concerné (il peut
+-- ainsi l'activer depuis Admin > Sécurité).
+-- Recette officielle Supabase (« Enforce MFA for users who have it »).
+-- Idempotent : peut être relancé sans risque. Peut être exécuté avant ou
+-- après le déploiement du code correspondant.
+-- ============================================================
+drop policy if exists "settings_mfa" on public.settings;
+create policy "settings_mfa" on public.settings as restrictive to authenticated using (
+  array[(select auth.jwt() ->> 'aal')] <@ (
+    select case when count(id) > 0 then array['aal2'] else array['aal1', 'aal2'] end
+    from auth.mfa_factors where user_id = (select auth.uid()) and status = 'verified'
+  )
+);
+
+drop policy if exists "precommandes_mfa" on public.precommandes;
+create policy "precommandes_mfa" on public.precommandes as restrictive for select to authenticated using (
+  array[(select auth.jwt() ->> 'aal')] <@ (
+    select case when count(id) > 0 then array['aal2'] else array['aal1', 'aal2'] end
+    from auth.mfa_factors where user_id = (select auth.uid()) and status = 'verified'
+  )
+);

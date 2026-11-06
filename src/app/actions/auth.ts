@@ -372,7 +372,7 @@ export async function verifierCodeRecuperationMfa(code: string) {
   }
 
   await notifySecurityEvent(
-    await getRecoveryEmail(supabase, user.id),
+    await getRecoveryEmail(user.id),
     'Double authentification désactivée par code de secours — YES BOX Admin',
     'Un code de secours vient d\'être utilisé pour désactiver la double authentification de ton compte admin YES BOX suite à une perte d\'accès. Reconnecte-toi puis réactive la 2FA dès que possible depuis l\'onglet Sécurité. Si ce n\'est pas toi, change immédiatement ton mot de passe.'
   )

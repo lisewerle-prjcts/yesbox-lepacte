@@ -33,7 +33,7 @@ export async function changerMotDePasse(currentPassword: string, newPassword: st
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) return { error: error.message }
 
-  await notifySecurityEvent(await getRecoveryEmail(supabase, user.id), 'Mot de passe modifié — YES BOX Admin', 'Le mot de passe de ton compte admin YES BOX vient d\'être modifié. Si ce n\'est pas toi, contacte-nous immédiatement.')
+  await notifySecurityEvent(await getRecoveryEmail(user.id), 'Mot de passe modifié — YES BOX Admin', 'Le mot de passe de ton compte admin YES BOX vient d\'être modifié. Si ce n\'est pas toi, contacte-nous immédiatement.')
 
   return { success: true }
 }
@@ -45,7 +45,7 @@ export async function deconnecterAutresSessions() {
   if (error) return { error: error.message }
 
   if (user) {
-    await notifySecurityEvent(await getRecoveryEmail(supabase, user.id), 'Sessions déconnectées — YES BOX Admin', 'Toutes les autres sessions connectées à ton compte admin YES BOX ont été déconnectées à distance.')
+    await notifySecurityEvent(await getRecoveryEmail(user.id), 'Sessions déconnectées — YES BOX Admin', 'Toutes les autres sessions connectées à ton compte admin YES BOX ont été déconnectées à distance.')
   }
 
   return { success: true }
@@ -65,7 +65,7 @@ export async function confirmerActivationMfa(factorId: string, code: string) {
   if (error) return { error: 'Code invalide, réessaie.' }
 
   if (user) {
-    await notifySecurityEvent(await getRecoveryEmail(supabase, user.id), 'Double authentification activée — YES BOX Admin', 'La double authentification (2FA) vient d\'être activée sur ton compte admin YES BOX.')
+    await notifySecurityEvent(await getRecoveryEmail(user.id), 'Double authentification activée — YES BOX Admin', 'La double authentification (2FA) vient d\'être activée sur ton compte admin YES BOX.')
   }
 
   revalidatePath('/admin/securite')
@@ -88,7 +88,7 @@ export async function desactiverMfa(factorId: string, silent = false) {
   }
 
   if (user && !silent) {
-    await notifySecurityEvent(await getRecoveryEmail(supabase, user.id), 'Double authentification désactivée — YES BOX Admin', 'La double authentification (2FA) vient d\'être désactivée sur ton compte admin YES BOX. Si ce n\'est pas toi, contacte-nous immédiatement.')
+    await notifySecurityEvent(await getRecoveryEmail(user.id), 'Double authentification désactivée — YES BOX Admin', 'La double authentification (2FA) vient d\'être désactivée sur ton compte admin YES BOX. Si ce n\'est pas toi, contacte-nous immédiatement.')
   }
 
   revalidatePath('/admin/securite')
@@ -121,7 +121,7 @@ export async function genererCodesSecours() {
   )
   if (error) return { error: error.message }
 
-  await notifySecurityEvent(await getRecoveryEmail(supabase, user.id), 'Codes de secours régénérés — YES BOX Admin', 'De nouveaux codes de secours 2FA ont été générés pour ton compte admin YES BOX. Les anciens codes ne fonctionnent plus.')
+  await notifySecurityEvent(await getRecoveryEmail(user.id), 'Codes de secours régénérés — YES BOX Admin', 'De nouveaux codes de secours 2FA ont été générés pour ton compte admin YES BOX. Les anciens codes ne fonctionnent plus.')
 
   return { success: true, codes }
 }
