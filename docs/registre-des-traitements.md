@@ -79,14 +79,14 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | | |
 |---|---|
 | Date de création de la fiche | septembre 2026 |
-| Finalité | Confirmation d'inscription, e-mail de bienvenue, réinitialisation du mot de passe, alertes de sécurité ; rappels d'accompagnement (relance après 10 jours sans avancer dans le parcours, au plus 2 ; un e-mail par mois une fois le pacte signé, tant que l'accès est en cours ; e-mail le jour de l'anniversaire de couple et une semaine avant l'anniversaire de mariage, si le couple a indiqué ces dates) |
+| Finalité | Confirmation d'inscription, e-mail de bienvenue, invitation du ou de la partenaire (à la demande d'un membre du couple), réinitialisation du mot de passe, alertes de sécurité ; rappels d'accompagnement (relance après 10 jours sans avancer dans le parcours, au plus 2 ; un e-mail par mois une fois le pacte signé, tant que l'accès est en cours ; e-mail le jour de l'anniversaire de couple et une semaine avant l'anniversaire de mariage, si le couple a indiqué ces dates) |
 | Base légale | Exécution du contrat (art. 6.1.b) ; rappels : intérêt légitime (art. 6.1.f), avec opposition possible à tout moment (case dans Mon compte, lien en bas de chaque rappel — `profiles.rappels_email`) |
-| Personnes concernées | Utilisatrices et utilisateurs inscrits |
+| Personnes concernées | Utilisatrices et utilisateurs inscrits ; partenaire invité·e par e-mail (adresse saisie par l'autre membre du couple, utilisée uniquement pour l'invitation) |
 | Données | E-mail, prénom, code couple, langue choisie (français ou anglais, pour écrire dans la bonne langue) ; pour les rappels : prénom de l'autre membre du couple, titre du module en cours, date de dernière activité, date du rendez-vous annuel. Le contenu des réponses et du pacte n'est jamais repris dans les e-mails |
 | Destinataires | Google (Gmail), Resend, Supabase (e-mails d'authentification) |
 | Transferts hors UE | Oui : États-Unis (voir tableau) |
-| Durée de conservation | Pas de stockage propre à l'application en dehors des boîtes d'envoi |
-| Mesures de sécurité | Identifiants d'envoi stockés dans les variables d'environnement du serveur |
+| Durée de conservation | Journal des e-mails envoyés (`emails_envoyes` : destinataire, objet, date, résultat ; jamais le contenu) : 12 mois, effacé avec le compte. Boîtes d'envoi : selon les réglages de Gmail et Resend |
+| Mesures de sécurité | Identifiants d'envoi stockés dans les variables d'environnement du serveur ; journal accessible uniquement côté serveur (RLS sans politique), consultable dans Admin > Utilisateurs |
 
 ## Fiche 5 — Sécurité des connexions
 
@@ -96,10 +96,10 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Finalité | Bloquer temporairement les tentatives de connexion répétées et les essais de codes couple |
 | Base légale | Intérêt légitime (art. 6.1.f) : protéger le service et les comptes |
 | Personnes concernées | Toute personne tentant de se connecter |
-| Données | E-mail ou identifiant du compte, nombre d'essais, date de fin de blocage |
+| Données | E-mail ou identifiant du compte, nombre d'essais, date de fin de blocage ; adresse IP (limites d'inscription, de renvoi d'e-mails et anti-robot Cloudflare Turnstile) |
 | Destinataires | Aucun en dehors du serveur |
 | Transferts hors UE | Non (Supabase, Irlande) |
-| Durée de conservation | Effacement à la connexion réussie ; blocage de 15 minutes |
+| Durée de conservation | Effacement à la connexion réussie, sinon après 2 jours (tâche planifiée quotidienne) ; blocage de 15 minutes. Adresses IP des limites d'inscription et d'envoi (`limites_actions`) : 2 jours |
 | Mesures de sécurité | Table accessible uniquement côté serveur |
 
 ## Fiche 7 — Cartes cadeaux
