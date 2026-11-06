@@ -23,6 +23,7 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Stripe Payments Europe, Ltd. | Paiement de l'abonnement | Irlande (UE), transferts possibles vers les États-Unis | CCT / Data Privacy Framework |
 | Google LLC (Gmail) | Envoi des e-mails de service | États-Unis | CCT / Data Privacy Framework |
 | Resend Inc. | Envoi des e-mails de service | États-Unis | CCT |
+| GitHub, Inc. | Stockage des sauvegardes nocturnes de la base, chiffrées en AES-256 avant envoi (mot de passe détenu par l'équipe seule), effacées après 30 jours | États-Unis | CCT / Data Privacy Framework ; données chiffrées, illisibles pour GitHub |
 | Cloudflare, Inc. (Turnstile) | Vérification anti-robot à l'inscription (adresse IP, informations techniques du navigateur) | États-Unis | CCT / Data Privacy Framework |
 
 > À faire : accepter ou signer le contrat de sous-traitance (DPA) de chacun de ces prestataires et en garder une copie avec ce registre.
@@ -41,8 +42,8 @@ Document interne : à présenter à la CNIL sur demande, à mettre à jour à ch
 | Données sensibles | Non (voir fiche 2) |
 | Destinataires | Le ou la partenaire du couple (réponses des modules révélés, journal, pacte) ; l'administration du site (compte, grandes dates du couple — visibles dans Admin > Couples, avec une alerte par e-mail à l'équipe un mois avant chaque anniversaire pour préparer les e-mails —, et progression, sans le contenu des réponses) ; sous-traitants Vercel et Supabase |
 | Transferts hors UE | Base de données dans l'UE (Irlande). Hébergement du site : États-Unis (Vercel, voir tableau) |
-| Durée de conservation | Tant que le compte est utilisé. Après 24 mois d'inactivité (aucune visite ni connexion d'un membre du couple, aucune réponse, plus d'accès payé ou offert en cours) : suppression des comptes et effacement de toutes les données, avec e-mail d'avertissement 2 mois, 1 mois, 1 semaine et la veille (date de dernière visite : `profiles.derniere_visite_le` ; date d'effacement : `couples.effacement_prevu_le`, tâche planifiée quotidienne). Suppression immédiate sur demande (bouton « Supprimer mon compte ») |
-| Mesures de sécurité | HTTPS, mots de passe chiffrés, isolement de chaque couple par des règles d'accès en base (Row Level Security), droits en écriture limités aux champs modifiables, limitation des tentatives de connexion, double authentification disponible pour l'administration, purge automatique quotidienne |
+| Durée de conservation | Tant que le compte est utilisé. Après 24 mois d'inactivité (aucune visite ni connexion d'un membre du couple, aucune réponse, plus d'accès payé ou offert en cours) : suppression des comptes et effacement de toutes les données, avec e-mail d'avertissement 2 mois, 1 mois, 1 semaine et la veille (date de dernière visite : `profiles.derniere_visite_le` ; date d'effacement : `couples.effacement_prevu_le`, tâche planifiée quotidienne). Suppression immédiate sur demande (bouton « Supprimer mon compte »). Les sauvegardes chiffrées de la base sont effacées après 30 jours : une donnée supprimée en disparaît au plus tard 30 jours après |
+| Mesures de sécurité | HTTPS, mots de passe chiffrés, isolement de chaque couple par des règles d'accès en base (Row Level Security), droits en écriture limités aux champs modifiables, limitation des tentatives de connexion, double authentification obligatoire pour l'administration, purge automatique quotidienne, sauvegarde chiffrée chaque nuit conservée 30 jours (cf. `docs/sauvegarde-base.md`) |
 
 ## Fiche 2 — Réponses aux modules (données sensibles)
 
