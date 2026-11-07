@@ -313,12 +313,11 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
       const annonce = rdvLe !== null && joursAvantRdv !== null && joursAvantRdv > 0 && joursAvantRdv <= 31
 
       // Sans annonce du rendez-vous : pas d'e-mail du mois les mois de fête,
-      // d'anniversaire ou de rendez-vous annuel (sauf celui du 1er mois, qui
-      // dit « il y a un mois, vous avez signé votre pacte »), ni une fois
-      // tous les thèmes envoyés (pas de boucle).
+      // d'anniversaire ou de rendez-vous annuel, ni une fois tous les thèmes
+      // envoyés (pas de boucle).
       let theme: string | undefined
       if (!annonce) {
-        if (mois > 1 && raisonMoisSansTheme(dateDuMois(signeLe, mois), couple)) continue
+        if (raisonMoisSansTheme(dateDuMois(signeLe, mois), couple)) continue
         const themes = await themesDuCouple(admin, couple.id)
         if (themes.has(mois)) continue
         const dejaEnvoyes = new Set(themes.values())

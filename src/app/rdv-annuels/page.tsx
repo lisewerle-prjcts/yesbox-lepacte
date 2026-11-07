@@ -110,7 +110,7 @@ export default async function RdvAnnuelsPage() {
           {listeMois.length === 0 ? (
             <div className="card p-5">
               <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-                {t(`Votre première question arrivera par e-mail un mois après la signature de votre pacte (en ${moisFr(1).toLowerCase()}) : vous noterez vos réponses ici.`, `Your first question will arrive by email one month after signing your pact (in ${moisFr(1)}): you’ll note your answers here.`)}
+                {t('Votre première question arrivera par e-mail quelques semaines après la signature de votre pacte : vous noterez vos réponses ici.', 'Your first question will arrive by email a few weeks after signing your pact: you’ll note your answers here.')}
               </p>
             </div>
           ) : (

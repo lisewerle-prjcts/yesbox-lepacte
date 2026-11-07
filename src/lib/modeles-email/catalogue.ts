@@ -543,7 +543,8 @@ See you soon, and take care of yourselves and your relationship.
 // fois le dernier envoyé, plus d'e-mail du mois jusqu'à l'ajout d'un nouveau
 // thème. Pas d'e-mail du mois les mois des fêtes de fin d'année, de la Saint-Valentin, du
 // rendez-vous annuel et des anniversaires de couple ou de mariage : le thème
-// suivant attend le mois d'après (sauf pour l'e-mail du 1er mois).
+// suivant attend le mois d'après. Les textes ne disent donc jamais « il y a
+// un mois » ni « le 9e mois » : le rang d'un thème n'est pas un numéro de mois.
 // `cle` : identifiant du modèle (ne jamais changer celui d'un thème déjà
 // envoyé : il sert à retrouver la question du mois sur la page « Nos
 // rendez-vous annuels »). Un nouveau thème s'ajoute avec une nouvelle clé.
@@ -552,13 +553,13 @@ See you soon, and take care of yourselves and your relationship.
 const THEMES: { cle: string; fr: ContenuEmail; en: ContenuEmail; question: [string, string]; suite?: { fr: string; en: string } }[] = [
   {
     cle: 'mensuel_1',
-    fr: { objet: 'Un mois que vous avez signé votre pacte 💍', corps: `Il y a un mois, {partenaire} et toi avez signé votre pacte. Bravo : beaucoup de couples n’osent jamais mettre des mots sur ce qui compte vraiment à deux.
+    fr: { objet: 'Il y a quelques semaines, vous avez signé votre pacte 💍', corps: `Il y a quelques semaines, {partenaire} et toi avez signé votre pacte. Bravo : beaucoup de couples n’osent jamais mettre des mots sur ce qui compte vraiment à deux.
 
 **« Et si vous vous bloquiez un rendez-vous régulier dans l’agenda ?**
 **Une soirée par mois par exemple, sans écran, rien que tous les deux. Ou une pause déjeuner en semaine. Faites en fonction de ce qui est possible…**
 **Pas besoin d’un grand programme : un repas, une balade, et surtout une conversation sans téléphone à portée de main.**
 **Et pourquoi ne pas l’organiser à tour de rôle ? »**` },
-    en: { objet: 'One month since you signed your pact 💍', corps: `A month ago, {partenaire} and you signed your pact. Well done: many couples never dare to put into words what truly matters to them as a pair.
+    en: { objet: 'A few weeks ago, you signed your pact 💍', corps: `A few weeks ago, {partenaire} and you signed your pact. Well done: many couples never dare to put into words what truly matters to them as a pair.
 
 **"What if you blocked out a regular date in your calendar?**
 **One evening a month, for example, screen-free, just the two of you. Or a lunch break during the week. Go with what’s possible…**
@@ -792,7 +793,7 @@ const MENSUELS: ModeleEmail[] = [
   ...THEMES.map((theme, i): ModeleEmail => ({
     cle: theme.cle, famille: 'mensuels', nom: `Thème ${i + 1} — ${theme.fr.objet}`, rappel: true,
     quand: i === 0
-      ? '1 mois après la signature du pacte.'
+      ? '1er e-mail du mois, en principe 1 mois après la signature du pacte (plus tard si ce mois-là tombe pendant les fêtes de fin d’année, la Saint-Valentin, le rendez-vous annuel ou un anniversaire).'
       : `${i + 1}e e-mail du mois après la signature du pacte (une seule fois ; pas d’e-mail du mois les mois des fêtes de fin d’année, de la Saint-Valentin, du rendez-vous annuel et des anniversaires de couple ou de mariage).`,
     facultatives: ['rappel_rdv'],
     fr: { objet: theme.fr.objet, corps: `${BONJOUR.fr}
