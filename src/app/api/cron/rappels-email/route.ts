@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 // Tâche planifiée quotidienne (voir vercel.json) : relances après 10 jours
-// sans avancer, e-mails mensuels, de Noël et de la Saint-Valentin une fois
+// sans avancer, e-mails mensuels, des fêtes de fin d'année et de la Saint-Valentin une fois
 // le pacte signé et proposition de
 // l'abonnement annuel 5 jours avant la fin du mois, annonce du
 // renouvellement à 19 €/an un mois avant, proposition de l'abonnement annuel

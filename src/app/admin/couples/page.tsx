@@ -23,7 +23,7 @@ type RappelEnvoye = { couple_id: string; type: string; cle: string; envoye_le: s
 
 // E-mails reçus après la signature du pacte, d'après rappels_envoyes :
 // thèmes du mois (« Mensuel 3 »), anniversaires de couple (« Anniversaire 7 »,
-// numéro du modèle), de mariage, Noël, Saint-Valentin, annonce du rendez-vous
+// numéro du modèle), de mariage, fêtes de fin d'année, Saint-Valentin, annonce du rendez-vous
 // annuel.
 function emailsRecus(rappels: RappelEnvoye[], dateRencontre: string | null, dateMariage: string | null): EmailRecu[] {
   const recus: EmailRecu[] = []
@@ -66,7 +66,7 @@ function emailsRecus(rappels: RappelEnvoye[], dateRencontre: string | null, date
   }
   for (const r of rappels.filter(r => r.type === 'fete')) {
     const [fete, annee] = r.cle.split(':')
-    const nom = fete === 'noel' ? 'Noël' : fete === 'saint_valentin' ? 'Saint-Valentin' : fete
+    const nom = fete === 'noel' ? 'Fêtes' : fete === 'saint_valentin' ? 'Saint-Valentin' : fete
     recus.push({ famille: 'fete', libelle: `${nom} ${annee ?? ''}`.trim(), detail: estModeleEmail(fete) ? modeleEmail(fete).nom : nom, date: r.envoye_le })
   }
   return recus.sort((a, b) => a.date.localeCompare(b.date))

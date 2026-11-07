@@ -24,9 +24,9 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //      10 jours (puis une seconde à 20 jours, pas plus) ;
 //   2. une fois le pacte signé, un e-mail par mois pour faire vivre les
 //      engagements (chaque thème une seule fois, sans boucle ; rien les mois
-//      de Noël, de la Saint-Valentin, du rendez-vous annuel et des
+//      des fêtes de fin d'année, de la Saint-Valentin, du rendez-vous annuel et des
 //      anniversaires), l'annonce du rendez-vous annuel un mois avant, et les
-//      e-mails de Noël et de la Saint-Valentin ;
+//      e-mails des fêtes de fin d'année et de la Saint-Valentin ;
 //   3. une fois le pacte signé, 5 jours avant la fin du mois payé, la
 //      proposition de passer de l'abonnement mensuel à l'abonnement annuel
 //      (« Pacte – notre rendez-vous annuel », bascule Stripe programmée
@@ -241,7 +241,7 @@ function moisCalendrier(date: string | null | undefined) {
   return date ? Number(date.slice(5, 7)) - 1 : null
 }
 
-// Pas d'e-mail du mois quand il tombe le mois de Noël, de la Saint-Valentin,
+// Pas d'e-mail du mois quand il tombe le mois des fêtes de fin d'année, de la Saint-Valentin,
 // d'un anniversaire de couple ou de mariage, ou du rendez-vous annuel : ces
 // mois-là ont déjà leur propre e-mail. Renvoie la raison, ou null.
 export function raisonMoisSansTheme(echeance: Date, couple: { date_anniversaire?: string | null; date_mariage?: string | null; rdv_annuel_le?: string | null }): string | null {
@@ -355,7 +355,7 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
 }
 
 // ---------------------------------------------------------------------------
-// 2 bis. Noël et Saint-Valentin
+// 2 bis. Fêtes de fin d'année (clé « noel ») et Saint-Valentin
 // ---------------------------------------------------------------------------
 
 // Envoyés chaque année aux couples qui ont signé leur pacte, à partir du jour

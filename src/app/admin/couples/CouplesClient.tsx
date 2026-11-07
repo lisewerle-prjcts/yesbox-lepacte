@@ -573,7 +573,7 @@ function MemberRow({
 }
 
 // Pastilles des e-mails reçus après la signature du pacte : « Mensuel 3 »,
-// « Anniversaire 7 », « Noël 2026 »… (détail et date au survol).
+// « Anniversaire 7 », « Fêtes 2026 »… (détail et date au survol).
 const COULEUR_RECU: Record<EmailRecu['famille'], { fond: string; texte: string }> = {
   mensuel: { fond: 'var(--brand-tint)', texte: 'var(--brand)' },
   anniversaire: { fond: '#fef3c7', texte: '#92400e' },

@@ -12,7 +12,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'inscription', nom: 'Inscription & compte', description: 'Confirmation d’adresse, bienvenue, invitation du ou de la partenaire, mot de passe.' },
   { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
-  { cle: 'mensuels', nom: 'Rendez-vous mensuels, fêtes & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé (chaque thème une seule fois, sans boucle), Noël, Saint-Valentin, et l’annonce du rendez-vous annuel.' },
+  { cle: 'mensuels', nom: 'Rendez-vous mensuels, fêtes & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé (chaque thème une seule fois, sans boucle), fêtes de fin d’année, Saint-Valentin, et l’annonce du rendez-vous annuel.' },
   { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
   { cle: 'abonnement', nom: 'Abonnement, cartes cadeaux & avis', description: 'Renouvellement à 19 €/an, passage à l’abonnement annuel, cartes cadeaux, code de réduction offert pour un avis publié.' },
 ]
@@ -541,7 +541,7 @@ See you soon, and take care of yourselves and your relationship.
 // Thèmes des e-mails du mois après la signature du pacte, envoyés une seule
 // fois chacun, dans cet ordre (cf. rappels-email.ts) : pas de boucle, une
 // fois le dernier envoyé, plus d'e-mail du mois jusqu'à l'ajout d'un nouveau
-// thème. Pas d'e-mail du mois les mois de Noël, de la Saint-Valentin, du
+// thème. Pas d'e-mail du mois les mois des fêtes de fin d'année, de la Saint-Valentin, du
 // rendez-vous annuel et des anniversaires de couple ou de mariage : le thème
 // suivant attend le mois d'après (sauf pour l'e-mail du 1er mois).
 // `cle` : identifiant du modèle (ne jamais changer celui d'un thème déjà
@@ -793,7 +793,7 @@ const MENSUELS: ModeleEmail[] = [
     cle: theme.cle, famille: 'mensuels', nom: `Thème ${i + 1} — ${theme.fr.objet}`, rappel: true,
     quand: i === 0
       ? '1 mois après la signature du pacte.'
-      : `${i + 1}e e-mail du mois après la signature du pacte (une seule fois ; pas d’e-mail du mois les mois de Noël, de la Saint-Valentin, du rendez-vous annuel et des anniversaires de couple ou de mariage).`,
+      : `${i + 1}e e-mail du mois après la signature du pacte (une seule fois ; pas d’e-mail du mois les mois des fêtes de fin d’année, de la Saint-Valentin, du rendez-vous annuel et des anniversaires de couple ou de mariage).`,
     facultatives: ['rappel_rdv'],
     fr: { objet: theme.fr.objet, corps: `${BONJOUR.fr}
 
@@ -850,11 +850,11 @@ You chose together who would organize it: maybe it’s time to book the place or
 ${EQUIPE.en}` },
   },
   {
-    cle: 'noel', famille: 'mensuels', nom: 'Noël — un cadeau surprise', rappel: true,
+    cle: 'noel', famille: 'mensuels', nom: 'Fêtes de fin d’année — un cadeau surprise', rappel: true,
     quand: 'Chaque année le 10 décembre (ou dans les jours qui suivent, jusqu’au 24), aux couples qui ont signé leur pacte. Pas d’e-mail du mois en décembre.',
-    fr: { objet: 'Noël approche : et si vous vous faisiez une surprise ? 🎁', corps: `${BONJOUR.fr}
+    fr: { objet: 'Les fêtes de fin d’année approchent : et si vous vous faisiez une surprise ? 🎁', corps: `${BONJOUR.fr}
 
-Noël approche ! Cette année, un défi : **prépare un cadeau surprise pour {partenaire}**.
+Les fêtes de fin d’année approchent ! Cette année, un défi : **prépare un cadeau surprise pour {partenaire}**.
 
 Pas forcément cher ni spectaculaire : quelque chose qui lui ressemble et qui montre que tu l’écoutes vraiment. Un objet évoqué au détour d’une conversation, une expérience à vivre à deux, une photo souvenir à encadrer, une lettre, un bon pour un moment rien qu’à vous…
 
@@ -862,9 +862,9 @@ Le plus beau dans un cadeau surprise, c’est la surprise : chut, on ne dit rien
 
 Joyeuses fêtes à vous deux,
 ${EQUIPE.fr}` },
-    en: { objet: 'Christmas is coming: what about a surprise? 🎁', corps: `${BONJOUR.en}
+    en: { objet: 'The holiday season is coming: what about a surprise? 🎁', corps: `${BONJOUR.en}
 
-Christmas is coming! This year, a challenge: **prepare a surprise gift for {partenaire}**.
+The holiday season is coming! This year, a challenge: **prepare a surprise gift for {partenaire}**.
 
 It doesn’t have to be expensive or spectacular: something that feels like them and shows you really listen. Something they mentioned in passing, an experience to share, a photo to frame, a letter, a voucher for a moment just for the two of you…
 

@@ -1928,14 +1928,14 @@ create policy "precommandes_mfa" on public.precommandes as restrictive for selec
 );
 
 -- ============================================================
--- Migration : e-mails du mois sans boucle, Noël et Saint-Valentin.
+-- Migration : e-mails du mois sans boucle, fêtes de fin d'année et Saint-Valentin.
 -- 1. rappels_envoyes, type 'theme_mensuel' (cle « <mois>:<clé du thème> ») :
 --    thème envoyé chaque mois, pour retrouver la question du mois sur la
 --    page Nos rendez-vous annuels. Chaque thème n'est envoyé qu'une fois ;
---    pas d'e-mail du mois les mois de Noël, de la Saint-Valentin, du
+--    pas d'e-mail du mois les mois des fêtes de fin d'année, de la Saint-Valentin, du
 --    rendez-vous annuel et des anniversaires.
 -- 2. rappels_envoyes, type 'fete' (cle « noel:2026 », « saint_valentin:2027 ») :
---    un seul e-mail de Noël et de Saint-Valentin par an.
+--    un seul e-mail des fêtes de fin d'année et de Saint-Valentin par an.
 -- 3. Reprise de l'existant (une seule fois, tant qu'aucun thème n'est
 --    enregistré) : les mois déjà écoulés gardent la question qu'ils
 --    affichaient (ancien calcul : thèmes 1 à 11, puis en boucle à partir
