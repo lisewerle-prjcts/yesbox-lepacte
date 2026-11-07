@@ -12,7 +12,7 @@ export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[]
   { cle: 'inscription', nom: 'Inscription & compte', description: 'Confirmation d’adresse, bienvenue, invitation du ou de la partenaire, mot de passe.' },
   { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
-  { cle: 'mensuels', nom: 'Rendez-vous mensuels & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé, et l’annonce du rendez-vous annuel.' },
+  { cle: 'mensuels', nom: 'Rendez-vous mensuels, fêtes & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé (chaque thème une seule fois, sans boucle), Noël, Saint-Valentin, et l’annonce du rendez-vous annuel.' },
   { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
   { cle: 'abonnement', nom: 'Abonnement, cartes cadeaux & avis', description: 'Renouvellement à 19 €/an, passage à l’abonnement annuel, cartes cadeaux, code de réduction offert pour un avis publié.' },
 ]
@@ -50,6 +50,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   date: 'date concernée',
   quand: '« demain » ou « le 12 mars 2027 »',
   jours: '« 12 jours », « 1 jour »',
+  lien_intimite: 'lien vers le module « Tendresse et intimité »',
   rappel_rdv: 'phrase sur le prochain rendez-vous annuel (vide s’il n’y en a pas)',
   precision_rdv: '« , le 12 mars 2027 » (vide sans rendez-vous fixé)',
   phrase_abonnement: 'phrase sur le passage à l’abonnement annuel (vide si rien n’est programmé)',
@@ -537,20 +538,31 @@ See you soon, and take care of yourselves and your relationship.
 // Rendez-vous mensuels & bilan annuel
 // ---------------------------------------------------------------------------
 
-// Un thème par mois après la signature du pacte (cf. rappels-email.ts).
+// Thèmes des e-mails du mois après la signature du pacte, envoyés une seule
+// fois chacun, dans cet ordre (cf. rappels-email.ts) : pas de boucle, une
+// fois le dernier envoyé, plus d'e-mail du mois jusqu'à l'ajout d'un nouveau
+// thème. Pas d'e-mail du mois les mois de Noël, de la Saint-Valentin, du
+// rendez-vous annuel et des anniversaires de couple ou de mariage : le thème
+// suivant attend le mois d'après (sauf pour l'e-mail du 1er mois).
+// `cle` : identifiant du modèle (ne jamais changer celui d'un thème déjà
+// envoyé : il sert à retrouver la question du mois sur la page « Nos
+// rendez-vous annuels »). Un nouveau thème s'ajoute avec une nouvelle clé.
 // `suite` : fin d'e-mail propre au thème, à la place du texte et du bouton
 // « Noter nos réponses » communs.
-const THEMES: { fr: ContenuEmail; en: ContenuEmail; question: [string, string]; suite?: { fr: string; en: string } }[] = [
+const THEMES: { cle: string; fr: ContenuEmail; en: ContenuEmail; question: [string, string]; suite?: { fr: string; en: string } }[] = [
   {
+    cle: 'mensuel_1',
     fr: { objet: 'Un mois que vous avez signé votre pacte 💍', corps: `Il y a un mois, {partenaire} et toi avez signé votre pacte. Bravo : beaucoup de couples n’osent jamais mettre des mots sur ce qui compte vraiment à deux.
 
 **« Et si vous vous bloquiez un rendez-vous régulier dans l’agenda ?**
-**Une soirée par mois par exemple, rien qu’à vous. Ou une pause déjeuner en semaine. Faites en fonction de ce qui est possible…**
+**Une soirée par mois par exemple, sans écran, rien que tous les deux. Ou une pause déjeuner en semaine. Faites en fonction de ce qui est possible…**
+**Pas besoin d’un grand programme : un repas, une balade, et surtout une conversation sans téléphone à portée de main.**
 **Et pourquoi ne pas l’organiser à tour de rôle ? »**` },
     en: { objet: 'One month since you signed your pact 💍', corps: `A month ago, {partenaire} and you signed your pact. Well done: many couples never dare to put into words what truly matters to them as a pair.
 
 **"What if you blocked out a regular date in your calendar?**
-**One evening a month, for example, just for the two of you. Or a lunch break during the week. Go with what’s possible…**
+**One evening a month, for example, screen-free, just the two of you. Or a lunch break during the week. Go with what’s possible…**
+**No need for big plans: a meal, a walk, and above all a conversation with no phone within reach.**
 **And why not take turns organising it?"**` },
     question: ['Et si vous vous bloquiez un rendez-vous régulier dans l’agenda ? Qu’aimerais-tu organiser, et comment aimerais-tu le faire ?', 'What if you blocked out a regular date in your calendar? What would you like to organise, and how would you like to do it?'],
     suite: {
@@ -563,6 +575,7 @@ const THEMES: { fr: ContenuEmail; en: ContenuEmail; question: [string, string]; 
     },
   },
   {
+    cle: 'mensuel_2',
     fr: { objet: 'Et si vous vous disiez merci ?', corps: `Dans votre pacte, vous avez parlé de gratitude. Ce mois-ci, petit défi : dis à {partenaire} une chose précise que tu as appréciée cette semaine. Pas un « merci pour tout », un vrai détail.
 
 Ça prend 30 secondes, et c’est souvent ce qu’on oublie le plus vite.` },
@@ -572,6 +585,7 @@ It takes 30 seconds, and it’s often what we forget first.` },
     question: ['Quelle chose précise ai-je appréciée chez l’autre ce mois-ci ?', 'What specific thing did I appreciate about the other this month?'],
   },
   {
+    cle: 'mensuel_3',
     fr: { objet: 'Votre socle tient-il bon ?', corps: `Au moment d’écrire votre pacte, vous avez choisi les 3 principes de base d’un couple heureux… et du vôtre en particulier.
 
 Ce mois-ci, relisez-les ensemble : **lequel avez-vous le plus vécu ces dernières semaines ? Lequel aimeriez-vous soigner davantage ?**` },
@@ -581,15 +595,21 @@ This month, reread them together: **which one have you lived the most these past
     question: ['Lequel de nos 3 principes avons-nous le plus vécu ? Lequel aimerions-nous soigner davantage ?', 'Which of our 3 principles did we live most? Which one would we like to nurture more?'],
   },
   {
-    fr: { objet: 'Un moment rien qu’à vous', corps: `Le quotidien a vite fait de reprendre toute la place. Ce mois-ci, un défi simple : **bloquez une soirée sans écran, rien que tous les deux**.
+    cle: 'mensuel_renoncer',
+    fr: { objet: 'Ce que vous avez choisi de faire moins', corps: `En écrivant votre pacte, chacun·e a noté **une chose à laquelle renoncer, ou à faire moins** pour l’autre.
 
-Pas besoin d’un grand programme : un repas, une balade, une conversation sans téléphone à portée de main.` },
-    en: { objet: 'A moment just for the two of you', corps: `Everyday life easily takes up all the space. This month, a simple challenge: **set aside a screen-free evening, just the two of you**.
+Ce mois-ci, relisez vos deux réponses dans votre pacte, et posez-vous honnêtement la question : **avez-vous réussi à tenir cet engagement ?**
 
-No need for big plans: a meal, a walk, a conversation with no phone within reach.` },
-    question: ['Notre soirée sans écran : qu’avons-nous fait, et qu’en retenons-nous ?', 'Our screen-free evening: what did we do, and what do we take from it?'],
+Si oui, bravo : dites-vous ce que ça a changé entre vous. Si c’est plus difficile que prévu, pas de culpabilité : réfléchissez ensemble à **la meilleure manière d’y arriver**. Un premier petit pas, un signal convenu entre vous, un moment de la journée où faire plus attention… À deux, c’est plus facile.` },
+    en: { objet: 'What you chose to do less', corps: `When writing your pact, each of you wrote down **one thing to give up, or to do less**, for the other.
+
+This month, reread both your answers in your pact, and ask yourselves honestly: **have you managed to keep this commitment?**
+
+If so, well done: tell each other what it has changed between you. If it’s harder than expected, no guilt: think together about **the best way to get there**. A first small step, a signal agreed between you, a time of day to pay more attention… It’s easier as a pair.` },
+    question: ['Ce à quoi j’ai renoncé, ou que je me suis engagé·e à faire moins : ai-je réussi ? Qu’est-ce qui m’aiderait à y arriver ?', 'What I gave up, or committed to doing less: have I managed it? What would help me get there?'],
   },
   {
+    cle: 'mensuel_5',
     fr: { objet: 'Le désaccord du mois', corps: `En écrivant votre pacte, vous avez classé vos désaccords : négociable, pas encore réfléchi, rédhibitoire.
 
 Ce mois-ci, choisissez **un désaccord « négociable »** et prenez un moment calme pour en reparler. L’objectif n’est pas de gagner, mais de comprendre ce qui compte pour l’autre.` },
@@ -599,6 +619,7 @@ This month, pick **one "negotiable" disagreement** and take a calm moment to tal
     question: ['Quel désaccord « négociable » avons-nous repris, et qu’avons-nous compris de l’autre ?', 'Which "negotiable" disagreement did we revisit, and what did we understand about each other?'],
   },
   {
+    cle: 'mensuel_6',
     fr: { objet: 'Mi-parcours de votre année', corps: `Votre pacte a déjà plusieurs mois. C’est le bon moment pour le relire ensemble.
 
 **Y a-t-il un engagement à ajuster, à préciser, ou un nouveau à ajouter ?** Un pacte vivant, c’est un pacte qui évolue avec vous.` },
@@ -608,6 +629,7 @@ This month, pick **one "negotiable" disagreement** and take a calm moment to tal
     question: ['Y a-t-il un engagement de notre pacte à ajuster, à préciser ou à ajouter ?', 'Is there a commitment in our pact to adjust, clarify or add?'],
   },
   {
+    cle: 'mensuel_7',
     fr: { objet: 'Le geste qui vous rapproche', corps: `Vous vous êtes choisi un geste ou un code de rapprochement. Ce mois-ci, faites-le vivre : **utilisez-le au moins une fois par semaine**.
 
 Ce sont ces petits signes qui entretiennent la complicité au quotidien.` },
@@ -617,6 +639,7 @@ These small signs are what keep your bond alive day to day.` },
     question: ['Comment avons-nous fait vivre notre geste de rapprochement ?', 'How did we keep our closeness gesture alive?'],
   },
   {
+    cle: 'mensuel_8',
     fr: { objet: 'Qu’est-ce qui a changé entre vous ?', corps: `Depuis le début de votre parcours, des choses ont bougé, même discrètement.
 
 Ce mois-ci, prenez un moment pour vous le dire : **qu’est-ce qui va mieux entre vous ? Qu’est-ce que vous voulez garder précieusement ?**` },
@@ -626,15 +649,21 @@ This month, take a moment to tell each other: **what is going better between you
     question: ['Qu’est-ce qui va mieux entre nous ? Que voulons-nous garder précieusement ?', 'What is going better between us? What do we want to treasure?'],
   },
   {
+    cle: 'mensuel_9',
     fr: { objet: 'Vos rêves à deux', corps: `Un voyage, un projet, une envie dont vous parlez depuis longtemps ?
 
-Ce mois-ci, choisissez **un projet commun et faites-le avancer d’un pas** : une date, une réservation, un premier rendez-vous.` },
+Ce mois-ci, choisissez **un projet commun et faites-le avancer d’un pas** : une date, une réservation, un premier rendez-vous.
+
+Et voyez plus loin : **faites des projets à 6 mois, à 1 an et à 5 ans**.` },
     en: { objet: 'Your shared dreams', corps: `A trip, a project, something you’ve been talking about for a long time?
 
-This month, choose **one shared project and move it forward by one step**: a date, a booking, a first appointment.` },
-    question: ['Quel projet commun avons-nous fait avancer, et de quel pas ?', 'Which shared project did we move forward, and by what step?'],
+This month, choose **one shared project and move it forward by one step**: a date, a booking, a first appointment.
+
+And look further ahead: **make plans for 6 months, 1 year and 5 years from now**.` },
+    question: ['Quel projet commun avons-nous fait avancer, et de quel pas ? Quels sont nos projets à 6 mois, à 1 an et à 5 ans ?', 'Which shared project did we move forward, and by what step? What are our plans for 6 months, 1 year and 5 years?'],
   },
   {
+    cle: 'mensuel_10',
     fr: { objet: 'Prendre soin de soi pour prendre soin du couple', corps: `Un couple solide, c’est aussi deux personnes qui vont bien.
 
 Ce mois-ci, posez-vous la question séparément, puis partagez vos réponses : **de quoi ai-je besoin en ce moment ? Qu’est-ce que l’autre pourrait faire pour m’aider ?**` },
@@ -644,6 +673,7 @@ This month, ask yourselves separately, then share your answers: **what do I need
     question: ['De quoi ai-je besoin en ce moment ? Qu’est-ce que l’autre pourrait faire pour m’aider ?', 'What do I need right now? What could the other do to help me?'],
   },
   {
+    cle: 'mensuel_11',
     fr: { objet: 'La gratitude, encore', corps: `Ce mois-ci, un petit geste : écris un mot à {partenaire}. Quelques lignes sur un papier, un message, peu importe.
 
 Dis-lui ce que tu apprécies le plus en ce moment dans votre relation. C’est simple, et ça marque longtemps.` },
@@ -652,27 +682,118 @@ Dis-lui ce que tu apprécies le plus en ce moment dans votre relation. C’est s
 Tell them what you appreciate most in your relationship right now. It’s simple, and it stays with you for a long time.` },
     question: ['Qu’ai-je écrit à l’autre, et qu’est-ce que ce mot a changé ?', 'What did I write to the other, and what did that note change?'],
   },
+  {
+    cle: 'mensuel_serviable',
+    fr: { objet: 'Rendre service, juste pour faire plaisir', corps: `Ce mois-ci, un défi tout simple : **rendez service à l’autre, gratuitement, juste pour lui faire plaisir**.
+
+Pas parce que c’est votre tour, ni pour attendre quelque chose en retour : préparer son café, vous charger d’une corvée que l’autre n’aime pas, anticiper un petit besoin, faire une course à sa place… Ces attentions gratuites disent « je pense à toi » sans un mot.` },
+    en: { objet: 'Doing something kind, just to please', corps: `This month, a very simple challenge: **do something helpful for the other, for free, just to make them happy**.
+
+Not because it’s your turn, nor to get something in return: making their coffee, taking on a chore the other dislikes, anticipating a small need, running an errand for them… These freely given gestures say "I’m thinking of you" without a word.` },
+    question: ['Quel service ai-je rendu à l’autre, juste pour lui faire plaisir ? Et lequel m’a touché·e ?', 'What did I do for the other, just to make them happy? And which of their gestures touched me?'],
+  },
+  {
+    cle: 'mensuel_toucher',
+    fr: { objet: 'Le pouvoir du toucher', corps: `Une main posée sur l’épaule, un câlin qui dure un peu plus longtemps, des doigts entrelacés en marchant, un massage devant un film… Le toucher rapproche, apaise et rassure, souvent mieux que les mots.
+
+Ce mois-ci, **soyez plus tactiles entre vous** : multipliez les gestes tendres au quotidien, sans autre intention que d’être proches. Et dites-vous quels gestes vous font le plus de bien : chacun·e a les siens.` },
+    en: { objet: 'The power of touch', corps: `A hand on the shoulder, a hug that lasts a little longer, fingers intertwined while walking, a massage in front of a film… Touch brings you closer, soothes and reassures, often better than words.
+
+This month, **be more physically affectionate with each other**: add more tender gestures to your everyday life, with no other intention than being close. And tell each other which gestures feel best: everyone has their own.` },
+    question: ['Quels gestes tendres me font le plus de bien ? Lesquels avons-nous ajoutés à notre quotidien ce mois-ci ?', 'Which tender gestures feel best to me? Which ones did we add to our everyday life this month?'],
+  },
+  {
+    cle: 'mensuel_intimite',
+    fr: { objet: 'Un peu de fun sous la couette ?', corps: `**Et si ce mois-ci, vous mettiez un peu de fun sous la couette ?** Une envie dont vous n’avez jamais parlé, un moment improvisé, un fou rire, une soirée sans réveil le lendemain… L’intimité aussi a besoin de légèreté et de nouveauté.
+
+L’essentiel : que chacun·e se sente libre et en confiance, et puisse dire oui comme non.
+
+Si besoin, relisez ensemble vos réponses du module « Tendresse et intimité » : c’est un bon point de départ pour en parler.
+
+[lien: Relire le module « Tendresse et intimité » | {lien_intimite}]` },
+    en: { objet: 'A little fun under the covers?', corps: `**What if this month, you brought a little fun under the covers?** A desire you’ve never talked about, a spontaneous moment, a fit of giggles, an evening with no alarm the next morning… Intimacy needs lightness and novelty too.
+
+What matters most: that each of you feels free and safe, and can say yes as well as no.
+
+If needed, reread your answers to the "Tenderness and Intimacy" module together: it’s a good starting point to talk about it.
+
+[lien: Reread the "Tenderness and Intimacy" module | {lien_intimite}]` },
+    question: ['Quelle envie aimerais-je partager pour mettre un peu de fun dans notre intimité ?', 'What desire would I like to share to bring a little fun into our intimacy?'],
+  },
+  {
+    cle: 'mensuel_originalite',
+    fr: { objet: 'Faites quelque chose que vous n’avez jamais fait', corps: `Ce mois-ci, sortez de vos habitudes : **faites ensemble quelque chose que vous n’avez jamais fait**.
+
+Partez visiter votre ville comme deux touristes, louez un scooter, testez une activité improbable, montez dans un train pour une destination tirée au sort…
+
+Voyez la vie en grand : personne d’autre ne le fera à votre place !` },
+    en: { objet: 'Do something you’ve never done', corps: `This month, break out of your routine: **do something together that you’ve never done before**.
+
+Explore your own city like two tourists, rent a scooter, try an unlikely activity, hop on a train to a destination picked at random…
+
+Think big: nobody else will do it for you!` },
+    question: ['Qu’avons-nous fait pour la première fois ensemble, et qu’est-ce que ça nous a apporté ?', 'What did we do together for the first time, and what did it bring us?'],
+  },
+  {
+    cle: 'mensuel_rire',
+    fr: { objet: 'Riez !', corps: `**Le rire est le ciment du couple.** Ce mois-ci, saisissez toutes les occasions de retrouver cette complicité : regardez un spectacle d’humour, sortez dans un comedy club, ressortez vos souvenirs les plus drôles, laissez-vous aller aux fous rires.
+
+Bref : riez !` },
+    en: { objet: 'Laugh!', corps: `**Laughter is what holds a couple together.** This month, seize every opportunity to find that closeness again: watch a comedy show, go to a comedy club, bring up your funniest memories, let yourselves get carried away by fits of laughter.
+
+In short: laugh!` },
+    question: ['Quel a été notre plus beau fou rire ce mois-ci ?', 'What was our best fit of laughter this month?'],
+  },
+  {
+    cle: 'mensuel_humilite',
+    fr: { objet: 'Le courage de l’humilité', corps: `Ce mois-ci, un exercice qui demande un peu de courage : **reconnaissez vos limites ou vos erreurs**. Un « tu avais raison », un « je me suis trompé·e », un « là, j’ai besoin d’aide »…
+
+Et sachez aussi rire de vous-même. Bonne nouvelle : l’humilité est très contagieuse.` },
+    en: { objet: 'The courage of humility', corps: `This month, an exercise that takes a little courage: **acknowledge your limits or your mistakes**. A "you were right", an "I got it wrong", a "right now, I need help"…
+
+And learn to laugh at yourself too. Good news: humility is very contagious.` },
+    question: ['Quelle limite ou quelle erreur ai-je reconnue ce mois-ci ? Comment a-t-elle été accueillie ?', 'What limit or mistake did I acknowledge this month? How was it received?'],
+  },
+  {
+    cle: 'mensuel_jeux',
+    fr: { objet: 'Soirée jeux !', corps: `Ce mois-ci, **ressortez les jeux de société ou un jeu de cartes, et jouez ensemble**. Un classique de votre enfance, un jeu coopératif, une revanche attendue depuis longtemps…
+
+Peu importe qui gagne : l’essentiel, c’est de vous amuser ensemble.` },
+    en: { objet: 'Game night!', corps: `This month, **get out the board games or a deck of cards, and play together**. A childhood classic, a cooperative game, a long-awaited rematch…
+
+It doesn’t matter who wins: what matters is having fun together.` },
+    question: ['À quoi avons-nous joué, et qu’avons-nous découvert de l’autre en jouant ?', 'What did we play, and what did we discover about each other while playing?'],
+  },
 ]
 
-export const NOMBRE_THEMES_MENSUELS = THEMES.length
-
-// Titre (objet par défaut) et question de chaque thème, pour la page « Nos
-// rendez-vous annuels ».
-export function themeMensuelParDefaut(index: number) {
-  const theme = THEMES[index]
-  return { objet: { fr: theme.fr.objet, en: theme.en.objet }, question: { fr: theme.question[0], en: theme.question[1] } }
+// Thèmes retirés du catalogue, déjà envoyés à certains couples : leur question
+// reste affichée sur la page « Nos rendez-vous annuels ».
+const THEMES_RETIRES: Record<string, { objet: [string, string]; question: [string, string] }> = {
+  mensuel_4: {
+    objet: ['Un moment rien qu’à vous', 'A moment just for the two of you'],
+    question: ['Notre soirée sans écran : qu’avons-nous fait, et qu’en retenons-nous ?', 'Our screen-free evening: what did we do, and what do we take from it?'],
+  },
 }
 
-export function cleThemeMensuel(index: number) {
-  return `mensuel_${index + 1}`
+// Ordre des thèmes (clés des modèles).
+export const CLES_THEMES_MENSUELS = THEMES.map(theme => theme.cle)
+
+// Titre (objet par défaut) et question d'un thème, pour la page « Nos
+// rendez-vous annuels » (null pour une clé inconnue).
+export function themeMensuelParDefaut(cle: string): { objet: Record<'fr' | 'en', string>; question: Record<'fr' | 'en', string> } | null {
+  const theme = THEMES.find(x => x.cle === cle)
+  if (theme) return { objet: { fr: theme.fr.objet, en: theme.en.objet }, question: { fr: theme.question[0], en: theme.question[1] } }
+  const retire = THEMES_RETIRES[cle]
+  if (retire) return { objet: { fr: retire.objet[0], en: retire.objet[1] }, question: { fr: retire.question[0], en: retire.question[1] } }
+  return null
 }
 
 const MENSUELS: ModeleEmail[] = [
   ...THEMES.map((theme, i): ModeleEmail => ({
-    cle: cleThemeMensuel(i), famille: 'mensuels', nom: `Mois ${i + 1} — ${theme.fr.objet}`, rappel: true,
+    cle: theme.cle, famille: 'mensuels', nom: `Thème ${i + 1} — ${theme.fr.objet}`, rappel: true,
     quand: i === 0
       ? '1 mois après la signature du pacte.'
-      : `${i + 1} mois après la signature du pacte (puis en boucle, à partir du mois 2, après le rendez-vous annuel).`,
+      : `${i + 1}e e-mail du mois après la signature du pacte (une seule fois ; pas d’e-mail du mois les mois de Noël, de la Saint-Valentin, du rendez-vous annuel et des anniversaires de couple ou de mariage).`,
     facultatives: ['rappel_rdv'],
     fr: { objet: theme.fr.objet, corps: `${BONJOUR.fr}
 
@@ -728,6 +849,54 @@ You chose together who would organize it: maybe it’s time to book the place or
 
 ${EQUIPE.en}` },
   },
+  {
+    cle: 'noel', famille: 'mensuels', nom: 'Noël — un cadeau surprise', rappel: true,
+    quand: 'Chaque année le 10 décembre (ou dans les jours qui suivent, jusqu’au 24), aux couples qui ont signé leur pacte. Pas d’e-mail du mois en décembre.',
+    fr: { objet: 'Noël approche : et si vous vous faisiez une surprise ? 🎁', corps: `${BONJOUR.fr}
+
+Noël approche ! Cette année, un défi : **prépare un cadeau surprise pour {partenaire}**.
+
+Pas forcément cher ni spectaculaire : quelque chose qui lui ressemble et qui montre que tu l’écoutes vraiment. Un objet évoqué au détour d’une conversation, une expérience à vivre à deux, une photo souvenir à encadrer, une lettre, un bon pour un moment rien qu’à vous…
+
+Le plus beau dans un cadeau surprise, c’est la surprise : chut, on ne dit rien !
+
+Joyeuses fêtes à vous deux,
+${EQUIPE.fr}` },
+    en: { objet: 'Christmas is coming: what about a surprise? 🎁', corps: `${BONJOUR.en}
+
+Christmas is coming! This year, a challenge: **prepare a surprise gift for {partenaire}**.
+
+It doesn’t have to be expensive or spectacular: something that feels like them and shows you really listen. Something they mentioned in passing, an experience to share, a photo to frame, a letter, a voucher for a moment just for the two of you…
+
+The best part of a surprise gift is the surprise: shh, not a word!
+
+Happy holidays to you both,
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'saint_valentin', famille: 'mensuels', nom: 'Saint-Valentin — une recette à deux', rappel: true,
+    quand: 'Chaque année le 7 février (ou dans les jours qui suivent, jusqu’au 13), aux couples qui ont signé leur pacte. Pas d’e-mail du mois en février.',
+    fr: { objet: 'Saint-Valentin : un moment gourmand à deux 💞', corps: `${BONJOUR.fr}
+
+Pour la Saint-Valentin, nous vous proposons un moment sensuel à deux : **choisissez une recette à faire ensemble, et réalisez toutes les étapes à quatre mains**, avec douceur et gentillesse.
+
+Soyez tactiles et gourmand·es. Essayez par exemple de fabriquer vos propres **gnocchis à la betterave**, entre pétrissage et travail d’équipe.
+
+Régalez-vous !
+
+Belle Saint-Valentin à vous deux,
+${EQUIPE.fr}` },
+    en: { objet: 'Valentine’s Day: a delicious moment for two 💞', corps: `${BONJOUR.en}
+
+For Valentine’s Day, we suggest a sensual moment for two: **choose a recipe to make together, and do every step side by side**, gently and kindly.
+
+Be tactile and indulgent. Try making your own **beetroot gnocchi**, for example, between kneading and teamwork.
+
+Enjoy every bite!
+
+Happy Valentine’s Day to you both,
+${EQUIPE.en}` },
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -759,8 +928,8 @@ const CONSEILS_RENCONTRE: { etiquette: string; fr: string; en: string }[] = [
   },
   {
     etiquette: 'bocal à souvenirs',
-    fr: '**Le défi du jour : un bocal à souvenirs.** Prenez un bocal ou une jolie boîte, et glissez-y chacun·e cinq petits papiers avec un souvenir heureux de l’année qui vient de s’écouler. Lisez-les ensemble ce soir, puis gardez le bocal : il se remplira d’année en année.',
-    en: '**Today’s challenge: a memory jar.** Take a jar or a pretty box, and each slip in five little notes with a happy memory from the past year. Read them together tonight, then keep the jar: it will fill up year after year.',
+    fr: '**Le défi du jour : un bocal à souvenirs.** Prenez un bocal ou une jolie boîte, et glissez-y chacun·e cinq petits papiers avec un souvenir heureux de l’année qui vient de s’écouler. Pour chacun, nommez le souvenir, le lieu, et détaillez les émotions ressenties. Lisez-les ensemble ce soir, puis gardez le bocal : il se remplira d’année en année.',
+    en: '**Today’s challenge: a memory jar.** Take a jar or a pretty box, and each slip in five little notes with a happy memory from the past year. For each one, name the memory and the place, and describe the emotions you felt. Read them together tonight, then keep the jar: it will fill up year after year.',
   },
   {
     etiquette: 'photo de l’année',

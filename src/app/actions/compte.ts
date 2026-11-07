@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { questionDuMois } from '@/lib/rappels-email'
+import { questionDuTheme, themesDuCouple } from '@/lib/rappels-email'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
@@ -232,8 +232,10 @@ export async function telechargerMesDonnees() {
       lines.push('='.repeat(60))
       lines.push(t(locale, 'Nos rendez-vous annuels — questions du mois', 'Our yearly dates — monthly questions'))
       lines.push('='.repeat(60))
+      const themes = await themesDuCouple(createAdminClient(), moi.couple_id)
       for (const mois of [...new Set(reponsesMois.map(r => r.mois))]) {
-        lines.push(`- ${questionDuMois(mois, locale).question} (${t(locale, 'mois', 'month')} ${mois})`)
+        const question = questionDuTheme(themes.get(mois) ?? '', locale)?.question ?? t(locale, 'Question du mois', 'Monthly question')
+        lines.push(`- ${question} (${t(locale, 'mois', 'month')} ${mois})`)
         for (const membre of membresList) {
           const r = reponsesMois.find(r => r.mois === mois && r.user_id === membre.id)
           if (r) lines.push(`  ${nomDe(membre)} : ${r.valeur}`)

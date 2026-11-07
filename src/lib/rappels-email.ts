@@ -10,7 +10,7 @@ import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
 import { dechiffrerLignes } from '@/lib/chiffrement'
 import { envoyerModele } from '@/lib/modeles-email/serveur'
-import { cleThemeMensuel, NOMBRE_THEMES_MENSUELS, themeMensuelParDefaut, type ContenuEmail } from '@/lib/modeles-email/catalogue'
+import { CLES_THEMES_MENSUELS, themeMensuelParDefaut, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import type { Variables } from '@/lib/modeles-email/rendu'
 
 // Le lien de désinscription est signé dans src/lib/desinscription.ts.
@@ -23,7 +23,10 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //   1. relance quand un couple n'a pas avancé dans son parcours depuis
 //      10 jours (puis une seconde à 20 jours, pas plus) ;
 //   2. une fois le pacte signé, un e-mail par mois pour faire vivre les
-//      engagements, et l'annonce du rendez-vous annuel un mois avant ;
+//      engagements (chaque thème une seule fois, sans boucle ; rien les mois
+//      de Noël, de la Saint-Valentin, du rendez-vous annuel et des
+//      anniversaires), l'annonce du rendez-vous annuel un mois avant, et les
+//      e-mails de Noël et de la Saint-Valentin ;
 //   3. une fois le pacte signé, 5 jours avant la fin du mois payé, la
 //      proposition de passer de l'abonnement mensuel à l'abonnement annuel
 //      (« Pacte – notre rendez-vous annuel », bascule Stripe programmée
@@ -194,19 +197,26 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
 // 2. Un e-mail par mois une fois le pacte signé
 // ---------------------------------------------------------------------------
 
-// Thème du mois : dans l'ordre à partir du 1er mois après la signature, puis
-// on reboucle (à partir du 2e). Les thèmes sont les modèles « mensuel_1 »,
-// « mensuel_2 »… du catalogue.
-function indexTheme(mois: number) {
-  const n = NOMBRE_THEMES_MENSUELS
-  return mois <= n ? mois - 1 : 1 + ((mois - 2) % (n - 1))
+// Thème de chaque mois : enregistré au moment de l'envoi dans
+// rappels_envoyes (type 'theme_mensuel', cle « <mois>:<clé du thème> »), pour
+// retrouver la question du mois sur la page Nos rendez-vous annuels
+// (/rdv-annuels). Les mois sans e-mail du mois n'ont pas de thème.
+export async function themesDuCouple(admin: AdminClient, coupleId: string): Promise<Map<number, string>> {
+  const { data, error } = await admin.from('rappels_envoyes').select('cle').eq('couple_id', coupleId).eq('type', 'theme_mensuel')
+  if (error) throw new Error(error.message)
+  const themes = new Map<number, string>()
+  for (const { cle } of data ?? []) {
+    const [mois, theme] = String(cle).split(':')
+    if (Number(mois) > 0 && theme) themes.set(Number(mois), theme)
+  }
+  return themes
 }
 
-// Titre et question du mois, affichés sur la page Nos rendez-vous annuels
-// (/rdv-annuels), où chaque membre du couple note sa réponse.
-export function questionDuMois(mois: number, locale: Locale): { titre: string; question: string } {
-  const theme = themeMensuelParDefaut(indexTheme(mois))
-  return { titre: theme.objet[locale], question: theme.question[locale] }
+// Titre et question d'un thème, affichés sur la page Nos rendez-vous
+// annuels, où chaque membre du couple note sa réponse.
+export function questionDuTheme(cle: string, locale: Locale): { titre: string; question: string } | null {
+  const theme = themeMensuelParDefaut(cle)
+  return theme ? { titre: theme.objet[locale], question: theme.question[locale] } : null
 }
 
 // Nombre de mois entiers écoulés depuis la signature (même jour du mois).
@@ -217,29 +227,63 @@ export function moisDepuis(debut: Date, maintenant: Date) {
 }
 
 
-// abonne : abonnement annuel (ou accès gratuit) en cours, qui ouvre le module
-// de renouvellement ; sinon, l'annonce du rendez-vous le rappelle.
-function modeleMensuel(mois: number, rdvLe: string | null, joursAvantRdv: number | null, abonne: boolean, locale: Locale): { cle: string; vars: Variables } {
+// Date du « mois-anniversaire » de la signature (même jour, ou le dernier
+// jour du mois quand il est plus court).
+export function dateDuMois(debut: Date, mois: number) {
+  const annee = debut.getUTCFullYear()
+  const m = debut.getUTCMonth() + mois
+  const dernierJour = new Date(Date.UTC(annee, m + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(annee, m, Math.min(debut.getUTCDate(), dernierJour)))
+}
+
+// Mois de calendrier (0 à 11) d'une date AAAA-MM-JJ.
+function moisCalendrier(date: string | null | undefined) {
+  return date ? Number(date.slice(5, 7)) - 1 : null
+}
+
+// Pas d'e-mail du mois quand il tombe le mois de Noël, de la Saint-Valentin,
+// d'un anniversaire de couple ou de mariage, ou du rendez-vous annuel : ces
+// mois-là ont déjà leur propre e-mail. Renvoie la raison, ou null.
+export function raisonMoisSansTheme(echeance: Date, couple: { date_anniversaire?: string | null; date_mariage?: string | null; rdv_annuel_le?: string | null }): string | null {
+  const mois = echeance.getUTCMonth()
+  if (mois === 11) return 'noel'
+  if (mois === 1) return 'saint_valentin'
+  if (moisCalendrier(couple.date_anniversaire) === mois) return 'anniversaire_couple'
+  if (moisCalendrier(couple.date_mariage) === mois) return 'anniversaire_mariage'
+  const rdv = couple.rdv_annuel_le
+  if (rdv && Number(rdv.slice(0, 4)) === echeance.getUTCFullYear() && moisCalendrier(rdv) === mois) return 'rdv_annuel'
+  return null
+}
+
+// Annonce du rendez-vous annuel quand il tombe dans les 31 jours (elle
+// remplace l'e-mail du mois). abonne : abonnement annuel (ou accès gratuit)
+// en cours, qui ouvre le module de renouvellement ; sinon, l'annonce le
+// rappelle.
+function annonceRdv(rdvLe: string, joursAvantRdv: number, abonne: boolean, locale: Locale): { cle: string; vars: Variables } {
   const base = appUrl()
-  if (rdvLe && joursAvantRdv !== null && joursAvantRdv > 0 && joursAvantRdv <= 31) {
-    return {
-      cle: 'rdv_annuel_approche',
-      vars: {
-        date: formaterDate(rdvLe, locale),
-        jours: t(locale, `${joursAvantRdv} jour${joursAvantRdv > 1 ? 's' : ''}`, `${joursAvantRdv} day${joursAvantRdv > 1 ? 's' : ''}`),
-        lien: abonne ? `${base}/journal` : `${base}/journal#rdv-annuel-offre`,
-        abonnement_rdv: abonne ? '' : t(locale,
-          'Pour ouvrir ce module, il faut l’abonnement « Pacte – notre rendez-vous annuel » (19 € par an), à prendre depuis votre page Notre Pacte.',
-          'To open this module, you need the "Pact – our yearly date" subscription (€19 per year), available from your Our Pact page.'),
-      },
-    }
+  return {
+    cle: 'rdv_annuel_approche',
+    vars: {
+      date: formaterDate(rdvLe, locale),
+      jours: t(locale, `${joursAvantRdv} jour${joursAvantRdv > 1 ? 's' : ''}`, `${joursAvantRdv} day${joursAvantRdv > 1 ? 's' : ''}`),
+      lien: abonne ? `${base}/journal` : `${base}/journal#rdv-annuel-offre`,
+      abonnement_rdv: abonne ? '' : t(locale,
+        'Pour ouvrir ce module, il faut l’abonnement « Pacte – notre rendez-vous annuel » (19 € par an), à prendre depuis votre page Notre Pacte.',
+        'To open this module, you need the "Pact – our yearly date" subscription (€19 per year), available from your Our Pact page.'),
+    },
   }
+}
+
+function varsTheme(mois: number, rdvLe: string | null, joursAvantRdv: number | null, locale: Locale): Variables {
+  const base = appUrl()
   const rappelRdv = rdvLe && joursAvantRdv !== null && joursAvantRdv > 0
     ? t(locale, `Prochain rendez-vous annuel : le ${formaterDate(rdvLe, locale)}.`, `Next yearly date: ${formaterDate(rdvLe, locale)}.`)
     : ''
   return {
-    cle: cleThemeMensuel(indexTheme(mois)),
-    vars: { rappel_rdv: rappelRdv, lien: `${base}/rdv-annuels#mois-${mois}`, lien_pacte: `${base}/journal` },
+    rappel_rdv: rappelRdv,
+    lien: `${base}/rdv-annuels#mois-${mois}`,
+    lien_pacte: `${base}/journal`,
+    lien_intimite: `${base}/module/intimite/revelation`,
   }
 }
 
@@ -247,7 +291,7 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
   const maintenant = new Date()
   const { data: couples, error } = await admin
     .from('couples')
-    .select(`${ABONNEMENT_COLONNES}, pacte_signe_le, rdv_annuel_le`)
+    .select(`${ABONNEMENT_COLONNES}, pacte_signe_le, rdv_annuel_le, date_anniversaire, date_mariage`)
     .not('pacte_signe_le', 'is', null)
     .is('compte_resilie_le', null)
   if (error) throw new Error(error.message)
@@ -256,33 +300,96 @@ export async function envoyerRappelsMensuels(admin: AdminClient): Promise<number
   for (const couple of couples ?? []) {
     try {
       // Envoyés à tous les couples qui ont signé leur pacte, avec ou sans
-      // abonnement annuel (2 par mois au maximum).
-      const mois = moisDepuis(new Date(couple.pacte_signe_le as string), maintenant)
+      // abonnement annuel. Le thème est attribué même si personne ne reçoit
+      // les rappels : la question du mois s'affiche sur /rdv-annuels.
+      const signeLe = new Date(couple.pacte_signe_le as string)
+      const mois = moisDepuis(signeLe, maintenant)
       if (mois < 1) continue
-
-      const membres = await membresDuCouple(admin, couple.id)
-      if (!membres.some(m => m.rappels_email && m.email)) continue
-
-      // Réserve l'envoi du mois avant de le faire : jamais deux fois le même.
-      const { data: reserve, error: reserveError } = await admin
-        .from('rappels_envoyes')
-        .upsert({ couple_id: couple.id, type: 'mensuel', cle: String(mois) }, { onConflict: 'couple_id,type,cle', ignoreDuplicates: true })
-        .select('couple_id')
-      if (reserveError) throw new Error(reserveError.message)
-      if (!reserve?.length) continue
 
       const rdvLe = (couple.rdv_annuel_le as string | null) ?? null
       const joursAvantRdv = rdvLe
         ? Math.ceil((new Date(`${rdvLe}T00:00:00Z`).getTime() - Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate())) / JOUR)
         : null
+      const annonce = rdvLe !== null && joursAvantRdv !== null && joursAvantRdv > 0 && joursAvantRdv <= 31
 
+      // Sans annonce du rendez-vous : pas d'e-mail du mois les mois de fête,
+      // d'anniversaire ou de rendez-vous annuel (sauf celui du 1er mois, qui
+      // dit « il y a un mois, vous avez signé votre pacte »), ni une fois
+      // tous les thèmes envoyés (pas de boucle).
+      let theme: string | undefined
+      if (!annonce) {
+        if (mois > 1 && raisonMoisSansTheme(dateDuMois(signeLe, mois), couple)) continue
+        const themes = await themesDuCouple(admin, couple.id)
+        if (themes.has(mois)) continue
+        const dejaEnvoyes = new Set(themes.values())
+        theme = CLES_THEMES_MENSUELS.find(cle => !dejaEnvoyes.has(cle))
+        if (!theme) continue
+      }
+
+      // Réserve l'envoi du mois avant de le faire : jamais deux fois le même.
+      if (!(await reserverEnvoi(admin, couple.id, 'mensuel', String(mois)))) continue
+      if (theme) {
+        const { error: themeError } = await admin.from('rappels_envoyes').insert({ couple_id: couple.id, type: 'theme_mensuel', cle: `${mois}:${theme}` })
+        if (themeError) {
+          // Thème pas enregistré (SQL pas encore exécuté ?) : on libère le
+          // mois pour réessayer demain plutôt que d'envoyer une question
+          // introuvable sur /rdv-annuels.
+          await admin.from('rappels_envoyes').delete().eq('couple_id', couple.id).eq('type', 'mensuel').eq('cle', String(mois))
+          throw new Error(themeError.message)
+        }
+      }
+
+      const membres = await membresDuCouple(admin, couple.id)
       for (const d of membres) {
         const autre = membres.find(m => m.id !== d.id)
-        const { cle, vars } = modeleMensuel(mois, rdvLe, joursAvantRdv, aAccesComplet(couple as CoupleAbonnement), d.langue)
+        const { cle, vars } = theme
+          ? { cle: theme, vars: varsTheme(mois, rdvLe, joursAvantRdv, d.langue) }
+          : annonceRdv(rdvLe!, joursAvantRdv!, aAccesComplet(couple as CoupleAbonnement), d.langue)
         if (await envoyerRappel(d, cle, { ...vars, partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple') })) envoyes++
       }
     } catch (e) {
       console.error(`[rappels] e-mail mensuel du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
+
+// ---------------------------------------------------------------------------
+// 2 bis. Noël et Saint-Valentin
+// ---------------------------------------------------------------------------
+
+// Envoyés chaque année aux couples qui ont signé leur pacte, à partir du jour
+// `debut` (rattrapés jusqu'au jour `fin` si la tâche planifiée a manqué un
+// jour). Les mois de décembre et février n'ont pas d'e-mail du mois.
+const FETES: { cle: string; mois: number; debut: number; fin: number }[] = [
+  { cle: 'noel', mois: 11, debut: 10, fin: 24 },
+  { cle: 'saint_valentin', mois: 1, debut: 7, fin: 13 },
+]
+
+export async function envoyerEmailsFetes(admin: AdminClient): Promise<number> {
+  const maintenant = new Date()
+  const fete = FETES.find(f => f.mois === maintenant.getUTCMonth() && maintenant.getUTCDate() >= f.debut && maintenant.getUTCDate() <= f.fin)
+  if (!fete) return 0
+
+  const { data: couples, error } = await admin
+    .from('couples')
+    .select('id')
+    .not('pacte_signe_le', 'is', null)
+    .is('compte_resilie_le', null)
+  if (error) throw new Error(error.message)
+
+  let envoyes = 0
+  for (const couple of couples ?? []) {
+    try {
+      const membres = await membresDuCouple(admin, couple.id)
+      if (!membres.some(m => m.rappels_email && m.email)) continue
+      if (!(await reserverEnvoi(admin, couple.id, 'fete', `${fete.cle}:${maintenant.getUTCFullYear()}`))) continue
+      for (const d of membres) {
+        const autre = membres.find(m => m.id !== d.id)
+        if (await envoyerRappel(d, fete.cle, { partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple') })) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] e-mail de ${fete.cle} du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes

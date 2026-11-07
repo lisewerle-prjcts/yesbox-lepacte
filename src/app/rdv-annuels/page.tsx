@@ -4,7 +4,7 @@ import { CalendarHeart, Lock, MessageCircleHeart, Sprout } from 'lucide-react'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { MODULE_RDV_ANNUEL, ouvrirRdvAnnuelSiDate } from '@/lib/progression'
-import { moisDepuis, questionDuMois } from '@/lib/rappels-email'
+import { moisDepuis, questionDuTheme, themesDuCouple } from '@/lib/rappels-email'
 import { dechiffrerLignes } from '@/lib/chiffrement'
 import EditableText from '@/components/edit-mode/EditableText'
 import ReponseMois from './ReponseMois'
@@ -12,7 +12,8 @@ import ReponseMois from './ReponseMois'
 export const metadata = { title: 'Nos rendez-vous annuels' }
 
 // Nos rendez-vous annuels : une fois le pacte signé, la question de chaque
-// mois (celle de l'e-mail mensuel) avec les réponses des deux membres du
+// mois qui a eu son e-mail du mois (pas les mois de fête, d'anniversaire ou
+// de rendez-vous annuel) avec les réponses des deux membres du
 // couple, dévoilées quand les deux ont répondu, et le bilan annuel (module « Notre rendez-vous annuel »).
 export default async function RdvAnnuelsPage() {
   const supabase = await createClient()
@@ -26,11 +27,12 @@ export default async function RdvAnnuelsPage() {
   const admin = createAdminClient()
   await ouvrirRdvAnnuelSiDate(admin, profile.couple_id)
 
-  const [{ data: couple }, { data: membres }, { data: moduleRdv }, { data: reponsesBrutes }] = await Promise.all([
+  const [{ data: couple }, { data: membres }, { data: moduleRdv }, { data: reponsesBrutes }, themes] = await Promise.all([
     supabase.from('couples').select('pacte_signe_le, rdv_annuel_le').eq('id', profile.couple_id).single(),
     supabase.from('profiles').select('id, prenom').eq('couple_id', profile.couple_id),
     supabase.from('modules').select('statut, revealed, revealed_at').eq('couple_id', profile.couple_id).eq('slug', MODULE_RDV_ANNUEL).maybeSingle(),
     admin.from('rdv_reponses_mois').select('user_id, mois, valeur').eq('couple_id', profile.couple_id),
+    themesDuCouple(admin, profile.couple_id),
   ])
   const reponses = dechiffrerLignes(reponsesBrutes)
 
@@ -48,7 +50,10 @@ export default async function RdvAnnuelsPage() {
   const reponseDe = (userId: string | undefined, mois: number) => reponses.find(r => r.user_id === userId && r.mois === mois)?.valeur ?? ''
 
   const rdvOuvert = !!moduleRdv && (moduleRdv.statut !== 'locked' || moduleRdv.revealed)
-  const listeMois = Array.from({ length: moisEcoules }, (_, i) => moisEcoules - i)
+  // Mois qui ont eu un thème, du plus récent au plus ancien.
+  const listeMois = [...themes.entries()]
+    .filter(([mois, cle]) => mois <= moisEcoules && questionDuTheme(cle, locale))
+    .sort((a, b) => b[0] - a[0])
 
   return (
     <div className="fade" style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -110,8 +115,8 @@ export default async function RdvAnnuelsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {listeMois.map(mois => {
-                const { titre, question } = questionDuMois(mois, locale)
+              {listeMois.map(([mois, cle]) => {
+                const { titre, question } = questionDuTheme(cle, locale)!
                 // Comme pour les modules : la réponse de l'autre reste cachée
                 // tant que les deux n'ont pas répondu (et n'est pas envoyée
                 // au navigateur), puis les deux sont dévoilées.

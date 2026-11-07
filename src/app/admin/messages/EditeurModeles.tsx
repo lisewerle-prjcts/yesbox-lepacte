@@ -24,7 +24,7 @@ interface Modele {
 
 // Valeurs d'exemple pour l'aperçu.
 const EXEMPLE: Record<string, string> = {
-  prenom: 'Camille', partenaire: 'Sacha', code: 'A1B2C3', lien: 'https://yesbox-lepacte.fr', lien_pacte: 'https://yesbox-lepacte.fr/journal',
+  prenom: 'Camille', partenaire: 'Sacha', code: 'A1B2C3', lien: 'https://yesbox-lepacte.fr', lien_pacte: 'https://yesbox-lepacte.fr/journal', lien_intimite: 'https://yesbox-lepacte.fr/module/intimite/revelation',
   module: 'Nos valeurs', numero: '3', total: '10', date: '12 mars 2027', quand: 'le 12 mars 2027', jours: '12 jours',
   rappel_rdv: 'Prochain rendez-vous annuel : le 12 mars 2027.', precision_rdv: ', le 12 mars 2027',
   phrase_abonnement: 'À la fin de votre mois d’abonnement, le 12 mars 2027, vous passerez automatiquement à l’abonnement annuel.',
