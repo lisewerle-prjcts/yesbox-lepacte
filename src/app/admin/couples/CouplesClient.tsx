@@ -13,6 +13,8 @@ interface UnassignedMember { id: string; prenom: string | null; nom: string | nu
 interface MemberProgress { id: string; prenom: string | null; nom: string | null; email: string; role: string | null; modulesCompleted: number; derniereConnexion: string | null; rappelsEmail: boolean }
 interface ModuleStatus { slug: string; statut: string; revealed: boolean; termine_le: string | null }
 export interface EmailEnvoye { date: string; destinataire: string; sujet: string; ok: boolean }
+/** E-mail reçu après la signature du pacte (thème du mois, anniversaire, fête…). */
+export interface EmailRecu { famille: 'mensuel' | 'anniversaire' | 'fete' | 'rdv'; libelle: string; detail: string; date: string }
 export interface GrandeDateAVenir { type: 'rencontre' | 'mariage' | 'bilan'; le: string; annees: number | null; joursAvant: number; numero: number; nom: string }
 const LIBELLE_GRANDE_DATE = { rencontre: 'anniversaire de couple', mariage: 'mariage', bilan: 'bilan annuel' }
 interface Couple {
@@ -27,6 +29,7 @@ interface Couple {
   derniere_connexion: string | null
   a_commence: boolean
   emails: EmailEnvoye[]
+  emailsRecus: EmailRecu[]
   members: MemberProgress[]
   modules: ModuleStatus[]
   rdvAnnuels: { valides: (string | null)[]; enCours: boolean; prevuLe: string | null }
@@ -61,7 +64,8 @@ function formesDate(iso: string) {
 }
 
 // Tout ce qui permet de retrouver un couple : numéro, code, nom, prénoms,
-// noms et e-mails des membres, date de création.
+// noms et e-mails des membres, date de création, e-mails reçus après le
+// pacte (« Mensuel 3 », « Anniversaire 7 »…).
 function texteRecherche(couple: Couple) {
   return normaliser([
     `couple ${couple.numero}`, couple.pairing_code, couple.nom_couple,
@@ -69,6 +73,7 @@ function texteRecherche(couple: Couple) {
     ...formesDate(couple.created_at),
     ...(couple.date_anniversaire ? formesDate(couple.date_anniversaire) : []),
     ...(couple.date_mariage ? formesDate(couple.date_mariage) : []),
+    ...couple.emailsRecus.map(r => r.libelle),
   ].filter(Boolean).join(' '))
 }
 
@@ -481,6 +486,8 @@ function CoupleCard({
         })}
       </div>
 
+      <EmailsRecus recus={couple.emailsRecus} />
+
       <EmailsCouple emails={couple.emails} />
 
       <Link
@@ -561,6 +568,36 @@ function MemberRow({
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+// Pastilles des e-mails reçus après la signature du pacte : « Mensuel 3 »,
+// « Anniversaire 7 », « Fêtes 2026 »… (détail et date au survol).
+const COULEUR_RECU: Record<EmailRecu['famille'], { fond: string; texte: string }> = {
+  mensuel: { fond: 'var(--brand-tint)', texte: 'var(--brand)' },
+  anniversaire: { fond: '#fef3c7', texte: '#92400e' },
+  fete: { fond: '#dcfce7', texte: '#166534' },
+  rdv: { fond: 'var(--paper)', texte: 'var(--ink-2)' },
+}
+
+function EmailsRecus({ recus }: { recus: EmailRecu[] }) {
+  if (!recus.length) return null
+  return (
+    <div className="mb-3">
+      <div className="font-mono font-bold mb-1" style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.08em' }}>E-MAILS REÇUS APRÈS LE PACTE</div>
+      <div className="flex flex-wrap gap-1.5">
+        {recus.map((r, i) => (
+          <span
+            key={i}
+            title={`${r.detail} — ${new Date(r.date).toLocaleDateString('fr-FR')}`}
+            className="font-mono rounded-md px-2 py-0.5"
+            style={{ fontSize: 10.5, fontWeight: 600, background: COULEUR_RECU[r.famille].fond, color: COULEUR_RECU[r.famille].texte, border: '1px solid rgba(0,0,0,.06)' }}
+          >
+            {r.libelle}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

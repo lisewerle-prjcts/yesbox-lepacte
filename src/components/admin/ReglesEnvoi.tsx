@@ -33,10 +33,12 @@ const FAMILLES: { titre: string; regles: Regle[] }[] = [
     ],
   },
   {
-    titre: 'Rendez-vous mensuels & bilan annuel',
+    titre: 'Rendez-vous mensuels, fêtes & bilan annuel',
     regles: [
-      { email: 'E-mail du mois (11 thèmes)', quand: 'Chaque mois, le même jour que la signature du pacte', qui: 'Les deux membres', notes: 'À tous les couples qui ont signé leur pacte, avec ou sans abonnement ; après le 11e mois, les thèmes repartent du 2e' },
-      { email: 'Le rendez-vous annuel approche', quand: 'À la place de l’e-mail du mois, quand le rendez-vous annuel tombe dans les 31 jours', qui: 'Les deux membres' },
+      { email: 'E-mail du mois (18 thèmes)', quand: 'Chaque mois, le même jour que la signature du pacte', qui: 'Les deux membres', notes: 'À tous les couples qui ont signé leur pacte, avec ou sans abonnement. Chaque thème une seule fois, dans l’ordre, sans boucle : une fois le dernier envoyé, plus d’e-mail du mois. Rien les mois des fêtes de fin d’année (décembre), de la Saint-Valentin (février), du rendez-vous annuel et des anniversaires de couple ou de mariage, y compris pour le 1er : le thème suivant attend le mois d’après' },
+      { email: 'Fêtes de fin d’année — un cadeau surprise', quand: 'Le 10 décembre (rattrapé jusqu’au 24)', qui: 'Les deux membres', notes: 'À tous les couples qui ont signé leur pacte' },
+      { email: 'Saint-Valentin — une recette à deux', quand: 'Le 7 février (rattrapé jusqu’au 13)', qui: 'Les deux membres', notes: 'À tous les couples qui ont signé leur pacte' },
+      { email: 'Le rendez-vous annuel approche', quand: 'À la place de l’e-mail du mois, quand le rendez-vous annuel tombe dans les 31 jours', qui: 'Les deux membres', notes: 'Le mois du rendez-vous lui-même, pas d’e-mail du mois' },
     ],
   },
   {

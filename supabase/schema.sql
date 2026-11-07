@@ -1926,3 +1926,43 @@ create policy "precommandes_mfa" on public.precommandes as restrictive for selec
     from auth.mfa_factors where user_id = (select auth.uid()) and status = 'verified'
   )
 );
+
+-- ============================================================
+-- Migration : e-mails du mois sans boucle, fêtes de fin d'année et Saint-Valentin.
+-- 1. rappels_envoyes, type 'theme_mensuel' (cle « <mois>:<clé du thème> ») :
+--    thème envoyé chaque mois, pour retrouver la question du mois sur la
+--    page Nos rendez-vous annuels. Chaque thème n'est envoyé qu'une fois ;
+--    pas d'e-mail du mois les mois des fêtes de fin d'année, de la Saint-Valentin, du
+--    rendez-vous annuel et des anniversaires.
+-- 2. rappels_envoyes, type 'fete' (cle « noel:2026 », « saint_valentin:2027 ») :
+--    un seul e-mail des fêtes de fin d'année et de Saint-Valentin par an.
+-- 3. Reprise de l'existant (une seule fois, tant qu'aucun thème n'est
+--    enregistré) : les mois déjà écoulés gardent la question qu'ils
+--    affichaient (ancien calcul : thèmes 1 à 11, puis en boucle à partir
+--    du 2e). Le mois en cours n'est repris que si son e-mail est déjà parti.
+-- À exécuter AVANT le déploiement du code correspondant. Idempotent.
+-- ============================================================
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete'));
+
+do $$
+begin
+  if not exists (select 1 from public.rappels_envoyes where type = 'theme_mensuel') then
+    insert into public.rappels_envoyes (couple_id, type, cle)
+    select c.id, 'theme_mensuel',
+      m || ':mensuel_' || (case when m <= 11 then m else 2 + ((m - 2) % 10) end)
+    from public.couples c
+    cross join lateral (
+      select (extract(year from age(now() at time zone 'utc', c.pacte_signe_le at time zone 'utc')) * 12
+            + extract(month from age(now() at time zone 'utc', c.pacte_signe_le at time zone 'utc')))::int as ecoules
+    ) e
+    cross join lateral generate_series(1, e.ecoules) m
+    where c.pacte_signe_le is not null
+      and (m < e.ecoules or exists (
+        select 1 from public.rappels_envoyes r
+        where r.couple_id = c.id and r.type = 'mensuel' and r.cle = m::text
+      ))
+    on conflict do nothing;
+  end if;
+end $$;

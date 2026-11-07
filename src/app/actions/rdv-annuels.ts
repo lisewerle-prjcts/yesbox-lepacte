@@ -5,7 +5,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/locale'
 import { chiffrer } from '@/lib/chiffrement'
-import { moisDepuis } from '@/lib/rappels-email'
+import { moisDepuis, themesDuCouple } from '@/lib/rappels-email'
 
 const LONGUEUR_MAX = 4000
 
@@ -25,6 +25,8 @@ export async function enregistrerReponseMois(mois: number, valeur: string): Prom
 
   const moisEcoules = moisDepuis(new Date(couple.pacte_signe_le), new Date())
   if (!Number.isInteger(mois) || mois < 1 || mois > moisEcoules) return { error: t(locale, 'Mois invalide', 'Invalid month') }
+  // Seulement un mois qui a eu sa question (pas les mois sans e-mail du mois).
+  if (!(await themesDuCouple(admin, profile.couple_id)).has(mois)) return { error: t(locale, 'Mois invalide', 'Invalid month') }
 
   const texte = valeur.trim().slice(0, LONGUEUR_MAX)
   const { error } = await admin.from('rdv_reponses_mois').upsert(
