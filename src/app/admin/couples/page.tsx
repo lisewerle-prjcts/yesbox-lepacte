@@ -3,7 +3,8 @@ import { getEffectiveModules } from '@/lib/modules-effective'
 import { dernieresConnexions, modulesTerminesParCouple } from '@/lib/segments-donnees'
 import { prochainesGrandesDates } from '@/lib/grandes-dates'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
-import CouplesClient, { type EmailEnvoye, type GrandeDateAVenir } from './CouplesClient'
+import { CLES_THEMES_MENSUELS, cleAnniversaireRencontre, estModeleEmail, modeleEmail, themeMensuelParDefaut } from '@/lib/modeles-email/catalogue'
+import CouplesClient, { type EmailEnvoye, type EmailRecu, type GrandeDateAVenir } from './CouplesClient'
 
 const LIBELLES_NOTIFICATION: Record<string, string> = {
   reponses_a_ton_tour: 'à ton tour de répondre',
@@ -18,6 +19,59 @@ const LIBELLES_RAPPEL: Record<string, string> = {
   invitation: 'Invitation du ou de la partenaire',
 }
 
+type RappelEnvoye = { couple_id: string; type: string; cle: string; envoye_le: string }
+
+// E-mails reçus après la signature du pacte, d'après rappels_envoyes :
+// thèmes du mois (« Mensuel 3 »), anniversaires de couple (« Anniversaire 7 »,
+// numéro du modèle), de mariage, Noël, Saint-Valentin, annonce du rendez-vous
+// annuel.
+function emailsRecus(rappels: RappelEnvoye[], dateRencontre: string | null, dateMariage: string | null): EmailRecu[] {
+  const recus: EmailRecu[] = []
+  const moisEnvoyes = new Map(rappels.filter(r => r.type === 'mensuel').map(r => [r.cle, r.envoye_le]))
+  const themes = new Map<string, string>()
+  for (const r of rappels.filter(r => r.type === 'theme_mensuel')) {
+    const [mois, cle] = r.cle.split(':')
+    if (mois && cle) themes.set(mois, cle)
+  }
+  for (const [mois, date] of moisEnvoyes) {
+    const cle = themes.get(mois)
+    if (!cle) {
+      recus.push({ famille: 'rdv', libelle: 'Annonce RDV annuel', detail: `Mois ${mois} : le rendez-vous annuel approche`, date })
+      continue
+    }
+    const rang = CLES_THEMES_MENSUELS.indexOf(cle)
+    const titre = themeMensuelParDefaut(cle)?.objet.fr ?? cle
+    recus.push({
+      famille: 'mensuel',
+      libelle: rang >= 0 ? `Mensuel ${rang + 1}` : `Mensuel ${cle.replace('mensuel_', '')} (ancien)`,
+      detail: `Mois ${mois} : ${titre}`,
+      date,
+    })
+  }
+  for (const r of rappels.filter(r => r.type === 'alerte_grande_date' && r.cle.startsWith('email_'))) {
+    const [type, anniversaire] = r.cle.slice('email_'.length).split(':')
+    const origine = type === 'mariage' ? dateMariage : dateRencontre
+    const annees = origine && anniversaire ? Number(anniversaire.slice(0, 4)) - Number(origine.slice(0, 4)) : null
+    if (type === 'rencontre') {
+      const cle = annees ? cleAnniversaireRencontre(annees) : null
+      recus.push({
+        famille: 'anniversaire',
+        libelle: cle ? `Anniversaire ${cle.replace('anniv_rencontre_', '')}` : 'Anniversaire',
+        detail: `Anniversaire de couple${annees ? ` (${annees} an${annees > 1 ? 's' : ''})` : ''}${cle ? ` : ${modeleEmail(cle).etiquette ?? ''}` : ''}`,
+        date: r.envoye_le,
+      })
+    } else if (type === 'mariage') {
+      recus.push({ famille: 'anniversaire', libelle: `Mariage${annees ? ` ${annees} an${annees > 1 ? 's' : ''}` : ''}`, detail: 'Anniversaire de mariage (une semaine avant)', date: r.envoye_le })
+    }
+  }
+  for (const r of rappels.filter(r => r.type === 'fete')) {
+    const [fete, annee] = r.cle.split(':')
+    const nom = fete === 'noel' ? 'Noël' : fete === 'saint_valentin' ? 'Saint-Valentin' : fete
+    recus.push({ famille: 'fete', libelle: `${nom} ${annee ?? ''}`.trim(), detail: estModeleEmail(fete) ? modeleEmail(fete).nom : nom, date: r.envoye_le })
+  }
+  return recus.sort((a, b) => a.date.localeCompare(b.date))
+}
+
 export default async function AdminCouples() {
   const supabase = createAdminClient()
 
@@ -29,7 +83,7 @@ export default async function AdminCouples() {
     modulesTerminesParCouple(supabase),
     // Table absente (SQL pas encore exécuté) : data null, la page reste utilisable.
     supabase.from('emails_envoyes').select('destinataire, sujet, ok, envoye_le').order('envoye_le', { ascending: false }).limit(10000),
-    supabase.from('rappels_envoyes').select('couple_id, type, envoye_le'),
+    supabase.from('rappels_envoyes').select('couple_id, type, cle, envoye_le'),
     // Requête à part : si la colonne manque en base, le reste s'affiche.
     supabase.from('couples').select('id, rdv_annuel_le'),
   ])
@@ -131,6 +185,7 @@ export default async function AdminCouples() {
       // A commencé : au moins une réponse enregistrée, par l'un ou l'autre.
       a_commence: coupleModules.some(m => modulesAvecReponses.has(m.id)),
       emails,
+      emailsRecus: emailsRecus(((rappels || []) as RappelEnvoye[]).filter(r => r.couple_id === couple.id), couple.date_anniversaire, couple.date_mariage),
       members: membersWithProgress,
       modules: coupleModules.map(m => ({ slug: m.slug, statut: m.statut, revealed: m.revealed, termine_le: terminesParCouple.get(couple.id)?.[m.slug] ?? null })),
       // Rendez-vous annuels validés (module du rendez-vous annuel terminé :
