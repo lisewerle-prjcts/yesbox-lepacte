@@ -18,6 +18,7 @@ import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel, entetesDesinscription } from '@/lib/desinscription'
+import { envoyerRelancesDemarrage, relancesDemarragePrevues } from '@/lib/rappels-email'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
@@ -182,6 +183,22 @@ export async function adminSendEmail(to: string, message: MessageManuel, mode: M
   const envoye = await envoyerMail({ to: adresse, subject: objet, body: html, etiquette: etiquetteManuelle(message) })
   if (!envoye) return { error: 'Échec de l\'envoi' }
   return { success: true, langue }
+}
+
+// Rattrapage des relances de démarrage (couples pas encore au complet ou
+// qui n'ont jamais commencé) : envoie tout de suite ce que la tâche du matin
+// enverrait. Une seule relance par couple, celle du palier atteint ; jamais
+// deux fois la même (rappels_envoyes).
+export async function adminEnvoyerRelancesDemarrage() {
+  await assertAdmin()
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
+  const admin = createAdminClient()
+  const prevues = await relancesDemarragePrevues(admin)
+  if (!prevues.length) return { success: true, envoyes: 0 }
+  const envoyes = await envoyerRelancesDemarrage(admin)
+  revalidatePath('/admin/actions')
+  if (!envoyes) return { error: 'Aucun e-mail n’est parti. Le SQL « Relances des inscrit·es qui ne concrétisent pas » (fin de supabase/schema.sql) a-t-il été exécuté ?' }
+  return { success: true, envoyes }
 }
 
 // Envoi d'un même message à toutes les personnes d'un segment. Le segment
