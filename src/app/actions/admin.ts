@@ -197,11 +197,12 @@ export async function adminEnvoyerMaintenant(sorte: SortePrevue, coupleId: strin
   await assertAdmin()
   if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
   if (!['inactivite', 'demarrage', 'avis', 'parrainage'].includes(sorte)) return { error: 'E-mail inconnu' }
-  const envoyes = await envoyerPrevuMaintenant(createAdminClient(), sorte, coupleId, cle)
+  const resultat = await envoyerPrevuMaintenant(createAdminClient(), sorte, coupleId, cle)
   revalidatePath('/admin')
-  if (envoyes === null) return { error: 'Cet e-mail n’est plus prévu (le couple a avancé, un avis a été laissé, ou il est déjà parti).' }
-  if (!envoyes) return { error: 'Aucun e-mail n’est parti : regarde le journal des e-mails du couple.' }
-  return { success: true, envoyes }
+  if (resultat === null) return { error: 'Cet e-mail n’est plus prévu (le couple a avancé, un avis a été laissé, ou il est déjà parti).' }
+  if (!resultat.envoyes) return { error: `Aucun e-mail n’est parti. ${resultat.erreur ?? ''} Tu peux réessayer.`.trim() }
+  if (resultat.erreur) return { success: true, envoyes: resultat.envoyes, avertissement: `Envoi partiel : ${resultat.erreur}` }
+  return { success: true, envoyes: resultat.envoyes }
 }
 
 // Rattrapage des relances de démarrage (couples pas encore au complet ou
