@@ -12,6 +12,17 @@ const EXPEDITEUR_DOMAINE = process.env.MAIL_FROM || 'lise@yesbox-lepacte.fr'
 // ne reçoit pas de courrier.
 const REPONDRE_A = process.env.MAIL_REPLY_TO || 'lise.yesbox@gmail.com'
 
+// Copie cachée de chaque e-mail envoyé par le site, pour l'équipe
+// (MAIL_COPIE_CACHEE='' pour l'arrêter). Pas de copie des e-mails de
+// sécurité (lien de confirmation, mot de passe), ni d'un e-mail déjà adressé
+// à cette boîte.
+const COPIE_CACHEE = (process.env.MAIL_COPIE_CACHEE ?? 'lise.yesbox@gmail.com').trim()
+
+function copieCachee(to: string, copie: boolean | undefined): string | undefined {
+  if (copie === false || !COPIE_CACHEE) return undefined
+  return to.trim().toLowerCase() === COPIE_CACHEE.toLowerCase() ? undefined : COPIE_CACHEE
+}
+
 // Un envoi bloqué ne doit jamais bloquer la page qui l'a déclenché (la
 // connexion envoie l'e-mail de bienvenue s'il est encore en attente) : par
 // défaut, Gmail peut attendre jusqu'à 10 minutes.
@@ -76,6 +87,8 @@ interface Mail {
   etiquette?: string
   /** En-têtes ajoutés (ex. List-Unsubscribe pour les rappels). */
   entetes?: Record<string, string>
+  /** false : pas de copie cachée à l'équipe (e-mails de sécurité). */
+  copie?: boolean
 }
 
 // Renvoie true si l'e-mail est parti, false sinon (aucun envoi configuré ou erreur).
@@ -93,7 +106,8 @@ export async function envoyerMailDetail(mail: Mail): Promise<{ ok: boolean; erre
   return resultat
 }
 
-async function envoyer({ to, subject, body, nom = 'YES BOX', entetes }: Mail): Promise<{ ok: boolean; erreur?: string }> {
+async function envoyer({ to, subject, body, nom = 'YES BOX', entetes, copie }: Mail): Promise<{ ok: boolean; erreur?: string }> {
+  const bcc = copieCachee(to, copie)
   const html = mailHtml(body)
   const text = `${htmlVersTexte(body)}\n\n--\nYES BOX · yesbox-lepacte.fr`
   const erreurs: string[] = []
@@ -103,7 +117,7 @@ async function envoyer({ to, subject, body, nom = 'YES BOX', entetes }: Mail): P
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], reply_to: REPONDRE_A, subject, html, text, ...(entetes ? { headers: entetes } : {}) }),
+        body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], ...(bcc ? { bcc: [bcc] } : {}), reply_to: REPONDRE_A, subject, html, text, ...(entetes ? { headers: entetes } : {}) }),
         signal: AbortSignal.timeout(DELAI_ENVOI_MS),
       })
       if (res.ok) return { ok: true }
@@ -126,6 +140,7 @@ async function envoyer({ to, subject, body, nom = 'YES BOX', entetes }: Mail): P
       await transporter.sendMail({
         from: { name: nom, address: process.env.GMAIL_USER },
         to,
+        ...(bcc ? { bcc } : {}),
         subject,
         html,
         text,

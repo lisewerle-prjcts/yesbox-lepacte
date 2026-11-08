@@ -27,7 +27,8 @@ export async function envoyerMailConfirmation(email: string, prenom: string, lie
 async function envoyerMailConfirmationDetail(email: string, prenom: string, lien: string, locale: Locale): Promise<{ ok: boolean; erreur?: string }> {
   if (!gmailConfigure()) return { ok: false, erreur: 'Aucun envoi d\'e-mail configuré' }
   const { objet, html } = await rendreModele('confirmation_adresse', locale, { prenom, lien })
-  return envoyerMailDetail({ to: email, subject: objet, body: html })
+  // E-mail de sécurité (lien de connexion) : pas de copie à l'équipe.
+  return envoyerMailDetail({ to: email, subject: objet, body: html, copie: false })
 }
 
 // Renvoi pour un compte existant non confirmé. Renvoie false si rien n'est
