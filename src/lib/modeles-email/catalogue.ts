@@ -1449,7 +1449,7 @@ Si YES BOX vous fait du bien, pourquoi ne pas en parler autour de vous ? Voici v
 
 [code: {code_parrainage}]
 
-Ils le saisissent en créant leur compte, ou en passant par votre lien : [lien: {site}/inscription?parrain={code_parrainage} | {site}/inscription?parrain={code_parrainage}]
+Ces couples saisissent votre code en créant leur compte, ou passent par votre lien : [lien: {site}/inscription?parrain={code_parrainage} | {site}/inscription?parrain={code_parrainage}]
 
 **Tous les 5 couples qui s’inscrivent avec votre code, vous recevez un bon d’achat de 10 €**, déduit automatiquement de votre prochain paiement (pack initial ou abonnement annuel). Les bons se cumulent : 10 couples, 20 €, et ainsi de suite.
 
