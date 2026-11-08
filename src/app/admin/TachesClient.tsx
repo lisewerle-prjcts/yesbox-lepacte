@@ -262,6 +262,7 @@ function BoutonEnvoyerMaintenant({ relance }: { relance: RelanceAVenir }) {
     try {
       const res = await adminEnvoyerMaintenant(relance.sorte, relance.coupleId, relance.cle ?? undefined)
       if ('error' in res && res.error) { setErreur(res.error); setStatut('idle'); return }
+      if ('avertissement' in res && res.avertissement) setErreur(res.avertissement)
       setStatut('ok')
       router.refresh()
     } catch (e) {
@@ -270,7 +271,12 @@ function BoutonEnvoyerMaintenant({ relance }: { relance: RelanceAVenir }) {
     }
   }
 
-  if (statut === 'ok') return <span style={{ fontSize: 12, color: 'var(--sage)' }}><Check className="w-3.5 h-3.5 inline" /> Envoyé</span>
+  if (statut === 'ok') return (
+    <div>
+      <span style={{ fontSize: 12, color: 'var(--sage)' }}><Check className="w-3.5 h-3.5 inline" /> Envoyé</span>
+      {erreur && <p style={{ fontSize: 11, color: '#b45309', marginTop: 4, maxWidth: 220, whiteSpace: 'normal' }}>{erreur}</p>}
+    </div>
+  )
   return (
     <div>
       <button type="button" onClick={envoyer} disabled={statut === 'busy'} className="btn-secondary text-xs py-1 px-2.5">

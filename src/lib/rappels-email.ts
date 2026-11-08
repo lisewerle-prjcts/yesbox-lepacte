@@ -370,6 +370,17 @@ export async function relancesDemarragePrevues(admin: AdminClient, jusqua: numbe
 // Envoie les relances de démarrage dues. Au premier passage (rattrapage),
 // chaque inscrit·e des 90 derniers jours qui n'a pas concrétisé reçoit une
 // seule relance : celle du palier atteint.
+// Variables d'une relance de démarrage pour un destinataire.
+function varsDemarrage(r: RelanceDemarragePrevue, d: Membre, premier: { slug: string; titre: string; titre_en?: string | null } | undefined, base: string): Variables {
+  if (r.type === 'non_paire') return { code: r.pairingCode, lien: `${base}/tableau-de-bord#votre-couple` }
+  const autre = r.membres.find(m => m.id !== d.id)
+  return {
+    partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple'),
+    module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '',
+    lien: premier ? `${base}/module/${encodeURIComponent(premier.slug)}` : `${base}/tableau-de-bord`,
+  }
+}
+
 // `liste` : relances à envoyer (par défaut, celles dues maintenant).
 export async function envoyerRelancesDemarrage(admin: AdminClient, liste?: RelanceDemarragePrevue[]): Promise<number> {
   const prevues = liste ?? await relancesDemarragePrevues(admin)
@@ -383,17 +394,7 @@ export async function envoyerRelancesDemarrage(admin: AdminClient, liste?: Relan
     try {
       if (!(await reserverEnvoi(admin, r.coupleId, 'demarrage', `${r.type}:${r.jours}`))) continue
       for (const d of r.membres) {
-        if (r.type === 'non_paire') {
-          if (await envoyerRappel(d, r.modele, { code: r.pairingCode, lien: `${base}/tableau-de-bord#votre-couple` })) envoyes++
-        } else {
-          const autre = r.membres.find(m => m.id !== d.id)
-          const vars = {
-            partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple'),
-            module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '',
-            lien: premier ? `${base}/module/${encodeURIComponent(premier.slug)}` : `${base}/tableau-de-bord`,
-          }
-          if (await envoyerRappel(d, r.modele, vars)) envoyes++
-        }
+        if (await envoyerRappel(d, r.modele, varsDemarrage(r, d, premier, base))) envoyes++
       }
     } catch (e) {
       console.error(`[rappels] relance de démarrage du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
@@ -1040,22 +1041,76 @@ const HORIZON_ENVOI_IMMEDIAT_JOURS = 4
 
 // Envoie tout de suite un e-mail qui serait parti dans les prochains jours,
 // avec la même réservation que la tâche du matin (il ne repartira pas).
-// Renvoie le nombre d'e-mails envoyés, ou null s'il n'est plus prévu
-// (réponse enregistrée, avis laissé, déjà envoyé…).
-export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<number | null> {
+// Contrairement à la tâche du matin, la raison d'un échec est renvoyée, et la
+// réservation est libérée si aucun e-mail n'est parti : un nouvel essai
+// reste possible. null : l'e-mail n'est plus prévu (réponse enregistrée,
+// avis laissé, déjà envoyé…).
+export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ envoyes: number; erreur?: string } | null> {
   const horizon = Date.now() + HORIZON_ENVOI_IMMEDIAT_JOURS * JOUR
+  let envois: { d: Membre; modele: string; vars: Variables | undefined }[]
+  let reserver: () => Promise<boolean>
+  let liberer: () => Promise<void>
+
   if (sorte === 'inactivite') {
-    const liste = (await relancesInactivitePrevues(admin, horizon)).filter(r => r.coupleId === coupleId)
-    return liste.length ? envoyerRelancesInactivite(admin, liste) : null
+    const r = (await relancesInactivitePrevues(admin, horizon)).find(x => x.coupleId === coupleId)
+    if (!r) return null
+    const { data: avant } = await admin.from('couples').select('derniere_relance_le').eq('id', coupleId).single()
+    envois = r.destinataires.map(d => ({ d, modele: r.modele, vars: r.vars.get(d.id) }))
+    reserver = async () => {
+      const { data, error } = await admin.from('couples')
+        .update({ relances_inactivite: r.rang + 1, derniere_relance_le: new Date().toISOString() })
+        .eq('id', coupleId).eq('relances_inactivite', r.rang).select('id')
+      if (error) throw new Error(error.message)
+      return !!data?.length
+    }
+    liberer = async () => {
+      await admin.from('couples').update({ relances_inactivite: r.rang, derniere_relance_le: avant?.derniere_relance_le ?? null }).eq('id', coupleId).eq('relances_inactivite', r.rang + 1)
+    }
+  } else {
+    let type: string
+    let cleEnvoi: string
+    if (sorte === 'demarrage') {
+      const r = (await relancesDemarragePrevues(admin, horizon)).find(x => x.coupleId === coupleId)
+      if (!r) return null
+      const premier = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)[0]
+      envois = r.membres.filter(d => d.email && d.rappels_email).map(d => ({ d, modele: r.modele, vars: varsDemarrage(r, d, premier, appUrl()) }))
+      type = 'demarrage'
+      cleEnvoi = `${r.type}:${r.jours}`
+    } else {
+      const liste = sorte === 'avis' ? await demandesAvisPrevues(admin, horizon) : await parrainagesPrevus(admin, horizon)
+      const r = liste.find(x => x.coupleId === coupleId && (!cle || x.cle === cle))
+      if (!r) return null
+      envois = r.destinataires.map(d => ({ d, modele: r.modele, vars: r.vars.get(d.id) }))
+      type = sorte === 'avis' ? 'demande_avis' : 'parrainage'
+      cleEnvoi = r.cle
+    }
+    reserver = () => reserverEnvoi(admin, coupleId, type, cleEnvoi)
+    liberer = async () => { await admin.from('rappels_envoyes').delete().eq('couple_id', coupleId).eq('type', type).eq('cle', cleEnvoi) }
   }
-  if (sorte === 'demarrage') {
-    const liste = (await relancesDemarragePrevues(admin, horizon)).filter(r => r.coupleId === coupleId)
-    return liste.length ? envoyerRelancesDemarrage(admin, liste) : null
+
+  try {
+    if (!(await reserver())) return { envoyes: 0, erreur: 'Cet e-mail est déjà parti (envoi déjà enregistré).' }
+  } catch (e) {
+    return { envoyes: 0, erreur: `Envoi impossible à enregistrer : ${e instanceof Error ? e.message : String(e)}` }
   }
-  if (sorte === 'avis') {
-    const liste = (await demandesAvisPrevues(admin, horizon)).filter(r => r.coupleId === coupleId && (!cle || r.cle === cle))
-    return liste.length ? envoyerPrevus(admin, liste, 'demande_avis') : null
+
+  let envoyes = 0
+  const echecs: string[] = []
+  for (const { d, modele, vars } of envois) {
+    try {
+      if (await envoyerRappel(d, modele, vars)) { envoyes++; continue }
+      echecs.push(`${d.email} : ${await derniereErreurEnvoi(admin, d.email) ?? 'échec de l’envoi'}`)
+    } catch (e) {
+      echecs.push(`${d.email} : ${e instanceof Error ? e.message : String(e)}`)
+    }
   }
-  const liste = (await parrainagesPrevus(admin, horizon)).filter(r => r.coupleId === coupleId)
-  return liste.length ? envoyerPrevus(admin, liste, 'parrainage') : null
+  if (!envoyes) await liberer().catch(() => {})
+  return echecs.length ? { envoyes, erreur: echecs.join(' · ') } : { envoyes }
+}
+
+// Raison du dernier échec d'envoi vers une adresse (journal des e-mails).
+async function derniereErreurEnvoi(admin: AdminClient, email: string | null): Promise<string | null> {
+  if (!email) return 'adresse e-mail manquante'
+  const { data } = await admin.from('emails_envoyes').select('ok, erreur').eq('destinataire', email).order('envoye_le', { ascending: false }).limit(1).maybeSingle()
+  return data && !data.ok ? data.erreur ?? null : null
 }
