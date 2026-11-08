@@ -1458,8 +1458,6 @@ Dans Mon compte, rubrique Parrainage, vous retrouvez votre code, le crédit gagn
 
 [bouton: Voir mon parrainage | {site}/mon-compte#parrainage]
 
-petit: Le premier module est gratuit pour les couples que vous parrainez.
-
 ${EQUIPE.fr}` },
     en: { objet: '{numero} modules already! Share YES BOX with other couples', corps: `${BONJOUR.en}
 
@@ -1476,8 +1474,6 @@ They enter it when creating their account, or use your link: [lien: {site}/inscr
 In My Account, under Referrals, you’ll find your code, the credit you’ve earned and the couples who signed up thanks to you, with their sign-up date.
 
 [bouton: See my referrals | {site}/mon-compte#parrainage]
-
-petit: The first module is free for the couples you refer.
 
 ${EQUIPE.en}` },
   },
