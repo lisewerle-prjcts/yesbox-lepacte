@@ -13,8 +13,11 @@ export interface ModeleComposeur { cle: string; famille: FamilleEmail; nom: stri
 
 export const MESSAGE_VIDE: MessageManuel = { fr: { objet: '', corps: '' }, en: { objet: '', corps: '' }, modele: null }
 
-const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code']
-const EXEMPLE = { prenom: 'Camille', partenaire: 'Sacha', code: 'A1B2C3' }
+// {site} et {lien} : remplis pour tout le monde (adresse du site et espace
+// couple), comme dans src/app/actions/admin.ts.
+const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code', 'site', 'lien']
+const SITE = (process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app').replace(/\/+$/, '')
+const EXEMPLE = { prenom: 'Camille', partenaire: 'Sacha', code: 'A1B2C3', site: SITE, lien: `${SITE}/tableau-de-bord` }
 
 // Langues à remplir pour ce mode d'envoi.
 export function languesDuMode(mode: ModeEnvoi): Langue[] {
@@ -139,7 +142,7 @@ export default function ComposeurEmail({
         <label className="flabel">Message ({onglet === 'fr' ? 'FR' : 'EN'})</label>
         <textarea className="field font-mono" rows={10} style={{ fontSize: 12.5 }} readOnly={traduction === 'busy'} value={contenu.corps} onChange={e => modifier('corps', e.target.value)} placeholder={onglet === 'fr' ? 'Bonjour {prenom},\n\n…' : 'Hello {prenom},\n\n…'} />
         <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
-          {aideVariables} Mise en forme : une ligne vide entre deux paragraphes, **gras**, [bouton: Libellé | https://…], [lien: Libellé | https://…].
+          {aideVariables} {'{lien}'} mène à l’espace couple (tableau de bord). Mise en forme : une ligne vide entre deux paragraphes, **gras**, [bouton: Libellé | https://…], [lien: Libellé | https://…], [image: Description | {'{site}'}/emails/visuel.png | {'{lien}'}].
         </p>
       </div>
 

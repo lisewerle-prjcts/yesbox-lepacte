@@ -23,7 +23,7 @@ import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } fr
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
-import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
+import { adresseDuSite, cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
 import { traductionConfiguree, traduireEmailEnAnglais } from '@/lib/traduction'
 import type { OffreCodeGratuit, QuestionType } from '@/types'
 
@@ -106,13 +106,15 @@ export async function adminResetModule(coupleId: string, slug: string) {
 // d'un modèle d'e-mail automatique, en français, en anglais, ou dans la
 // langue choisie par chaque personne (les deux versions sont alors
 // nécessaires). Variables remplacées pour chaque personne : {prenom},
-// {partenaire} (prénom de l'autre membre du couple) et {code} (code couple).
+// {partenaire} (prénom de l'autre membre du couple) et {code} (code couple) ;
+// pour tout le monde : {site} (adresse du site, pour les visuels) et {lien}
+// (espace couple, /tableau-de-bord), pour repartir d'un modèle automatique.
 // ---------------------------------------------------------------------------
 
 export type ModeEnvoi = 'fr' | 'en' | 'langue'
 export interface MessageManuel { fr: ContenuEmail; en: ContenuEmail; modele?: string | null }
 
-const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code']
+const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code', 'site', 'lien']
 
 function verifierMessage(message: MessageManuel, mode: ModeEnvoi): string | null {
   const langues: Locale[] = mode === 'langue' ? ['fr', 'en'] : [mode]
@@ -161,7 +163,9 @@ async function contexteDestinataires(admin: ReturnType<typeof createAdminClient>
   return contexte
 }
 
-function rendreMessage(message: MessageManuel, langue: Locale, vars: Variables) {
+function rendreMessage(message: MessageManuel, langue: Locale, varsPersonne: Variables) {
+  const site = adresseDuSite()
+  const vars: Variables = { site, lien: `${site}/tableau-de-bord`, ...varsPersonne }
   return { objet: rendreObjet(message[langue].objet, vars), html: rendreCorps(message[langue].corps, vars) }
 }
 
