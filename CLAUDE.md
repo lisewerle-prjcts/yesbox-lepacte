@@ -15,6 +15,6 @@
 ## Écriture
 
 - Langage inclusif et neutre : « chacun·e », « partenaire », « un ou une thérapeute », exemples valables pour tous les couples.
-- Accueil et pages publiques au « vous » ; espace couple au « tu ».
+- Accueil et pages publiques au « vous » ; espace couple au « tu » ; tous les e-mails au « vous » (sauf citations d'exemple).
 - Chaque texte existe en français et en anglais (`t(fr, en)`, ou `EN_CONTENT` pour les textes `EditableText`). Un texte `EditableText` modifié change d'identifiant (`.v2`, `.v3`…).
 - Commentaires du code en français.

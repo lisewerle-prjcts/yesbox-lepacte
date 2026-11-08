@@ -213,7 +213,7 @@ export async function envoyerInvitationPartenaire(email: string, langueInvitatio
     to: destinataire,
     cle: 'invitation_partenaire',
     locale: langue,
-    vars: { invite_par: prenomBrut || t(langue, 'Ton/ta partenaire', 'Your partner'), lien, code: couple.pairing_code ?? '' },
+    vars: { invite_par: prenomBrut || t(langue, 'Votre partenaire', 'Your partner'), lien, code: couple.pairing_code ?? '' },
   })
   if (!ok) return { error: t(locale, "L'e-mail n'a pas pu être envoyé. Réessaie dans quelques minutes.", 'The email could not be sent. Please try again in a few minutes.') }
   return { success: true }

@@ -37,5 +37,5 @@ export function entetesDesinscription(userId: string): Record<string, string> {
 }
 
 export function piedDePageRappel(userId: string, locale: Locale) {
-  return `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(locale, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <a href="${lienDesinscription(userId, locale)}" style="color:#8a8580;">${t(locale, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</a></p>`
+  return `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(locale, 'Vous recevez ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <a href="${lienDesinscription(userId, locale)}" style="color:#8a8580;">${t(locale, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</a></p>`
 }

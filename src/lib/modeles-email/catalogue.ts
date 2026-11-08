@@ -63,7 +63,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   autour_matiere: '« du coton », « de la laine »…',
   noces: '« noces de bois », « noces d’or »…',
   idees_cadeau: 'idées de cadeaux pour cette matière (vide s’il n’y en a pas)',
-  invite_par: 'prénom de la personne qui invite (ou « Ton/ta partenaire »)',
+  invite_par: 'prénom de la personne qui invite (ou « Votre partenaire »)',
   code_parrainage: 'code de parrainage du couple',
   avancement: '« le module « Moi » » ou « 6 modules, le dernier étant « Nos projets » »',
   site: 'adresse du site, pour les visuels du dossier public/emails',
@@ -86,15 +86,15 @@ const INSCRIPTION: ModeleEmail[] = [
     cle: 'confirmation_adresse', famille: 'inscription', nom: 'Confirmation de l’adresse e-mail',
     quand: 'À l’inscription, et quand la personne redemande le lien.',
     obligatoires: ['lien'],
-    fr: { objet: 'Confirme ton adresse e-mail — YES BOX', corps: `${BONJOUR.fr}
+    fr: { objet: 'Confirmez votre adresse e-mail — YES BOX', corps: `${BONJOUR.fr}
 
-Pour confirmer que cette adresse est bien la tienne et recevoir ton code couple, clique sur le bouton ci-dessous :
+Pour confirmer que cette adresse est bien la vôtre et recevoir votre code couple, cliquez sur le bouton ci-dessous :
 
 [bouton: Confirmer mon adresse | {lien}]
 
-petit: Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur : {lien}
+petit: Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur : {lien}
 
-petit: Si tu n'es pas à l'origine de cette inscription, ignore simplement ce message.` },
+petit: Si vous n’êtes pas à l’origine de cette inscription, ignorez simplement ce message.` },
     en: { objet: 'Confirm your email address — YES BOX', corps: `${BONJOUR.en}
 
 To confirm this email address is yours and receive your couple code, click the button below:
@@ -109,11 +109,11 @@ petit: If you didn't sign up, simply ignore this message.` },
     cle: 'bienvenue', famille: 'inscription', nom: 'Bienvenue (avec le code couple)',
     quand: 'Une fois l’adresse confirmée.',
     obligatoires: ['code'],
-    fr: { objet: 'Bienvenue sur YES BOX — voici ton code couple', corps: `${BONJOUR.fr}
+    fr: { objet: 'Bienvenue sur YES BOX — voici votre code couple', corps: `${BONJOUR.fr}
 
-Ton compte YES BOX — Le Pacte est créé !
+Votre compte YES BOX — Le Pacte est créé !
 
-Voici ton code couple, à transmettre à la personne avec qui tu veux signer ton pacte :
+Voici votre code couple, à transmettre à la personne avec qui vous voulez signer votre pacte :
 
 [code: {code}]
 
@@ -138,15 +138,15 @@ ${EQUIPE.en}` },
     cle: 'invitation_partenaire', famille: 'inscription', nom: 'Invitation du ou de la partenaire',
     quand: 'Quand un membre invite son ou sa partenaire par e-mail depuis le tableau de bord.',
     obligatoires: ['lien'],
-    fr: { objet: '{invite_par} t’invite à écrire votre pacte de couple', corps: `Bonjour,
+    fr: { objet: '{invite_par} vous invite à écrire votre pacte de couple', corps: `Bonjour,
 
-{invite_par} a commencé YES BOX et t’invite à le faire à deux.
+{invite_par} a commencé YES BOX et vous invite à le faire à deux.
 
 YES BOX, ce sont des modules simples et ludiques pour parler de ce qui compte : chacun·e répond de son côté, puis vous découvrez vos réponses ensemble. Le module 1 est gratuit pour vous deux, sans carte bancaire.
 
 [bouton: Rejoindre notre espace | {lien}]
 
-Tu peux aussi créer ton compte sur le site et saisir le code de votre couple : **{code}**` },
+Vous pouvez aussi créer votre compte sur le site et saisir le code de votre couple : **{code}**` },
     en: { objet: '{invite_par} invites you to write your couple’s pact', corps: `Hello,
 
 {invite_par} has started YES BOX and is inviting you to do it together.
@@ -163,13 +163,13 @@ You can also create your account on the website and enter your couple code: **{c
     obligatoires: ['lien'],
     fr: { objet: 'Choisis un nouveau mot de passe — YES BOX', corps: `${BONJOUR.fr}
 
-Tu as demandé à changer ton mot de passe YES BOX. Clique sur le bouton ci-dessous pour en choisir un nouveau :
+Vous avez demandé à changer votre mot de passe YES BOX. Cliquez sur le bouton ci-dessous pour en choisir un nouveau :
 
 [bouton: Choisir un nouveau mot de passe | {lien}]
 
-petit: Ce lien est valable 1 heure et ne sert qu'une fois. Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur : {lien}
+petit: Ce lien est valable 1 heure et ne sert qu’une fois. Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur : {lien}
 
-petit: Si tu n'es pas à l'origine de cette demande, ignore ce message : ton mot de passe reste inchangé.` },
+petit: Si vous n’êtes pas à l’origine de cette demande, ignorez ce message : votre mot de passe reste inchangé.` },
     en: { objet: 'Choose a new password — YES BOX', corps: `${BONJOUR.en}
 
 You asked to change your YES BOX password. Click the button below to choose a new one:
@@ -184,13 +184,13 @@ petit: If you didn't request this, ignore this message: your password stays the 
     cle: 'nouveau_mot_de_passe', famille: 'inscription', nom: 'Nouveau mot de passe (envoyé depuis l’admin)',
     quand: 'Quand l’admin réinitialise le mot de passe d’une personne.',
     obligatoires: ['mot_de_passe'],
-    fr: { objet: 'Ton nouveau mot de passe YES BOX', corps: `${BONJOUR.fr}
+    fr: { objet: 'Votre nouveau mot de passe YES BOX', corps: `${BONJOUR.fr}
 
-Voici ton nouveau mot de passe pour te connecter à ton espace YES BOX — Le Pacte :
+Voici votre nouveau mot de passe pour vous connecter à votre espace YES BOX — Le Pacte :
 
 [code: {mot_de_passe}]
 
-Connecte-toi puis change-le si tu le souhaites depuis ton espace.` },
+Connectez-vous, puis changez-le si vous le souhaitez depuis votre espace.` },
     en: { objet: 'Your new YES BOX password', corps: `${BONJOUR.en}
 
 Here is your new password to log in to your YES BOX — Le Pacte account:
@@ -220,13 +220,13 @@ const PAS_AVANCE = {
 
 const RELANCES: ModeleEmail[] = [
   {
-    cle: 'relance_reponses_a_ton_tour', famille: 'relances', nom: 'Relance — l’autre attend tes réponses', rappel: true,
+    cle: 'relance_reponses_a_ton_tour', famille: 'relances', nom: 'Relance — l’autre attend vos réponses', rappel: true,
     quand: '10 jours sans avancer (puis 20 jours), quand un seul membre a répondu au module en cours. Envoyé à celui ou celle qui n’a pas répondu.',
-    fr: { objet: '{partenaire} t’attend dans « {module} »', corps: `${BONJOUR.fr}
+    fr: { objet: '{partenaire} vous attend dans « {module} »', corps: `${BONJOUR.fr}
 
 ${PAUSE.fr} {partenaire} a terminé ses réponses au module « {module} » et attend les tiennes pour que vous puissiez les découvrir ensemble.
 
-Pas besoin d’y passer des heures : un moment au calme suffit. Tes réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre.
+Pas besoin d’y passer des heures : un moment au calme suffit. Vos réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre.
 
 [bouton: Reprendre le module | {lien}]
 
@@ -242,13 +242,13 @@ No need to spend hours on it: a quiet moment is enough. Your answers stay hidden
 ${EQUIPE.en}` },
   },
   {
-    cle: 'relance_conclusion_a_ton_tour', famille: 'relances', nom: 'Relance — l’autre attend ta conclusion', rappel: true,
+    cle: 'relance_conclusion_a_ton_tour', famille: 'relances', nom: 'Relance — l’autre attend votre conclusion', rappel: true,
     quand: '10 jours sans avancer (puis 20 jours), quand un seul membre a écrit sa conclusion du module.',
-    fr: { objet: '{partenaire} t’attend dans « {module} »', corps: `${BONJOUR.fr}
+    fr: { objet: '{partenaire} vous attend dans « {module} »', corps: `${BONJOUR.fr}
 
 ${PAUSE.fr} {partenaire} a écrit sa conclusion du module « {module} » et attend la tienne : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.
 
-Quelques lignes suffisent : ce que tu as appris, ce qui t’a surpris·e.
+Quelques lignes suffisent : ce que vous avez appris, ce qui vous a surpris·e.
 
 [bouton: Écrire ma conclusion | {lien}]
 
@@ -264,11 +264,11 @@ A few lines are enough: what you learned, what surprised you.
 ${EQUIPE.en}` },
   },
   {
-    cle: 'relance_pacte_a_signer', famille: 'relances', nom: 'Relance — l’autre attend ta signature du pacte', rappel: true,
+    cle: 'relance_pacte_a_signer', famille: 'relances', nom: 'Relance — l’autre attend votre signature du pacte', rappel: true,
     quand: '10 jours sans avancer (puis 20 jours), quand un seul membre a signé le pacte.',
-    fr: { objet: '{partenaire} t’attend dans « {module} »', corps: `${BONJOUR.fr}
+    fr: { objet: '{partenaire} vous attend dans « {module} »', corps: `${BONJOUR.fr}
 
-${PAUSE.fr} {partenaire} a signé votre pacte et attend ta signature pour clore le programme.
+${PAUSE.fr} {partenaire} a signé votre pacte et attend votre signature pour clore le programme.
 
 [bouton: Signer notre pacte | {lien}]
 
@@ -365,17 +365,17 @@ ${EQUIPE.en}` },
     obligatoires: ['code', 'lien'],
     fr: { objet: 'Il ne manque plus qu’une personne pour commencer YES BOX', corps: `${BONJOUR.fr}
 
-Ton compte YES BOX — Le Pacte est prêt, mais ton couple n’est pas encore au complet : YES BOX se fait à deux.
+Votre compte YES BOX — Le Pacte est prêt, mais votre couple n’est pas encore au complet : YES BOX se fait à deux.
 
 [image: YES BOX, ce sont 8 modules et 1 pacte | {site}/emails/8-modules-et-1-pacte.png | {lien}]
 
 Le principe : 8 modules à faire à deux et à votre rythme. Chacun·e répond de son côté, puis vous découvrez les réponses de l’autre et vous en parlez. À la fin, un pacte de couple à signer, à renouveler chaque année pour vous redire oui, en conscience.
 
-Pour commencer, transmets ce code à la personne avec qui tu veux signer ton pacte. Elle le saisira en créant son compte :
+Pour commencer, transmettez ce code à la personne avec qui vous voulez signer votre pacte. Elle le saisira en créant son compte :
 
 [code: {code}]
 
-Tu peux aussi lui envoyer une invitation par e-mail depuis ton espace :
+Vous pouvez aussi lui envoyer une invitation par e-mail depuis votre espace :
 
 [bouton: Inviter mon ou ma partenaire | {lien}]
 
@@ -410,13 +410,13 @@ ${EQUIPE.en}` },
 
 On prend soin de sa santé, de son travail, de ses proches… et le couple passe souvent après. YES BOX vous offre des moments rien qu’à deux pour parler de ce qui compte vraiment, que vous soyez ensemble depuis 2 mois ou 20 ans.
 
-Ton couple n’est toujours pas au complet sur YES BOX. Il suffit que la personne avec qui tu veux signer ton pacte crée son compte avec ce code :
+Votre couple n’est toujours pas au complet sur YES BOX. Il suffit que la personne avec qui vous voulez signer votre pacte crée son compte avec ce code :
 
 [code: {code}]
 
 [bouton: Inviter mon ou ma partenaire | {lien}]
 
-petit: Le premier module est gratuit, pour vous deux. Et si ce n’est pas le bon moment, aucun souci : ton compte t’attend.
+petit: Le premier module est gratuit, pour vous deux. Et si ce n’est pas le bon moment, aucun souci : votre compte vous attend.
 
 ${EQUIPE.fr}` },
     en: { objet: 'How much do you take care of your relationship?', corps: `${BONJOUR.en}
@@ -439,7 +439,7 @@ ${EQUIPE.en}` },
     obligatoires: ['lien'],
     fr: { objet: 'Vous êtes au complet : à vous de jouer !', corps: `${BONJOUR.fr}
 
-{partenaire} et toi êtes bien pairé·es sur YES BOX… mais votre premier module, « {module} », n’a pas encore commencé.
+{partenaire} et vous êtes bien pairé·es sur YES BOX… mais votre premier module, « {module} », n’a pas encore commencé.
 
 [image: Quand avez-vous pris du temps rien que pour vous deux… pour la dernière fois ? | {site}/emails/du-temps-rien-que-pour-vous-deux.png | {lien}]
 
@@ -476,7 +476,7 @@ ${EQUIPE.en}` },
 
 On prend soin de sa santé, de son travail, de ses proches… et le couple passe souvent après. Pourtant, quelques moments à deux suffisent pour se redire ce qui compte.
 
-Votre premier module, « {module} », vous attend toujours, {partenaire} et toi. Pas besoin d’y passer des heures : vous avancez à votre rythme, un module après l’autre.
+Votre premier module, « {module} », vous attend toujours, {partenaire} et vous. Pas besoin d’y passer des heures : vous avancez à votre rythme, un module après l’autre.
 
 [bouton: Commencer le premier module | {lien}]
 
@@ -525,13 +525,13 @@ ${EQUIPE.en}` },
 
 const MODULES: ModeleEmail[] = [
   {
-    cle: 'module_reponses_a_ton_tour', famille: 'modules', nom: 'L’autre a fini de répondre — à ton tour',
+    cle: 'module_reponses_a_ton_tour', famille: 'modules', nom: 'L’autre a fini de répondre — à votre tour',
     quand: 'Quand un membre a répondu à toutes les questions d’un module et pas l’autre. Envoyé à l’autre.',
-    fr: { objet: '{partenaire} a terminé le module « {module} » — à ton tour !', corps: `${BONJOUR.fr}
+    fr: { objet: '{partenaire} a terminé le module « {module} » — à votre tour !', corps: `${BONJOUR.fr}
 
 {partenaire} vient de répondre à toutes les questions du module « {module} ».
 
-À ton tour ! Ses réponses restent cachées tant que tu n'as pas répondu : vous les découvrirez ensemble.
+À votre tour ! Ses réponses restent cachées tant que vous n’avez pas répondu : vous les découvrirez ensemble.
 
 [bouton: Répondre aux questions | {lien}]` },
     en: { objet: '{partenaire} finished the "{module}" module — your turn!', corps: `${BONJOUR.en}
@@ -561,13 +561,13 @@ It's time to talk it over together and discover each other's answers.
 [bouton: Discover our answers | {lien}]` },
   },
   {
-    cle: 'module_conclusion_a_ton_tour', famille: 'modules', nom: 'L’autre a écrit sa conclusion — à ton tour',
+    cle: 'module_conclusion_a_ton_tour', famille: 'modules', nom: 'L’autre a écrit sa conclusion — à votre tour',
     quand: 'Quand un membre a écrit sa conclusion du module et pas l’autre.',
     fr: { objet: '{partenaire} a écrit sa conclusion du module « {module} »', corps: `${BONJOUR.fr}
 
 {partenaire} vient d'inscrire sa conclusion du module « {module} » dans votre journal.
 
-À ton tour d'écrire la tienne : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.
+À votre tour d’écrire la vôtre : le module suivant se débloquera dès que vos deux conclusions seront dans le journal.
 
 [bouton: Écrire ma conclusion | {lien}]` },
     en: { objet: '{partenaire} wrote their conclusion for the "{module}" module', corps: `${BONJOUR.en}
@@ -615,13 +615,13 @@ That was the last module: congratulations on everything you've been through toge
 [bouton: See our dashboard | {lien}]` },
   },
   {
-    cle: 'pacte_a_ton_tour', famille: 'modules', nom: 'L’autre a signé le pacte — à ton tour',
+    cle: 'pacte_a_ton_tour', famille: 'modules', nom: 'L’autre a signé le pacte — à votre tour',
     quand: 'Quand un membre a signé le pacte et pas l’autre.',
     fr: { objet: '{partenaire} a signé votre pacte', corps: `${BONJOUR.fr}
 
 {partenaire} vient de signer votre pacte de couple.
 
-À ton tour de le signer : le programme sera terminé dès que vos deux signatures seront posées.
+À votre tour de le signer : le programme sera terminé dès que vos deux signatures seront posées.
 
 [bouton: Signer notre pacte | {lien}]` },
     en: { objet: '{partenaire} signed your pact', corps: `${BONJOUR.en}
@@ -692,7 +692,7 @@ See you soon, and take care of yourselves and your relationship.
 const THEMES: { cle: string; fr: ContenuEmail; en: ContenuEmail; question: [string, string]; suite?: { fr: string; en: string } }[] = [
   {
     cle: 'mensuel_1',
-    fr: { objet: 'Il y a quelques semaines, vous avez signé votre pacte 💍', corps: `Il y a quelques semaines, {partenaire} et toi avez signé votre pacte. Bravo : beaucoup de couples n’osent jamais mettre des mots sur ce qui compte vraiment à deux.
+    fr: { objet: 'Il y a quelques semaines, vous avez signé votre pacte 💍', corps: `Il y a quelques semaines, {partenaire} et vous avez signé votre pacte. Bravo : beaucoup de couples n’osent jamais mettre des mots sur ce qui compte vraiment à deux.
 
 **« Et si vous vous bloquiez un rendez-vous régulier dans l’agenda ?**
 **Une soirée par mois par exemple, sans écran, rien que tous les deux. Ou une pause déjeuner en semaine. Faites en fonction de ce qui est possible…**
@@ -716,7 +716,7 @@ const THEMES: { cle: string; fr: ContenuEmail; en: ContenuEmail; question: [stri
   },
   {
     cle: 'mensuel_2',
-    fr: { objet: 'Et si vous vous disiez merci ?', corps: `Dans votre pacte, vous avez parlé de gratitude. Ce mois-ci, petit défi : dis à {partenaire} une chose précise que tu as appréciée cette semaine. Pas un « merci pour tout », un vrai détail.
+    fr: { objet: 'Et si vous vous disiez merci ?', corps: `Dans votre pacte, vous avez parlé de gratitude. Ce mois-ci, petit défi : dites à {partenaire} une chose précise que vous avez appréciée cette semaine. Pas un « merci pour tout », un vrai détail.
 
 Ça prend 30 secondes, et c’est souvent ce qu’on oublie le plus vite.` },
     en: { objet: 'What if you said thank you?', corps: `In your pact, you talked about gratitude. This month, a little challenge: tell {partenaire} one specific thing you appreciated this week. Not a "thanks for everything", a real detail.
@@ -816,7 +816,7 @@ This month, ask yourselves separately, then share your answers: **what do I need
     cle: 'mensuel_11',
     fr: { objet: 'La gratitude, encore', corps: `Ce mois-ci, un petit geste : écris un mot à {partenaire}. Quelques lignes sur un papier, un message, peu importe.
 
-Dis-lui ce que tu apprécies le plus en ce moment dans votre relation. C’est simple, et ça marque longtemps.` },
+Dites-lui ce que vous appréciez le plus en ce moment dans votre relation. C’est simple, et ça marque longtemps.` },
     en: { objet: 'Gratitude, once more', corps: `This month, a small gesture: write a note to {partenaire}. A few lines on paper, a message, it doesn’t matter.
 
 Tell them what you appreciate most in your relationship right now. It’s simple, and it stays with you for a long time.` },
@@ -996,7 +996,7 @@ ${EQUIPE.en}` },
 
 Les fêtes de fin d’année approchent ! Cette année, un défi : **prépare un cadeau surprise pour {partenaire}**.
 
-Pas forcément cher ni spectaculaire : quelque chose qui lui ressemble et qui montre que tu l’écoutes vraiment. Un objet évoqué au détour d’une conversation, une expérience à vivre à deux, une photo souvenir à encadrer, une lettre, un bon pour un moment rien qu’à vous…
+Pas forcément cher ni spectaculaire : quelque chose qui lui ressemble et qui montre que vous l’écoutez vraiment. Un objet évoqué au détour d’une conversation, une expérience à vivre à deux, une photo souvenir à encadrer, une lettre, un bon pour un moment rien qu’à vous…
 
 Le plus beau dans un cadeau surprise, c’est la surprise : chut, on ne dit rien !
 
@@ -1391,7 +1391,7 @@ Comment l’avez-vous vécu ? Votre avis compte beaucoup pour nous, et il aide d
 
 **Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, le pack initial ou l’abonnement annuel « Pacte – notre rendez-vous annuel ».
 
-petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom (vous pouvez le modifier, ou n’indiquer que votre initiale) et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
 
 ${EQUIPE.fr}` },
     en: { objet: 'How are you finding your YES BOX journey?', corps: `${BONJOUR.en}
@@ -1404,7 +1404,7 @@ How did you find it? Your review means a lot to us, and it helps other couples g
 
 **As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, the starter pack or the "Pact – our yearly date" yearly subscription.
 
-petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+petit: Your review is read by the team before being published on the website, with your first name (you can change it, or only give your initial) and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
 
 ${EQUIPE.en}` },
   },
@@ -1421,7 +1421,7 @@ Maintenant que vous avez vécu le parcours en entier, comment l’avez-vous trou
 
 **Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, par exemple l’abonnement annuel « Pacte – notre rendez-vous annuel », pour vous redire oui chaque année.
 
-petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom (vous pouvez le modifier, ou n’indiquer que votre initiale) et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
 
 ${EQUIPE.fr}` },
     en: { objet: 'Your pact is signed: a word about your journey?', corps: `${BONJOUR.en}
@@ -1434,7 +1434,7 @@ Now that you’ve been through the whole program, how did you find it? Your revi
 
 **As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, for example the "Pact – our yearly date" yearly subscription, to say yes again every year.
 
-petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+petit: Your review is read by the team before being published on the website, with your first name (you can change it, or only give your initial) and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
 
 ${EQUIPE.en}` },
   },

@@ -1223,7 +1223,7 @@ export async function apercuPrevu(admin: AdminClient, sorte: SortePrevue, couple
   const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
   for (const { d, modele, vars } of prevu.envois) {
     const { objet, html } = await rendreModele(modele, d.langue, { prenom: d.prenom ?? '', ...vars }, modifie?.[d.langue] ?? null)
-    const pied = `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(d.langue, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <u>${t(d.langue, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</u></p>`
+    const pied = `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(d.langue, 'Vous recevez ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <u>${t(d.langue, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</u></p>`
     apercus.push({ destinataire: d.prenom ? `${d.prenom} (${d.email})` : d.email ?? '', langue: d.langue, objet, html: mailHtml(html + pied) })
   }
   return apercus
