@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
-import { dernieresConnexions, modulesTerminesParCouple } from '@/lib/segments-donnees'
+import { dernieresConnexions, modulesTerminesParCouple, programmeInitialTermine } from '@/lib/segments-donnees'
+import { estVueCouples, vuesDuCouple } from '@/lib/vues-couples'
 import { grandesDatesAVenir } from '@/lib/grandes-dates'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { CLES_THEMES_MENSUELS, cleAnniversaireRencontre, estModeleEmail, modeleEmail, themeMensuelParDefaut } from '@/lib/modeles-email/catalogue'
@@ -72,7 +73,10 @@ function emailsRecus(rappels: RappelEnvoye[], dateRencontre: string | null, date
   return recus.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-export default async function AdminCouples() {
+// ?vue=actifs, en_pause… : arrivée depuis un chiffre clé de la vue
+// d'ensemble, la liste ne montre que les couples concernés.
+export default async function AdminCouples({ searchParams }: { searchParams: Promise<{ vue?: string }> }) {
+  const { vue } = await searchParams
   const supabase = createAdminClient()
 
   const [{ data: couples, error: couplesError }, { data: profiles }, effectiveModules, connexions, terminesParCouple, { data: journalEmails }, { data: rappels }, { data: signatures }] = await Promise.all([
@@ -85,9 +89,10 @@ export default async function AdminCouples() {
     supabase.from('emails_envoyes').select('destinataire, sujet, ok, envoye_le').order('envoye_le', { ascending: false }).limit(10000),
     supabase.from('rappels_envoyes').select('couple_id, type, cle, envoye_le'),
     // Requête à part : si la colonne manque en base, le reste s'affiche.
-    supabase.from('couples').select('id, rdv_annuel_le'),
+    supabase.from('couples').select('id, rdv_annuel_le, pacte_signe_le, derniere_activite_le, compte_resilie_le'),
   ])
   const rdvAnnuelParCouple = new Map((signatures ?? []).map(s => [s.id, s.rdv_annuel_le as string | null]))
+  const etatParCouple = new Map((signatures ?? []).map(s => [s.id, s]))
 
   const questionCountBySlug: Record<string, number> = {}
   for (const m of effectiveModules) questionCountBySlug[m.slug] = m.questions.length
@@ -182,6 +187,17 @@ export default async function AdminCouples() {
       rdv_annuel_le: rdvAnnuelParCouple.get(couple.id) ?? null,
       created_at: couple.created_at,
       derniere_connexion: derniereConnexion,
+      // Chiffres clés de la vue d'ensemble dont fait partie le couple.
+      vues: vuesDuCouple(
+        {
+          created_at: couple.created_at,
+          pacte_signe_le: (etatParCouple.get(couple.id)?.pacte_signe_le as string | null) ?? null,
+          derniere_activite_le: (etatParCouple.get(couple.id)?.derniere_activite_le as string | null) ?? null,
+          compte_resilie_le: (etatParCouple.get(couple.id)?.compte_resilie_le as string | null) ?? null,
+        },
+        members.length,
+        programmeInitialTermine(SLUGS, terminesParCouple.get(couple.id) ?? {}, (etatParCouple.get(couple.id)?.pacte_signe_le as string | null) ?? null),
+      ),
       // A commencé : au moins une réponse enregistrée, par l'un ou l'autre.
       a_commence: coupleModules.some(m => modulesAvecReponses.has(m.id)),
       emails,
@@ -215,7 +231,7 @@ export default async function AdminCouples() {
           Erreur lors du chargement des couples : {couplesError.message}
         </div>
       )}
-      <CouplesClient grandesDates={grandesDates} couples={couplesData} unassigned={unassigned} totalModules={SLUGS_INITIAUX.length} moduleSlugs={SLUGS_INITIAUX} pacteSlug={MODULE_PACTE} />
+      <CouplesClient vueInitiale={estVueCouples(vue) ? vue : null} grandesDates={grandesDates} couples={couplesData} unassigned={unassigned} totalModules={SLUGS_INITIAUX.length} moduleSlugs={SLUGS_INITIAUX} pacteSlug={MODULE_PACTE} />
     </div>
   )
 }

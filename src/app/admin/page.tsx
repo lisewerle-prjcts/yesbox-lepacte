@@ -26,9 +26,7 @@ function prochainPassage(dueLe: string, maintenant: number): string {
 }
 const RELANCES_HORIZON_JOURS = 3
 
-// Un couple « en pause » n'a enregistré ni réponse ni conclusion depuis plus
-// de 5 jours.
-const PAUSE_APRES_JOURS = 5
+import { LIBELLES_VUES, PAUSE_APRES_JOURS, vuesDuCouple, type VueCouples } from '@/lib/vues-couples'
 
 // Lit toutes les lignes d'une requête, par pages de 1000 (limite Supabase).
 async function toutesLesLignes<T>(lire: (debut: number, fin: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
@@ -74,11 +72,8 @@ export default async function AdminHome() {
 
   // Parcours rendez-vous annuel : programme initial fini (les 8 modules
   // thématiques et le pacte terminés, pacte signé), comme le critère
-  // « Programme initial fini » des segments.
-  const totalCouples = allCouples?.length ?? 0
+  // « Programme initial fini » des segments (cf. vuesDuCouple plus bas).
   const slugs = effectiveModules.map(m => m.slug)
-  const couplesParcoursBac = (allCouples ?? []).filter(c => programmeInitialTermine(slugs, terminesParCouple.get(c.id) ?? {}, c.pacte_signe_le)).length
-  const couplesParcoursInitial = totalCouples - couplesParcoursBac
 
   // Relances qui partiront dans les 3 prochains jours (inactivité et
   // démarrage), d'après l'état actuel des couples : une réponse enregistrée
@@ -163,20 +158,14 @@ export default async function AdminHome() {
     date_mariage: c.date_mariage as string | null,
     rdv_annuel_le: c.rdv_annuel_le as string | null,
   })))
-  const limitePause = Date.now() - PAUSE_APRES_JOURS * 24 * 60 * 60 * 1000
-  const chiffres = { solo: 0, pasCommence: 0, actifs: 0, enPause: 0, pactesSignes: 0 }
+  // Même règle que le filtre de Couples & progression (src/lib/vues-couples.ts).
+  const parVue = new Map<VueCouples, number>()
   for (const c of allCouples ?? []) {
-    if (c.compte_resilie_le) continue
-    const membres = membresParCouple.get(c.id) ?? 0
-    if (membres === 1) { chiffres.solo++; continue }
-    if (membres !== 2) continue
-    if (c.pacte_signe_le) { chiffres.pactesSignes++; continue }
-    const activite = c.derniere_activite_le ? new Date(c.derniere_activite_le).getTime() : null
-    const commence = activite !== null && activite > new Date(c.created_at).getTime()
-    if (!commence) chiffres.pasCommence++
-    else if (activite! >= limitePause) chiffres.actifs++
-    else chiffres.enPause++
+    const fini = programmeInitialTermine(slugs, terminesParCouple.get(c.id) ?? {}, c.pacte_signe_le)
+    for (const v of vuesDuCouple(c, membresParCouple.get(c.id) ?? 0, fini)) parVue.set(v, (parVue.get(v) ?? 0) + 1)
   }
+  const nb = (v: VueCouples) => parVue.get(v) ?? 0
+  const lienVue = (v: VueCouples) => `/admin/couples?vue=${v}`
 
   // Satisfaction : notes de tous les avis reçus (publiés, en attente ou
   // refusés : le refus porte sur la publication du texte, pas sur la note).
@@ -187,13 +176,13 @@ export default async function AdminHome() {
 
   const CHIFFRES_CLES: { label: string; detail: string; value: string | number; color: string; href?: string }[] = [
     { label: 'Utilisateurs', detail: 'Comptes inscrits', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/utilisateurs' },
-    { label: 'Couples — parcours initial', detail: 'Programme initial pas encore fini', value: couplesParcoursInitial, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Couples — parcours rendez-vous annuel', detail: 'Modules terminés et pacte signé', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
-    { label: 'Couples actifs', detail: `Réponse ou conclusion dans les ${PAUSE_APRES_JOURS} derniers jours, pacte pas encore signé`, value: chiffres.actifs, color: 'var(--sage)', href: '/admin/couples' },
-    { label: `En pause depuis plus de ${PAUSE_APRES_JOURS} jours`, detail: 'Parcours commencé, plus rien depuis', value: chiffres.enPause, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Couples pas encore commencés', detail: 'Au complet, aucune réponse enregistrée', value: chiffres.pasCommence, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Inscrit·es en solo', detail: 'Personne n’a encore rejoint leur couple', value: chiffres.solo, color: 'var(--ink)', href: '/admin/utilisateurs' },
-    { label: 'Pactes signés', detail: 'Couples entrés dans le parcours rendez-vous annuel', value: chiffres.pactesSignes, color: 'var(--sage)', href: '/admin/couples' },
+    { label: LIBELLES_VUES.parcours_initial, detail: 'Programme initial pas encore fini', value: nb('parcours_initial'), color: 'var(--brand)', href: lienVue('parcours_initial') },
+    { label: LIBELLES_VUES.parcours_rdv, detail: 'Modules terminés et pacte signé', value: nb('parcours_rdv'), color: 'var(--sage)', href: lienVue('parcours_rdv') },
+    { label: LIBELLES_VUES.actifs, detail: `Réponse ou conclusion dans les ${PAUSE_APRES_JOURS} derniers jours, pacte pas encore signé`, value: nb('actifs'), color: 'var(--sage)', href: lienVue('actifs') },
+    { label: LIBELLES_VUES.en_pause, detail: 'Parcours commencé, plus rien depuis', value: nb('en_pause'), color: 'var(--brand)', href: lienVue('en_pause') },
+    { label: LIBELLES_VUES.pas_commences, detail: 'Au complet, aucune réponse enregistrée', value: nb('pas_commences'), color: 'var(--brand)', href: lienVue('pas_commences') },
+    { label: LIBELLES_VUES.solo, detail: 'Personne n’a encore rejoint leur couple', value: nb('solo'), color: 'var(--ink)', href: lienVue('solo') },
+    { label: LIBELLES_VUES.pactes_signes, detail: 'Couples entrés dans le parcours rendez-vous annuel', value: nb('pactes_signes'), color: 'var(--sage)', href: lienVue('pactes_signes') },
     {
       label: 'Taux de satisfaction',
       detail: notes.length ? `${satisfaits} avis sur ${notes.length} à 4 ou 5 étoiles · moyenne ${moyenne!.toFixed(1).replace('.', ',')}/5` : 'Aucun avis reçu pour l’instant',
