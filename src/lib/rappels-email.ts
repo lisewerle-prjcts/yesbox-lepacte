@@ -244,7 +244,20 @@ function palierDemarrage(depuis: string | null, maintenant: number): number | nu
 
 interface ProfilDemarrage { couple_id: string; created_at: string | null; email_bienvenue_envoye_le: string | null }
 
-export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<number> {
+// Relance de démarrage due aujourd'hui pour un couple : rien n'est réservé
+// ni envoyé (sert aussi à l'aperçu du rattrapage dans l'admin).
+export interface RelanceDemarragePrevue {
+  coupleId: string
+  type: 'non_paire' | 'jamais_commence'
+  /** Jours du palier atteint (3 ou 10). */
+  jours: number
+  /** Clé du modèle d'e-mail (relance_non_paire_1…). */
+  modele: string
+  pairingCode: string | null
+  membres: Membre[]
+}
+
+export async function relancesDemarragePrevues(admin: AdminClient): Promise<RelanceDemarragePrevue[]> {
   const maintenant = Date.now()
   const { data: couples, error } = await admin
     .from('couples')
@@ -252,7 +265,7 @@ export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<numb
     .is('pacte_signe_le', null)
     .is('compte_resilie_le', null)
   if (error) throw new Error(error.message)
-  if (!couples?.length) return 0
+  if (!couples?.length) return []
 
   // Profils et relances déjà envoyées, lus par lots pour ne pas interroger la
   // base couple par couple.
@@ -270,15 +283,11 @@ export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<numb
     for (const { couple_id, cle } of r ?? []) dejaEnvoyees.add(`${couple_id}:${cle}`)
   }
 
-  const modulesParcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)
-  const premier = modulesParcours[0]
-  const base = appUrl()
-  let envoyes = 0
-
+  const prevues: RelanceDemarragePrevue[] = []
   for (const couple of couples) {
     try {
       const duCouple = profils.filter(p => p.couple_id === couple.id)
-      let type: 'non_paire' | 'jamais_commence'
+      let type: RelanceDemarragePrevue['type']
       let depuis: string | null
       if (duCouple.length === 1) {
         // Adresse pas encore confirmée (pas d'e-mail de bienvenue) : rien.
@@ -292,31 +301,56 @@ export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<numb
 
       const palier = palierDemarrage(depuis, maintenant)
       if (palier === null) continue
-      const cle = `${type}:${RELANCES_DEMARRAGE_JOURS[palier]}`
       // Palier déjà envoyé, ou palier suivant déjà parti.
       if (RELANCES_DEMARRAGE_JOURS.slice(palier).some(j => dejaEnvoyees.has(`${couple.id}:${type}:${j}`))) continue
       if (type === 'jamais_commence' && (await coupleACommence(admin, couple.id))) continue
 
       const membres = await membresDuCouple(admin, couple.id)
       if (!membres.some(m => m.rappels_email && m.email)) continue
-      if (!(await reserverEnvoi(admin, couple.id, 'demarrage', cle))) continue
+      prevues.push({
+        coupleId: couple.id,
+        type,
+        jours: RELANCES_DEMARRAGE_JOURS[palier],
+        modele: `relance_${type}_${palier + 1}`,
+        pairingCode: couple.pairing_code,
+        membres,
+      })
+    } catch (e) {
+      console.error(`[rappels] relance de démarrage du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return prevues
+}
 
-      for (const d of membres) {
-        const modele = `relance_${type}_${palier + 1}`
-        if (type === 'non_paire') {
-          if (await envoyerRappel(d, modele, { code: couple.pairing_code, lien: `${base}/tableau-de-bord#votre-couple` })) envoyes++
+// Envoie les relances de démarrage dues. Au premier passage (rattrapage),
+// chaque inscrit·e des 90 derniers jours qui n'a pas concrétisé reçoit une
+// seule relance : celle du palier atteint.
+export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<number> {
+  const prevues = await relancesDemarragePrevues(admin)
+  if (!prevues.length) return 0
+  const modulesParcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)
+  const premier = modulesParcours[0]
+  const base = appUrl()
+  let envoyes = 0
+
+  for (const r of prevues) {
+    try {
+      if (!(await reserverEnvoi(admin, r.coupleId, 'demarrage', `${r.type}:${r.jours}`))) continue
+      for (const d of r.membres) {
+        if (r.type === 'non_paire') {
+          if (await envoyerRappel(d, r.modele, { code: r.pairingCode, lien: `${base}/tableau-de-bord#votre-couple` })) envoyes++
         } else {
-          const autre = membres.find(m => m.id !== d.id)
+          const autre = r.membres.find(m => m.id !== d.id)
           const vars = {
             partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple'),
             module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '',
             lien: premier ? `${base}/module/${encodeURIComponent(premier.slug)}` : `${base}/tableau-de-bord`,
           }
-          if (await envoyerRappel(d, modele, vars)) envoyes++
+          if (await envoyerRappel(d, r.modele, vars)) envoyes++
         }
       }
     } catch (e) {
-      console.error(`[rappels] relance de démarrage du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+      console.error(`[rappels] relance de démarrage du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes
