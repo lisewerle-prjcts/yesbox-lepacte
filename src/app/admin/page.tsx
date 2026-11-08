@@ -2,7 +2,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { modulesTerminesParCouple, programmeInitialTermine } from '@/lib/segments-donnees'
 import Link from 'next/link'
-import { tachesEmailsAnniversaire } from '@/lib/grandes-dates'
+import { tachesEmailsAnniversaire, grandesDatesAVenir } from '@/lib/grandes-dates'
+import GrandesDatesAVenir, { type GrandeDateAVenir } from '@/components/admin/GrandesDatesAVenir'
 import TachesClient from './TachesClient'
 import ProblemesConnexionClient from './ProblemesConnexionClient'
 import { chargerProblemesConnexion } from '@/lib/problemes-connexion'
@@ -51,7 +52,7 @@ export default async function AdminHome() {
     effectiveModules,
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('couples').select('id, numero, created_at, pacte_signe_le, derniere_activite_le, compte_resilie_le'),
+    supabase.from('couples').select('id, numero, nom_couple, date_anniversaire, date_mariage, rdv_annuel_le, created_at, pacte_signe_le, derniere_activite_le, compte_resilie_le'),
     modulesTerminesParCouple(supabase),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
     getEffectiveModules(),
@@ -93,6 +94,8 @@ export default async function AdminHome() {
   const destinatairesDe = (liste: { prenom: string | null; email: string | null }[]) => liste.map(d => d.prenom ? `${d.prenom} (${d.email})` : d.email as string)
   const relancesAVenir: RelanceAVenir[] = [
     ...inactivite.map(r => ({
+      sorte: 'inactivite' as const,
+      cle: null,
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
       email: modeleEmail(r.modele).nom,
@@ -101,6 +104,8 @@ export default async function AdminHome() {
       le: prochainPassage(r.dueLe, maintenantTaches),
     })),
     ...demarrage.map(r => ({
+      sorte: 'demarrage' as const,
+      cle: null,
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
       email: modeleEmail(r.modele).nom,
@@ -109,6 +114,8 @@ export default async function AdminHome() {
       le: prochainPassage(r.dueLe, maintenantTaches),
     })),
     ...[...avisPrevus, ...parrainages].map(r => ({
+      sorte: r.modele === 'parrainage_module_5' ? 'parrainage' as const : 'avis' as const,
+      cle: r.cle,
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
       email: modeleEmail(r.modele).nom,
@@ -124,9 +131,20 @@ export default async function AdminHome() {
   // après la création du couple (elle reste vide, ou égale à la date de
   // création, tant que rien n'est enregistré).
   const membresParCouple = new Map<string, number>()
-  for (const p of await toutesLesLignes<{ couple_id: string | null }>((debut, fin) => supabase.from('profiles').select('couple_id').not('couple_id', 'is', null).range(debut, fin))) {
+  const prenomsParCouple = new Map<string, string[]>()
+  for (const p of await toutesLesLignes<{ couple_id: string | null; prenom: string | null; email: string | null }>((debut, fin) => supabase.from('profiles').select('couple_id, prenom, email').not('couple_id', 'is', null).range(debut, fin))) {
     membresParCouple.set(p.couple_id!, (membresParCouple.get(p.couple_id!) ?? 0) + 1)
+    prenomsParCouple.set(p.couple_id!, [...(prenomsParCouple.get(p.couple_id!) ?? []), p.prenom || p.email || ''])
   }
+
+  // Grandes dates des 90 prochains jours (comme dans Couples & progression).
+  const grandesDates: GrandeDateAVenir[] = grandesDatesAVenir((allCouples ?? []).map(c => ({
+    numero: c.numero as number,
+    nom: (c.nom_couple as string | null) || (prenomsParCouple.get(c.id) ?? []).join(' & '),
+    date_anniversaire: c.date_anniversaire as string | null,
+    date_mariage: c.date_mariage as string | null,
+    rdv_annuel_le: c.rdv_annuel_le as string | null,
+  })))
   const limitePause = Date.now() - PAUSE_APRES_JOURS * 24 * 60 * 60 * 1000
   const chiffres = { solo: 0, pasCommence: 0, actifs: 0, enPause: 0, pactesSignes: 0 }
   for (const c of allCouples ?? []) {
@@ -150,6 +168,9 @@ export default async function AdminHome() {
   const tauxSatisfaction = notes.length ? Math.round(satisfaits / notes.length * 100) : null
 
   const CHIFFRES_CLES: { label: string; detail: string; value: string | number; color: string; href?: string }[] = [
+    { label: 'Utilisateurs', detail: 'Comptes inscrits', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/utilisateurs' },
+    { label: 'Couples — parcours initial', detail: 'Programme initial pas encore fini', value: couplesParcoursInitial, color: 'var(--brand)', href: '/admin/couples' },
+    { label: 'Couples — parcours rendez-vous annuel', detail: 'Modules terminés et pacte signé', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
     { label: 'Couples actifs', detail: `Réponse ou conclusion dans les ${PAUSE_APRES_JOURS} derniers jours, pacte pas encore signé`, value: chiffres.actifs, color: 'var(--sage)', href: '/admin/couples' },
     { label: `En pause depuis plus de ${PAUSE_APRES_JOURS} jours`, detail: 'Parcours commencé, plus rien depuis', value: chiffres.enPause, color: 'var(--brand)', href: '/admin/couples' },
     { label: 'Couples pas encore commencés', detail: 'Au complet, aucune réponse enregistrée', value: chiffres.pasCommence, color: 'var(--brand)', href: '/admin/couples' },
@@ -177,11 +198,6 @@ export default async function AdminHome() {
     }
   })
 
-  const STATS = [
-    { label: 'Utilisateurs', value: totalUsers ?? 0, color: 'var(--ink)', href: '/admin/utilisateurs' },
-    { label: 'Couples — parcours initial', value: couplesParcoursInitial, color: 'var(--brand)', href: '/admin/couples' },
-    { label: 'Couples — parcours rendez-vous annuel', value: couplesParcoursBac, color: 'var(--sage)', href: '/admin/couples' },
-  ]
 
   return (
     <div>
@@ -207,17 +223,8 @@ export default async function AdminHome() {
       </div>
 
       <TachesClient taches={taches} tableManquante={tableManquante} avis={avis} avisTableManquante={!!erreurAvis} relances={relancesAVenir} />
+      <div className="mb-8"><GrandesDatesAVenir dates={grandesDates} /></div>
       <ProblemesConnexionClient {...problemes} />
-
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {STATS.map(s => (
-          <Link key={s.label} href={s.href} className="card p-6 hover:shadow-md transition-shadow">
-            <div className="font-serif font-bold mb-1" style={{ fontSize: 40, color: s.color, lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>{s.label}</div>
-          </Link>
-        ))}
-      </div>
 
       {/* Stats modules */}
       <div className="card p-6">

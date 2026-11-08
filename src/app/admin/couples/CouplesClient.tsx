@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import GrandesDatesAVenir, { type GrandeDateAVenir } from '@/components/admin/GrandesDatesAVenir'
 import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff, CalendarHeart, ArrowUp, ArrowDown } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
@@ -15,8 +16,7 @@ interface ModuleStatus { slug: string; statut: string; revealed: boolean; termin
 export interface EmailEnvoye { date: string; destinataire: string; sujet: string; ok: boolean }
 /** E-mail reçu après la signature du pacte (thème du mois, anniversaire, fête…). */
 export interface EmailRecu { famille: 'mensuel' | 'anniversaire' | 'fete' | 'rdv'; libelle: string; detail: string; date: string }
-export interface GrandeDateAVenir { type: 'rencontre' | 'mariage' | 'bilan'; le: string; annees: number | null; joursAvant: number; numero: number; nom: string }
-const LIBELLE_GRANDE_DATE = { rencontre: 'anniversaire de couple', mariage: 'mariage', bilan: 'bilan annuel' }
+export type { GrandeDateAVenir } from '@/components/admin/GrandesDatesAVenir'
 interface Couple {
   id: string
   numero: number
@@ -236,36 +236,6 @@ export default function CouplesClient({
         couplesFiltres.map(couple => (
           <CoupleCard key={couple.id} couple={couple} unassigned={unassigned} totalModules={totalModules} moduleSlugs={moduleSlugs} pacteSlug={pacteSlug} />
         ))
-      )}
-    </div>
-  )
-}
-
-// Anniversaires de couple et de mariage et rendez-vous de bilan annuel
-// des 90 prochains jours, pour préparer les e-mails.
-function GrandesDatesAVenir({ dates }: { dates: GrandeDateAVenir[] }) {
-  return (
-    <div className="card p-5">
-      <div className="flex items-center gap-2 mb-1">
-        <CalendarHeart className="w-4 h-4" style={{ color: 'var(--brand)' }} />
-        <h2 className="font-semibold" style={{ fontSize: 15, color: 'var(--ink)' }}>Grandes dates à venir (90 jours)</h2>
-      </div>
-      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Un e-mail d&apos;alerte part aussi un mois avant chaque anniversaire. Les e-mails envoyés aux couples se valident dans <Link href="/admin#taches" style={{ color: 'var(--brand)' }}>Vue d&apos;ensemble &gt; Tâches</Link>.</p>
-      {dates.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--muted)' }}>Aucune date dans les 90 prochains jours.</p>
-      ) : (
-        <ul className="space-y-1.5">
-          {dates.map(d => (
-            <li key={`${d.numero}-${d.type}`} className="flex flex-wrap gap-x-2" style={{ fontSize: 13, color: 'var(--ink-2)' }}>
-              <span className="font-mono" style={{ color: 'var(--muted)', minWidth: 110 }}>{dateLongue(d.le)}</span>
-              <span><strong>Couple {d.numero}</strong>{d.nom ? ` — ${d.nom}` : ''}</span>
-              <span style={{ color: 'var(--muted)' }}>
-                · {LIBELLE_GRANDE_DATE[d.type]}{d.annees ? `, ${d.annees} an${d.annees > 1 ? 's' : ''}` : ''}
-                {' · '}{d.joursAvant === 0 ? "aujourd'hui" : `dans ${d.joursAvant} jour${d.joursAvant > 1 ? 's' : ''}`}
-              </span>
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   )
