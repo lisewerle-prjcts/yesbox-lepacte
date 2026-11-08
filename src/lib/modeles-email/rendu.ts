@@ -8,6 +8,10 @@
 //   - [lien: Libellé | {lien}] insère un lien dans le texte ;
 //   - une ligne seule [bouton: Libellé | {lien}] affiche un bouton ;
 //   - une ligne seule [code: {code}] affiche un code encadré ;
+//   - une ligne seule [image: Description | {site}/emails/visuel.png] affiche
+//     une image (visuels de public/emails) ; avec un troisième élément
+//     [image: Description | {site}/emails/visuel.png | {lien}], l'image est
+//     cliquable. La description s'affiche si l'image est bloquée ;
 //   - un paragraphe qui commence par « petit: » s'affiche en petit et en gris ;
 //   - {variable} est remplacée par sa valeur (échappée : un prénom ne peut
 //     jamais injecter de HTML ni de lien).
@@ -62,6 +66,11 @@ function bouton(href: string, libelle: string) {
   return `<p style="margin:24px 0;"><a href="${href}" style="display:inline-block;background:${ROSE};color:white;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;padding:12px 22px;border-radius:10px;">${libelle}</a></p>`
 }
 
+function image(src: string, description: string, href?: string) {
+  const img = `<img src="${src}" alt="${description}" width="456" style="display:block;width:100%;max-width:456px;height:auto;border:0;border-radius:12px;margin:0 auto;">`
+  return `<p style="margin:20px 0;text-align:center;">${href ? `<a href="${href}" style="text-decoration:none;">${img}</a>` : img}</p>`
+}
+
 function enLigne(texte: string, vars: Variables) {
   // Texte du modèle échappé, mise en forme appliquée, puis valeurs
   // (échappées) insérées : une valeur ne peut pas créer de mise en forme.
@@ -96,6 +105,15 @@ export function rendreCorps(corps: string, vars: Variables, facultatives: string
     if (code) {
       const texte = substituer(code[1], vars, v => v)
       if (texte) html.push(`<p style="margin:20px 0;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:22px;letter-spacing:.12em;padding:12px 20px;border:2px dashed ${ROSE};border-radius:10px;background:white;">${echapperHtml(texte)}</span></p>`)
+      continue
+    }
+    const img = bloc.match(/^\[image:\s*([^|\]]+?)\s*\|\s*([^|\]]+?)\s*(?:\|\s*([^\]]+?)\s*)?\]$/)
+    if (img) {
+      const src = substituer(img[2], vars, v => v)
+      const href = img[3] ? substituer(img[3], vars, v => v) : ''
+      if (/^https?:\/\/[^\s"<>]+$/.test(src)) {
+        html.push(image(echapperHtml(src), echapperHtml(substituer(img[1], vars, v => v)), href && urlSure(href) ? echapperHtml(href) : undefined))
+      }
       continue
     }
     const petit = bloc.match(/^petit:\s*([\s\S]*)$/)

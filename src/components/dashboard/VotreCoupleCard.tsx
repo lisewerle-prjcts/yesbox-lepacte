@@ -94,7 +94,7 @@ export default function VotreCoupleCard({
   }
 
   return (
-    <div className="card p-5 mb-6">
+    <div id="votre-couple" className="card p-5 mb-6">
       <h2 style={{ fontFamily: 'var(--font-newsreader)', fontSize: 18, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>{t('Votre couple', 'Your couple')}</h2>
 
       {joinError && <Alert type="error" message={joinError} className="mb-4" />}
