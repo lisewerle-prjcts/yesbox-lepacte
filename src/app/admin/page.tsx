@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { modulesTerminesParCouple, programmeInitialTermine } from '@/lib/segments-donnees'
 import Link from 'next/link'
+import { MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { tachesEmailsAnniversaire, grandesDatesAVenir } from '@/lib/grandes-dates'
 import GrandesDatesAVenir, { type GrandeDateAVenir } from '@/components/admin/GrandesDatesAVenir'
 import TachesClient from './TachesClient'
@@ -91,10 +92,21 @@ export default async function AdminHome() {
     demandesAvisPrevues(supabase, horizon).catch(() => []),
     parrainagesPrevus(supabase, horizon).catch(() => []),
   ])
+  // N° du dernier module terminé de chaque couple (parcours initial), ou
+  // « Pacte signé ».
+  const parcours = effectiveModules.filter(m => m.slug !== MODULE_RDV_ANNUEL)
+  const dernierModule = (coupleId: string) => {
+    const couple = (allCouples ?? []).find(c => c.id === coupleId)
+    if (couple?.pacte_signe_le) return 'Pacte signé'
+    const termines = terminesParCouple.get(coupleId) ?? {}
+    const index = parcours.map(m => m.slug in termines).lastIndexOf(true)
+    return index < 0 ? 'Aucun' : `M${index + 1} · ${parcours[index].titre}`
+  }
   const destinatairesDe = (liste: { prenom: string | null; email: string | null }[]) => liste.map(d => d.prenom ? `${d.prenom} (${d.email})` : d.email as string)
   const relancesAVenir: RelanceAVenir[] = [
     ...inactivite.map(r => ({
       sorte: 'inactivite' as const,
+      dernierModule: dernierModule(r.coupleId),
       cle: null,
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
@@ -105,6 +117,7 @@ export default async function AdminHome() {
     })),
     ...demarrage.map(r => ({
       sorte: 'demarrage' as const,
+      dernierModule: dernierModule(r.coupleId),
       cle: null,
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
@@ -115,6 +128,7 @@ export default async function AdminHome() {
     })),
     ...[...avisPrevus, ...parrainages].map(r => ({
       sorte: r.modele === 'parrainage_module_5' ? 'parrainage' as const : 'avis' as const,
+      dernierModule: dernierModule(r.coupleId),
       cle: r.cle,
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,

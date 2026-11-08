@@ -1379,7 +1379,7 @@ ${EQUIPE.en}` },
   },
   {
     cle: 'demande_avis', famille: 'abonnement', nom: 'Demande d’avis — après le premier module', rappel: true,
-    quand: '2 jours après la fin du premier module (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
+    quand: '2 jours après la fin du premier module (réponses dévoilées, conclusions des deux écrites), si le couple n’est pas déjà plus loin. Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
     fr: { objet: 'Comment avez-vous vécu votre premier module YES BOX ?', corps: `${BONJOUR.fr}
 
 Vous avez terminé le module « {module} » : bravo d’avoir pris ce temps à deux !
@@ -1439,7 +1439,7 @@ ${EQUIPE.en}` },
   },
   {
     cle: 'parrainage_module_5', famille: 'abonnement', nom: 'Parrainage — après le module 5 (avec le code)', rappel: true,
-    quand: 'Le lendemain de la fin du module 5 (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux deux membres.',
+    quand: 'Le lendemain de la fin du module 5 (réponses dévoilées, conclusions des deux écrites), si le couple n’est pas déjà plus loin (module 6 dévoilé, pacte signé). Une seule fois, aux deux membres.',
     obligatoires: ['code_parrainage'],
     fr: { objet: 'Déjà 5 modules ! Faites découvrir YES BOX à d’autres couples', corps: `${BONJOUR.fr}
 

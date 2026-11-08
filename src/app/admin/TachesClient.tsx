@@ -21,7 +21,7 @@ function quand(jours: number) {
 // relances des 3 prochains jours, et la validation des e-mails
 // d'anniversaire avant leur envoi.
 // Relance qui partira avec la tâche quotidienne dans les 3 prochains jours.
-export interface RelanceAVenir { sorte: SortePrevue; cle: string | null; coupleId: string; couple: string; email: string; detail: string; destinataires: string[]; le: string }
+export interface RelanceAVenir { sorte: SortePrevue; cle: string | null; coupleId: string; couple: string; dernierModule: string; email: string; detail: string; destinataires: string[]; le: string }
 
 const jourRelance = (iso: string) => {
   const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
@@ -55,6 +55,7 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
               <tr style={{ textAlign: 'left', color: 'var(--muted)', borderBottom: '1px solid var(--line)' }}>
                 <th className="py-1.5 pr-3">Quand</th>
                 <th className="py-1.5 pr-3">Couple</th>
+                <th className="py-1.5 pr-3">Dernier module terminé</th>
                 <th className="py-1.5 pr-3">E-mail</th>
                 <th className="py-1.5 pr-3">Destinataires</th>
                 <th className="py-1.5"></th>
@@ -65,6 +66,7 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
                 <tr key={`${r.coupleId}-${r.email}`} style={{ borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink)', fontWeight: 500, whiteSpace: 'nowrap' }}>{jourRelance(r.le)}</td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.couple}</td>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>{r.dernierModule}</td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.email}<div style={{ color: 'var(--muted)', fontSize: 11.5 }}>{r.detail}</div></td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--muted)' }}>{r.destinataires.join(', ')}</td>
                   <td className="py-1.5" style={{ whiteSpace: 'nowrap' }}><BoutonEnvoyerMaintenant relance={r} /></td>

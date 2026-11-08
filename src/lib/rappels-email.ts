@@ -888,6 +888,19 @@ export async function envoyerPropositionsRdvAnnuel(admin: AdminClient): Promise<
 // ont déjà laissé un avis, et rien au-delà de 60 jours (pas de rattrapage
 // des couples d'il y a longtemps).
 // Module terminé : réponses dévoilées ET conclusions des deux membres écrites.
+// Le couple est-il allé plus loin que ce module (un module suivant du
+// parcours dévoilé, ou pacte signé) ? Les e-mails liés à un module (« vous
+// venez de terminer… ») ne partent alors plus : ils ne seraient plus vrais.
+async function coupleAuDelaDuModule(admin: AdminClient, coupleId: string, slug: string): Promise<boolean> {
+  const parcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL).map(m => m.slug)
+  const suivants = parcours.slice(parcours.indexOf(slug) + 1)
+  const [{ data: couple }, { data: devoiles }] = await Promise.all([
+    admin.from('couples').select('pacte_signe_le').eq('id', coupleId).maybeSingle(),
+    suivants.length ? admin.from('modules').select('slug').eq('couple_id', coupleId).eq('revealed', true).in('slug', suivants).limit(1) : Promise.resolve({ data: [] }),
+  ])
+  return !!couple?.pacte_signe_le || !!devoiles?.length
+}
+
 async function conclusionsEcrites(admin: AdminClient, coupleId: string, slug: string, membres: Membre[]): Promise<boolean> {
   const { data: conclusions, error } = await admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', coupleId).eq('module_slug', slug)
   if (error) throw new Error(error.message)
@@ -941,8 +954,9 @@ export async function demandesAvisPrevues(admin: AdminClient, jusqua: number = D
 
       const membres = await membresDuCouple(admin, coupleId)
       if (membres.length < 2) continue
-      // Premier module vraiment terminé : conclusions des deux écrites.
-      if (cle !== 'pacte' && premier && !(await conclusionsEcrites(admin, coupleId, premier.slug, membres))) continue
+      // Premier module vraiment terminé (conclusions des deux écrites), et
+      // couple pas encore plus loin dans le parcours.
+      if (cle !== 'pacte' && premier && (!(await conclusionsEcrites(admin, coupleId, premier.slug, membres)) || await coupleAuDelaDuModule(admin, coupleId, premier.slug))) continue
 
       // Pas aux personnes qui ont déjà laissé un avis.
       const { data: avis } = await admin.from('avis').select('profile_id').in('profile_id', membres.map(m => m.id))
@@ -987,7 +1001,8 @@ async function envoyerPrevus(admin: AdminClient, prevus: EnvoiPrevu[], type: str
 // deux) : le code de parrainage du couple et la règle (tous les 5 couples
 // inscrits avec ce code, 10 € de réduction). Une seule fois par couple
 // (rappels_envoyes, type 'parrainage', clé = slug du module), rien pour un
-// module terminé il y a plus de 60 jours.
+// module terminé il y a plus de 60 jours, ni pour un couple déjà plus loin
+// (module suivant dévoilé ou pacte signé).
 const PARRAINAGE_APRES_MODULE = 5
 const PARRAINAGE_MAX_JOURS = 60
 
@@ -1014,6 +1029,9 @@ export async function parrainagesPrevus(admin: AdminClient, jusqua: number = Dat
       const destinataires = membres.filter(m => m.rappels_email && m.email)
       if (!destinataires.length) continue
       if (!(await conclusionsEcrites(admin, coupleId, module.slug, membres))) continue
+      // Couple déjà plus loin (module 6 dévoilé, pacte signé) : l'e-mail
+      // « vous venez de terminer le module 5 » ne serait plus vrai.
+      if (await coupleAuDelaDuModule(admin, coupleId, module.slug)) continue
       const vars = new Map<string, Variables>()
       for (const d of destinataires) {
         vars.set(d.id, { code_parrainage: couple.code_parrainage, numero: PARRAINAGE_APRES_MODULE, module: d.langue === 'en' ? module.titre_en ?? module.titre : module.titre })
