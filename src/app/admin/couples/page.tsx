@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { dernieresConnexions, modulesTerminesParCouple } from '@/lib/segments-donnees'
-import { prochainesGrandesDates } from '@/lib/grandes-dates'
+import { grandesDatesAVenir } from '@/lib/grandes-dates'
 import { MODULE_PACTE, MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { CLES_THEMES_MENSUELS, cleAnniversaireRencontre, estModeleEmail, modeleEmail, themeMensuelParDefaut } from '@/lib/modeles-email/catalogue'
 import CouplesClient, { type EmailEnvoye, type EmailRecu, type GrandeDateAVenir } from './CouplesClient'
@@ -201,19 +201,8 @@ export default async function AdminCouples() {
   // Anniversaires de couple et de mariage et rendez-vous de bilan annuel
   // des 90 prochains jours, pour préparer les e-mails (une alerte part aussi
   // par e-mail un mois avant les anniversaires).
-  const maintenant = new Date()
-  const aujourdhui = Date.UTC(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate())
   const nomDu = (c: (typeof couplesData)[number]) => c.nom_couple || c.members.map(m => m.prenom || m.email).join(' & ')
-  const grandesDates: GrandeDateAVenir[] = [
-    ...couplesData.flatMap(c => prochainesGrandesDates(c).map(d => ({ type: d.type, le: d.le.toISOString(), annees: d.annees, joursAvant: d.joursAvant, numero: c.numero, nom: nomDu(c) }))),
-    ...couplesData.flatMap(c => {
-      if (!c.rdv_annuel_le) return []
-      const jours = Math.round((Date.parse(`${c.rdv_annuel_le.slice(0, 10)}T00:00:00Z`) - aujourdhui) / (24 * 60 * 60 * 1000))
-      return jours >= 0 ? [{ type: 'bilan' as const, le: `${c.rdv_annuel_le.slice(0, 10)}T12:00:00Z`, annees: null, joursAvant: jours, numero: c.numero, nom: nomDu(c) }] : []
-    }),
-  ]
-    .filter(d => d.joursAvant <= 90)
-    .sort((a, b) => a.joursAvant - b.joursAvant)
+  const grandesDates: GrandeDateAVenir[] = grandesDatesAVenir(couplesData.map(c => ({ ...c, nom: nomDu(c) })))
 
   return (
     <div>

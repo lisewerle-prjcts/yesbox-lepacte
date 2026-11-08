@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronRight, CalendarHeart } from 'lucide-react'
-import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail } from '@/app/actions/admin'
+import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail, adminEnvoyerMaintenant } from '@/app/actions/admin'
+import type { SortePrevue } from '@/lib/rappels-email'
 import { ApercuEmail } from '@/components/admin/ComposeurEmail'
 import { corpsAvecMotPersonnel } from '@/lib/modeles-email/rendu'
 import type { ContenuPerso, TacheEmailAnniversaire } from '@/lib/grandes-dates'
@@ -20,7 +21,7 @@ function quand(jours: number) {
 // relances des 3 prochains jours, et la validation des e-mails
 // d'anniversaire avant leur envoi.
 // Relance qui partira avec la tâche quotidienne dans les 3 prochains jours.
-export interface RelanceAVenir { coupleId: string; couple: string; email: string; detail: string; destinataires: string[]; le: string }
+export interface RelanceAVenir { sorte: SortePrevue; cle: string | null; coupleId: string; couple: string; email: string; detail: string; destinataires: string[]; le: string }
 
 const jourRelance = (iso: string) => {
   const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
@@ -43,7 +44,7 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
 
       <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>Relances, demandes d’avis et parrainage des 3 prochains jours</h3>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
-        Rien à valider : elles partent seules avec la tâche du matin (vers 8 h–9 h, heure de Paris). Une réponse enregistrée d’ici là annule une relance d’inactivité ; un avis laissé d’ici là annule la demande d’avis.
+        Rien à valider : ils partent seuls avec la tâche du matin (vers 8 h–9 h, heure de Paris), ou tout de suite avec « Envoyer maintenant ». Une réponse enregistrée d’ici là annule une relance d’inactivité ; un avis laissé d’ici là annule la demande d’avis.
       </p>
       {relances.length === 0 ? (
         <p className="mb-6" style={{ fontSize: 13, color: 'var(--muted)' }}>Aucun e-mail prévu dans les 3 prochains jours.</p>
@@ -55,7 +56,8 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
                 <th className="py-1.5 pr-3">Quand</th>
                 <th className="py-1.5 pr-3">Couple</th>
                 <th className="py-1.5 pr-3">E-mail</th>
-                <th className="py-1.5">Destinataires</th>
+                <th className="py-1.5 pr-3">Destinataires</th>
+                <th className="py-1.5"></th>
               </tr>
             </thead>
             <tbody>
@@ -64,7 +66,8 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink)', fontWeight: 500, whiteSpace: 'nowrap' }}>{jourRelance(r.le)}</td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.couple}</td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.email}<div style={{ color: 'var(--muted)', fontSize: 11.5 }}>{r.detail}</div></td>
-                  <td className="py-1.5" style={{ color: 'var(--muted)' }}>{r.destinataires.join(', ')}</td>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--muted)' }}>{r.destinataires.join(', ')}</td>
+                  <td className="py-1.5" style={{ whiteSpace: 'nowrap' }}><BoutonEnvoyerMaintenant relance={r} /></td>
                 </tr>
               ))}
             </tbody>
@@ -241,6 +244,39 @@ function Tache({ tache }: { tache: TacheEmailAnniversaire }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Envoie tout de suite un e-mail de la liste « à venir » : il ne repartira
+// pas avec la tâche du matin.
+function BoutonEnvoyerMaintenant({ relance }: { relance: RelanceAVenir }) {
+  const router = useRouter()
+  const [statut, setStatut] = useState<'idle' | 'busy' | 'ok'>('idle')
+  const [erreur, setErreur] = useState<string | null>(null)
+
+  async function envoyer() {
+    if (!window.confirm(`Envoyer maintenant « ${relance.email} » au ${relance.couple} (${relance.destinataires.join(', ')}) ?`)) return
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminEnvoyerMaintenant(relance.sorte, relance.coupleId, relance.cle ?? undefined)
+      if ('error' in res && res.error) { setErreur(res.error); setStatut('idle'); return }
+      setStatut('ok')
+      router.refresh()
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+      setStatut('idle')
+    }
+  }
+
+  if (statut === 'ok') return <span style={{ fontSize: 12, color: 'var(--sage)' }}><Check className="w-3.5 h-3.5 inline" /> Envoyé</span>
+  return (
+    <div>
+      <button type="button" onClick={envoyer} disabled={statut === 'busy'} className="btn-secondary text-xs py-1 px-2.5">
+        {statut === 'busy' ? 'Envoi…' : 'Envoyer maintenant'}
+      </button>
+      {erreur && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 220, whiteSpace: 'normal' }}>{erreur}</p>}
     </div>
   )
 }

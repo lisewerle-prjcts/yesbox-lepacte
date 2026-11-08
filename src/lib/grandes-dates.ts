@@ -374,3 +374,24 @@ export async function envoyerRappelsValidation(admin: AdminClient): Promise<numb
   }
   return envoyes
 }
+
+// Anniversaires de couple et de mariage et rendez-vous de bilan annuel des
+// `jours` prochains jours, du plus proche au plus lointain (Couples &
+// progression, Vue d'ensemble).
+export function grandesDatesAVenir(
+  couples: { numero: number; nom: string; date_anniversaire: string | null; date_mariage?: string | null; rdv_annuel_le?: string | null }[],
+  jours = 90,
+): { type: TypeGrandeDate | 'bilan'; le: string; annees: number | null; joursAvant: number; numero: number; nom: string }[] {
+  const maintenant = new Date()
+  const aujourdhui = Date.UTC(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate())
+  return [
+    ...couples.flatMap(c => prochainesGrandesDates(c).map(d => ({ type: d.type as TypeGrandeDate | 'bilan', le: d.le.toISOString(), annees: d.annees as number | null, joursAvant: d.joursAvant, numero: c.numero, nom: c.nom }))),
+    ...couples.flatMap(c => {
+      if (!c.rdv_annuel_le) return []
+      const j = Math.round((Date.parse(`${c.rdv_annuel_le.slice(0, 10)}T00:00:00Z`) - aujourdhui) / JOUR)
+      return j >= 0 ? [{ type: 'bilan' as const, le: `${c.rdv_annuel_le.slice(0, 10)}T12:00:00Z`, annees: null, joursAvant: j, numero: c.numero, nom: c.nom }] : []
+    }),
+  ]
+    .filter(d => d.joursAvant <= jours)
+    .sort((a, b) => a.joursAvant - b.joursAvant)
+}

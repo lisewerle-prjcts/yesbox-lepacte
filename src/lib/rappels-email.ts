@@ -214,10 +214,11 @@ export async function relancesInactivitePrevues(admin: AdminClient, jusqua: numb
   return prevues
 }
 
-export async function envoyerRelancesInactivite(admin: AdminClient): Promise<number> {
+// `liste` : relances à envoyer (par défaut, celles dues maintenant).
+export async function envoyerRelancesInactivite(admin: AdminClient, liste?: RelanceInactivitePrevue[]): Promise<number> {
   const maintenant = Date.now()
   let envoyes = 0
-  for (const r of await relancesInactivitePrevues(admin, maintenant)) {
+  for (const r of liste ?? await relancesInactivitePrevues(admin, maintenant)) {
     try {
       // Compte la relance avant d'envoyer : jamais deux fois la même, même
       // si la tâche est relancée ou qu'un envoi échoue.
@@ -369,8 +370,9 @@ export async function relancesDemarragePrevues(admin: AdminClient, jusqua: numbe
 // Envoie les relances de démarrage dues. Au premier passage (rattrapage),
 // chaque inscrit·e des 90 derniers jours qui n'a pas concrétisé reçoit une
 // seule relance : celle du palier atteint.
-export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<number> {
-  const prevues = await relancesDemarragePrevues(admin)
+// `liste` : relances à envoyer (par défaut, celles dues maintenant).
+export async function envoyerRelancesDemarrage(admin: AdminClient, liste?: RelanceDemarragePrevue[]): Promise<number> {
+  const prevues = liste ?? await relancesDemarragePrevues(admin)
   if (!prevues.length) return 0
   const modulesParcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)
   const premier = modulesParcours[0]
@@ -1025,4 +1027,35 @@ export async function parrainagesPrevus(admin: AdminClient, jusqua: number = Dat
 
 export async function envoyerEmailsParrainage(admin: AdminClient): Promise<number> {
   return envoyerPrevus(admin, await parrainagesPrevus(admin), 'parrainage')
+}
+
+// ---------------------------------------------------------------------------
+// Envoi immédiat d'un e-mail prévu (Vue d'ensemble > Tâches)
+// ---------------------------------------------------------------------------
+
+export type SortePrevue = 'inactivite' | 'demarrage' | 'avis' | 'parrainage'
+
+// Horizon de la liste des e-mails à venir (3 jours), avec un jour de marge.
+const HORIZON_ENVOI_IMMEDIAT_JOURS = 4
+
+// Envoie tout de suite un e-mail qui serait parti dans les prochains jours,
+// avec la même réservation que la tâche du matin (il ne repartira pas).
+// Renvoie le nombre d'e-mails envoyés, ou null s'il n'est plus prévu
+// (réponse enregistrée, avis laissé, déjà envoyé…).
+export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<number | null> {
+  const horizon = Date.now() + HORIZON_ENVOI_IMMEDIAT_JOURS * JOUR
+  if (sorte === 'inactivite') {
+    const liste = (await relancesInactivitePrevues(admin, horizon)).filter(r => r.coupleId === coupleId)
+    return liste.length ? envoyerRelancesInactivite(admin, liste) : null
+  }
+  if (sorte === 'demarrage') {
+    const liste = (await relancesDemarragePrevues(admin, horizon)).filter(r => r.coupleId === coupleId)
+    return liste.length ? envoyerRelancesDemarrage(admin, liste) : null
+  }
+  if (sorte === 'avis') {
+    const liste = (await demandesAvisPrevues(admin, horizon)).filter(r => r.coupleId === coupleId && (!cle || r.cle === cle))
+    return liste.length ? envoyerPrevus(admin, liste, 'demande_avis') : null
+  }
+  const liste = (await parrainagesPrevus(admin, horizon)).filter(r => r.coupleId === coupleId)
+  return liste.length ? envoyerPrevus(admin, liste, 'parrainage') : null
 }

@@ -18,7 +18,7 @@ import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel, entetesDesinscription } from '@/lib/desinscription'
-import { envoyerRelancesDemarrage, relancesDemarragePrevues } from '@/lib/rappels-email'
+import { envoyerPrevuMaintenant, envoyerRelancesDemarrage, relancesDemarragePrevues, type SortePrevue } from '@/lib/rappels-email'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
@@ -189,6 +189,19 @@ export async function adminSendEmail(to: string, message: MessageManuel, mode: M
   const envoye = await envoyerMail({ to: adresse, subject: objet, body: html, etiquette: etiquetteManuelle(message) })
   if (!envoye) return { error: 'Échec de l\'envoi' }
   return { success: true, langue }
+}
+
+// Vue d'ensemble > Tâches : envoie tout de suite un e-mail prévu dans les
+// prochains jours (il ne repartira pas avec la tâche du matin).
+export async function adminEnvoyerMaintenant(sorte: SortePrevue, coupleId: string, cle?: string) {
+  await assertAdmin()
+  if (!mailConfigure()) return { error: 'Envoi d\'e-mails non configuré' }
+  if (!['inactivite', 'demarrage', 'avis', 'parrainage'].includes(sorte)) return { error: 'E-mail inconnu' }
+  const envoyes = await envoyerPrevuMaintenant(createAdminClient(), sorte, coupleId, cle)
+  revalidatePath('/admin')
+  if (envoyes === null) return { error: 'Cet e-mail n’est plus prévu (le couple a avancé, un avis a été laissé, ou il est déjà parti).' }
+  if (!envoyes) return { error: 'Aucun e-mail n’est parti : regarde le journal des e-mails du couple.' }
+  return { success: true, envoyes }
 }
 
 // Rattrapage des relances de démarrage (couples pas encore au complet ou
