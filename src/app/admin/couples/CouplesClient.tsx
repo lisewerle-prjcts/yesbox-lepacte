@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import GrandesDatesAVenir, { type GrandeDateAVenir } from '@/components/admin/GrandesDatesAVenir'
+import { LIBELLES_VUES, type VueCouples } from '@/lib/vues-couples'
 import { Plus, Pencil, Trash2, UserPlus, UserMinus, KeyRound, Search, X, Mail, BellOff, CalendarHeart, ArrowUp, ArrowDown } from 'lucide-react'
 import {
   adminAssignMemberToCouple, adminUnassignMember, adminCreateEmptyCouple,
@@ -28,6 +29,7 @@ interface Couple {
   created_at: string
   derniere_connexion: string | null
   a_commence: boolean
+  vues: VueCouples[]
   emails: EmailEnvoye[]
   emailsRecus: EmailRecu[]
   members: MemberProgress[]
@@ -120,6 +122,7 @@ function trierCouples(couples: Couple[], critere: CritereTri, croissant: boolean
 const STATUS_TEXT: Record<string, string> = { locked: '🔒', en_cours: '✏️', complete: '✓', revealed: '★' }
 
 export default function CouplesClient({
+  vueInitiale,
   grandesDates,
   couples,
   unassigned,
@@ -127,6 +130,7 @@ export default function CouplesClient({
   moduleSlugs,
   pacteSlug,
 }: {
+  vueInitiale: VueCouples | null
   grandesDates: GrandeDateAVenir[]
   couples: Couple[]
   unassigned: UnassignedMember[]
@@ -141,6 +145,8 @@ export default function CouplesClient({
   const [critereTri, setCritereTri] = useState<CritereTri>('numero')
   const [croissant, setCroissant] = useState(false)
   const [masques, setMasques] = useState<Record<Masque, boolean>>({ pacteSigne: false, enCours: false, nonPaire: false, nonCommence: false })
+  // Chiffre clé choisi dans la vue d'ensemble (?vue=…).
+  const [vue, setVue] = useState<VueCouples | null>(vueInitiale)
 
   const index = useMemo(() => couples.map(couple => ({ couple, texte: texteRecherche(couple) })), [couples])
   // Chaque mot saisi doit apparaître (ex : « lise octobre »).
@@ -157,7 +163,7 @@ export default function CouplesClient({
     nonCommence: c => !c.a_commence,
   }
   const masquesActifs = MASQUES.filter(m => masques[m.cle])
-  const couplesVisibles = couplesTrouves.filter(c => !masquesActifs.some(m => correspond[m.cle](c)))
+  const couplesVisibles = couplesTrouves.filter(c => !masquesActifs.some(m => correspond[m.cle](c)) && (!vue || c.vues.includes(vue)))
   const couplesFiltres = trierCouples(couplesVisibles, critereTri, croissant, moduleSlugs)
 
   async function addCouple() {
@@ -171,6 +177,15 @@ export default function CouplesClient({
 
   return (
     <div className="space-y-4">
+      {vue && (
+        <div className="card p-4 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: 'var(--brand-soft)', background: 'var(--brand-tint)' }}>
+          <p style={{ fontSize: 14, color: 'var(--ink)' }}>
+            <strong>{LIBELLES_VUES[vue]}</strong> : {couples.filter(c => c.vues.includes(vue)).length} couple{couples.filter(c => c.vues.includes(vue)).length > 1 ? 's' : ''}
+          </p>
+          <button type="button" onClick={() => { setVue(null); router.replace('/admin/couples') }} className="btn-secondary text-sm py-1.5 px-3">Afficher tous les couples</button>
+        </div>
+      )}
+
       <GrandesDatesAVenir dates={grandesDates} />
 
       <div className="card p-5">
@@ -214,7 +229,7 @@ export default function CouplesClient({
             </label>
           ))}
         </div>
-        {(mots.length > 0 || masquesActifs.length > 0) && (
+        {(mots.length > 0 || masquesActifs.length > 0 || vue) && (
           <p className="mt-3" style={{ fontSize: 12, color: 'var(--muted)' }}>
             {couplesFiltres.length} résultat{couplesFiltres.length > 1 ? 's' : ''} sur {couples.length}
           </p>
