@@ -10,7 +10,7 @@ export type FamilleEmail = 'inscription' | 'relances' | 'modules' | 'mensuels' |
 
 export const FAMILLES: { cle: FamilleEmail; nom: string; description: string }[] = [
   { cle: 'inscription', nom: 'Inscription & compte', description: 'Confirmation d’adresse, bienvenue, invitation du ou de la partenaire, mot de passe.' },
-  { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
+  { cle: 'relances', nom: 'Relances (inactivité, effacement des données)', description: 'Couple pas encore au complet, couple au complet qui n’a pas commencé, parcours en pause depuis 10 jours, avertissement avant l’effacement d’un compte inactif.' },
   { cle: 'modules', nom: 'Fins de module & dévoilement des réponses', description: 'Envoyés à l’autre membre du couple à chaque étape d’un module et du pacte.' },
   { cle: 'mensuels', nom: 'Rendez-vous mensuels, fêtes & bilan annuel', description: 'Un e-mail par mois une fois le pacte signé (chaque thème une seule fois, sans boucle), fêtes de fin d’année, Saint-Valentin, et l’annonce du rendez-vous annuel.' },
   { cle: 'anniversaires', nom: 'Anniversaires', description: 'Anniversaire de couple (le jour J, un conseil différent chaque année) et de mariage (une semaine avant). Chaque envoi est validé dans Vue d’ensemble > Tâches.' },
@@ -64,6 +64,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   noces: '« noces de bois », « noces d’or »…',
   idees_cadeau: 'idées de cadeaux pour cette matière (vide s’il n’y en a pas)',
   invite_par: 'prénom de la personne qui invite (ou « Ton/ta partenaire »)',
+  site: 'adresse du site, pour les visuels du dossier public/emails',
   mot_personnel: 'mot personnel ajouté à la validation (Vue d’ensemble > Tâches), vide sinon',
 }
 
@@ -353,6 +354,142 @@ Your next step: discover your answers for the **"{module}"** module ({numero}/{t
 ${IDEE_DEBRIEF.en}
 
 [bouton: Resume our program | {lien}]
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'relance_non_paire_1', famille: 'relances', nom: 'Relance — couple pas encore au complet (1re)', rappel: true,
+    quand: '3 jours après l’e-mail de bienvenue, quand personne n’a encore rejoint le couple. Envoyé à la personne inscrite.',
+    obligatoires: ['code', 'lien'],
+    fr: { objet: 'Il ne manque plus qu’une personne pour commencer YES BOX', corps: `${BONJOUR.fr}
+
+Ton compte YES BOX — Le Pacte est prêt, mais ton couple n’est pas encore au complet : YES BOX se fait à deux.
+
+[image: YES BOX, ce sont 8 modules et 1 pacte | {site}/emails/8-modules-et-1-pacte.png | {lien}]
+
+Le principe : 8 modules à faire à deux et à votre rythme. Chacun·e répond de son côté, puis vous découvrez les réponses de l’autre et vous en parlez. À la fin, un pacte de couple à signer, à renouveler chaque année pour vous redire oui, en conscience.
+
+Pour commencer, transmets ce code à la personne avec qui tu veux signer ton pacte. Elle le saisira en créant son compte :
+
+[code: {code}]
+
+Tu peux aussi lui envoyer une invitation par e-mail depuis ton espace :
+
+[bouton: Inviter mon ou ma partenaire | {lien}]
+
+petit: Le premier module est gratuit.
+
+${EQUIPE.fr}` },
+    en: { objet: 'Just one more person to get started with YES BOX', corps: `${BONJOUR.en}
+
+Your YES BOX — Le Pacte account is ready, but your couple isn’t complete yet: YES BOX is done as a pair.
+
+How it works: 8 modules to do together, at your own pace. Each of you answers on your own, then you discover each other’s answers and talk about them. At the end, a couple’s pact to sign, and to renew every year to say yes again, mindfully.
+
+To get started, share this code with the person you want to sign your pact with. They’ll enter it when creating their account:
+
+[code: {code}]
+
+You can also send them an email invitation from your account:
+
+[bouton: Invite my partner | {lien}]
+
+petit: The first module is free.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'relance_non_paire_2', famille: 'relances', nom: 'Relance — couple pas encore au complet (2de)', rappel: true,
+    quand: '10 jours après l’e-mail de bienvenue, quand personne n’a encore rejoint le couple. Envoyé à la personne inscrite. Dernière relance.',
+    obligatoires: ['code', 'lien'],
+    fr: { objet: 'À quel point prenez-vous soin de votre couple ?', corps: `${BONJOUR.fr}
+
+[image: Et vous ? À quel point prenez-vous soin de votre couple ? Module 1 offert | {site}/emails/prenez-vous-soin-de-votre-couple.png | {lien}]
+
+On prend soin de sa santé, de son travail, de ses proches… et le couple passe souvent après. YES BOX vous offre des moments rien qu’à deux pour parler de ce qui compte vraiment, que vous soyez ensemble depuis 2 mois ou 20 ans.
+
+Ton couple n’est toujours pas au complet sur YES BOX. Il suffit que la personne avec qui tu veux signer ton pacte crée son compte avec ce code :
+
+[code: {code}]
+
+[bouton: Inviter mon ou ma partenaire | {lien}]
+
+petit: Le premier module est gratuit, pour vous deux. Et si ce n’est pas le bon moment, aucun souci : ton compte t’attend.
+
+${EQUIPE.fr}` },
+    en: { objet: 'How much do you take care of your relationship?', corps: `${BONJOUR.en}
+
+We take care of our health, our work, our loved ones… and our relationship often comes last. YES BOX gives you moments just for the two of you to talk about what really matters, whether you’ve been together for 2 months or 20 years.
+
+Your couple still isn’t complete on YES BOX. All it takes is for the person you want to sign your pact with to create their account with this code:
+
+[code: {code}]
+
+[bouton: Invite my partner | {lien}]
+
+petit: The first module is free, for both of you. And if now isn’t the right time, no problem: your account will be waiting.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'relance_jamais_commence_1', famille: 'relances', nom: 'Relance — couple au complet qui n’a pas commencé (1re)', rappel: true,
+    quand: '3 jours après l’arrivée du second membre, quand aucun des deux n’a encore répondu à une question. Envoyé aux deux.',
+    obligatoires: ['lien'],
+    fr: { objet: 'Vous êtes au complet : à vous de jouer !', corps: `${BONJOUR.fr}
+
+{partenaire} et toi êtes bien pairé·es sur YES BOX… mais votre premier module, « {module} », n’a pas encore commencé.
+
+[image: Quand avez-vous pris du temps rien que pour vous deux… pour la dernière fois ? | {site}/emails/du-temps-rien-que-pour-vous-deux.png | {lien}]
+
+Avec YES BOX, c’est simple : chacun·e répond de son côté, à son rythme. Vos réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre. Ensuite, vous les découvrez ensemble et vous en parlez.
+
+Une idée : choisissez dès maintenant un moment au calme cette semaine pour y répondre, chacun·e de votre côté.
+
+[bouton: Commencer le premier module | {lien}]
+
+petit: Le premier module est gratuit.
+
+${EQUIPE.fr}` },
+    en: { objet: 'You’re all set: your turn to play!', corps: `${BONJOUR.en}
+
+{partenaire} and you are paired up on YES BOX… but your first module, "{module}", hasn’t started yet.
+
+With YES BOX, it’s simple: each of you answers on your own, at your own pace. Your answers stay hidden until you have both finished. Then you discover them together and talk about them.
+
+An idea: pick a quiet moment this week right now to answer, each on your own.
+
+[bouton: Start the first module | {lien}]
+
+petit: The first module is free.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'relance_jamais_commence_2', famille: 'relances', nom: 'Relance — couple au complet qui n’a pas commencé (2de)', rappel: true,
+    quand: '10 jours après l’arrivée du second membre, quand aucun des deux n’a encore répondu à une question. Envoyé aux deux. Dernière relance.',
+    obligatoires: ['lien'],
+    fr: { objet: 'Et vous, à quel point prenez-vous soin de votre couple ?', corps: `${BONJOUR.fr}
+
+[image: Et vous ? À quel point prenez-vous soin de votre couple ? Module 1 offert | {site}/emails/prenez-vous-soin-de-votre-couple.png | {lien}]
+
+On prend soin de sa santé, de son travail, de ses proches… et le couple passe souvent après. Pourtant, quelques moments à deux suffisent pour se redire ce qui compte.
+
+Votre premier module, « {module} », vous attend toujours, {partenaire} et toi. Pas besoin d’y passer des heures : vous avancez à votre rythme, un module après l’autre.
+
+[bouton: Commencer le premier module | {lien}]
+
+petit: Le premier module est gratuit. Et si ce n’est pas le bon moment, aucun souci : votre espace vous attend.
+
+${EQUIPE.fr}` },
+    en: { objet: 'How much do you take care of your relationship?', corps: `${BONJOUR.en}
+
+We take care of our health, our work, our loved ones… and our relationship often comes last. Yet a few moments together are enough to remind each other of what matters.
+
+Your first module, "{module}", is still waiting for you, {partenaire} and you. No need to spend hours on it: you move forward at your own pace, one module at a time.
+
+[bouton: Start the first module | {lien}]
+
+petit: The first module is free. And if now isn’t the right time, no problem: your space will be waiting.
 
 ${EQUIPE.en}` },
   },

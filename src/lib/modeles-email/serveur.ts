@@ -11,6 +11,10 @@ import { corpsAvecMotPersonnel, rendreCorps, rendreObjet, type Variables } from 
 // (email_bienvenue_subject / email_bienvenue_body, version française) sont
 // encore lus tant qu'il n'y a pas de nouveau réglage.
 
+export function adresseDuSite() {
+  return (process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app').replace(/\/+$/, '')
+}
+
 export const PREFIXE_MODELE = 'modele_email::'
 const BIENVENUE_ANCIEN = { objet: 'email_bienvenue_subject', corps: 'email_bienvenue_body' }
 
@@ -73,8 +77,10 @@ export async function contenusModeles(): Promise<Record<string, Record<Locale, C
 
 // `contenuForce` : texte modifié pour un envoi précis (ex. e-mail
 // d'anniversaire d'un couple), à la place de celui du modèle.
-export async function rendreModele(cle: string, locale: Locale, vars: Variables, contenuForce?: ContenuEmail | null) {
+export async function rendreModele(cle: string, locale: Locale, varsRecues: Variables, contenuForce?: ContenuEmail | null) {
   const modele = modeleEmail(cle)
+  // {site} : adresse du site, pour les visuels de public/emails.
+  const vars: Variables = { site: adresseDuSite(), ...varsRecues }
   const contenu = contenuForce ?? await contenuModele(cle, locale)
   const corps = corpsAvecMotPersonnel(contenu.corps, vars.mot_personnel as string | undefined)
   return { objet: rendreObjet(contenu.objet, vars), html: rendreCorps(corps, vars, modele.facultatives) }

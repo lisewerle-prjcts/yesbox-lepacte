@@ -1966,3 +1966,15 @@ begin
     on conflict do nothing;
   end if;
 end $$;
+
+-- ============================================================
+-- RELANCES DES INSCRIT·ES QUI NE CONCRÉTISENT PAS
+-- Couple pas encore au complet (3 puis 10 jours après l'e-mail de
+-- bienvenue) ou couple au complet qui n'a jamais répondu (3 puis 10 jours
+-- après l'inscription du second membre) : rappels_envoyes, type
+-- 'demarrage', clé « non_paire:3 », « jamais_commence:10 »…
+-- À exécuter AVANT le déploiement du code correspondant. Idempotent.
+-- ============================================================
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete', 'demarrage'));

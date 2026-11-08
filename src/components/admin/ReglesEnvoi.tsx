@@ -19,7 +19,9 @@ const FAMILLES: { titre: string; regles: Regle[] }[] = [
   {
     titre: 'Relances (inactivité, effacement des données)',
     regles: [
-      { email: 'Relance « votre parcours vous attend »', quand: '10 jours sans nouvelle réponse ni conclusion, puis 20 jours (2 relances maximum)', qui: 'Celui ou celle qui doit agir, ou les deux', notes: 'Uniquement avant la signature du pacte, couple au complet, module accessible ; au moins 10 jours entre deux relances ; le compteur repart à chaque nouvelle réponse' },
+      { email: 'Relance « il ne manque plus qu’une personne »', quand: '3 jours puis 10 jours après l’e-mail de bienvenue (2 relances maximum)', qui: 'La personne inscrite', notes: 'Couple pas encore au complet, adresse confirmée ; avec le code couple et le lien pour inviter son ou sa partenaire ; visuels Instagram dans la version française ; rien au-delà de 90 jours' },
+      { email: 'Relance « vous êtes au complet : à vous de jouer »', quand: '3 jours puis 10 jours après l’inscription du second membre (2 relances maximum)', qui: 'Les deux membres', notes: 'Couple au complet qui n’a encore enregistré aucune réponse ni conclusion ; visuels Instagram dans la version française ; rien au-delà de 90 jours' },
+      { email: 'Relance « votre parcours vous attend »', quand: '10 jours sans nouvelle réponse ni conclusion, puis 20 jours (2 relances maximum)', qui: 'Celui ou celle qui doit agir, ou les deux', notes: 'Une fois le parcours commencé, uniquement avant la signature du pacte, couple au complet, module accessible ; au moins 10 jours entre deux relances ; le compteur repart à chaque nouvelle réponse' },
       { email: 'Avertissement avant l’effacement des données', quand: '2 mois, 1 mois, 1 semaine et la veille de l’effacement (après 24 mois d’inactivité)', qui: 'Les deux membres', notes: 'Envoyé même si les rappels sont désactivés (obligation d’information)' },
     ],
   },

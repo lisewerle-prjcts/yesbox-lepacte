@@ -22,6 +22,10 @@ type AdminClient = ReturnType<typeof createAdminClient>
 // /api/cron/rappels-email :
 //   1. relance quand un couple n'a pas avancé dans son parcours depuis
 //      10 jours (puis une seconde à 20 jours, pas plus) ;
+//   1 bis. relance des inscrit·es qui ne concrétisent pas : couple pas encore
+//      au complet (personne n'a rejoint), ou couple au complet qui n'a
+//      jamais répondu à une seule question — 3 jours puis 10 jours après,
+//      pas plus ;
 //   2. une fois le pacte signé, un e-mail par mois pour faire vivre les
 //      engagements (chaque thème une seule fois, sans boucle ; rien les mois
 //      des fêtes de fin d'année, de la Saint-Valentin, du rendez-vous annuel et des
@@ -125,6 +129,8 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
 
       const membres = await membresDuCouple(admin, couple.id)
       if (membres.length < 2) continue
+      // Couple qui n'a jamais commencé : relances de démarrage (1 bis).
+      if (!(await coupleACommence(admin, couple.id))) continue
 
       // Module en cours : le premier module ouvert et pas encore révélé.
       const { data: modules } = await admin.from('modules').select('id, slug, statut, revealed, reponses_partagees').eq('couple_id', couple.id)
@@ -192,6 +198,129 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
   return envoyes
 }
 
+
+// ---------------------------------------------------------------------------
+// 1 bis. Inscrit·es qui ne concrétisent pas
+// ---------------------------------------------------------------------------
+
+// Deux relances, 3 puis 10 jours après le point de départ :
+//   - couple pas encore au complet : depuis l'e-mail de bienvenue (adresse
+//     confirmée, code couple reçu) ; envoyé à la personne inscrite, avec le
+//     code couple et le lien pour inviter son ou sa partenaire ;
+//   - couple au complet sans aucune réponse ni conclusion : depuis
+//     l'inscription du second membre ; envoyé aux deux.
+// Un palier manqué n'est pas rattrapé en plus du suivant, et rien au-delà de
+// 90 jours (on n'écrit pas à des inscrit·es d'il y a longtemps). Chaque envoi
+// est noté dans rappels_envoyes (type 'demarrage', clé « non_paire:3 »,
+// « jamais_commence:10 »…) : jamais deux fois le même.
+const RELANCES_DEMARRAGE_JOURS = [3, 10]
+const RELANCES_DEMARRAGE_MAX_JOURS = 90
+
+// Le couple a-t-il déjà enregistré au moins une réponse ou une conclusion ?
+export async function coupleACommence(admin: AdminClient, coupleId: string): Promise<boolean> {
+  const { data: modules, error } = await admin.from('modules').select('id').eq('couple_id', coupleId)
+  if (error) throw new Error(error.message)
+  const ids = (modules ?? []).map(m => m.id)
+  if (ids.length) {
+    const { count, error: reponsesError } = await admin.from('reponses').select('*', { count: 'exact', head: true }).in('module_id', ids)
+    if (reponsesError) throw new Error(reponsesError.message)
+    if (count) return true
+  }
+  const { count, error: journalError } = await admin.from('journal_entries').select('*', { count: 'exact', head: true }).eq('couple_id', coupleId)
+  if (journalError) throw new Error(journalError.message)
+  return !!count
+}
+
+// Index du dernier palier atteint (0 : 3 jours, 1 : 10 jours), ou null.
+function palierDemarrage(depuis: string | null, maintenant: number): number | null {
+  if (!depuis) return null
+  const jours = (maintenant - new Date(depuis).getTime()) / JOUR
+  if (jours > RELANCES_DEMARRAGE_MAX_JOURS) return null
+  for (let i = RELANCES_DEMARRAGE_JOURS.length - 1; i >= 0; i--) {
+    if (jours >= RELANCES_DEMARRAGE_JOURS[i]) return i
+  }
+  return null
+}
+
+interface ProfilDemarrage { couple_id: string; created_at: string | null; email_bienvenue_envoye_le: string | null }
+
+export async function envoyerRelancesDemarrage(admin: AdminClient): Promise<number> {
+  const maintenant = Date.now()
+  const { data: couples, error } = await admin
+    .from('couples')
+    .select('id, pairing_code')
+    .is('pacte_signe_le', null)
+    .is('compte_resilie_le', null)
+  if (error) throw new Error(error.message)
+  if (!couples?.length) return 0
+
+  // Profils et relances déjà envoyées, lus par lots pour ne pas interroger la
+  // base couple par couple.
+  const profils: ProfilDemarrage[] = []
+  const dejaEnvoyees = new Set<string>()
+  for (let i = 0; i < couples.length; i += 200) {
+    const ids = couples.slice(i, i + 200).map(c => c.id)
+    const [{ data: p, error: pError }, { data: r, error: rError }] = await Promise.all([
+      admin.from('profiles').select('couple_id, created_at, email_bienvenue_envoye_le').in('couple_id', ids),
+      admin.from('rappels_envoyes').select('couple_id, cle').eq('type', 'demarrage').in('couple_id', ids),
+    ])
+    if (pError) throw new Error(pError.message)
+    if (rError) throw new Error(rError.message)
+    profils.push(...((p ?? []) as ProfilDemarrage[]))
+    for (const { couple_id, cle } of r ?? []) dejaEnvoyees.add(`${couple_id}:${cle}`)
+  }
+
+  const modulesParcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)
+  const premier = modulesParcours[0]
+  const base = appUrl()
+  let envoyes = 0
+
+  for (const couple of couples) {
+    try {
+      const duCouple = profils.filter(p => p.couple_id === couple.id)
+      let type: 'non_paire' | 'jamais_commence'
+      let depuis: string | null
+      if (duCouple.length === 1) {
+        // Adresse pas encore confirmée (pas d'e-mail de bienvenue) : rien.
+        type = 'non_paire'
+        depuis = duCouple[0].email_bienvenue_envoye_le
+        if (!couple.pairing_code) continue
+      } else if (duCouple.length === 2) {
+        type = 'jamais_commence'
+        depuis = duCouple.map(p => p.created_at ?? '').sort().at(-1) || null
+      } else continue
+
+      const palier = palierDemarrage(depuis, maintenant)
+      if (palier === null) continue
+      const cle = `${type}:${RELANCES_DEMARRAGE_JOURS[palier]}`
+      // Palier déjà envoyé, ou palier suivant déjà parti.
+      if (RELANCES_DEMARRAGE_JOURS.slice(palier).some(j => dejaEnvoyees.has(`${couple.id}:${type}:${j}`))) continue
+      if (type === 'jamais_commence' && (await coupleACommence(admin, couple.id))) continue
+
+      const membres = await membresDuCouple(admin, couple.id)
+      if (!membres.some(m => m.rappels_email && m.email)) continue
+      if (!(await reserverEnvoi(admin, couple.id, 'demarrage', cle))) continue
+
+      for (const d of membres) {
+        const modele = `relance_${type}_${palier + 1}`
+        if (type === 'non_paire') {
+          if (await envoyerRappel(d, modele, { code: couple.pairing_code, lien: `${base}/tableau-de-bord#votre-couple` })) envoyes++
+        } else {
+          const autre = membres.find(m => m.id !== d.id)
+          const vars = {
+            partenaire: autre?.prenom || t(d.langue, 'l’autre membre de votre couple', 'the other member of your couple'),
+            module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '',
+            lien: premier ? `${base}/module/${encodeURIComponent(premier.slug)}` : `${base}/tableau-de-bord`,
+          }
+          if (await envoyerRappel(d, modele, vars)) envoyes++
+        }
+      }
+    } catch (e) {
+      console.error(`[rappels] relance de démarrage du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
 
 // ---------------------------------------------------------------------------
 // 2. Un e-mail par mois une fois le pacte signé
