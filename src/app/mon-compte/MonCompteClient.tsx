@@ -18,7 +18,7 @@ import ChampCode from '@/components/ChampCode'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, offreRdvAnnuelDispo, codeParrainage, filleuls, recompenses, rappelsEmail, langue,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, offreRdvAnnuelDispo, codeParrainage, filleuls, codesSaisis, recompenses, rappelsEmail, langue,
 }: {
   prenom: string
   email: string
@@ -35,6 +35,7 @@ export default function MonCompteClient({
   offreRdvAnnuelDispo: boolean
   codeParrainage: string | null
   filleuls: Filleul[]
+  codesSaisis: CodeSaisi[]
   /** Paliers de 5 filleuls déjà récompensés (10 € chacun). */
   recompenses: number
   rappelsEmail: boolean
@@ -53,7 +54,7 @@ export default function MonCompteClient({
         <MesInfosCard prenom={prenom} email={email} />
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} offreRdvAnnuelDispo={offreRdvAnnuelDispo} />
-        {!estCompteResilie(abonnement) && <AjouterCodeCard />}
+        {!estCompteResilie(abonnement) && <AjouterCodeCard codesSaisis={codesSaisis} />}
         <ParrainageCard codeParrainage={codeParrainage} filleuls={filleuls} recompenses={recompenses} />
         <AvisCard />
         <LangueCard langueInitiale={langue} />
@@ -291,8 +292,13 @@ function AbonnementCard({ abonnement, formule, annuelPrevuLe, proposerAnnuel, of
 // Carte cadeau, code de parrainage (si le couple s'est inscrit sans) ou code
 // gratuit : utilisable à tout moment, même après l'inscription ou pendant un
 // abonnement en cours (cf. utiliserCode).
-function AjouterCodeCard() {
+// Code déjà saisi par le couple, avec ce qu'il a apporté (textes FR / EN
+// préparés côté serveur) et sa date d'utilisation.
+export interface CodeSaisi { code: string; detail: { fr: string; en: string }; le: string | null }
+
+function AjouterCodeCard({ codesSaisis }: { codesSaisis: CodeSaisi[] }) {
   const t = useT()
+  const { locale } = useLocale()
   const [code, setCode] = useState('')
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [error, setError] = useState('')
@@ -317,8 +323,8 @@ function AjouterCodeCard() {
       </div>
       <p className="text-sm text-gray-600 mb-3">
         {t(
-          'Une carte cadeau reçue, le code du couple qui vous a parrainés si vous ne l’avez pas saisi à l’inscription, ou un code gratuit : ajoutez-le ici, à tout moment.',
-          'A gift card you received, the code of the couple who referred you if you didn’t enter it when signing up, or a free code: add it here, at any time.'
+          'Une carte cadeau reçue, le code du couple qui vous a parrainés si vous ne l’avez pas saisi à l’inscription, ou un code gratuit : ajoutez-le ici, à tout moment. Les codes se cumulent.',
+          'A gift card you received, the code of the couple who referred you if you didn’t enter it when signing up, or a free code: add it here, at any time. Codes can be combined.'
         )}
       </p>
       <div className="flex items-center gap-2 max-w-sm">
@@ -334,6 +340,19 @@ function AjouterCodeCard() {
       </div>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
       {message && <p className="text-sm text-green-700 mt-2 flex items-center gap-1.5"><Check className="w-4 h-4" /> {message}</p>}
+      {codesSaisis.length > 0 && (
+        <div className="mt-4">
+          <p className="label">{t('Codes déjà saisis', 'Codes already entered')}</p>
+          <ul className="text-sm text-gray-700 space-y-1.5">
+            {codesSaisis.map((c, i) => (
+              <li key={`${c.code}-${i}`} className="flex flex-wrap justify-between gap-x-3 max-w-md">
+                <span><span className="font-mono font-bold">{c.code}</span> <span className="text-gray-500">· {c.detail[locale]}</span></span>
+                {c.le && <span className="text-gray-400 shrink-0">{new Date(c.le).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
