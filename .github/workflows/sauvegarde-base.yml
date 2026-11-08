@@ -77,7 +77,35 @@ jobs:
           sys.exit(1 if pb else 0)
           PY
 
-      - uses: supabase/setup-cli@v1
+      # Téléchargement de l'outil Supabase depuis GitHub : en cas de panne
+      # passagère (erreur 504, comme le 8 novembre 2026), nouvel essai une
+      # minute plus tard, puis cinq minutes plus tard, avant d'abandonner.
+      - name: Installer l'outil Supabase
+        id: cli1
+        uses: supabase/setup-cli@v1
+        continue-on-error: true
+        with:
+          version: latest
+
+      - name: Attendre avant un nouvel essai
+        if: steps.cli1.outcome == 'failure'
+        run: sleep 60
+
+      - name: Installer l'outil Supabase (2e essai)
+        id: cli2
+        if: steps.cli1.outcome == 'failure'
+        uses: supabase/setup-cli@v1
+        continue-on-error: true
+        with:
+          version: latest
+
+      - name: Attendre avant un dernier essai
+        if: steps.cli1.outcome == 'failure' && steps.cli2.outcome == 'failure'
+        run: sleep 300
+
+      - name: Installer l'outil Supabase (dernier essai)
+        if: steps.cli1.outcome == 'failure' && steps.cli2.outcome == 'failure'
+        uses: supabase/setup-cli@v1
         with:
           version: latest
 

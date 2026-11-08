@@ -52,7 +52,8 @@ GitHub ne réaffiche jamais un secret enregistré, même à toi : c'est normal.
 
 Croix rouge ? Clique dessus pour voir l'étape en échec :
 - « Secrets … manquants » : l'étape 3 n'est pas faite, ou un nom est mal écrit ;
-- erreur de connexion ou « password authentication failed » : l'adresse de l'étape 2 est incorrecte (mot de passe, ou « Direct connection » au lieu de « Session pooler »).
+- erreur de connexion ou « password authentication failed » : l'adresse de l'étape 2 est incorrecte (mot de passe, ou « Direct connection » au lieu de « Session pooler ») ;
+- « Unexpected HTTP response: 504 » à l'étape « Installer l'outil Supabase » : panne passagère de GitHub, rien à corriger. La tâche réessaie seule (après 1 minute, puis 5 minutes) ; si la panne dure, relance-la plus tard avec **Run workflow**, ou attends la nuit suivante.
 
 Ensuite, tout se fait seul chaque nuit. **Si une sauvegarde échoue, GitHub t'envoie un e-mail.**
 
