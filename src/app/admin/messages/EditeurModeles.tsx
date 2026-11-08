@@ -29,7 +29,7 @@ const EXEMPLE: Record<string, string> = {
   rappel_rdv: 'Prochain rendez-vous annuel : le 12 mars 2027.', precision_rdv: ', le 12 mars 2027',
   phrase_abonnement: 'À la fin de votre mois d’abonnement, le 12 mars 2027, vous passerez automatiquement à l’abonnement annuel.',
   mois: '6 mois', abonnement_rdv: 'Pour ouvrir ce module, il faut l’abonnement « Pacte – notre rendez-vous annuel » (19 € par an), à prendre depuis votre page Notre Pacte.', offre: 'le pack initial YES BOX – Le Pacte : les 8 modules et le module Pacte de couple, avec un an pour le réaliser', mot_de_passe: 'k3Rm-92xa', annees: '5 ans', matiere: 'bois', autour_matiere: 'du bois', noces: 'noces de bois',
-  idees_cadeau: 'un objet sculpté, une boîte à souvenirs gravée, ou un arbre à planter ensemble', invite_par: 'Camille', site: process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app', mot_personnel: 'Un petit mot de l’équipe : merci de faire partie de l’aventure YES BOX !',
+  idees_cadeau: 'un objet sculpté, une boîte à souvenirs gravée, ou un arbre à planter ensemble', invite_par: 'Camille', code_parrainage: 'PAR7KQ', site: process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app', mot_personnel: 'Un petit mot de l’équipe : merci de faire partie de l’aventure YES BOX !',
 }
 
 const egal = (a: ContenuEmail, b: ContenuEmail) => a.objet === b.objet && a.corps === b.corps

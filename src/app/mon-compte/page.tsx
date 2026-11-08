@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getInviteLink } from '@/app/actions/couple'
 import { ABONNEMENT_COLONNES, PARRAINAGE_COLONNES } from '@/types'
 import type { CoupleAbonnement, CoupleParrainage } from '@/types'
+import type { Filleul } from './MonCompteClient'
 import { lireFormule, offreRdvAnnuel } from '@/lib/abonnement'
 import MonCompteClient from './MonCompteClient'
 
@@ -26,7 +27,7 @@ export default async function MonComptePage() {
   let offreRdvAnnuelDispo = false
   let rappelsEmail = true
   let langue: 'fr' | 'en' = 'fr'
-  let filleulsCount = 0
+  let filleuls: Filleul[] = []
   let pairingCode: string | null = null
   let paired = false
   if (profile?.couple_id) {
@@ -59,9 +60,18 @@ export default async function MonComptePage() {
     // Le compte des filleuls d'un couple exige le service role : la policy
     // RLS "couple_member_select" ne donne accès qu'à sa propre ligne, pas
     // aux couples parrainés (qui sont d'autres lignes de la même table).
+    // Prénoms des membres et date d'inscription de chaque couple parrainé,
+    // affichés dans la carte Parrainage.
     const admin = createAdminClient()
-    const { count } = await admin.from('couples').select('id', { count: 'exact', head: true }).eq('parrain_couple_id', profile.couple_id)
-    filleulsCount = count ?? 0
+    const { data: couplesFilleuls } = await admin.from('couples').select('id, created_at').eq('parrain_couple_id', profile.couple_id).order('created_at', { ascending: false })
+    const idsFilleuls = (couplesFilleuls ?? []).map(c => c.id)
+    const { data: membresFilleuls } = idsFilleuls.length
+      ? await admin.from('profiles').select('couple_id, prenom, created_at').in('couple_id', idsFilleuls).order('created_at')
+      : { data: [] as { couple_id: string | null; prenom: string | null; created_at: string | null }[] }
+    filleuls = (couplesFilleuls ?? []).map(c => ({
+      prenoms: (membresFilleuls ?? []).filter(m => m.couple_id === c.id).map(m => m.prenom?.trim()).filter((p): p is string => !!p),
+      inscritLe: c.created_at,
+    }))
   }
 
   return (
@@ -77,7 +87,8 @@ export default async function MonComptePage() {
       proposerAnnuel={proposerAnnuel}
       offreRdvAnnuelDispo={offreRdvAnnuelDispo}
       codeParrainage={coupleParrainage?.code_parrainage ?? null}
-      filleulsCount={filleulsCount}
+      filleuls={filleuls}
+      recompenses={coupleParrainage?.parrainages_recompenses ?? 0}
       rappelsEmail={rappelsEmail}
       langue={langue}
     />

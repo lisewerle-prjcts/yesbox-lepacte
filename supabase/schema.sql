@@ -1980,13 +1980,96 @@ alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete', 'demarrage'));
 
 -- ============================================================
--- DEMANDES D'AVIS APRÈS LE PREMIER MODULE ET APRÈS LE PACTE
+-- DEMANDES D'AVIS (PREMIER MODULE, PACTE) ET PARRAINAGE (MODULE 5)
 -- 2 jours après la fin du premier module, puis 2 jours après la signature
 -- du pacte, invitation à laisser un avis (bon de 10 € une fois publié),
 -- chacune une seule fois par couple : rappels_envoyes, type
 -- 'demande_avis', clé = slug du premier module, ou « pacte ».
+-- Le lendemain de la fin du module 5, le code de parrainage du couple, une
+-- seule fois : rappels_envoyes, type 'parrainage', clé = slug du module.
 -- À exécuter AVANT le déploiement du code correspondant. Idempotent.
 -- ============================================================
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
-  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete', 'demarrage', 'demande_avis'));
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete', 'demarrage', 'demande_avis', 'parrainage'));
+
+-- ============================================================
+-- CODES GRATUITS CUMULABLES
+-- Un couple peut désormais utiliser plusieurs codes gratuits différents
+-- (jamais deux fois le même) : les réductions s'additionnent sur le
+-- prochain paiement (src/lib/reduction-code.ts), les accès offerts prennent
+-- la date de fin la plus lointaine. Le crédit de parrainage, les codes
+-- d'avis et les cartes cadeaux se cumulaient déjà.
+-- À exécuter AVANT le déploiement du code correspondant. Idempotent.
+-- ============================================================
+alter table public.codes_gratuits_utilisations drop constraint if exists codes_gratuits_utilisations_couple_id_key;
+create unique index if not exists codes_gratuits_utilisations_code_couple_idx
+  on public.codes_gratuits_utilisations (code_id, couple_id);
+create index if not exists codes_gratuits_utilisations_couple_idx
+  on public.codes_gratuits_utilisations (couple_id);
+
+create or replace function public.utiliser_code_gratuit(p_code text, p_couple_id uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_code public.codes_gratuits;
+  v_expire timestamptz;
+begin
+  select * into v_code from public.codes_gratuits
+  where code = upper(trim(p_code)) and actif = true
+  for update;
+
+  if not found then
+    return json_build_object('success', false, 'error', 'invalide');
+  end if;
+  if v_code.actif_jusqu_au is not null and (now() at time zone 'Europe/Paris')::date > v_code.actif_jusqu_au then
+    return json_build_object('success', false, 'error', 'expire');
+  end if;
+  if v_code.usages >= v_code.usages_max then
+    return json_build_object('success', false, 'error', 'epuise');
+  end if;
+  -- Codes cumulables : seul le même code ne peut pas servir deux fois.
+  if exists (select 1 from public.codes_gratuits_utilisations where couple_id = p_couple_id and code_id = v_code.id) then
+    return json_build_object('success', false, 'error', 'deja_utilise');
+  end if;
+
+  update public.codes_gratuits set usages = usages + 1 where id = v_code.id;
+  insert into public.codes_gratuits_utilisations (code_id, couple_id) values (v_code.id, p_couple_id);
+
+  if v_code.offre = 'reduction' then
+    -- Rien à ouvrir : la réduction est appliquée au prochain paiement
+    -- (src/lib/reduction-code.ts), cumulée avec les autres codes.
+    v_expire := case when v_code.duree_mois is null then null
+      else now() + (v_code.duree_mois || ' months')::interval end;
+  elsif v_code.offre = 'pack_initial' then
+    -- 12 mois = DUREE_MOIS_YESBOX (src/lib/abonnement.ts).
+    select greatest(coalesce(pack_initial_expire_le, now()), now() + interval '12 months') into v_expire
+    from public.couples where id = p_couple_id;
+    update public.couples set pack_initial_expire_le = v_expire where id = p_couple_id;
+  else
+    v_expire := case
+      when v_code.duree_mois is null then timestamptz '2999-01-01'
+      else now() + (v_code.duree_mois || ' months')::interval
+    end;
+    -- Un accès offert déjà plus long n'est jamais raccourci.
+    select greatest(coalesce(acces_gratuit_expire_le, v_expire), v_expire) into v_expire
+    from public.couples where id = p_couple_id;
+    update public.couples set acces_gratuit_expire_le = v_expire where id = p_couple_id;
+  end if;
+
+  return json_build_object('success', true, 'offre', v_code.offre, 'expire_le', v_expire, 'montant_centimes', v_code.montant_centimes);
+end;
+$$;
+revoke execute on function public.utiliser_code_gratuit(text, uuid) from public, anon, authenticated;
+grant execute on function public.utiliser_code_gratuit(text, uuid) to service_role;
+
+-- ============================================================
+-- AVIS : PLUS DE LIMITE DE CARACTÈRES À LA SAISIE
+-- Le prénom (40) et le texte (1500) n'étaient pas extensibles : seuls des
+-- garde-fous techniques très larges restent (100 et 10 000 caractères,
+-- comme src/lib/avis-constantes.ts).
+-- À exécuter AVANT le déploiement du code correspondant. Idempotent.
+-- ============================================================
+alter table public.avis drop constraint if exists avis_prenom_check;
+alter table public.avis drop constraint if exists avis_texte_check;
+alter table public.avis add constraint avis_prenom_check check (char_length(prenom) between 1 and 100);
+alter table public.avis add constraint avis_texte_check check (char_length(texte) between 10 and 10000);

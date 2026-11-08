@@ -30,7 +30,6 @@ export default function ReponseMois({ mois, prenom, initiale }: { mois: number; 
       <textarea
         className="input-field"
         rows={3}
-        maxLength={4000}
         placeholder={t('Ta réponse…', 'Your answer…')}
         value={valeur}
         onChange={e => setValeur(e.target.value)}

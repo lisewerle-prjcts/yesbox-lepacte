@@ -222,7 +222,6 @@ export default function InscriptionForm({
             name="partner_code"
             type="text"
             placeholder={t('Ex : A3F9K', 'e.g. A3F9K')}
-            maxLength={12}
             autoCapitalize="characters"
             className="input-field uppercase"
           />

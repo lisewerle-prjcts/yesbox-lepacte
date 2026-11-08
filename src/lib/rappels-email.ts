@@ -46,7 +46,8 @@ type AdminClient = ReturnType<typeof createAdminClient>
 //      renouvellement ;
 //   7. 2 jours après la fin du premier module, puis 2 jours après la
 //      signature du pacte, l'invitation à laisser un avis (bon de 10 € une
-//      fois l'avis publié).
+//      fois l'avis publié) ;
+//   8. le lendemain de la fin du module 5, le code de parrainage du couple.
 // Les relances de parcours ne partent que si le module en cours est ouvert ;
 // les e-mails du mois partent à tous les couples qui ont signé leur pacte. Chaque membre peut refuser ces rappels
 // (profiles.rappels_email) : lien en bas de chaque e-mail ou Mon compte.
@@ -843,6 +844,14 @@ export async function envoyerPropositionsRdvAnnuel(admin: AdminClient): Promise<
 // clé « <slug du premier module> » ou « pacte »), jamais aux personnes qui
 // ont déjà laissé un avis, et rien au-delà de 60 jours (pas de rattrapage
 // des couples d'il y a longtemps).
+// Module terminé : réponses dévoilées ET conclusions des deux membres écrites.
+async function conclusionsEcrites(admin: AdminClient, coupleId: string, slug: string, membres: Membre[]): Promise<boolean> {
+  const { data: conclusions, error } = await admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', coupleId).eq('module_slug', slug)
+  if (error) throw new Error(error.message)
+  const claires = dechiffrerLignes(conclusions)
+  return membres.every(m => entreesDeFin(slug).every(q => claires.some(c => c.user_id === m.id && c.question_slug === q && c.valeur?.trim())))
+}
+
 const DEMANDE_AVIS_APRES_JOURS = 2
 const DEMANDE_AVIS_MAX_JOURS = 60
 
@@ -876,13 +885,8 @@ export async function envoyerDemandesAvis(admin: AdminClient): Promise<number> {
 
       const membres = await membresDuCouple(admin, coupleId)
       if (membres.length < 2) continue
-      if (cle !== 'pacte' && premier) {
-        // Premier module vraiment terminé : conclusions des deux écrites.
-        const { data: conclusions } = await admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', coupleId).eq('module_slug', premier.slug)
-        const claires = dechiffrerLignes(conclusions)
-        const conclu = (m: Membre) => entreesDeFin(premier.slug).every(q => claires.some(c => c.user_id === m.id && c.question_slug === q && c.valeur?.trim()))
-        if (!membres.every(conclu)) continue
-      }
+      // Premier module vraiment terminé : conclusions des deux écrites.
+      if (cle !== 'pacte' && premier && !(await conclusionsEcrites(admin, coupleId, premier.slug, membres))) continue
 
       // Pas aux personnes qui ont déjà laissé un avis.
       const { data: avis } = await admin.from('avis').select('profile_id').in('profile_id', membres.map(m => m.id))
@@ -897,6 +901,54 @@ export async function envoyerDemandesAvis(admin: AdminClient): Promise<number> {
       }
     } catch (e) {
       console.error(`[rappels] demande d'avis (${cle}) du couple ${coupleId} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
+
+// ---------------------------------------------------------------------------
+// 8. Parrainage, une fois le module 5 terminé
+// ---------------------------------------------------------------------------
+
+// Le lendemain de la fin du 5e module (réponses dévoilées, conclusions des
+// deux) : le code de parrainage du couple et la règle (tous les 5 couples
+// inscrits avec ce code, 10 € de réduction). Une seule fois par couple
+// (rappels_envoyes, type 'parrainage', clé = slug du module), rien pour un
+// module terminé il y a plus de 60 jours.
+const PARRAINAGE_APRES_MODULE = 5
+const PARRAINAGE_MAX_JOURS = 60
+
+export async function envoyerEmailsParrainage(admin: AdminClient): Promise<number> {
+  const maintenant = Date.now()
+  const module = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)[PARRAINAGE_APRES_MODULE - 1]
+  if (!module) return 0
+  const { data: modules, error } = await admin.from('modules').select('couple_id')
+    .eq('slug', module.slug).eq('revealed', true)
+    .gte('revealed_at', new Date(maintenant - PARRAINAGE_MAX_JOURS * JOUR).toISOString())
+  if (error) throw new Error(error.message)
+
+  let envoyes = 0
+  for (const { couple_id: coupleId } of modules ?? []) {
+    try {
+      const { data: couple } = await admin.from('couples').select('code_parrainage, parrainages_recompenses, compte_resilie_le').eq('id', coupleId).maybeSingle()
+      if (!couple?.code_parrainage || couple.compte_resilie_le) continue
+      const { data: deja } = await admin.from('rappels_envoyes').select('cle').eq('couple_id', coupleId).eq('type', 'parrainage').limit(1)
+      if (deja?.length) continue
+      const membres = await membresDuCouple(admin, coupleId)
+      if (membres.length < 2 || !membres.some(m => m.rappels_email && m.email)) continue
+      if (!(await conclusionsEcrites(admin, coupleId, module.slug, membres))) continue
+      if (!(await reserverEnvoi(admin, coupleId, 'parrainage', module.slug))) continue
+
+      for (const d of membres) {
+        const vars = {
+          code_parrainage: couple.code_parrainage,
+          numero: PARRAINAGE_APRES_MODULE,
+          module: d.langue === 'en' ? module.titre_en ?? module.titre : module.titre,
+        }
+        if (await envoyerRappel(d, 'parrainage_module_5', vars)) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] e-mail de parrainage du couple ${coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes

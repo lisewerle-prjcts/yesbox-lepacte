@@ -121,14 +121,14 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
               </p>
               <label className="label">{t('Pour vous deux', 'For the two of you')}</label>
               <div className="flex items-center gap-2 mb-4">
-                <input type="text" className="input-field" maxLength={40} placeholder={t('Prénom', 'First name')} value={prenom1} onChange={e => setPrenom1(e.target.value)} />
+                <input type="text" className="input-field" placeholder={t('Prénom', 'First name')} value={prenom1} onChange={e => setPrenom1(e.target.value)} />
                 <span className="font-serif" style={{ fontSize: 20, color: 'var(--ink)' }}>&amp;</span>
-                <input type="text" className="input-field" maxLength={40} placeholder={t('Prénom', 'First name')} value={prenom2} onChange={e => setPrenom2(e.target.value)} />
+                <input type="text" className="input-field" placeholder={t('Prénom', 'First name')} value={prenom2} onChange={e => setPrenom2(e.target.value)} />
               </div>
               {!pourSoi && (
                 <>
                   <label className="label">{t('De la part de', 'From')}</label>
-                  <input type="text" className="input-field" maxLength={60} placeholder={t('Votre prénom, ou « Toute la famille »', 'Your first name, or "The whole family"')} value={deLaPartDe} onChange={e => setDeLaPartDe(e.target.value)} />
+                  <input type="text" className="input-field" placeholder={t('Votre prénom, ou « Toute la famille »', 'Your first name, or "The whole family"')} value={deLaPartDe} onChange={e => setDeLaPartDe(e.target.value)} />
                 </>
               )}
             </section>

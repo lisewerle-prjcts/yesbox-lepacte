@@ -64,6 +64,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   noces: '« noces de bois », « noces d’or »…',
   idees_cadeau: 'idées de cadeaux pour cette matière (vide s’il n’y en a pas)',
   invite_par: 'prénom de la personne qui invite (ou « Ton/ta partenaire »)',
+  code_parrainage: 'code de parrainage du couple',
   site: 'adresse du site, pour les visuels du dossier public/emails',
   mot_personnel: 'mot personnel ajouté à la validation (Vue d’ensemble > Tâches), vide sinon',
 }
@@ -1433,6 +1434,49 @@ Now that you’ve been through the whole program, how did you find it? Your revi
 **As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, for example the "Pact – our yearly date" yearly subscription, to say yes again every year.
 
 petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'parrainage_module_5', famille: 'abonnement', nom: 'Parrainage — après le module 5 (avec le code)', rappel: true,
+    quand: 'Le lendemain de la fin du module 5 (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux deux membres.',
+    obligatoires: ['code_parrainage'],
+    fr: { objet: 'Déjà 5 modules ! Faites découvrir YES BOX à d’autres couples', corps: `${BONJOUR.fr}
+
+Vous venez de terminer le module « {module} » : vous êtes déjà à mi-parcours, bravo à vous deux !
+
+Si YES BOX vous fait du bien, pourquoi ne pas en parler autour de vous ? Voici votre code de parrainage, à partager avec les couples de votre entourage :
+
+[code: {code_parrainage}]
+
+Ils le saisissent en créant leur compte, ou en passant par votre lien : [lien: {site}/inscription?parrain={code_parrainage} | {site}/inscription?parrain={code_parrainage}]
+
+**Tous les 5 couples qui s’inscrivent avec votre code, vous recevez un bon d’achat de 10 €**, déduit automatiquement de votre prochain paiement (pack initial ou abonnement annuel). Les bons se cumulent : 10 couples, 20 €, et ainsi de suite.
+
+Dans Mon compte, rubrique Parrainage, vous retrouvez votre code, le crédit gagné et les couples inscrits grâce à vous, avec leur date d’inscription.
+
+[bouton: Voir mon parrainage | {site}/mon-compte#parrainage]
+
+petit: Le premier module est gratuit pour les couples que vous parrainez.
+
+${EQUIPE.fr}` },
+    en: { objet: '5 modules already! Share YES BOX with other couples', corps: `${BONJOUR.en}
+
+You’ve just finished the "{module}" module: you’re already halfway through, well done to you both!
+
+If YES BOX is doing you good, why not tell the people around you? Here is your referral code, to share with couples you know:
+
+[code: {code_parrainage}]
+
+They enter it when creating their account, or use your link: [lien: {site}/inscription?parrain={code_parrainage} | {site}/inscription?parrain={code_parrainage}]
+
+**For every 5 couples who sign up with your code, you get a €10 voucher**, automatically deducted from your next payment (starter pack or yearly subscription). Vouchers add up: 10 couples, €20, and so on.
+
+In My Account, under Referrals, you’ll find your code, the credit you’ve earned and the couples who signed up thanks to you, with their sign-up date.
+
+[bouton: See my referrals | {site}/mon-compte#parrainage]
+
+petit: The first module is free for the couples you refer.
 
 ${EQUIPE.en}` },
   },

@@ -201,7 +201,6 @@ export default function VotreCoupleCard({
                 name="code"
                 type="text"
                 placeholder={t('Ex : A3F9K', 'E.g.: A3F9K')}
-                maxLength={12}
                 autoCapitalize="characters"
                 required
                 className="field uppercase"

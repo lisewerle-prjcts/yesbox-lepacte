@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { Star, Check } from 'lucide-react'
 import { envoyerAvis } from '@/app/actions/avis'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
-import { PRENOM_AVIS_MAX, TEXTE_AVIS_MAX } from '@/lib/avis-constantes'
 
 interface AvisExistant {
   prenom: string
@@ -125,18 +124,17 @@ export default function AvisClient({ existant, prenomParDefaut, debutParDefaut }
             id="avis-texte"
             className="field"
             rows={5}
-            maxLength={TEXTE_AVIS_MAX}
             value={texte}
             onChange={e => setTexte(e.target.value)}
             placeholder={t('Ce que vous avez découvert, ce qui vous a plu, ce que ça a changé entre vous…', 'What you discovered, what you enjoyed, what it changed between you…')}
             required
           />
-          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, textAlign: 'right' }}>{texte.length} / {TEXTE_AVIS_MAX}</p>
+          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, textAlign: 'right' }}>{t(`${texte.length} caractère${texte.length > 1 ? 's' : ''}`, `${texte.length} character${texte.length > 1 ? 's' : ''}`)}</p>
         </div>
 
         <div>
           <label htmlFor="avis-prenom" className="flabel">{t('Prénom ou initiales', 'First name or initials')}</label>
-          <input id="avis-prenom" className="field" value={prenom} maxLength={PRENOM_AVIS_MAX} onChange={e => setPrenom(e.target.value)} placeholder={t('Ex : Camille & Sam, ou C + S', 'E.g. Camille & Sam, or C + S')} required />
+          <input id="avis-prenom" className="field" value={prenom} onChange={e => setPrenom(e.target.value)} placeholder={t('Ex : Camille & Sam, ou C + S', 'E.g. Camille & Sam, or C + S')} required />
           <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{t('C’est le nom affiché sous votre avis.', 'This is the name shown under your review.')}</p>
         </div>
 

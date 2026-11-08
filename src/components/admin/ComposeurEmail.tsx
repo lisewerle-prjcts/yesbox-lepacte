@@ -15,9 +15,9 @@ export const MESSAGE_VIDE: MessageManuel = { fr: { objet: '', corps: '' }, en: {
 
 // {site} et {lien} : remplis pour tout le monde (adresse du site et espace
 // couple), comme dans src/app/actions/admin.ts.
-const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code', 'site', 'lien']
+const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code', 'code_parrainage', 'site', 'lien']
 const SITE = (process.env.NEXT_PUBLIC_APP_URL || 'https://yesbox-lepacte.vercel.app').replace(/\/+$/, '')
-const EXEMPLE = { prenom: 'Camille', partenaire: 'Sacha', code: 'A1B2C3', site: SITE, lien: `${SITE}/tableau-de-bord` }
+const EXEMPLE = { prenom: 'Camille', partenaire: 'Sacha', code: 'A1B2C3', code_parrainage: 'PAR7KQ', site: SITE, lien: `${SITE}/tableau-de-bord` }
 
 // Langues à remplir pour ce mode d'envoi.
 export function languesDuMode(mode: ModeEnvoi): Langue[] {

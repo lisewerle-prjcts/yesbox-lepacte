@@ -20,12 +20,14 @@ type ProfilCharte = { couple_id?: string | null; charte_beta_acceptee_le?: strin
 // (profil chargé avec select('*')), personne n'est bloqué.
 export async function charteBetaManquante(admin: AdminClient, profile: ProfilCharte): Promise<boolean> {
   if (!profile?.couple_id || !('charte_beta_acceptee_le' in profile) || profile.charte_beta_acceptee_le) return false
+  // Plusieurs codes possibles (codes cumulables) : la charte est demandée si
+  // l'un d'eux est un code de la bêta.
   const { data } = await admin
     .from('codes_gratuits_utilisations')
     .select('codes_gratuits(code)')
     .eq('couple_id', profile.couple_id)
-    .maybeSingle()
-  const lie = data?.codes_gratuits as { code?: string } | { code?: string }[] | null | undefined
-  const code = Array.isArray(lie) ? lie[0]?.code : lie?.code
-  return estCodeCharteBeta(code)
+  return (data ?? []).some(u => {
+    const lie = u.codes_gratuits as { code?: string } | { code?: string }[] | null | undefined
+    return estCodeCharteBeta(Array.isArray(lie) ? lie[0]?.code : lie?.code)
+  })
 }

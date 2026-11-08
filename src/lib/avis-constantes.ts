@@ -1,9 +1,11 @@
 // Types, limites et mise en forme des avis, utilisables côté navigateur
 // (formulaire /avis, accueil). La logique serveur est dans ./avis.ts.
 
-export const PRENOM_AVIS_MAX = 40
+// Garde-fous techniques seulement (aucun champ ne bloque la saisie) :
+// largement au-dessus de ce qu'un avis contient.
+export const PRENOM_AVIS_MAX = 100
 export const TEXTE_AVIS_MIN = 10
-export const TEXTE_AVIS_MAX = 1500
+export const TEXTE_AVIS_MAX = 10000
 
 // Avis affichés sur l'accueil (les plus récents), et repris tels quels dans
 // les données structurées.

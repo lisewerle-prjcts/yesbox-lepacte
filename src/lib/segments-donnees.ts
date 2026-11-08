@@ -105,7 +105,8 @@ export async function chargerPersonnesSegment(admin: AdminClient): Promise<Perso
   for (const u of codes ?? []) {
     const lie = u.codes_gratuits as { code?: string } | { code?: string }[] | null
     const code = Array.isArray(lie) ? lie[0]?.code : lie?.code
-    if (code) codeParCouple.set(u.couple_id, code)
+    // Codes cumulables : tous les codes du couple, séparés par des virgules.
+    if (code) codeParCouple.set(u.couple_id, codeParCouple.has(u.couple_id) ? `${codeParCouple.get(u.couple_id)}, ${code}` : code)
   }
 
   return (profiles ?? []).map(p => {

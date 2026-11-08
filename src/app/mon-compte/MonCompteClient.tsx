@@ -18,7 +18,7 @@ import ChampCode from '@/components/ChampCode'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MonCompteClient({
-  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, offreRdvAnnuelDispo, codeParrainage, filleulsCount, rappelsEmail, langue,
+  prenom, email, nomCouple, pairingCode, paired, abonnement, formule, annuelPrevuLe, proposerAnnuel, offreRdvAnnuelDispo, codeParrainage, filleuls, recompenses, rappelsEmail, langue,
 }: {
   prenom: string
   email: string
@@ -34,7 +34,9 @@ export default function MonCompteClient({
   /** Pacte signé, sans abonnement : proposer l'abonnement annuel (19 €/an). */
   offreRdvAnnuelDispo: boolean
   codeParrainage: string | null
-  filleulsCount: number
+  filleuls: Filleul[]
+  /** Paliers de 5 filleuls déjà récompensés (10 € chacun). */
+  recompenses: number
   rappelsEmail: boolean
   /** Langue préférée enregistrée sur le profil (site et e-mails). */
   langue: 'fr' | 'en'
@@ -52,7 +54,7 @@ export default function MonCompteClient({
         <CoupleCard nomCouple={nomCouple} pairingCode={pairingCode} paired={paired} />
         <AbonnementCard abonnement={abonnement} formule={formule} annuelPrevuLe={annuelPrevuLe} proposerAnnuel={proposerAnnuel} offreRdvAnnuelDispo={offreRdvAnnuelDispo} />
         {!estCompteResilie(abonnement) && <AjouterCodeCard />}
-        <ParrainageCard codeParrainage={codeParrainage} filleulsCount={filleulsCount} />
+        <ParrainageCard codeParrainage={codeParrainage} filleuls={filleuls} recompenses={recompenses} />
         <AvisCard />
         <LangueCard langueInitiale={langue} />
         <RappelsCard actifInitial={rappelsEmail} />
@@ -336,8 +338,14 @@ function AjouterCodeCard() {
   )
 }
 
-function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: string | null; filleulsCount: number }) {
+// Couple inscrit avec le code de parrainage : prénoms de ses membres et date
+// d'inscription.
+export interface Filleul { prenoms: string[]; inscritLe: string | null }
+
+function ParrainageCard({ codeParrainage, filleuls, recompenses }: { codeParrainage: string | null; filleuls: Filleul[]; recompenses: number }) {
   const t = useT()
+  const { locale } = useLocale()
+  const filleulsCount = filleuls.length
   const [copie, setCopie] = useState<'code' | 'lien' | null>(null)
   if (!codeParrainage) return null
 
@@ -360,7 +368,7 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
   )
 
   return (
-    <div className="card p-6">
+    <div id="parrainage" className="card p-6">
       <div className="flex items-center gap-2 mb-4">
         <Gift className="w-4 h-4 text-magenta" />
         <h2 className="font-fraunces text-lg font-bold text-gray-900">{t('Parrainage', 'Referrals')}</h2>
@@ -392,6 +400,25 @@ function ParrainageCard({ codeParrainage, filleulsCount }: { codeParrainage: str
           ? t(`${filleulsCount} couple(s) parrainé(s) — bravo !`, `${filleulsCount} referred couple(s) — nice!`)
           : t(`${filleulsCount} couple(s) parrainé(s) · encore ${prochainSeuil} avant ta prochaine récompense`, `${filleulsCount} referred couple(s) · ${prochainSeuil} more until your next reward`)}
       </p>
+      <p className="text-sm text-gray-700 mt-3">
+        <strong>{t('Crédit gagné :', 'Credit earned:')}</strong> {recompenses * 10} €
+        {recompenses > 0 && <span className="text-gray-500"> {t('(déduit automatiquement de tes prochains paiements)', '(automatically deducted from your next payments)')}</span>}
+      </p>
+      {filleulsCount > 0 && (
+        <div className="mt-3">
+          <p className="label">{t('Couples inscrits grâce à vous', 'Couples who signed up thanks to you')}</p>
+          <ul className="text-sm text-gray-700 space-y-1">
+            {filleuls.map((f, i) => (
+              <li key={i} className="flex justify-between gap-3 max-w-md">
+                <span>{f.prenoms.length ? f.prenoms.join(' & ') : t('Prénom non renseigné', 'No first name given')}</span>
+                <span className="text-gray-400 shrink-0">
+                  {f.inscritLe ? new Date(f.inscritLe).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
