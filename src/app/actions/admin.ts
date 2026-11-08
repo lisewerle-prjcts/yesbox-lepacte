@@ -23,7 +23,7 @@ import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } fr
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
-import { cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
+import { adresseDuSite, cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
 import { traductionConfiguree, traduireEmailEnAnglais } from '@/lib/traduction'
 import type { OffreCodeGratuit, QuestionType } from '@/types'
 
@@ -106,13 +106,16 @@ export async function adminResetModule(coupleId: string, slug: string) {
 // d'un modèle d'e-mail automatique, en français, en anglais, ou dans la
 // langue choisie par chaque personne (les deux versions sont alors
 // nécessaires). Variables remplacées pour chaque personne : {prenom},
-// {partenaire} (prénom de l'autre membre du couple) et {code} (code couple).
+// {partenaire} (prénom de l'autre membre du couple), {code} (code couple) et
+// {code_parrainage} ;
+// pour tout le monde : {site} (adresse du site, pour les visuels) et {lien}
+// (espace couple, /tableau-de-bord), pour repartir d'un modèle automatique.
 // ---------------------------------------------------------------------------
 
 export type ModeEnvoi = 'fr' | 'en' | 'langue'
 export interface MessageManuel { fr: ContenuEmail; en: ContenuEmail; modele?: string | null }
 
-const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code']
+const VARIABLES_MANUELLES = ['prenom', 'partenaire', 'code', 'code_parrainage', 'site', 'lien']
 
 function verifierMessage(message: MessageManuel, mode: ModeEnvoi): string | null {
   const langues: Locale[] = mode === 'langue' ? ['fr', 'en'] : [mode]
@@ -140,13 +143,13 @@ function etiquetteManuelle(message: MessageManuel) {
 // Prénom, prénom de l'autre membre du couple, code couple et langue de
 // chaque personne.
 async function contexteDestinataires(admin: ReturnType<typeof createAdminClient>, ids: string[]) {
-  const contexte = new Map<string, { prenom: string; partenaire: string; code: string; langue: Locale }>()
+  const contexte = new Map<string, { prenom: string; partenaire: string; code: string; codeParrainage: string; langue: Locale }>()
   if (!ids.length) return contexte
   const { data: personnes } = await admin.from('profiles').select('id, prenom, couple_id').in('id', ids)
   const coupleIds = [...new Set((personnes ?? []).map(p => p.couple_id).filter((c): c is string => !!c))]
   const [{ data: membres }, { data: couples }, langues] = await Promise.all([
     coupleIds.length ? admin.from('profiles').select('id, prenom, couple_id').in('couple_id', coupleIds) : Promise.resolve({ data: [] as { id: string; prenom: string | null; couple_id: string | null }[] }),
-    coupleIds.length ? admin.from('couples').select('id, pairing_code').in('id', coupleIds) : Promise.resolve({ data: [] as { id: string; pairing_code: string | null }[] }),
+    coupleIds.length ? admin.from('couples').select('id, pairing_code, code_parrainage').in('id', coupleIds) : Promise.resolve({ data: [] as { id: string; pairing_code: string | null; code_parrainage: string | null }[] }),
     languesDesProfils(admin, ids),
   ])
   for (const p of personnes ?? []) {
@@ -155,13 +158,16 @@ async function contexteDestinataires(admin: ReturnType<typeof createAdminClient>
       prenom: p.prenom?.trim() || '',
       partenaire: autre?.prenom?.trim() || '',
       code: (couples ?? []).find(c => c.id === p.couple_id)?.pairing_code || '',
+      codeParrainage: (couples ?? []).find(c => c.id === p.couple_id)?.code_parrainage || '',
       langue: langues.get(p.id) ?? 'fr',
     })
   }
   return contexte
 }
 
-function rendreMessage(message: MessageManuel, langue: Locale, vars: Variables) {
+function rendreMessage(message: MessageManuel, langue: Locale, varsPersonne: Variables) {
+  const site = adresseDuSite()
+  const vars: Variables = { site, lien: `${site}/tableau-de-bord`, ...varsPersonne }
   return { objet: rendreObjet(message[langue].objet, vars), html: rendreCorps(message[langue].corps, vars) }
 }
 
@@ -178,7 +184,7 @@ export async function adminSendEmail(to: string, message: MessageManuel, mode: M
   const { data: profil } = await admin.from('profiles').select('id').eq('email', adresse.toLowerCase()).maybeSingle()
   const ctx = profil ? (await contexteDestinataires(admin, [profil.id])).get(profil.id) : undefined
   const langue: Locale = mode === 'langue' ? ctx?.langue ?? 'fr' : mode
-  const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '' })
+  const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '', code_parrainage: ctx?.codeParrainage ?? '' })
 
   const envoye = await envoyerMail({ to: adresse, subject: objet, body: html, etiquette: etiquetteManuelle(message) })
   if (!envoye) return { error: 'Échec de l\'envoi' }
@@ -223,7 +229,7 @@ export async function adminEnvoyerEmailSegment(filtres: FiltresSegment, message:
   for (const p of personnes) {
     const ctx = contexte.get(p.id)
     const langue: Locale = mode === 'langue' ? ctx?.langue ?? 'fr' : mode
-    const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? p.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '' })
+    const { objet, html } = rendreMessage(message, langue, { prenom: ctx?.prenom ?? p.prenom ?? '', partenaire: ctx?.partenaire ?? '', code: ctx?.code ?? '', code_parrainage: ctx?.codeParrainage ?? '' })
     const ok = await envoyerMail({ to: p.email, subject: objet, body: html + piedDePageRappel(p.id, langue), etiquette: etiquetteManuelle(message), entetes: entetesDesinscription(p.id) })
     if (ok) { envoyes += 1; parLangue[langue] += 1 }
     else echecs.push(p.email)
@@ -883,8 +889,8 @@ export async function adminModifierDureeCode(id: string, dureeMois: number | nul
 
 // Attribue un code gratuit au couple d'un membre inscrit, comme s'il l'avait
 // saisi lui-même (mêmes règles : code actif, pas épuisé ; charte de la bêta
-// demandée ensuite pour les codes concernés). Un couple n'a qu'un code : avec
-// `remplacer`, l'ancien est retiré (et son utilisation décomptée) avant.
+// demandée ensuite pour les codes concernés). Les codes sont cumulables : le
+// nouveau s'ajoute à ceux que le couple a déjà.
 export async function adminAttribuerCode(userId: string, code: string, remplacer = false) {
   await assertAdmin()
   const admin = createAdminClient()
@@ -900,21 +906,20 @@ export async function adminAttribuerCode(userId: string, code: string, remplacer
   if (dateFinPassee(nouveau.actif_jusqu_au)) return { error: 'Ce code a dépassé sa date de fin : prolonge-la dans Codes gratuits.' }
   if (nouveau.usages >= nouveau.usages_max) return { error: 'Ce code a atteint son nombre maximum d\'utilisations : augmente-le dans Codes gratuits.' }
 
-  const { data: existant } = await admin.from('codes_gratuits_utilisations').select('id, code_id, codes_gratuits(code, usages)').eq('couple_id', coupleId).maybeSingle()
-  if (existant) {
-    const lie = existant.codes_gratuits as { code?: string; usages?: number } | { code?: string; usages?: number }[] | null
-    const ancien = Array.isArray(lie) ? lie[0] : lie
-    if (ancien?.code === cleanCode) return { error: `Ce couple a déjà le code ${cleanCode}.` }
-    if (!remplacer) return { error: `Ce couple a déjà le code ${ancien?.code ?? '—'}.`, codeExistant: ancien?.code ?? '—' }
-    const { error: suppression } = await admin.from('codes_gratuits_utilisations').delete().eq('id', existant.id)
-    if (suppression) return { error: suppression.message }
-    await admin.from('codes_gratuits').update({ usages: Math.max(0, (ancien?.usages ?? 1) - 1) }).eq('id', existant.code_id)
-  }
+  // Codes cumulables : un couple peut avoir plusieurs codes, mais pas deux
+  // fois le même. `remplacer` est gardé pour compatibilité (plus utilisé).
+  void remplacer
+  const { data: existants } = await admin.from('codes_gratuits_utilisations').select('codes_gratuits(code)').eq('couple_id', coupleId)
+  const dejaLa = (existants ?? []).some(u => {
+    const lie = u.codes_gratuits as { code?: string } | { code?: string }[] | null
+    return (Array.isArray(lie) ? lie[0]?.code : lie?.code) === cleanCode
+  })
+  if (dejaLa) return { error: `Ce couple a déjà le code ${cleanCode}.` }
 
   const { data, error } = await admin.rpc('utiliser_code_gratuit', { p_code: cleanCode, p_couple_id: coupleId })
   if (error) return { error: error.message }
   if (!data?.success) {
-    const messages: Record<string, string> = { invalide: 'Code invalide', expire: 'Ce code a dépassé sa date de fin', epuise: 'Ce code a atteint son nombre maximum d\'utilisations', deja_utilise: 'Ce couple a déjà un code' }
+    const messages: Record<string, string> = { invalide: 'Code invalide', expire: 'Ce code a dépassé sa date de fin', epuise: 'Ce code a atteint son nombre maximum d\'utilisations', deja_utilise: 'Ce couple a déjà ce code' }
     return { error: messages[data?.error] ?? 'Code invalide' }
   }
 

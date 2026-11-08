@@ -177,7 +177,7 @@ export default function AdminActionsClient({
             modeles={modeles}
             message={message}
             onChange={setMessage}
-            aideVariables="Remplacées automatiquement si l’adresse est celle d’une personne inscrite : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple)."
+            aideVariables="Remplacées automatiquement si l’adresse est celle d’une personne inscrite : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple), {code_parrainage} (code de parrainage)."
           />
           {emailResultat && <Alert type={emailResultat.ok ? 'success' : 'error'} message={emailResultat.texte} />}
           <BoutonsEnvoi message={emailTo.trim() ? message : { ...MESSAGE_VIDE }} envoi={envoi} onEnvoyer={sendEmail} libelle="" />

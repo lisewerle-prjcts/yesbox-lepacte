@@ -7,7 +7,8 @@ import { t } from '@/lib/i18n/locale'
 import { chiffrer } from '@/lib/chiffrement'
 import { moisDepuis, themesDuCouple } from '@/lib/rappels-email'
 
-const LONGUEUR_MAX = 4000
+// Garde-fou technique seulement, largement au-dessus d'une réponse.
+const LONGUEUR_MAX = 50000
 
 // Réponse d'un membre du couple à la question d'un mois écoulé depuis la
 // signature du pacte (page /rdv-annuels). Écrite par le serveur, chiffrée.
@@ -28,7 +29,8 @@ export async function enregistrerReponseMois(mois: number, valeur: string): Prom
   // Seulement un mois qui a eu sa question (pas les mois sans e-mail du mois).
   if (!(await themesDuCouple(admin, profile.couple_id)).has(mois)) return { error: t(locale, 'Mois invalide', 'Invalid month') }
 
-  const texte = valeur.trim().slice(0, LONGUEUR_MAX)
+  const texte = valeur.trim()
+  if (texte.length > LONGUEUR_MAX) return { error: t(locale, 'Ta réponse est trop longue pour être enregistrée.', 'Your answer is too long to be saved.') }
   const { error } = await admin.from('rdv_reponses_mois').upsert(
     { couple_id: profile.couple_id, user_id: user.id, mois, valeur: texte ? chiffrer(texte) : null, updated_at: new Date().toISOString() },
     { onConflict: 'couple_id,user_id,mois' },

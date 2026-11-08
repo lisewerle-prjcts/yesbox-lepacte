@@ -327,7 +327,7 @@ export default function SegmentClient({
           modeles={modeles}
           message={message}
           onChange={setMessage}
-          aideVariables="Remplacées pour chaque personne : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple)."
+          aideVariables="Remplacées pour chaque personne : {prenom}, {partenaire} (prénom de l’autre membre du couple), {code} (code couple), {code_parrainage} (code de parrainage)."
         />
         <BoutonsEnvoi message={selection.length ? message : MESSAGE_VIDE} envoi={envoi} onEnvoyer={envoyer} libelle={`(${selection.length})`} />
       </div>

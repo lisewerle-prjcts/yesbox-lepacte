@@ -32,7 +32,8 @@ export default async function AdminUtilisateurs() {
   for (const u of utilisations || []) {
     const lie = u.codes_gratuits as { code?: string } | { code?: string }[] | null
     const code = Array.isArray(lie) ? lie[0]?.code : lie?.code
-    if (code) codeParCouple[u.couple_id] = code
+    // Codes cumulables : tous les codes du couple, séparés par des virgules.
+    if (code) codeParCouple[u.couple_id] = codeParCouple[u.couple_id] ? `${codeParCouple[u.couple_id]}, ${code}` : code
   }
 
   const confirmeById: Record<string, boolean> = {}

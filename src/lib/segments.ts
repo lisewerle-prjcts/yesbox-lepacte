@@ -64,7 +64,8 @@ const JOUR = 24 * 60 * 60 * 1000
 function remplit(p: PersonneSegment, c: Critere, maintenant: number): boolean {
   switch (c.type) {
     case 'code':
-      return !!c.valeur && (p.code ?? '').toUpperCase() === c.valeur.trim().toUpperCase()
+      // Un couple peut avoir plusieurs codes (séparés par des virgules).
+      return !!c.valeur && (p.code ?? '').toUpperCase().split(/,\s*/).includes(c.valeur.trim().toUpperCase())
     case 'module_termine':
       return !!c.valeur && c.valeur in p.modulesTermines
     case 'inactif': {

@@ -7,7 +7,8 @@ import { getStripe } from '@/lib/stripe'
 import { estDureeCarteCadeau, prixCarteCadeauId } from '@/lib/cartes-cadeaux'
 
 // Prénoms imprimés sur la carte : texte court, sans retour à la ligne.
-function nettoyer(texte: string | undefined, max = 60) {
+// Garde-fou technique (métadonnée Stripe limitée à 500 caractères).
+function nettoyer(texte: string | undefined, max = 200) {
   return (texte ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max)
 }
 
@@ -33,7 +34,7 @@ export async function acheterCarteCadeau(choix: {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const prenoms = [nettoyer(choix.prenom1, 40), nettoyer(choix.prenom2, 40)].filter(Boolean)
+  const prenoms = [nettoyer(choix.prenom1), nettoyer(choix.prenom2)].filter(Boolean)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const metadata = {
     type: 'carte_cadeau',

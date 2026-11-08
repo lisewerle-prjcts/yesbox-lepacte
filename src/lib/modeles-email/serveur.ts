@@ -88,6 +88,10 @@ export async function rendreModele(cle: string, locale: Locale, varsRecues: Vari
 
 // Envoie un modèle. Pour un rappel, `desinscription` (id de la personne)
 // ajoute le lien « Ne plus recevoir ces rappels ».
+// E-mails de sécurité : pas de copie à l'équipe (lien de confirmation ou de
+// réinitialisation, mot de passe).
+const SANS_COPIE = new Set(['confirmation_adresse', 'mot_de_passe_oublie', 'nouveau_mot_de_passe'])
+
 export async function envoyerModele(options: {
   to: string
   cle: string
@@ -107,5 +111,6 @@ export async function envoyerModele(options: {
     body: html + pied,
     etiquette: options.etiquette ?? modele.etiquette,
     entetes: rappel ? entetesDesinscription(options.desinscription!) : undefined,
+    copie: !SANS_COPIE.has(options.cle),
   })
 }

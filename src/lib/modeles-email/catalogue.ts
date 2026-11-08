@@ -64,6 +64,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   noces: '« noces de bois », « noces d’or »…',
   idees_cadeau: 'idées de cadeaux pour cette matière (vide s’il n’y en a pas)',
   invite_par: 'prénom de la personne qui invite (ou « Ton/ta partenaire »)',
+  code_parrainage: 'code de parrainage du couple',
   site: 'adresse du site, pour les visuels du dossier public/emails',
   mot_personnel: 'mot personnel ajouté à la validation (Vue d’ensemble > Tâches), vide sinon',
 }
@@ -1373,6 +1374,109 @@ To activate it, log in at yesbox-lepacte.fr and enter this code in My Account, u
 Valid until {date}, for one couple.
 
 [bouton: Download the printable card | {lien}]
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'demande_avis', famille: 'abonnement', nom: 'Demande d’avis — après le premier module', rappel: true,
+    quand: '2 jours après la fin du premier module (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
+    fr: { objet: 'Comment avez-vous vécu votre premier module YES BOX ?', corps: `${BONJOUR.fr}
+
+Vous avez terminé le module « {module} » : bravo d’avoir pris ce temps à deux !
+
+Comment l’avez-vous vécu ? Votre avis compte beaucoup pour nous, et il aide d’autres couples à se lancer. Quelques lignes et une note suffisent, et chacun·e peut laisser le sien.
+
+[bouton: Laisser mon avis | {site}/avis]
+
+**Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, le pack initial ou l’abonnement annuel « Pacte – notre rendez-vous annuel ».
+
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+
+${EQUIPE.fr}` },
+    en: { objet: 'How did you find your first YES BOX module?', corps: `${BONJOUR.en}
+
+You’ve finished the "{module}" module: well done for taking this time together!
+
+How did you find it? Your review means a lot to us, and it helps other couples get started. A few lines and a rating are enough, and each of you can leave your own.
+
+[bouton: Leave my review | {site}/avis]
+
+**As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, the starter pack or the "Pact – our yearly date" yearly subscription.
+
+petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'demande_avis_pacte', famille: 'abonnement', nom: 'Demande d’avis — après la signature du pacte', rappel: true,
+    quand: '2 jours après la signature du pacte par les deux. Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
+    fr: { objet: 'Votre pacte est signé : un mot sur votre parcours ?', corps: `${BONJOUR.fr}
+
+Il y a quelques jours, vous avez signé votre pacte de couple. Bravo à vous deux pour tout ce chemin parcouru ensemble !
+
+Maintenant que vous avez vécu le parcours en entier, comment l’avez-vous trouvé ? Votre avis compte beaucoup pour nous, et il aide d’autres couples à se lancer. Quelques lignes et une note suffisent, et chacun·e peut laisser le sien.
+
+[bouton: Laisser mon avis | {site}/avis]
+
+**Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, par exemple l’abonnement annuel « Pacte – notre rendez-vous annuel », pour vous redire oui chaque année.
+
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+
+${EQUIPE.fr}` },
+    en: { objet: 'Your pact is signed: a word about your journey?', corps: `${BONJOUR.en}
+
+A few days ago, you signed your couple’s pact. Well done to you both for the whole journey you’ve made together!
+
+Now that you’ve been through the whole program, how did you find it? Your review means a lot to us, and it helps other couples get started. A few lines and a rating are enough, and each of you can leave your own.
+
+[bouton: Leave my review | {site}/avis]
+
+**As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, for example the "Pact – our yearly date" yearly subscription, to say yes again every year.
+
+petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'parrainage_module_5', famille: 'abonnement', nom: 'Parrainage — après le module 5 (avec le code)', rappel: true,
+    quand: 'Le lendemain de la fin du module 5 (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux deux membres.',
+    obligatoires: ['code_parrainage'],
+    fr: { objet: 'Déjà 5 modules ! Faites découvrir YES BOX à d’autres couples', corps: `${BONJOUR.fr}
+
+Vous venez de terminer le module « {module} » : vous êtes déjà à mi-parcours, bravo à vous deux !
+
+Si YES BOX vous fait du bien, pourquoi ne pas en parler autour de vous ? Voici votre code de parrainage, à partager avec les couples de votre entourage :
+
+[code: {code_parrainage}]
+
+Ces couples saisissent votre code en créant leur compte, ou passent par votre lien : [lien: {site}/inscription?parrain={code_parrainage} | {site}/inscription?parrain={code_parrainage}]
+
+**Tous les 5 couples qui s’inscrivent avec votre code, vous recevez un bon d’achat de 10 €**, déduit automatiquement de votre prochain paiement (pack initial ou abonnement annuel). Les bons se cumulent : 10 couples, 20 €, et ainsi de suite.
+
+Dans Mon compte, rubrique Parrainage, vous retrouvez votre code, le crédit gagné et les couples inscrits grâce à vous, avec leur date d’inscription.
+
+[bouton: Voir mon parrainage | {site}/mon-compte#parrainage]
+
+petit: Le premier module est gratuit pour les couples que vous parrainez.
+
+${EQUIPE.fr}` },
+    en: { objet: '5 modules already! Share YES BOX with other couples', corps: `${BONJOUR.en}
+
+You’ve just finished the "{module}" module: you’re already halfway through, well done to you both!
+
+If YES BOX is doing you good, why not tell the people around you? Here is your referral code, to share with couples you know:
+
+[code: {code_parrainage}]
+
+They enter it when creating their account, or use your link: [lien: {site}/inscription?parrain={code_parrainage} | {site}/inscription?parrain={code_parrainage}]
+
+**For every 5 couples who sign up with your code, you get a €10 voucher**, automatically deducted from your next payment (starter pack or yearly subscription). Vouchers add up: 10 couples, €20, and so on.
+
+In My Account, under Referrals, you’ll find your code, the credit you’ve earned and the couples who signed up thanks to you, with their sign-up date.
+
+[bouton: See my referrals | {site}/mon-compte#parrainage]
+
+petit: The first module is free for the couples you refer.
 
 ${EQUIPE.en}` },
   },
