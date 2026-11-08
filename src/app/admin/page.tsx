@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { modulesTerminesParCouple, programmeInitialTermine } from '@/lib/segments-donnees'
 import Link from 'next/link'
+import { MODULE_RDV_ANNUEL } from '@/lib/progression'
 import { tachesEmailsAnniversaire, grandesDatesAVenir } from '@/lib/grandes-dates'
 import GrandesDatesAVenir, { type GrandeDateAVenir } from '@/components/admin/GrandesDatesAVenir'
 import TachesClient from './TachesClient'
@@ -10,7 +11,7 @@ import { chargerProblemesConnexion } from '@/lib/problemes-connexion'
 import { formaterMoisAvis } from '@/lib/avis'
 import type { AvisAdmin } from './AvisTaches'
 import type { RelanceAVenir } from './TachesClient'
-import { demandesAvisPrevues, parrainagesPrevus, relancesDemarragePrevues, relancesInactivitePrevues } from '@/lib/rappels-email'
+import { emailsModifies, demandesAvisPrevues, parrainagesPrevus, relancesDemarragePrevues, relancesInactivitePrevues } from '@/lib/rappels-email'
 import { modeleEmail } from '@/lib/modeles-email/catalogue'
 
 // Les rappels partent avec la tâche quotidienne de 7 h (UTC, cf. vercel.json) :
@@ -85,17 +86,30 @@ export default async function AdminHome() {
   const maintenantTaches = Date.now()
   const horizon = maintenantTaches + RELANCES_HORIZON_JOURS * 24 * 60 * 60 * 1000
   const numeroCouple = new Map((allCouples ?? []).map(c => [c.id, c.numero as number | null]))
-  const [inactivite, demarrage, avisPrevus, parrainages] = await Promise.all([
+  const [inactivite, demarrage, avisPrevus, parrainages, modifies] = await Promise.all([
     relancesInactivitePrevues(supabase, horizon).catch(() => []),
     relancesDemarragePrevues(supabase, horizon).catch(() => []),
     demandesAvisPrevues(supabase, horizon).catch(() => []),
     parrainagesPrevus(supabase, horizon).catch(() => []),
+    emailsModifies(supabase).catch(() => new Set<string>()),
   ])
+  // N° du dernier module terminé de chaque couple (parcours initial), ou
+  // « Pacte signé ».
+  const parcours = effectiveModules.filter(m => m.slug !== MODULE_RDV_ANNUEL)
+  const dernierModule = (coupleId: string) => {
+    const couple = (allCouples ?? []).find(c => c.id === coupleId)
+    if (couple?.pacte_signe_le) return 'Pacte signé'
+    const termines = terminesParCouple.get(coupleId) ?? {}
+    const index = parcours.map(m => m.slug in termines).lastIndexOf(true)
+    return index < 0 ? 'Aucun' : `M${index + 1} · ${parcours[index].titre}`
+  }
   const destinatairesDe = (liste: { prenom: string | null; email: string | null }[]) => liste.map(d => d.prenom ? `${d.prenom} (${d.email})` : d.email as string)
   const relancesAVenir: RelanceAVenir[] = [
     ...inactivite.map(r => ({
       sorte: 'inactivite' as const,
+      dernierModule: dernierModule(r.coupleId),
       cle: null,
+      modifie: modifies.has(`inactivite::${r.coupleId}::inactivite:${r.rang}`),
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
       email: modeleEmail(r.modele).nom,
@@ -105,7 +119,9 @@ export default async function AdminHome() {
     })),
     ...demarrage.map(r => ({
       sorte: 'demarrage' as const,
+      dernierModule: dernierModule(r.coupleId),
       cle: null,
+      modifie: modifies.has(`demarrage::${r.coupleId}::${r.type}:${r.jours}`),
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
       email: modeleEmail(r.modele).nom,
@@ -115,7 +131,9 @@ export default async function AdminHome() {
     })),
     ...[...avisPrevus, ...parrainages].map(r => ({
       sorte: r.modele === 'parrainage_module_5' ? 'parrainage' as const : 'avis' as const,
+      dernierModule: dernierModule(r.coupleId),
       cle: r.cle,
+      modifie: modifies.has(`${r.modele === 'parrainage_module_5' ? 'parrainage' : 'avis'}::${r.coupleId}::${r.cle}`),
       coupleId: r.coupleId,
       couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
       email: modeleEmail(r.modele).nom,

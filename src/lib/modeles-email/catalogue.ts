@@ -65,6 +65,7 @@ export const DESCRIPTION_VARIABLES: Record<string, string> = {
   idees_cadeau: 'idées de cadeaux pour cette matière (vide s’il n’y en a pas)',
   invite_par: 'prénom de la personne qui invite (ou « Ton/ta partenaire »)',
   code_parrainage: 'code de parrainage du couple',
+  avancement: '« le module « Moi » » ou « 6 modules, le dernier étant « Nos projets » »',
   site: 'adresse du site, pour les visuels du dossier public/emails',
   mot_personnel: 'mot personnel ajouté à la validation (Vue d’ensemble > Tâches), vide sinon',
 }
@@ -1378,11 +1379,11 @@ Valid until {date}, for one couple.
 ${EQUIPE.en}` },
   },
   {
-    cle: 'demande_avis', famille: 'abonnement', nom: 'Demande d’avis — après le premier module', rappel: true,
-    quand: '2 jours après la fin du premier module (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
-    fr: { objet: 'Comment avez-vous vécu votre premier module YES BOX ?', corps: `${BONJOUR.fr}
+    cle: 'demande_avis', famille: 'abonnement', nom: 'Demande d’avis — en cours de parcours', rappel: true,
+    quand: '2 jours après la fin du premier module (réponses dévoilées, conclusions des deux écrites), pacte pas encore signé. Indique le dernier module terminé à la date de l’envoi. Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
+    fr: { objet: 'Comment vivez-vous votre parcours YES BOX ?', corps: `${BONJOUR.fr}
 
-Vous avez terminé le module « {module} » : bravo d’avoir pris ce temps à deux !
+Vous avez terminé {avancement} : bravo d’avoir pris ce temps à deux !
 
 Comment l’avez-vous vécu ? Votre avis compte beaucoup pour nous, et il aide d’autres couples à se lancer. Quelques lignes et une note suffisent, et chacun·e peut laisser le sien.
 
@@ -1393,9 +1394,9 @@ Comment l’avez-vous vécu ? Votre avis compte beaucoup pour nous, et il aide d
 petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
 
 ${EQUIPE.fr}` },
-    en: { objet: 'How did you find your first YES BOX module?', corps: `${BONJOUR.en}
+    en: { objet: 'How are you finding your YES BOX journey?', corps: `${BONJOUR.en}
 
-You’ve finished the "{module}" module: well done for taking this time together!
+You’ve finished {avancement}: well done for taking this time together!
 
 How did you find it? Your review means a lot to us, and it helps other couples get started. A few lines and a rating are enough, and each of you can leave your own.
 
@@ -1438,12 +1439,12 @@ petit: Your review is read by the team before being published on the website, wi
 ${EQUIPE.en}` },
   },
   {
-    cle: 'parrainage_module_5', famille: 'abonnement', nom: 'Parrainage — après le module 5 (avec le code)', rappel: true,
-    quand: 'Le lendemain de la fin du module 5 (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux deux membres.',
+    cle: 'parrainage_module_5', famille: 'abonnement', nom: 'Parrainage — à partir du module 5 (avec le code)', rappel: true,
+    quand: 'Le lendemain de la fin du module 5 (réponses dévoilées, conclusions des deux écrites). Indique le dernier module terminé à la date de l’envoi. Une seule fois, aux deux membres.',
     obligatoires: ['code_parrainage'],
-    fr: { objet: 'Déjà 5 modules ! Faites découvrir YES BOX à d’autres couples', corps: `${BONJOUR.fr}
+    fr: { objet: 'Déjà {numero} modules ! Faites découvrir YES BOX à d’autres couples', corps: `${BONJOUR.fr}
 
-Vous venez de terminer le module « {module} » : vous êtes déjà à mi-parcours, bravo à vous deux !
+Vous avez terminé {avancement} : bravo à vous deux pour ce chemin parcouru !
 
 Si YES BOX vous fait du bien, pourquoi ne pas en parler autour de vous ? Voici votre code de parrainage, à partager avec les couples de votre entourage :
 
@@ -1457,12 +1458,10 @@ Dans Mon compte, rubrique Parrainage, vous retrouvez votre code, le crédit gagn
 
 [bouton: Voir mon parrainage | {site}/mon-compte#parrainage]
 
-petit: Le premier module est gratuit pour les couples que vous parrainez.
-
 ${EQUIPE.fr}` },
-    en: { objet: '5 modules already! Share YES BOX with other couples', corps: `${BONJOUR.en}
+    en: { objet: '{numero} modules already! Share YES BOX with other couples', corps: `${BONJOUR.en}
 
-You’ve just finished the "{module}" module: you’re already halfway through, well done to you both!
+You’ve finished {avancement}: well done to you both for the journey so far!
 
 If YES BOX is doing you good, why not tell the people around you? Here is your referral code, to share with couples you know:
 
@@ -1475,8 +1474,6 @@ They enter it when creating their account, or use your link: [lien: {site}/inscr
 In My Account, under Referrals, you’ll find your code, the credit you’ve earned and the couples who signed up thanks to you, with their sign-up date.
 
 [bouton: See my referrals | {site}/mon-compte#parrainage]
-
-petit: The first module is free for the couples you refer.
 
 ${EQUIPE.en}` },
   },

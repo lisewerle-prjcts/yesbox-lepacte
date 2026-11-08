@@ -1,5 +1,5 @@
 import type { createAdminClient } from '@/lib/supabase/server'
-import { mailConfigure } from '@/lib/mailer'
+import { mailConfigure, mailHtml } from '@/lib/mailer'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { hasAnsweredAll } from '@/lib/questions'
 import { aAccesComplet, offreRdvAnnuel, peutAccederModule } from '@/lib/abonnement'
@@ -9,7 +9,7 @@ import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
 import { dechiffrerLignes } from '@/lib/chiffrement'
-import { envoyerModele } from '@/lib/modeles-email/serveur'
+import { contenuModele, envoyerModele, rendreModele } from '@/lib/modeles-email/serveur'
 import { CLES_THEMES_MENSUELS, themeMensuelParDefaut, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import type { Variables } from '@/lib/modeles-email/rendu'
 
@@ -88,6 +88,41 @@ export async function envoyerRappel(destinataire: Membre, cle: string, vars: Var
     etiquette,
     contenu,
   })
+}
+
+// ---------------------------------------------------------------------------
+// Textes modifiés à la main pour un e-mail prévu (Vue d'ensemble > Tâches >
+// Modifier) : réglage « email_prevu::<sorte>::<couple>::<clé de l'envoi> »
+// (JSON { fr?, en? }, chacun { objet, corps }). Utilisé à l'envoi, par la
+// tâche du matin comme par « Envoyer maintenant », puis effacé.
+// ---------------------------------------------------------------------------
+
+export type SortePrevue = 'inactivite' | 'demarrage' | 'avis' | 'parrainage'
+export type ContenuModifie = Partial<Record<Locale, ContenuEmail>>
+const PREFIXE_PREVU_MODIFIE = 'email_prevu::'
+
+export function cleEmailModifie(sorte: SortePrevue, coupleId: string, cleEnvoi: string) {
+  return `${PREFIXE_PREVU_MODIFIE}${sorte}::${coupleId}::${cleEnvoi}`
+}
+
+export async function lireEmailModifie(admin: AdminClient, sorte: SortePrevue, coupleId: string, cleEnvoi: string): Promise<ContenuModifie | null> {
+  const { data } = await admin.from('settings').select('value').eq('key', cleEmailModifie(sorte, coupleId, cleEnvoi)).maybeSingle()
+  if (!data?.value) return null
+  try {
+    return JSON.parse(data.value) as ContenuModifie
+  } catch {
+    return null
+  }
+}
+
+export async function oublierEmailModifie(admin: AdminClient, sorte: SortePrevue, coupleId: string, cleEnvoi: string) {
+  await admin.from('settings').delete().eq('key', cleEmailModifie(sorte, coupleId, cleEnvoi))
+}
+
+// Clés (« <sorte>::<couple>::<clé> ») des e-mails prévus modifiés à la main.
+export async function emailsModifies(admin: AdminClient): Promise<Set<string>> {
+  const { data } = await admin.from('settings').select('key').like('key', `${PREFIXE_PREVU_MODIFIE}%`)
+  return new Set((data ?? []).map(r => String(r.key).slice(PREFIXE_PREVU_MODIFIE.length)))
 }
 
 // ---------------------------------------------------------------------------
@@ -227,9 +262,11 @@ export async function envoyerRelancesInactivite(admin: AdminClient, liste?: Rela
         .eq('id', r.coupleId).eq('relances_inactivite', r.rang)
         .select('id')
       if (!reserve?.length) continue
+      const modifie = await lireEmailModifie(admin, 'inactivite', r.coupleId, `inactivite:${r.rang}`)
       for (const d of r.destinataires) {
-        if (await envoyerRappel(d, r.modele, r.vars.get(d.id))) envoyes++
+        if (await envoyerRappel(d, r.modele, r.vars.get(d.id), undefined, modifie?.[d.langue] ?? null)) envoyes++
       }
+      if (modifie) await oublierEmailModifie(admin, 'inactivite', r.coupleId, `inactivite:${r.rang}`)
     } catch (e) {
       console.error(`[rappels] relance du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -393,9 +430,11 @@ export async function envoyerRelancesDemarrage(admin: AdminClient, liste?: Relan
   for (const r of prevues) {
     try {
       if (!(await reserverEnvoi(admin, r.coupleId, 'demarrage', `${r.type}:${r.jours}`))) continue
+      const modifie = await lireEmailModifie(admin, 'demarrage', r.coupleId, `${r.type}:${r.jours}`)
       for (const d of r.membres) {
-        if (await envoyerRappel(d, r.modele, varsDemarrage(r, d, premier, base))) envoyes++
+        if (await envoyerRappel(d, r.modele, varsDemarrage(r, d, premier, base), undefined, modifie?.[d.langue] ?? null)) envoyes++
       }
+      if (modifie) await oublierEmailModifie(admin, 'demarrage', r.coupleId, `${r.type}:${r.jours}`)
     } catch (e) {
       console.error(`[rappels] relance de démarrage du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -888,6 +927,29 @@ export async function envoyerPropositionsRdvAnnuel(admin: AdminClient): Promise<
 // ont déjà laissé un avis, et rien au-delà de 60 jours (pas de rattrapage
 // des couples d'il y a longtemps).
 // Module terminé : réponses dévoilées ET conclusions des deux membres écrites.
+// Dernier module terminé (réponses dévoilées et conclusions des deux) du
+// parcours initial, à la date de l'envoi : les e-mails d'avis et de
+// parrainage l'indiquent ({avancement}, {numero}, {module}).
+async function dernierModuleTermine(admin: AdminClient, coupleId: string, membres: Membre[]): Promise<{ numero: number; titre: string; titre_en: string | null } | null> {
+  const parcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)
+  const { data: devoiles } = await admin.from('modules').select('slug').eq('couple_id', coupleId).eq('revealed', true)
+  const slugs = new Set((devoiles ?? []).map(m => m.slug))
+  for (let i = parcours.length - 1; i >= 0; i--) {
+    if (slugs.has(parcours[i].slug) && await conclusionsEcrites(admin, coupleId, parcours[i].slug, membres)) {
+      return { numero: i + 1, titre: parcours[i].titre, titre_en: parcours[i].titre_en ?? null }
+    }
+  }
+  return null
+}
+
+function varsAvancement(dernier: { numero: number; titre: string; titre_en: string | null }, locale: Locale): Variables {
+  const titre = locale === 'en' ? dernier.titre_en ?? dernier.titre : dernier.titre
+  const avancement = dernier.numero === 1
+    ? t(locale, `le module « ${titre} »`, `the "${titre}" module`)
+    : t(locale, `${dernier.numero} modules, le dernier étant « ${titre} »`, `${dernier.numero} modules, the latest being "${titre}"`)
+  return { avancement, numero: dernier.numero, module: titre }
+}
+
 async function conclusionsEcrites(admin: AdminClient, coupleId: string, slug: string, membres: Membre[]): Promise<boolean> {
   const { data: conclusions, error } = await admin.from('journal_entries').select('user_id, question_slug, valeur').eq('couple_id', coupleId).eq('module_slug', slug)
   if (error) throw new Error(error.message)
@@ -941,8 +1003,14 @@ export async function demandesAvisPrevues(admin: AdminClient, jusqua: number = D
 
       const membres = await membresDuCouple(admin, coupleId)
       if (membres.length < 2) continue
-      // Premier module vraiment terminé : conclusions des deux écrites.
-      if (cle !== 'pacte' && premier && !(await conclusionsEcrites(admin, coupleId, premier.slug, membres))) continue
+      // Premier module vraiment terminé (conclusions des deux écrites). Après
+      // la signature du pacte, c'est la demande d'avis du pacte qui part.
+      if (cle !== 'pacte' && premier) {
+        if (!(await conclusionsEcrites(admin, coupleId, premier.slug, membres))) continue
+        const { data: signe } = await admin.from('couples').select('pacte_signe_le').eq('id', coupleId).maybeSingle()
+        if (signe?.pacte_signe_le) continue
+      }
+      const dernier = cle !== 'pacte' ? await dernierModuleTermine(admin, coupleId, membres) : null
 
       // Pas aux personnes qui ont déjà laissé un avis.
       const { data: avis } = await admin.from('avis').select('profile_id').in('profile_id', membres.map(m => m.id))
@@ -950,7 +1018,7 @@ export async function demandesAvisPrevues(admin: AdminClient, jusqua: number = D
       const destinataires = membres.filter(m => !ontDonneAvis.has(m.id) && m.rappels_email && m.email)
       if (!destinataires.length) continue
       const vars = new Map<string, Variables>()
-      for (const d of destinataires) vars.set(d.id, { module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '' })
+      for (const d of destinataires) vars.set(d.id, dernier ? varsAvancement(dernier, d.langue) : { module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '' })
       prevues.push({ coupleId, dueLe: new Date(new Date(le).getTime() + DEMANDE_AVIS_APRES_JOURS * JOUR).toISOString(), cle, modele, destinataires, vars })
     } catch (e) {
       console.error(`[rappels] demande d'avis (${cle}) du couple ${coupleId} : ${e instanceof Error ? e.message : String(e)}`)
@@ -969,9 +1037,12 @@ async function envoyerPrevus(admin: AdminClient, prevus: EnvoiPrevu[], type: str
   for (const p of prevus) {
     try {
       if (!(await reserverEnvoi(admin, p.coupleId, type, p.cle))) continue
+      const sorte: SortePrevue = type === 'parrainage' ? 'parrainage' : 'avis'
+      const modifie = await lireEmailModifie(admin, sorte, p.coupleId, p.cle)
       for (const d of p.destinataires) {
-        if (await envoyerRappel(d, p.modele, p.vars.get(d.id))) envoyes++
+        if (await envoyerRappel(d, p.modele, p.vars.get(d.id), undefined, modifie?.[d.langue] ?? null)) envoyes++
       }
+      if (modifie) await oublierEmailModifie(admin, sorte, p.coupleId, p.cle)
     } catch (e) {
       console.error(`[rappels] ${type} du couple ${p.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -987,7 +1058,8 @@ async function envoyerPrevus(admin: AdminClient, prevus: EnvoiPrevu[], type: str
 // deux) : le code de parrainage du couple et la règle (tous les 5 couples
 // inscrits avec ce code, 10 € de réduction). Une seule fois par couple
 // (rappels_envoyes, type 'parrainage', clé = slug du module), rien pour un
-// module terminé il y a plus de 60 jours.
+// module terminé il y a plus de 60 jours. Il indique le dernier module
+// terminé à la date de l'envoi.
 const PARRAINAGE_APRES_MODULE = 5
 const PARRAINAGE_MAX_JOURS = 60
 
@@ -1014,9 +1086,11 @@ export async function parrainagesPrevus(admin: AdminClient, jusqua: number = Dat
       const destinataires = membres.filter(m => m.rappels_email && m.email)
       if (!destinataires.length) continue
       if (!(await conclusionsEcrites(admin, coupleId, module.slug, membres))) continue
+      // L'e-mail indique le dernier module terminé à la date de l'envoi.
+      const dernier = await dernierModuleTermine(admin, coupleId, membres) ?? { numero: PARRAINAGE_APRES_MODULE, titre: module.titre, titre_en: module.titre_en ?? null }
       const vars = new Map<string, Variables>()
       for (const d of destinataires) {
-        vars.set(d.id, { code_parrainage: couple.code_parrainage, numero: PARRAINAGE_APRES_MODULE, module: d.langue === 'en' ? module.titre_en ?? module.titre : module.titre })
+        vars.set(d.id, { code_parrainage: couple.code_parrainage, ...varsAvancement(dernier, d.langue) })
       }
       prevues.push({ coupleId, dueLe: le as string, cle: module.slug, modele: 'parrainage_module_5', destinataires, vars })
     } catch (e) {
@@ -1034,8 +1108,6 @@ export async function envoyerEmailsParrainage(admin: AdminClient): Promise<numbe
 // Envoi immédiat d'un e-mail prévu (Vue d'ensemble > Tâches)
 // ---------------------------------------------------------------------------
 
-export type SortePrevue = 'inactivite' | 'demarrage' | 'avis' | 'parrainage'
-
 // Horizon de la liste des e-mails à venir (3 jours), avec un jour de marge.
 const HORIZON_ENVOI_IMMEDIAT_JOURS = 4
 
@@ -1045,17 +1117,29 @@ const HORIZON_ENVOI_IMMEDIAT_JOURS = 4
 // réservation est libérée si aucun e-mail n'est parti : un nouvel essai
 // reste possible. null : l'e-mail n'est plus prévu (réponse enregistrée,
 // avis laissé, déjà envoyé…).
-export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ envoyes: number; erreur?: string } | null> {
+interface PrevuPrepare {
+  /** Clé de l'envoi (textes modifiés à la main). */
+  cleEnvoi: string
+  envois: { d: Membre; modele: string; vars: Variables | undefined }[]
+  reserver: () => Promise<boolean>
+  liberer: () => Promise<void>
+}
+
+// Retrouve un e-mail prévu dans les prochains jours, avec sa réservation
+// (celle de la tâche du matin) et de quoi la libérer. null : plus prévu.
+async function preparerPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<PrevuPrepare | null> {
   const horizon = Date.now() + HORIZON_ENVOI_IMMEDIAT_JOURS * JOUR
   let envois: { d: Membre; modele: string; vars: Variables | undefined }[]
   let reserver: () => Promise<boolean>
   let liberer: () => Promise<void>
+  let cleModif: string
 
   if (sorte === 'inactivite') {
     const r = (await relancesInactivitePrevues(admin, horizon)).find(x => x.coupleId === coupleId)
     if (!r) return null
     const { data: avant } = await admin.from('couples').select('derniere_relance_le').eq('id', coupleId).single()
     envois = r.destinataires.map(d => ({ d, modele: r.modele, vars: r.vars.get(d.id) }))
+    cleModif = `inactivite:${r.rang}`
     reserver = async () => {
       const { data, error } = await admin.from('couples')
         .update({ relances_inactivite: r.rang + 1, derniere_relance_le: new Date().toISOString() })
@@ -1084,10 +1168,19 @@ export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePre
       type = sorte === 'avis' ? 'demande_avis' : 'parrainage'
       cleEnvoi = r.cle
     }
+    cleModif = cleEnvoi
     reserver = () => reserverEnvoi(admin, coupleId, type, cleEnvoi)
     liberer = async () => { await admin.from('rappels_envoyes').delete().eq('couple_id', coupleId).eq('type', type).eq('cle', cleEnvoi) }
   }
 
+  return { cleEnvoi: cleModif, envois, reserver, liberer }
+}
+
+export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ envoyes: number; erreur?: string } | null> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu) return null
+  const { envois, reserver, liberer } = prevu
+  const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
   try {
     if (!(await reserver())) return { envoyes: 0, erreur: 'Cet e-mail est déjà parti (envoi déjà enregistré).' }
   } catch (e) {
@@ -1098,14 +1191,42 @@ export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePre
   const echecs: string[] = []
   for (const { d, modele, vars } of envois) {
     try {
-      if (await envoyerRappel(d, modele, vars)) { envoyes++; continue }
+      if (await envoyerRappel(d, modele, vars, undefined, modifie?.[d.langue] ?? null)) { envoyes++; continue }
       echecs.push(`${d.email} : ${await derniereErreurEnvoi(admin, d.email) ?? 'échec de l’envoi'}`)
     } catch (e) {
       echecs.push(`${d.email} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   if (!envoyes) await liberer().catch(() => {})
+  else if (modifie) await oublierEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
   return echecs.length ? { envoyes, erreur: echecs.join(' · ') } : { envoyes }
+}
+
+// Annule un e-mail prévu : il est noté comme traité (même réservation que la
+// tâche du matin) sans être envoyé, et ne partira plus. Pour une relance
+// d'inactivité, la suivante (20 jours) reste possible. false : plus prévu.
+export async function annulerPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<boolean> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu) return false
+  const ok = await prevu.reserver()
+  if (ok) await oublierEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+  return ok
+}
+
+// Aperçu d'un e-mail prévu, tel qu'il partira pour chaque destinataire
+// (objet et page HTML complète). Le lien de désinscription du bas n'est pas
+// inclus, pour ne pas risquer de désinscrire la personne d'un clic.
+export async function apercuPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ destinataire: string; langue: Locale; objet: string; html: string }[] | null> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu) return null
+  const apercus: { destinataire: string; langue: Locale; objet: string; html: string }[] = []
+  const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+  for (const { d, modele, vars } of prevu.envois) {
+    const { objet, html } = await rendreModele(modele, d.langue, { prenom: d.prenom ?? '', ...vars }, modifie?.[d.langue] ?? null)
+    const pied = `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(d.langue, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <u>${t(d.langue, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</u></p>`
+    apercus.push({ destinataire: d.prenom ? `${d.prenom} (${d.email})` : d.email ?? '', langue: d.langue, objet, html: mailHtml(html + pied) })
+  }
+  return apercus
 }
 
 // Raison du dernier échec d'envoi vers une adresse (journal des e-mails).
@@ -1113,4 +1234,30 @@ async function derniereErreurEnvoi(admin: AdminClient, email: string | null): Pr
   if (!email) return 'adresse e-mail manquante'
   const { data } = await admin.from('emails_envoyes').select('ok, erreur').eq('destinataire', email).order('envoye_le', { ascending: false }).limit(1).maybeSingle()
   return data && !data.ok ? data.erreur ?? null : null
+}
+
+// Textes d'un e-mail prévu pour l'éditeur (Tâches > Modifier) : ceux modifiés
+// à la main, sinon ceux du modèle, pour les langues des destinataires.
+export async function textesPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ modele: string; langues: Locale[]; contenu: ContenuModifie; modifie: boolean } | null> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu?.envois.length) return null
+  const modele = prevu.envois[0].modele
+  const langues = [...new Set(prevu.envois.map(e => e.d.langue))]
+  const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+  const contenu: ContenuModifie = {}
+  for (const l of langues) contenu[l] = modifie?.[l] ?? await contenuModele(modele, l)
+  return { modele, langues, contenu, modifie: !!modifie }
+}
+
+// Enregistre (ou, avec null, efface) les textes modifiés d'un e-mail prévu.
+export async function enregistrerTextesPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle: string | undefined, contenu: ContenuModifie | null): Promise<boolean> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu) return false
+  if (!contenu) {
+    await oublierEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+    return true
+  }
+  const { error } = await admin.from('settings').upsert({ key: cleEmailModifie(sorte, coupleId, prevu.cleEnvoi), value: JSON.stringify(contenu) }, { onConflict: 'key' })
+  if (error) throw new Error(error.message)
+  return true
 }

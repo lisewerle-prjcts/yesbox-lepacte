@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronRight, CalendarHeart } from 'lucide-react'
-import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail, adminEnvoyerMaintenant } from '@/app/actions/admin'
+import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail, adminEnvoyerMaintenant, adminAnnulerPrevu, adminApercuPrevu, adminTextesPrevu, adminEnregistrerTextesPrevu } from '@/app/actions/admin'
 import type { SortePrevue } from '@/lib/rappels-email'
 import { ApercuEmail } from '@/components/admin/ComposeurEmail'
 import { corpsAvecMotPersonnel } from '@/lib/modeles-email/rendu'
@@ -21,7 +21,7 @@ function quand(jours: number) {
 // relances des 3 prochains jours, et la validation des e-mails
 // d'anniversaire avant leur envoi.
 // Relance qui partira avec la tâche quotidienne dans les 3 prochains jours.
-export interface RelanceAVenir { sorte: SortePrevue; cle: string | null; coupleId: string; couple: string; email: string; detail: string; destinataires: string[]; le: string }
+export interface RelanceAVenir { sorte: SortePrevue; cle: string | null; modifie: boolean; coupleId: string; couple: string; dernierModule: string; email: string; detail: string; destinataires: string[]; le: string }
 
 const jourRelance = (iso: string) => {
   const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
@@ -44,7 +44,7 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
 
       <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>Relances, demandes d’avis et parrainage des 3 prochains jours</h3>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
-        Rien à valider : ils partent seuls avec la tâche du matin (vers 8 h–9 h, heure de Paris), ou tout de suite avec « Envoyer maintenant ». Une réponse enregistrée d’ici là annule une relance d’inactivité ; un avis laissé d’ici là annule la demande d’avis.
+        Rien à valider : ils partent seuls avec la tâche du matin (vers 8 h–9 h, heure de Paris), ou tout de suite avec « Envoyer maintenant » ; « Annuler » empêche l’envoi. Une réponse enregistrée d’ici là annule une relance d’inactivité ; un avis laissé d’ici là annule la demande d’avis.
       </p>
       {relances.length === 0 ? (
         <p className="mb-6" style={{ fontSize: 13, color: 'var(--muted)' }}>Aucun e-mail prévu dans les 3 prochains jours.</p>
@@ -55,8 +55,12 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
               <tr style={{ textAlign: 'left', color: 'var(--muted)', borderBottom: '1px solid var(--line)' }}>
                 <th className="py-1.5 pr-3">Quand</th>
                 <th className="py-1.5 pr-3">Couple</th>
+                <th className="py-1.5 pr-3">Dernier module terminé</th>
                 <th className="py-1.5 pr-3">E-mail</th>
                 <th className="py-1.5 pr-3">Destinataires</th>
+                <th className="py-1.5 pr-3"></th>
+                <th className="py-1.5 pr-3"></th>
+                <th className="py-1.5 pr-3"></th>
                 <th className="py-1.5"></th>
               </tr>
             </thead>
@@ -65,9 +69,13 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
                 <tr key={`${r.coupleId}-${r.email}`} style={{ borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink)', fontWeight: 500, whiteSpace: 'nowrap' }}>{jourRelance(r.le)}</td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.couple}</td>
-                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.email}<div style={{ color: 'var(--muted)', fontSize: 11.5 }}>{r.detail}</div></td>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>{r.dernierModule}</td>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.email}{r.modifie && <span className="tag-brand ml-1.5" style={{ fontSize: 10 }}>modifié</span>}<div style={{ color: 'var(--muted)', fontSize: 11.5 }}>{r.detail}</div></td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--muted)' }}>{r.destinataires.join(', ')}</td>
-                  <td className="py-1.5" style={{ whiteSpace: 'nowrap' }}><BoutonEnvoyerMaintenant relance={r} /></td>
+                  <td className="py-1.5 pr-3" style={{ whiteSpace: 'nowrap' }}><BoutonVisualiser relance={r} /></td>
+                  <td className="py-1.5 pr-3" style={{ whiteSpace: 'nowrap' }}><BoutonModifier relance={r} /></td>
+                  <td className="py-1.5 pr-3" style={{ whiteSpace: 'nowrap' }}><BoutonEnvoyerMaintenant relance={r} /></td>
+                  <td className="py-1.5" style={{ whiteSpace: 'nowrap' }}><BoutonAnnuler relance={r} /></td>
                 </tr>
               ))}
             </tbody>
@@ -283,6 +291,242 @@ function BoutonEnvoyerMaintenant({ relance }: { relance: RelanceAVenir }) {
         {statut === 'busy' ? 'Envoi…' : 'Envoyer maintenant'}
       </button>
       {erreur && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 220, whiteSpace: 'normal' }}>{erreur}</p>}
+    </div>
+  )
+}
+
+// Annule un e-mail de la liste « à venir » : noté comme traité, il ne
+// partira pas avec la tâche du matin.
+function BoutonAnnuler({ relance }: { relance: RelanceAVenir }) {
+  const router = useRouter()
+  const [statut, setStatut] = useState<'idle' | 'busy' | 'ok'>('idle')
+  const [erreur, setErreur] = useState<string | null>(null)
+
+  async function annuler() {
+    const suite = relance.sorte === 'inactivite' ? ' La relance suivante (à 20 jours) reste possible.' : ''
+    if (!window.confirm(`Annuler « ${relance.email} » pour le ${relance.couple} ? Il ne sera pas envoyé.${suite}`)) return
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminAnnulerPrevu(relance.sorte, relance.coupleId, relance.cle ?? undefined)
+      if ('error' in res && res.error) { setErreur(res.error); setStatut('idle'); return }
+      setStatut('ok')
+      router.refresh()
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+      setStatut('idle')
+    }
+  }
+
+  if (statut === 'ok') return <span style={{ fontSize: 12, color: 'var(--muted)' }}>Annulé</span>
+  return (
+    <div>
+      <button type="button" onClick={annuler} disabled={statut === 'busy'} className="text-xs py-1 px-2.5" style={{ color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: 999, background: 'white' }}>
+        {statut === 'busy' ? '…' : 'Annuler'}
+      </button>
+      {erreur && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 200, whiteSpace: 'normal' }}>{erreur}</p>}
+    </div>
+  )
+}
+
+type Apercu = { destinataire: string; langue: 'fr' | 'en'; objet: string; html: string }
+
+// Ouvre dans une fenêtre l'e-mail tel qu'il partira, pour chaque destinataire.
+function BoutonVisualiser({ relance }: { relance: RelanceAVenir }) {
+  const [apercus, setApercus] = useState<Apercu[] | null>(null)
+  const [choisi, setChoisi] = useState(0)
+  const [statut, setStatut] = useState<'idle' | 'busy'>('idle')
+  const [erreur, setErreur] = useState<string | null>(null)
+
+  async function ouvrir() {
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminApercuPrevu(relance.sorte, relance.coupleId, relance.cle ?? undefined)
+      if ('error' in res && res.error) { setErreur(res.error); return }
+      if ('apercus' in res && res.apercus) { setApercus(res.apercus); setChoisi(0) }
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStatut('idle')
+    }
+  }
+
+  const apercu = apercus?.[choisi]
+  return (
+    <div>
+      <button type="button" onClick={ouvrir} disabled={statut === 'busy'} className="btn-secondary text-xs py-1 px-2.5">
+        {statut === 'busy' ? '…' : 'Visualiser'}
+      </button>
+      {erreur && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 200, whiteSpace: 'normal' }}>{erreur}</p>}
+      {apercus && apercu && (
+        <div
+          role="dialog" aria-modal="true" aria-label={`Aperçu : ${relance.email}`}
+          onClick={() => setApercus(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,22,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div onClick={e => e.stopPropagation()} className="card" style={{ width: '100%', maxWidth: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', whiteSpace: 'normal' }}>
+            <div className="p-4" style={{ borderBottom: '1px solid var(--line)' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 11, color: 'var(--muted)' }}>{relance.couple} · {relance.email}</p>
+                  <p className="font-semibold" style={{ fontSize: 15, color: 'var(--ink)' }}>{apercu.objet}</p>
+                  <p style={{ fontSize: 12, color: 'var(--muted)' }}>À : {apercu.destinataire} · {apercu.langue === 'en' ? 'anglais' : 'français'}</p>
+                </div>
+                <button type="button" onClick={() => setApercus(null)} className="btn-secondary text-xs py-1 px-2.5 shrink-0">Fermer</button>
+              </div>
+              {apercus.length > 1 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {apercus.map((a, i) => (
+                    <button key={i} type="button" onClick={() => setChoisi(i)} className={i === choisi ? 'tag-brand' : 'tag-muted'} style={{ fontSize: 11 }}>
+                      {a.destinataire.split(' (')[0]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <iframe title="Aperçu de l’e-mail" srcDoc={apercu.html} sandbox="" style={{ border: 0, width: '100%', flex: 1, minHeight: 420, background: '#fbf8f3' }} />
+            <p className="px-4 py-2" style={{ fontSize: 11, color: 'var(--muted)', borderTop: '1px solid var(--line)' }}>
+              Copie cachée à lise.yesbox@gmail.com. Le vrai lien de désinscription est ajouté à l’envoi.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+type Textes = Partial<Record<'fr' | 'en', ContenuEmail>>
+
+// Modifie le texte de cet e-mail pour ce couple uniquement (le modèle ne
+// change pas), puis demande : envoyer maintenant, ou comme prévu.
+function BoutonModifier({ relance }: { relance: RelanceAVenir }) {
+  const router = useRouter()
+  const [ouvert, setOuvert] = useState(false)
+  const [etape, setEtape] = useState<'edition' | 'choix'>('edition')
+  const [langues, setLangues] = useState<('fr' | 'en')[]>([])
+  const [textes, setTextes] = useState<Textes>({})
+  const [variables, setVariables] = useState<string[]>([])
+  const [dejaModifie, setDejaModifie] = useState(false)
+  const [statut, setStatut] = useState<'idle' | 'busy'>('idle')
+  const [erreur, setErreur] = useState<string | null>(null)
+  const [fin, setFin] = useState<string | null>(null)
+
+  async function ouvrir() {
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminTextesPrevu(relance.sorte, relance.coupleId, relance.cle ?? undefined)
+      if ('error' in res && res.error) { setErreur(res.error); return }
+      if ('contenu' in res && res.contenu) {
+        setLangues(res.langues)
+        setTextes(res.contenu)
+        setVariables(res.variables)
+        setDejaModifie(res.modifie)
+        setEtape('edition')
+        setOuvert(true)
+      }
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStatut('idle')
+    }
+  }
+
+  async function enregistrer(contenu: Textes | null) {
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminEnregistrerTextesPrevu(relance.sorte, relance.coupleId, relance.cle ?? undefined, contenu)
+      if ('error' in res && res.error) { setErreur(res.error); return }
+      router.refresh()
+      if (contenu) setEtape('choix')
+      else { setOuvert(false); setFin('Texte du modèle rétabli') }
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStatut('idle')
+    }
+  }
+
+  async function envoyerMaintenant() {
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminEnvoyerMaintenant(relance.sorte, relance.coupleId, relance.cle ?? undefined)
+      if ('error' in res && res.error) { setErreur(res.error); return }
+      setOuvert(false)
+      setFin('Envoyé')
+      router.refresh()
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStatut('idle')
+    }
+  }
+
+  const modifierTexte = (l: 'fr' | 'en', champ: 'objet' | 'corps', valeur: string) =>
+    setTextes(t => ({ ...t, [l]: { objet: t[l]?.objet ?? '', corps: t[l]?.corps ?? '', [champ]: valeur } }))
+
+  return (
+    <div>
+      <button type="button" onClick={ouvrir} disabled={statut === 'busy'} className="btn-secondary text-xs py-1 px-2.5">
+        {statut === 'busy' && !ouvert ? '…' : 'Modifier'}
+      </button>
+      {fin && <p style={{ fontSize: 11, color: 'var(--sage)', marginTop: 4 }}>{fin}</p>}
+      {erreur && !ouvert && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 200, whiteSpace: 'normal' }}>{erreur}</p>}
+      {ouvert && (
+        <div role="dialog" aria-modal="true" aria-label={`Modifier : ${relance.email}`}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,22,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="card" style={{ width: '100%', maxWidth: 720, maxHeight: '90vh', overflowY: 'auto', whiteSpace: 'normal' }}>
+            <div className="p-4" style={{ borderBottom: '1px solid var(--line)' }}>
+              <p style={{ fontSize: 11, color: 'var(--muted)' }}>{relance.couple} · {relance.destinataires.join(', ')}</p>
+              <p className="font-semibold" style={{ fontSize: 15, color: 'var(--ink)' }}>Modifier « {relance.email} »</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)' }}>Pour ce couple uniquement : le modèle de l’e-mail ne change pas.</p>
+            </div>
+
+            {etape === 'edition' ? (
+              <div className="p-4 space-y-4">
+                {langues.map(l => (
+                  <div key={l} className="space-y-2">
+                    {langues.length > 1 && <p className="font-mono font-bold" style={{ fontSize: 10, color: 'var(--muted)' }}>{l === 'fr' ? 'VERSION FRANÇAISE' : 'VERSION ANGLAISE'}</p>}
+                    <label className="flabel">Objet</label>
+                    <input type="text" className="field" value={textes[l]?.objet ?? ''} onChange={e => modifierTexte(l, 'objet', e.target.value)} />
+                    <label className="flabel">Message</label>
+                    <textarea className="field font-mono" rows={12} style={{ fontSize: 12.5 }} value={textes[l]?.corps ?? ''} onChange={e => modifierTexte(l, 'corps', e.target.value)} />
+                  </div>
+                ))}
+                <p style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  Variables remplies à l’envoi : {['prenom', ...variables.filter(v => v !== 'prenom')].map(v => `{${v}}`).join(', ')}. Mise en forme : une ligne vide entre deux paragraphes, **gras**, [bouton: Libellé | lien].
+                </p>
+                {erreur && <p style={{ fontSize: 12, color: '#dc2626' }}>{erreur}</p>}
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {dejaModifie && (
+                    <button type="button" onClick={() => enregistrer(null)} disabled={statut === 'busy'} className="btn-secondary text-sm py-1.5 px-3 mr-auto">Revenir au texte du modèle</button>
+                  )}
+                  <button type="button" onClick={() => setOuvert(false)} disabled={statut === 'busy'} className="btn-secondary text-sm py-1.5 px-3">Fermer sans enregistrer</button>
+                  <button type="button" onClick={() => enregistrer(textes)} disabled={statut === 'busy'} className="btn-primary text-sm py-1.5 px-3">
+                    {statut === 'busy' ? 'Enregistrement…' : 'Enregistrer'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 space-y-3">
+                <p style={{ fontSize: 14, color: 'var(--ink)' }}><Check className="w-4 h-4 inline" /> Texte modifié enregistré. Quand l’envoyer ?</p>
+                {erreur && <p style={{ fontSize: 12, color: '#dc2626' }}>{erreur}</p>}
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={envoyerMaintenant} disabled={statut === 'busy'} className="btn-primary text-sm py-1.5 px-3">
+                    {statut === 'busy' ? 'Envoi…' : 'Envoyer maintenant'}
+                  </button>
+                  <button type="button" onClick={() => { setOuvert(false); setFin('Partira comme prévu') }} disabled={statut === 'busy'} className="btn-secondary text-sm py-1.5 px-3">
+                    Comme prévu ({jourRelance(relance.le)})
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
