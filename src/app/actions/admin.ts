@@ -18,7 +18,7 @@ import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel, entetesDesinscription } from '@/lib/desinscription'
-import { annulerPrevu, envoyerPrevuMaintenant, envoyerRelancesDemarrage, relancesDemarragePrevues, type SortePrevue } from '@/lib/rappels-email'
+import { annulerPrevu, apercuPrevu, envoyerPrevuMaintenant, envoyerRelancesDemarrage, relancesDemarragePrevues, type SortePrevue } from '@/lib/rappels-email'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
@@ -203,6 +203,16 @@ export async function adminEnvoyerMaintenant(sorte: SortePrevue, coupleId: strin
   if (!resultat.envoyes) return { error: `Aucun e-mail n’est parti. ${resultat.erreur ?? ''} Tu peux réessayer.`.trim() }
   if (resultat.erreur) return { success: true, envoyes: resultat.envoyes, avertissement: `Envoi partiel : ${resultat.erreur}` }
   return { success: true, envoyes: resultat.envoyes }
+}
+
+// Vue d'ensemble > Tâches : aperçu d'un e-mail prévu, pour chaque
+// destinataire, tel qu'il partira.
+export async function adminApercuPrevu(sorte: SortePrevue, coupleId: string, cle?: string) {
+  await assertAdmin()
+  if (!['inactivite', 'demarrage', 'avis', 'parrainage'].includes(sorte)) return { error: 'E-mail inconnu' }
+  const apercus = await apercuPrevu(createAdminClient(), sorte, coupleId, cle)
+  if (!apercus) return { error: 'Cet e-mail n’est plus prévu, ou il est déjà parti.' }
+  return { success: true, apercus }
 }
 
 // Vue d'ensemble > Tâches : annule un e-mail prévu (noté comme traité, il

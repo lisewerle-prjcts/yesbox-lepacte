@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronRight, CalendarHeart } from 'lucide-react'
-import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail, adminEnvoyerMaintenant, adminAnnulerPrevu } from '@/app/actions/admin'
+import { adminValiderEmailAnniversaire, adminAnnulerValidationEmail, adminEnvoyerMaintenant, adminAnnulerPrevu, adminApercuPrevu } from '@/app/actions/admin'
 import type { SortePrevue } from '@/lib/rappels-email'
 import { ApercuEmail } from '@/components/admin/ComposeurEmail'
 import { corpsAvecMotPersonnel } from '@/lib/modeles-email/rendu'
@@ -59,6 +59,7 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
                 <th className="py-1.5 pr-3">E-mail</th>
                 <th className="py-1.5 pr-3">Destinataires</th>
                 <th className="py-1.5 pr-3"></th>
+                <th className="py-1.5 pr-3"></th>
                 <th className="py-1.5"></th>
               </tr>
             </thead>
@@ -70,6 +71,7 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>{r.dernierModule}</td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.email}<div style={{ color: 'var(--muted)', fontSize: 11.5 }}>{r.detail}</div></td>
                   <td className="py-1.5 pr-3" style={{ color: 'var(--muted)' }}>{r.destinataires.join(', ')}</td>
+                  <td className="py-1.5 pr-3" style={{ whiteSpace: 'nowrap' }}><BoutonVisualiser relance={r} /></td>
                   <td className="py-1.5 pr-3" style={{ whiteSpace: 'nowrap' }}><BoutonEnvoyerMaintenant relance={r} /></td>
                   <td className="py-1.5" style={{ whiteSpace: 'nowrap' }}><BoutonAnnuler relance={r} /></td>
                 </tr>
@@ -321,6 +323,73 @@ function BoutonAnnuler({ relance }: { relance: RelanceAVenir }) {
         {statut === 'busy' ? '…' : 'Annuler'}
       </button>
       {erreur && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 200, whiteSpace: 'normal' }}>{erreur}</p>}
+    </div>
+  )
+}
+
+type Apercu = { destinataire: string; langue: 'fr' | 'en'; objet: string; html: string }
+
+// Ouvre dans une fenêtre l'e-mail tel qu'il partira, pour chaque destinataire.
+function BoutonVisualiser({ relance }: { relance: RelanceAVenir }) {
+  const [apercus, setApercus] = useState<Apercu[] | null>(null)
+  const [choisi, setChoisi] = useState(0)
+  const [statut, setStatut] = useState<'idle' | 'busy'>('idle')
+  const [erreur, setErreur] = useState<string | null>(null)
+
+  async function ouvrir() {
+    setStatut('busy')
+    setErreur(null)
+    try {
+      const res = await adminApercuPrevu(relance.sorte, relance.coupleId, relance.cle ?? undefined)
+      if ('error' in res && res.error) { setErreur(res.error); return }
+      if ('apercus' in res && res.apercus) { setApercus(res.apercus); setChoisi(0) }
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStatut('idle')
+    }
+  }
+
+  const apercu = apercus?.[choisi]
+  return (
+    <div>
+      <button type="button" onClick={ouvrir} disabled={statut === 'busy'} className="btn-secondary text-xs py-1 px-2.5">
+        {statut === 'busy' ? '…' : 'Visualiser'}
+      </button>
+      {erreur && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4, maxWidth: 200, whiteSpace: 'normal' }}>{erreur}</p>}
+      {apercus && apercu && (
+        <div
+          role="dialog" aria-modal="true" aria-label={`Aperçu : ${relance.email}`}
+          onClick={() => setApercus(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,22,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div onClick={e => e.stopPropagation()} className="card" style={{ width: '100%', maxWidth: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', whiteSpace: 'normal' }}>
+            <div className="p-4" style={{ borderBottom: '1px solid var(--line)' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 11, color: 'var(--muted)' }}>{relance.couple} · {relance.email}</p>
+                  <p className="font-semibold" style={{ fontSize: 15, color: 'var(--ink)' }}>{apercu.objet}</p>
+                  <p style={{ fontSize: 12, color: 'var(--muted)' }}>À : {apercu.destinataire} · {apercu.langue === 'en' ? 'anglais' : 'français'}</p>
+                </div>
+                <button type="button" onClick={() => setApercus(null)} className="btn-secondary text-xs py-1 px-2.5 shrink-0">Fermer</button>
+              </div>
+              {apercus.length > 1 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {apercus.map((a, i) => (
+                    <button key={i} type="button" onClick={() => setChoisi(i)} className={i === choisi ? 'tag-brand' : 'tag-muted'} style={{ fontSize: 11 }}>
+                      {a.destinataire.split(' (')[0]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <iframe title="Aperçu de l’e-mail" srcDoc={apercu.html} sandbox="" style={{ border: 0, width: '100%', flex: 1, minHeight: 420, background: '#fbf8f3' }} />
+            <p className="px-4 py-2" style={{ fontSize: 11, color: 'var(--muted)', borderTop: '1px solid var(--line)' }}>
+              Copie cachée à lise.yesbox@gmail.com. Le vrai lien de désinscription est ajouté à l’envoi.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

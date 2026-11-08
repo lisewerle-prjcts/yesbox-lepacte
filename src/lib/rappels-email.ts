@@ -1,5 +1,5 @@
 import type { createAdminClient } from '@/lib/supabase/server'
-import { mailConfigure } from '@/lib/mailer'
+import { mailConfigure, mailHtml } from '@/lib/mailer'
 import { getEffectiveModules } from '@/lib/modules-effective'
 import { hasAnsweredAll } from '@/lib/questions'
 import { aAccesComplet, offreRdvAnnuel, peutAccederModule } from '@/lib/abonnement'
@@ -9,7 +9,7 @@ import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
 import { dechiffrerLignes } from '@/lib/chiffrement'
-import { envoyerModele } from '@/lib/modeles-email/serveur'
+import { envoyerModele, rendreModele } from '@/lib/modeles-email/serveur'
 import { CLES_THEMES_MENSUELS, themeMensuelParDefaut, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import type { Variables } from '@/lib/modeles-email/rendu'
 
@@ -1162,6 +1162,21 @@ export async function annulerPrevu(admin: AdminClient, sorte: SortePrevue, coupl
   const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
   if (!prevu) return false
   return prevu.reserver()
+}
+
+// Aperçu d'un e-mail prévu, tel qu'il partira pour chaque destinataire
+// (objet et page HTML complète). Le lien de désinscription du bas n'est pas
+// inclus, pour ne pas risquer de désinscrire la personne d'un clic.
+export async function apercuPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ destinataire: string; langue: Locale; objet: string; html: string }[] | null> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu) return null
+  const apercus: { destinataire: string; langue: Locale; objet: string; html: string }[] = []
+  for (const { d, modele, vars } of prevu.envois) {
+    const { objet, html } = await rendreModele(modele, d.langue, { prenom: d.prenom ?? '', ...vars })
+    const pied = `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(d.langue, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <u>${t(d.langue, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</u></p>`
+    apercus.push({ destinataire: d.prenom ? `${d.prenom} (${d.email})` : d.email ?? '', langue: d.langue, objet, html: mailHtml(html + pied) })
+  }
+  return apercus
 }
 
 // Raison du dernier échec d'envoi vers une adresse (journal des e-mails).
