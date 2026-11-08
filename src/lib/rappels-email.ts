@@ -106,30 +106,47 @@ function modeleRelance(etape: EtapeRelance, pacte: boolean) {
   return pacte ? 'relance_debrief_pacte' : 'relance_debrief'
 }
 
-export async function envoyerRelancesInactivite(admin: AdminClient): Promise<number> {
-  const maintenant = Date.now()
+// Relance d'inactivité due au plus tard à `jusqua` (par défaut maintenant) :
+// rien n'est réservé ni envoyé. Sert à l'envoi et, avec une date future, à
+// la liste des relances à venir (Vue d'ensemble > Tâches).
+export interface RelanceInactivitePrevue {
+  coupleId: string
+  /** Date à partir de laquelle la relance est due. */
+  dueLe: string
+  /** Rang de la relance (0 : 10 jours, 1 : 20 jours). */
+  rang: number
+  modele: string
+  destinataires: Membre[]
+  /** Variables de l'e-mail, par destinataire. */
+  vars: Map<string, Variables>
+}
+
+export async function relancesInactivitePrevues(admin: AdminClient, jusqua: number = Date.now()): Promise<RelanceInactivitePrevue[]> {
   const { data: couples, error } = await admin
     .from('couples')
     .select(`${ABONNEMENT_COLONNES}, derniere_activite_le, derniere_relance_le, relances_inactivite, pacte_signe_le`)
     .is('pacte_signe_le', null)
     .is('compte_resilie_le', null)
     .lt('relances_inactivite', RELANCES_APRES_JOURS.length)
-    .lte('derniere_activite_le', new Date(maintenant - RELANCES_APRES_JOURS[0] * JOUR).toISOString())
+    .lte('derniere_activite_le', new Date(jusqua - RELANCES_APRES_JOURS[0] * JOUR).toISOString())
   if (error) throw new Error(error.message)
-  if (!couples?.length) return 0
+  if (!couples?.length) return []
 
   const modulesParcours = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)
-  let envoyes = 0
+  const prevues: RelanceInactivitePrevue[] = []
 
   for (const couple of couples) {
     try {
       const relances = couple.relances_inactivite as number
-      const inactifDepuis = maintenant - new Date(couple.derniere_activite_le as string).getTime()
-      if (inactifDepuis < RELANCES_APRES_JOURS[relances] * JOUR) continue
-      // Au moins 10 jours entre deux relances, même pour un couple déjà
-      // inactif depuis longtemps.
+      // Due après 10 (puis 20) jours sans avancer, et au moins 10 jours
+      // après la relance précédente, même pour un couple inactif depuis
+      // longtemps.
       const derniereRelance = couple.derniere_relance_le ? new Date(couple.derniere_relance_le as string).getTime() : 0
-      if (maintenant - derniereRelance < RELANCES_APRES_JOURS[0] * JOUR) continue
+      const due = Math.max(
+        new Date(couple.derniere_activite_le as string).getTime() + RELANCES_APRES_JOURS[relances] * JOUR,
+        derniereRelance + RELANCES_APRES_JOURS[0] * JOUR,
+      )
+      if (due > jusqua) continue
 
       const membres = await membresDuCouple(admin, couple.id)
       if (membres.length < 2) continue
@@ -181,27 +198,43 @@ export async function envoyerRelancesInactivite(admin: AdminClient): Promise<num
         }
       }
 
-      // Compte la relance avant d'envoyer : jamais deux fois la même, même
-      // si la tâche est relancée ou qu'un envoi échoue.
-      const { data: reserve } = await admin.from('couples')
-        .update({ relances_inactivite: relances + 1, derniere_relance_le: new Date(maintenant).toISOString() })
-        .eq('id', couple.id).eq('relances_inactivite', relances)
-        .select('id')
-      if (!reserve?.length) continue
-
-      const destinataires = etape.type === 'a_vous_deux' ? membres : [etape.attendu]
+      const destinataires = (etape.type === 'a_vous_deux' ? membres : [etape.attendu]).filter(d => d.email && d.rappels_email)
+      if (!destinataires.length) continue
+      const vars = new Map<string, Variables>()
       for (const d of destinataires) {
         const titre = d.langue === 'en' ? info.titre_en ?? info.titre : info.titre
         const partenaire = etape.type === 'a_vous_deux' ? '' : (etape.autre.prenom || t(d.langue, 'L’autre membre de votre couple', 'The other member of your couple'))
-        if (await envoyerRappel(d, modeleRelance(etape, info.slug === MODULE_PACTE), { partenaire, module: titre, numero: index + 1, total: modulesParcours.length, lien: href })) envoyes++
+        vars.set(d.id, { partenaire, module: titre, numero: index + 1, total: modulesParcours.length, lien: href })
       }
+      prevues.push({ coupleId: couple.id, dueLe: new Date(due).toISOString(), rang: relances, modele: modeleRelance(etape, info.slug === MODULE_PACTE), destinataires, vars })
     } catch (e) {
       console.error(`[rappels] relance du couple ${couple.id} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
-  return envoyes
+  return prevues
 }
 
+export async function envoyerRelancesInactivite(admin: AdminClient): Promise<number> {
+  const maintenant = Date.now()
+  let envoyes = 0
+  for (const r of await relancesInactivitePrevues(admin, maintenant)) {
+    try {
+      // Compte la relance avant d'envoyer : jamais deux fois la même, même
+      // si la tâche est relancée ou qu'un envoi échoue.
+      const { data: reserve } = await admin.from('couples')
+        .update({ relances_inactivite: r.rang + 1, derniere_relance_le: new Date(maintenant).toISOString() })
+        .eq('id', r.coupleId).eq('relances_inactivite', r.rang)
+        .select('id')
+      if (!reserve?.length) continue
+      for (const d of r.destinataires) {
+        if (await envoyerRappel(d, r.modele, r.vars.get(d.id))) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] relance du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return envoyes
+}
 
 // ---------------------------------------------------------------------------
 // 1 bis. Inscrit·es qui ne concrétisent pas
@@ -252,6 +285,8 @@ interface ProfilDemarrage { couple_id: string; created_at: string | null; email_
 // ni envoyé (sert aussi à l'aperçu du rattrapage dans l'admin).
 export interface RelanceDemarragePrevue {
   coupleId: string
+  /** Date à partir de laquelle la relance est due. */
+  dueLe: string
   type: 'non_paire' | 'jamais_commence'
   /** Jours du palier atteint (3 ou 10). */
   jours: number
@@ -261,7 +296,9 @@ export interface RelanceDemarragePrevue {
   membres: Membre[]
 }
 
-export async function relancesDemarragePrevues(admin: AdminClient): Promise<RelanceDemarragePrevue[]> {
+// `jusqua` (par défaut maintenant) : date limite, pour la liste des relances
+// à venir (Vue d'ensemble > Tâches).
+export async function relancesDemarragePrevues(admin: AdminClient, jusqua: number = Date.now()): Promise<RelanceDemarragePrevue[]> {
   const maintenant = Date.now()
   const { data: couples, error } = await admin
     .from('couples')
@@ -303,7 +340,9 @@ export async function relancesDemarragePrevues(admin: AdminClient): Promise<Rela
         depuis = duCouple.map(p => p.created_at ?? '').sort().at(-1) || null
       } else continue
 
-      const palier = palierDemarrage(depuis, maintenant)
+      // Au-delà de 90 jours : plus rien. Palier atteint à la date limite.
+      if (!depuis || (maintenant - new Date(depuis).getTime()) / JOUR > RELANCES_DEMARRAGE_MAX_JOURS) continue
+      const palier = palierDemarrage(depuis, jusqua)
       if (palier === null) continue
       // Palier déjà envoyé, ou palier suivant déjà parti.
       if (RELANCES_DEMARRAGE_JOURS.slice(palier).some(j => dejaEnvoyees.has(`${couple.id}:${type}:${j}`))) continue
@@ -313,6 +352,7 @@ export async function relancesDemarragePrevues(admin: AdminClient): Promise<Rela
       if (!membres.some(m => m.rappels_email && m.email)) continue
       prevues.push({
         coupleId: couple.id,
+        dueLe: new Date(new Date(depuis).getTime() + RELANCES_DEMARRAGE_JOURS[palier] * JOUR).toISOString(),
         type,
         jours: RELANCES_DEMARRAGE_JOURS[palier],
         modele: `relance_${type}_${palier + 1}`,
@@ -855,28 +895,41 @@ async function conclusionsEcrites(admin: AdminClient, coupleId: string, slug: st
 const DEMANDE_AVIS_APRES_JOURS = 2
 const DEMANDE_AVIS_MAX_JOURS = 60
 
-export async function envoyerDemandesAvis(admin: AdminClient): Promise<number> {
+// E-mail prévu (demande d'avis ou parrainage) : rien n'est réservé ni envoyé.
+export interface EnvoiPrevu {
+  coupleId: string
+  /** Date à partir de laquelle l'e-mail est dû. */
+  dueLe: string
+  /** Clé de l'envoi dans rappels_envoyes. */
+  cle: string
+  modele: string
+  destinataires: Membre[]
+  vars: Map<string, Variables>
+}
+
+// Demandes d'avis dues au plus tard à `jusqua` (par défaut maintenant).
+export async function demandesAvisPrevues(admin: AdminClient, jusqua: number = Date.now()): Promise<EnvoiPrevu[]> {
   const maintenant = Date.now()
   const depuis = new Date(maintenant - DEMANDE_AVIS_MAX_JOURS * JOUR).toISOString()
-  const jusqua = new Date(maintenant - DEMANDE_AVIS_APRES_JOURS * JOUR).toISOString()
+  const limite = new Date(jusqua - DEMANDE_AVIS_APRES_JOURS * JOUR).toISOString()
   const premier = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)[0]
 
-  // Couples concernés : [id du couple, clé de l'envoi, modèle].
-  const aTraiter: { coupleId: string; cle: string; modele: string }[] = []
+  // Couples concernés, avec la date de la fin du module ou de la signature.
+  const aTraiter: { coupleId: string; le: string; cle: string; modele: string }[] = []
   if (premier) {
-    const { data, error } = await admin.from('modules').select('couple_id')
+    const { data, error } = await admin.from('modules').select('couple_id, revealed_at')
       .eq('slug', premier.slug).eq('revealed', true)
-      .gte('revealed_at', depuis).lte('revealed_at', jusqua)
+      .gte('revealed_at', depuis).lte('revealed_at', limite)
     if (error) throw new Error(error.message)
-    for (const m of data ?? []) aTraiter.push({ coupleId: m.couple_id, cle: premier.slug, modele: 'demande_avis' })
+    for (const m of data ?? []) aTraiter.push({ coupleId: m.couple_id, le: m.revealed_at as string, cle: premier.slug, modele: 'demande_avis' })
   }
-  const { data: signes, error: signesError } = await admin.from('couples').select('id')
-    .is('compte_resilie_le', null).gte('pacte_signe_le', depuis).lte('pacte_signe_le', jusqua)
+  const { data: signes, error: signesError } = await admin.from('couples').select('id, pacte_signe_le')
+    .is('compte_resilie_le', null).gte('pacte_signe_le', depuis).lte('pacte_signe_le', limite)
   if (signesError) throw new Error(signesError.message)
-  for (const c of signes ?? []) aTraiter.push({ coupleId: c.id, cle: 'pacte', modele: 'demande_avis_pacte' })
+  for (const c of signes ?? []) aTraiter.push({ coupleId: c.id, le: c.pacte_signe_le as string, cle: 'pacte', modele: 'demande_avis_pacte' })
 
-  let envoyes = 0
-  for (const { coupleId, cle, modele } of aTraiter) {
+  const prevues: EnvoiPrevu[] = []
+  for (const { coupleId, le, cle, modele } of aTraiter) {
     try {
       const { data: couple } = await admin.from('couples').select('compte_resilie_le').eq('id', coupleId).maybeSingle()
       if (!couple || couple.compte_resilie_le) continue
@@ -893,14 +946,31 @@ export async function envoyerDemandesAvis(admin: AdminClient): Promise<number> {
       const ontDonneAvis = new Set((avis ?? []).map(a => a.profile_id))
       const destinataires = membres.filter(m => !ontDonneAvis.has(m.id) && m.rappels_email && m.email)
       if (!destinataires.length) continue
-      if (!(await reserverEnvoi(admin, coupleId, 'demande_avis', cle))) continue
-
-      for (const d of destinataires) {
-        const module = premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : ''
-        if (await envoyerRappel(d, modele, { module })) envoyes++
-      }
+      const vars = new Map<string, Variables>()
+      for (const d of destinataires) vars.set(d.id, { module: premier ? (d.langue === 'en' ? premier.titre_en ?? premier.titre : premier.titre) : '' })
+      prevues.push({ coupleId, dueLe: new Date(new Date(le).getTime() + DEMANDE_AVIS_APRES_JOURS * JOUR).toISOString(), cle, modele, destinataires, vars })
     } catch (e) {
       console.error(`[rappels] demande d'avis (${cle}) du couple ${coupleId} : ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return prevues
+}
+
+export async function envoyerDemandesAvis(admin: AdminClient): Promise<number> {
+  return envoyerPrevus(admin, await demandesAvisPrevues(admin), 'demande_avis')
+}
+
+// Réserve puis envoie des e-mails prévus (une seule fois par couple et par clé).
+async function envoyerPrevus(admin: AdminClient, prevus: EnvoiPrevu[], type: string): Promise<number> {
+  let envoyes = 0
+  for (const p of prevus) {
+    try {
+      if (!(await reserverEnvoi(admin, p.coupleId, type, p.cle))) continue
+      for (const d of p.destinataires) {
+        if (await envoyerRappel(d, p.modele, p.vars.get(d.id))) envoyes++
+      }
+    } catch (e) {
+      console.error(`[rappels] ${type} du couple ${p.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   return envoyes
@@ -918,38 +988,41 @@ export async function envoyerDemandesAvis(admin: AdminClient): Promise<number> {
 const PARRAINAGE_APRES_MODULE = 5
 const PARRAINAGE_MAX_JOURS = 60
 
-export async function envoyerEmailsParrainage(admin: AdminClient): Promise<number> {
+// E-mails de parrainage dus au plus tard à `jusqua` (par défaut maintenant).
+export async function parrainagesPrevus(admin: AdminClient, jusqua: number = Date.now()): Promise<EnvoiPrevu[]> {
   const maintenant = Date.now()
   const module = (await getEffectiveModules()).filter(m => m.slug !== MODULE_RDV_ANNUEL)[PARRAINAGE_APRES_MODULE - 1]
-  if (!module) return 0
-  const { data: modules, error } = await admin.from('modules').select('couple_id')
+  if (!module) return []
+  const { data: modules, error } = await admin.from('modules').select('couple_id, revealed_at')
     .eq('slug', module.slug).eq('revealed', true)
     .gte('revealed_at', new Date(maintenant - PARRAINAGE_MAX_JOURS * JOUR).toISOString())
+    .lte('revealed_at', new Date(jusqua).toISOString())
   if (error) throw new Error(error.message)
 
-  let envoyes = 0
-  for (const { couple_id: coupleId } of modules ?? []) {
+  const prevues: EnvoiPrevu[] = []
+  for (const { couple_id: coupleId, revealed_at: le } of modules ?? []) {
     try {
-      const { data: couple } = await admin.from('couples').select('code_parrainage, parrainages_recompenses, compte_resilie_le').eq('id', coupleId).maybeSingle()
+      const { data: couple } = await admin.from('couples').select('code_parrainage, compte_resilie_le').eq('id', coupleId).maybeSingle()
       if (!couple?.code_parrainage || couple.compte_resilie_le) continue
       const { data: deja } = await admin.from('rappels_envoyes').select('cle').eq('couple_id', coupleId).eq('type', 'parrainage').limit(1)
       if (deja?.length) continue
       const membres = await membresDuCouple(admin, coupleId)
-      if (membres.length < 2 || !membres.some(m => m.rappels_email && m.email)) continue
+      if (membres.length < 2) continue
+      const destinataires = membres.filter(m => m.rappels_email && m.email)
+      if (!destinataires.length) continue
       if (!(await conclusionsEcrites(admin, coupleId, module.slug, membres))) continue
-      if (!(await reserverEnvoi(admin, coupleId, 'parrainage', module.slug))) continue
-
-      for (const d of membres) {
-        const vars = {
-          code_parrainage: couple.code_parrainage,
-          numero: PARRAINAGE_APRES_MODULE,
-          module: d.langue === 'en' ? module.titre_en ?? module.titre : module.titre,
-        }
-        if (await envoyerRappel(d, 'parrainage_module_5', vars)) envoyes++
+      const vars = new Map<string, Variables>()
+      for (const d of destinataires) {
+        vars.set(d.id, { code_parrainage: couple.code_parrainage, numero: PARRAINAGE_APRES_MODULE, module: d.langue === 'en' ? module.titre_en ?? module.titre : module.titre })
       }
+      prevues.push({ coupleId, dueLe: le as string, cle: module.slug, modele: 'parrainage_module_5', destinataires, vars })
     } catch (e) {
       console.error(`[rappels] e-mail de parrainage du couple ${coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
-  return envoyes
+  return prevues
+}
+
+export async function envoyerEmailsParrainage(admin: AdminClient): Promise<number> {
+  return envoyerPrevus(admin, await parrainagesPrevus(admin), 'parrainage')
 }

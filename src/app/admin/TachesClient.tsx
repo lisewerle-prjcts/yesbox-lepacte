@@ -16,9 +16,20 @@ function quand(jours: number) {
   return jours === 0 ? "aujourd'hui" : jours === 1 ? 'demain' : `dans ${jours} jours`
 }
 
-// Catégorie « Tâches » de la vue d'ensemble : les avis à publier, et la
-// validation des e-mails d'anniversaire avant leur envoi.
-export default function TachesClient({ taches, tableManquante, avis, avisTableManquante }: { taches: TacheEmailAnniversaire[]; tableManquante: boolean; avis: AvisAdmin[]; avisTableManquante: boolean }) {
+// Catégorie « Tâches » de la vue d'ensemble : les avis à publier, les
+// relances des 3 prochains jours, et la validation des e-mails
+// d'anniversaire avant leur envoi.
+// Relance qui partira avec la tâche quotidienne dans les 3 prochains jours.
+export interface RelanceAVenir { coupleId: string; couple: string; email: string; detail: string; destinataires: string[]; le: string }
+
+const jourRelance = (iso: string) => {
+  const jour = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+  const ecart = Math.round((jour(new Date(iso)) - jour(new Date())) / (24 * 60 * 60 * 1000))
+  const date = new Date(iso).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+  return ecart <= 0 ? `aujourd’hui (${date})` : ecart === 1 ? `demain (${date})` : date
+}
+
+export default function TachesClient({ taches, tableManquante, avis, avisTableManquante, relances = [] }: { taches: TacheEmailAnniversaire[]; tableManquante: boolean; avis: AvisAdmin[]; avisTableManquante: boolean; relances?: RelanceAVenir[] }) {
   const aValider = taches.filter(t => !t.valideLe).length + avis.filter(a => a.statut === 'en_attente').length
   return (
     <div id="taches" className="card p-6 mb-8">
@@ -29,6 +40,37 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
         </span>
       </div>
       <AvisTaches avis={avis} tableManquante={avisTableManquante} />
+
+      <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>Relances, demandes d’avis et parrainage des 3 prochains jours</h3>
+      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
+        Rien à valider : elles partent seules avec la tâche du matin (vers 8 h–9 h, heure de Paris). Une réponse enregistrée d’ici là annule une relance d’inactivité ; un avis laissé d’ici là annule la demande d’avis.
+      </p>
+      {relances.length === 0 ? (
+        <p className="mb-6" style={{ fontSize: 13, color: 'var(--muted)' }}>Aucun e-mail prévu dans les 3 prochains jours.</p>
+      ) : (
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ textAlign: 'left', color: 'var(--muted)', borderBottom: '1px solid var(--line)' }}>
+                <th className="py-1.5 pr-3">Quand</th>
+                <th className="py-1.5 pr-3">Couple</th>
+                <th className="py-1.5 pr-3">E-mail</th>
+                <th className="py-1.5">Destinataires</th>
+              </tr>
+            </thead>
+            <tbody>
+              {relances.map(r => (
+                <tr key={`${r.coupleId}-${r.email}`} style={{ borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink)', fontWeight: 500, whiteSpace: 'nowrap' }}>{jourRelance(r.le)}</td>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.couple}</td>
+                  <td className="py-1.5 pr-3" style={{ color: 'var(--ink-2)' }}>{r.email}<div style={{ color: 'var(--muted)', fontSize: 11.5 }}>{r.detail}</div></td>
+                  <td className="py-1.5" style={{ color: 'var(--muted)' }}>{r.destinataires.join(', ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>E-mails d’anniversaire</h3>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>

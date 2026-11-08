@@ -8,6 +8,21 @@ import ProblemesConnexionClient from './ProblemesConnexionClient'
 import { chargerProblemesConnexion } from '@/lib/problemes-connexion'
 import { formaterMoisAvis } from '@/lib/avis'
 import type { AvisAdmin } from './AvisTaches'
+import type { RelanceAVenir } from './TachesClient'
+import { demandesAvisPrevues, parrainagesPrevus, relancesDemarragePrevues, relancesInactivitePrevues } from '@/lib/rappels-email'
+import { modeleEmail } from '@/lib/modeles-email/catalogue'
+
+// Les rappels partent avec la tâche quotidienne de 7 h (UTC, cf. vercel.json) :
+// premier passage à partir de la date où la relance est due.
+const HEURE_TACHE_UTC = 7
+function prochainPassage(dueLe: string, maintenant: number): string {
+  const depart = Math.max(new Date(dueLe).getTime(), maintenant)
+  const d = new Date(depart)
+  let passage = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), HEURE_TACHE_UTC)
+  if (passage < depart) passage += 24 * 60 * 60 * 1000
+  return new Date(passage).toISOString()
+}
+const RELANCES_HORIZON_JOURS = 3
 
 // Un couple « en pause » n'a enregistré ni réponse ni conclusion depuis plus
 // de 5 jours.
@@ -36,7 +51,7 @@ export default async function AdminHome() {
     effectiveModules,
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('couples').select('id, created_at, pacte_signe_le, derniere_activite_le, compte_resilie_le'),
+    supabase.from('couples').select('id, numero, created_at, pacte_signe_le, derniere_activite_le, compte_resilie_le'),
     modulesTerminesParCouple(supabase),
     supabase.from('modules').select('slug,statut,revealed').order('slug'),
     getEffectiveModules(),
@@ -62,6 +77,47 @@ export default async function AdminHome() {
   const slugs = effectiveModules.map(m => m.slug)
   const couplesParcoursBac = (allCouples ?? []).filter(c => programmeInitialTermine(slugs, terminesParCouple.get(c.id) ?? {}, c.pacte_signe_le)).length
   const couplesParcoursInitial = totalCouples - couplesParcoursBac
+
+  // Relances qui partiront dans les 3 prochains jours (inactivité et
+  // démarrage), d'après l'état actuel des couples : une réponse enregistrée
+  // d'ici là annule la relance.
+  const maintenantTaches = Date.now()
+  const horizon = maintenantTaches + RELANCES_HORIZON_JOURS * 24 * 60 * 60 * 1000
+  const numeroCouple = new Map((allCouples ?? []).map(c => [c.id, c.numero as number | null]))
+  const [inactivite, demarrage, avisPrevus, parrainages] = await Promise.all([
+    relancesInactivitePrevues(supabase, horizon).catch(() => []),
+    relancesDemarragePrevues(supabase, horizon).catch(() => []),
+    demandesAvisPrevues(supabase, horizon).catch(() => []),
+    parrainagesPrevus(supabase, horizon).catch(() => []),
+  ])
+  const destinatairesDe = (liste: { prenom: string | null; email: string | null }[]) => liste.map(d => d.prenom ? `${d.prenom} (${d.email})` : d.email as string)
+  const relancesAVenir: RelanceAVenir[] = [
+    ...inactivite.map(r => ({
+      coupleId: r.coupleId,
+      couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
+      email: modeleEmail(r.modele).nom,
+      detail: `Relance d’inactivité n°${r.rang + 1} (${r.rang === 0 ? '10' : '20'} jours sans avancer)`,
+      destinataires: r.destinataires.map(d => d.prenom ? `${d.prenom} (${d.email})` : d.email as string),
+      le: prochainPassage(r.dueLe, maintenantTaches),
+    })),
+    ...demarrage.map(r => ({
+      coupleId: r.coupleId,
+      couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
+      email: modeleEmail(r.modele).nom,
+      detail: `${r.type === 'non_paire' ? 'Pas encore au complet' : 'Au complet, jamais commencé'} (palier ${r.jours} jours)`,
+      destinataires: r.membres.filter(m => m.rappels_email && m.email).map(m => m.prenom ? `${m.prenom} (${m.email})` : m.email as string),
+      le: prochainPassage(r.dueLe, maintenantTaches),
+    })),
+    ...[...avisPrevus, ...parrainages].map(r => ({
+      coupleId: r.coupleId,
+      couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
+      email: modeleEmail(r.modele).nom,
+      detail: r.modele === 'parrainage_module_5' ? 'Module 5 terminé' : r.cle === 'pacte' ? 'Pacte signé il y a 2 jours' : 'Premier module terminé il y a 2 jours',
+      destinataires: destinatairesDe(r.destinataires),
+      le: prochainPassage(r.dueLe, maintenantTaches),
+    })),
+  ].filter(r => r.destinataires.length && new Date(r.le).getTime() <= horizon)
+    .sort((a, b) => a.le.localeCompare(b.le))
 
   // Chiffres clés (comptes résiliés exclus). Un couple a « commencé » dès
   // sa première réponse ou conclusion : derniere_activite_le est alors posée
@@ -150,7 +206,7 @@ export default async function AdminHome() {
         })}
       </div>
 
-      <TachesClient taches={taches} tableManquante={tableManquante} avis={avis} avisTableManquante={!!erreurAvis} />
+      <TachesClient taches={taches} tableManquante={tableManquante} avis={avis} avisTableManquante={!!erreurAvis} relances={relancesAVenir} />
       <ProblemesConnexionClient {...problemes} />
 
       {/* KPIs */}
