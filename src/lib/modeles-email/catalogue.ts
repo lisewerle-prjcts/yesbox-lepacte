@@ -1391,7 +1391,7 @@ Comment l’avez-vous vécu ? Votre avis compte beaucoup pour nous, et il aide d
 
 **Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, le pack initial ou l’abonnement annuel « Pacte – notre rendez-vous annuel ».
 
-petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom (vous pouvez le modifier, ou n’indiquer que votre initiale) et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
 
 ${EQUIPE.fr}` },
     en: { objet: 'How are you finding your YES BOX journey?', corps: `${BONJOUR.en}
@@ -1404,7 +1404,7 @@ How did you find it? Your review means a lot to us, and it helps other couples g
 
 **As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, the starter pack or the "Pact – our yearly date" yearly subscription.
 
-petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+petit: Your review is read by the team before being published on the website, with your first name (you can change it, or only give your initial) and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
 
 ${EQUIPE.en}` },
   },
@@ -1421,7 +1421,7 @@ Maintenant que vous avez vécu le parcours en entier, comment l’avez-vous trou
 
 **Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, par exemple l’abonnement annuel « Pacte – notre rendez-vous annuel », pour vous redire oui chaque année.
 
-petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom (vous pouvez le modifier, ou n’indiquer que votre initiale) et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
 
 ${EQUIPE.fr}` },
     en: { objet: 'Your pact is signed: a word about your journey?', corps: `${BONJOUR.en}
@@ -1434,7 +1434,7 @@ Now that you’ve been through the whole program, how did you find it? Your revi
 
 **As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, for example the "Pact – our yearly date" yearly subscription, to say yes again every year.
 
-petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+petit: Your review is read by the team before being published on the website, with your first name (you can change it, or only give your initial) and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
 
 ${EQUIPE.en}` },
   },
