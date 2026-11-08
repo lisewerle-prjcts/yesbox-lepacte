@@ -441,7 +441,7 @@ ${EQUIPE.en}` },
 
 [image: Quand avez-vous pris du temps rien que pour vous deux… pour la dernière fois ? | {site}/emails/du-temps-rien-que-pour-vous-deux.png | {lien}]
 
-C’est simple : chacun·e répond de son côté, à son rythme. Vos réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre. Ensuite, vous les découvrez ensemble et vous en parlez.
+Avec YES BOX, c’est simple : chacun·e répond de son côté, à son rythme. Vos réponses restent cachées jusqu’à ce que vous ayez terminé de part et d’autre. Ensuite, vous les découvrez ensemble et vous en parlez.
 
 Une idée : choisissez dès maintenant un moment au calme cette semaine pour y répondre, chacun·e de votre côté.
 
@@ -454,7 +454,7 @@ ${EQUIPE.fr}` },
 
 {partenaire} and you are paired up on YES BOX… but your first module, "{module}", hasn’t started yet.
 
-It’s simple: each of you answers on your own, at your own pace. Your answers stay hidden until you have both finished. Then you discover them together and talk about them.
+With YES BOX, it’s simple: each of you answers on your own, at your own pace. Your answers stay hidden until you have both finished. Then you discover them together and talk about them.
 
 An idea: pick a quiet moment this week right now to answer, each on your own.
 
