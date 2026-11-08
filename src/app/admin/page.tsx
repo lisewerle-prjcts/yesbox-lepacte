@@ -9,7 +9,7 @@ import { chargerProblemesConnexion } from '@/lib/problemes-connexion'
 import { formaterMoisAvis } from '@/lib/avis'
 import type { AvisAdmin } from './AvisTaches'
 import type { RelanceAVenir } from './TachesClient'
-import { relancesDemarragePrevues, relancesInactivitePrevues } from '@/lib/rappels-email'
+import { demandesAvisPrevues, parrainagesPrevus, relancesDemarragePrevues, relancesInactivitePrevues } from '@/lib/rappels-email'
 import { modeleEmail } from '@/lib/modeles-email/catalogue'
 
 // Les rappels partent avec la tâche quotidienne de 7 h (UTC, cf. vercel.json) :
@@ -84,10 +84,13 @@ export default async function AdminHome() {
   const maintenantTaches = Date.now()
   const horizon = maintenantTaches + RELANCES_HORIZON_JOURS * 24 * 60 * 60 * 1000
   const numeroCouple = new Map((allCouples ?? []).map(c => [c.id, c.numero as number | null]))
-  const [inactivite, demarrage] = await Promise.all([
+  const [inactivite, demarrage, avisPrevus, parrainages] = await Promise.all([
     relancesInactivitePrevues(supabase, horizon).catch(() => []),
     relancesDemarragePrevues(supabase, horizon).catch(() => []),
+    demandesAvisPrevues(supabase, horizon).catch(() => []),
+    parrainagesPrevus(supabase, horizon).catch(() => []),
   ])
+  const destinatairesDe = (liste: { prenom: string | null; email: string | null }[]) => liste.map(d => d.prenom ? `${d.prenom} (${d.email})` : d.email as string)
   const relancesAVenir: RelanceAVenir[] = [
     ...inactivite.map(r => ({
       coupleId: r.coupleId,
@@ -103,6 +106,14 @@ export default async function AdminHome() {
       email: modeleEmail(r.modele).nom,
       detail: `${r.type === 'non_paire' ? 'Pas encore au complet' : 'Au complet, jamais commencé'} (palier ${r.jours} jours)`,
       destinataires: r.membres.filter(m => m.rappels_email && m.email).map(m => m.prenom ? `${m.prenom} (${m.email})` : m.email as string),
+      le: prochainPassage(r.dueLe, maintenantTaches),
+    })),
+    ...[...avisPrevus, ...parrainages].map(r => ({
+      coupleId: r.coupleId,
+      couple: `Couple ${numeroCouple.get(r.coupleId) ?? '?'}`,
+      email: modeleEmail(r.modele).nom,
+      detail: r.modele === 'parrainage_module_5' ? 'Module 5 terminé' : r.cle === 'pacte' ? 'Pacte signé il y a 2 jours' : 'Premier module terminé il y a 2 jours',
+      destinataires: destinatairesDe(r.destinataires),
       le: prochainPassage(r.dueLe, maintenantTaches),
     })),
   ].filter(r => r.destinataires.length && new Date(r.le).getTime() <= horizon)

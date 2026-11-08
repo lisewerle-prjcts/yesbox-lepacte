@@ -41,12 +41,12 @@ export default function TachesClient({ taches, tableManquante, avis, avisTableMa
       </div>
       <AvisTaches avis={avis} tableManquante={avisTableManquante} />
 
-      <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>Relances des 3 prochains jours</h3>
+      <h3 className="font-semibold mb-1" style={{ fontSize: 14, color: 'var(--ink)' }}>Relances, demandes d’avis et parrainage des 3 prochains jours</h3>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
-        Rien à valider : elles partent seules avec la tâche du matin (vers 8 h–9 h, heure de Paris). Une réponse enregistrée d’ici là annule la relance.
+        Rien à valider : elles partent seules avec la tâche du matin (vers 8 h–9 h, heure de Paris). Une réponse enregistrée d’ici là annule une relance d’inactivité ; un avis laissé d’ici là annule la demande d’avis.
       </p>
       {relances.length === 0 ? (
-        <p className="mb-6" style={{ fontSize: 13, color: 'var(--muted)' }}>Aucune relance prévue dans les 3 prochains jours.</p>
+        <p className="mb-6" style={{ fontSize: 13, color: 'var(--muted)' }}>Aucun e-mail prévu dans les 3 prochains jours.</p>
       ) : (
         <div className="overflow-x-auto mb-6">
           <table className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
