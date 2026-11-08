@@ -12,15 +12,24 @@ const EXPEDITEUR_DOMAINE = process.env.MAIL_FROM || 'lise@yesbox-lepacte.fr'
 // ne reçoit pas de courrier.
 const REPONDRE_A = process.env.MAIL_REPLY_TO || 'lise.yesbox@gmail.com'
 
-// Copie cachée de chaque e-mail envoyé par le site, pour l'équipe
-// (MAIL_COPIE_CACHEE='' pour l'arrêter). Pas de copie des e-mails de
-// sécurité (lien de confirmation, mot de passe), ni d'un e-mail déjà adressé
-// à cette boîte.
+// Copie de chaque e-mail envoyé par le site, pour l'équipe
+// (MAIL_COPIE_CACHEE='' pour l'arrêter). C'est un e-mail séparé, à l'objet
+// « [Copie → destinataire] … » : une copie cachée (Bcc) n'arrivait pas
+// (Gmail range la copie cachée envoyée à soi-même dans « Messages
+// envoyés », ou la fond dans la conversation de l'original). Pas de copie
+// des e-mails de sécurité (lien de confirmation, mot de passe), ni d'un
+// e-mail déjà adressé à cette boîte.
 const COPIE_CACHEE = (process.env.MAIL_COPIE_CACHEE ?? 'lise.yesbox@gmail.com').trim()
 
-function copieCachee(to: string, copie: boolean | undefined): string | undefined {
+function adresseCopie(to: string, copie: boolean | undefined): string | undefined {
   if (copie === false || !COPIE_CACHEE) return undefined
   return to.trim().toLowerCase() === COPIE_CACHEE.toLowerCase() ? undefined : COPIE_CACHEE
+}
+
+// Dans la copie, le lien « Ne plus recevoir ces rappels » est désactivé : un
+// clic désinscrirait la personne destinataire.
+function sansLienDesinscription(html: string) {
+  return html.replace(/<a\s[^>]*href="[^"]*desinscription[^"]*"[^>]*>([\s\S]*?)<\/a>/gi, '<u>$1</u>')
 }
 
 // Un envoi bloqué ne doit jamais bloquer la page qui l'a déclenché (la
@@ -103,11 +112,18 @@ export async function envoyerMail(mail: Mail): Promise<boolean> {
 export async function envoyerMailDetail(mail: Mail): Promise<{ ok: boolean; erreur?: string }> {
   const resultat = await envoyer(mail)
   await journaliserEnvoi(mail.to, mail.etiquette ? `${mail.subject} · [${mail.etiquette}]` : mail.subject, resultat.ok, resultat.erreur)
+  // Copie pour l'équipe, une fois l'e-mail parti : jamais bloquante, et pas
+  // notée dans le journal des e-mails du couple.
+  const copie = resultat.ok ? adresseCopie(mail.to, mail.copie) : undefined
+  if (copie) {
+    const bandeau = `<p style="margin:0 0 16px;padding:10px 12px;background:#fceef4;border-radius:8px;font-family:Arial,sans-serif;font-size:12px;color:#8a1d52;">Copie de l’e-mail envoyé à <strong>${mail.to.replace(/[<>&"]/g, '')}</strong> le ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris', dateStyle: 'long', timeStyle: 'short' })}.</p>`
+    const envoiCopie = await envoyer({ ...mail, to: copie, subject: `[Copie → ${mail.to}] ${mail.subject}`, body: bandeau + sansLienDesinscription(mail.body), entetes: undefined, copie: false })
+    if (!envoiCopie.ok) console.warn(`[mail] Copie pour l'équipe non envoyée (${mail.to}) — ${envoiCopie.erreur}`)
+  }
   return resultat
 }
 
-async function envoyer({ to, subject, body, nom = 'YES BOX', entetes, copie }: Mail): Promise<{ ok: boolean; erreur?: string }> {
-  const bcc = copieCachee(to, copie)
+async function envoyer({ to, subject, body, nom = 'YES BOX', entetes }: Mail): Promise<{ ok: boolean; erreur?: string }> {
   const html = mailHtml(body)
   const text = `${htmlVersTexte(body)}\n\n--\nYES BOX · yesbox-lepacte.fr`
   const erreurs: string[] = []
@@ -117,7 +133,7 @@ async function envoyer({ to, subject, body, nom = 'YES BOX', entetes, copie }: M
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], ...(bcc ? { bcc: [bcc] } : {}), reply_to: REPONDRE_A, subject, html, text, ...(entetes ? { headers: entetes } : {}) }),
+        body: JSON.stringify({ from: `${nom} <${EXPEDITEUR_DOMAINE}>`, to: [to], reply_to: REPONDRE_A, subject, html, text, ...(entetes ? { headers: entetes } : {}) }),
         signal: AbortSignal.timeout(DELAI_ENVOI_MS),
       })
       if (res.ok) return { ok: true }
@@ -140,7 +156,6 @@ async function envoyer({ to, subject, body, nom = 'YES BOX', entetes, copie }: M
       await transporter.sendMail({
         from: { name: nom, address: process.env.GMAIL_USER },
         to,
-        ...(bcc ? { bcc } : {}),
         subject,
         html,
         text,
