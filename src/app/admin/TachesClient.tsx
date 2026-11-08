@@ -387,7 +387,7 @@ function BoutonVisualiser({ relance }: { relance: RelanceAVenir }) {
             </div>
             <iframe title="Aperçu de l’e-mail" srcDoc={apercu.html} sandbox="" style={{ border: 0, width: '100%', flex: 1, minHeight: 420, background: '#fbf8f3' }} />
             <p className="px-4 py-2" style={{ fontSize: 11, color: 'var(--muted)', borderTop: '1px solid var(--line)' }}>
-              Une copie part aussi à lise.yesbox@gmail.com. Le vrai lien de désinscription est ajouté à l’envoi.
+              Copie cachée à lise.yesbox@gmail.com. Le vrai lien de désinscription est ajouté à l’envoi.
             </p>
           </div>
         </div>

@@ -81,7 +81,7 @@ export default function ReglesEnvoi() {
       </summary>
       <div className="mt-3 space-y-1" style={{ fontSize: 12, color: 'var(--muted)' }}>
         <p>Les e-mails « tout de suite » partent au moment de l’action. Les autres partent chaque matin vers 8 h–9 h (heure de Paris), lors de la tâche quotidienne.</p>
-        <p>Une copie de chaque e-mail part vers lise.yesbox@gmail.com, avec l’objet « [Copie → destinataire] … » (variable MAIL_COPIE_CACHEE sur Vercel pour changer d’adresse, vide pour arrêter), sauf les e-mails de sécurité : lien de confirmation ou de connexion, mot de passe oublié, nouveau mot de passe.</p>
+        <p>Une copie cachée de chaque e-mail part vers lise.yesbox@gmail.com (variable MAIL_COPIE_CACHEE sur Vercel pour changer d’adresse, vide pour arrêter), sauf les e-mails de sécurité : lien de confirmation ou de connexion, mot de passe oublié, nouveau mot de passe.</p>
         <p>Les rappels (relances, e-mails du mois, abonnement, anniversaires) ne sont pas envoyés aux personnes qui les ont désactivés dans Mon compte ou via le lien en bas de chaque rappel.</p>
       </div>
       <div className="mt-4 space-y-5">
