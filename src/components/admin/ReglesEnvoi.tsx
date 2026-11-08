@@ -58,6 +58,7 @@ const FAMILLES: { titre: string; regles: Regle[] }[] = [
       { email: 'Fin de l’année du pack initial', quand: '1 mois avant la fin de l’année du pack (acheté ou offert)', qui: 'Les deux membres', notes: 'Pacte pas encore signé, sans abonnement ; propose de continuer à 19 €/an' },
       { email: 'Proposition de l’abonnement annuel', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Couples encore à l’ancien abonnement mensuel : après la signature du pacte, passage à l’annuel pas encore programmé' },
       { email: 'Abonnement annuel programmé', quand: '5 jours avant la fin du mois payé', qui: 'Les deux membres', notes: 'Quand le passage à l’annuel est déjà programmé : simple information avant le prélèvement' },
+      { email: 'Demande d’avis (bon de 10 €)', quand: '2 jours après la fin du premier module, puis 2 jours après la signature du pacte', qui: 'Les membres qui n’ont pas encore laissé d’avis', notes: 'Chacune une seule fois par couple ; module terminé = réponses dévoilées et conclusions des deux ; rien au-delà de 60 jours' },
       { email: 'Carte cadeau', quand: 'Tout de suite après le paiement', qui: 'La personne qui achète' },
     ],
   },

@@ -1377,6 +1377,66 @@ Valid until {date}, for one couple.
 ${EQUIPE.en}` },
   },
   {
+    cle: 'demande_avis', famille: 'abonnement', nom: 'Demande d’avis — après le premier module', rappel: true,
+    quand: '2 jours après la fin du premier module (réponses dévoilées, conclusions des deux écrites). Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
+    fr: { objet: 'Comment avez-vous vécu votre premier module YES BOX ?', corps: `${BONJOUR.fr}
+
+Vous avez terminé le module « {module} » : bravo d’avoir pris ce temps à deux !
+
+Comment l’avez-vous vécu ? Votre avis compte beaucoup pour nous, et il aide d’autres couples à se lancer. Quelques lignes et une note suffisent, et chacun·e peut laisser le sien.
+
+[bouton: Laisser mon avis | {site}/avis]
+
+**Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, le pack initial ou l’abonnement annuel « Pacte – notre rendez-vous annuel ».
+
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+
+${EQUIPE.fr}` },
+    en: { objet: 'How did you find your first YES BOX module?', corps: `${BONJOUR.en}
+
+You’ve finished the "{module}" module: well done for taking this time together!
+
+How did you find it? Your review means a lot to us, and it helps other couples get started. A few lines and a rating are enough, and each of you can leave your own.
+
+[bouton: Leave my review | {site}/avis]
+
+**As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, the starter pack or the "Pact – our yearly date" yearly subscription.
+
+petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+
+${EQUIPE.en}` },
+  },
+  {
+    cle: 'demande_avis_pacte', famille: 'abonnement', nom: 'Demande d’avis — après la signature du pacte', rappel: true,
+    quand: '2 jours après la signature du pacte par les deux. Une seule fois, aux membres qui n’ont pas encore laissé d’avis.',
+    fr: { objet: 'Votre pacte est signé : un mot sur votre parcours ?', corps: `${BONJOUR.fr}
+
+Il y a quelques jours, vous avez signé votre pacte de couple. Bravo à vous deux pour tout ce chemin parcouru ensemble !
+
+Maintenant que vous avez vécu le parcours en entier, comment l’avez-vous trouvé ? Votre avis compte beaucoup pour nous, et il aide d’autres couples à se lancer. Quelques lignes et une note suffisent, et chacun·e peut laisser le sien.
+
+[bouton: Laisser mon avis | {site}/avis]
+
+**Pour vous remercier :** une fois votre avis publié, vous recevez un bon de **10 €** à valoir sur la suite du programme, par exemple l’abonnement annuel « Pacte – notre rendez-vous annuel », pour vous redire oui chaque année.
+
+petit: Votre avis est relu par l’équipe avant d’être publié sur le site, avec votre prénom et le mois où vous avez commencé. Le bon de 10 € s’ajoute dans Mon compte, rubrique « Ajouter un code », et se déduit de votre prochain paiement.
+
+${EQUIPE.fr}` },
+    en: { objet: 'Your pact is signed: a word about your journey?', corps: `${BONJOUR.en}
+
+A few days ago, you signed your couple’s pact. Well done to you both for the whole journey you’ve made together!
+
+Now that you’ve been through the whole program, how did you find it? Your review means a lot to us, and it helps other couples get started. A few lines and a rating are enough, and each of you can leave your own.
+
+[bouton: Leave my review | {site}/avis]
+
+**As a thank-you:** once your review is published, you get a **€10** voucher to use on the rest of the program, for example the "Pact – our yearly date" yearly subscription, to say yes again every year.
+
+petit: Your review is read by the team before being published on the website, with your first name and the month you started. The €10 voucher is added in My Account, under "Add a code", and is deducted from your next payment.
+
+${EQUIPE.en}` },
+  },
+  {
     cle: 'avis_publie', famille: 'abonnement', nom: 'Avis publié — code de 10 € de réduction',
     quand: 'Quand un avis est validé dans Vue d’ensemble > Tâches. Envoyé à la personne qui l’a écrit.',
     obligatoires: ['code'],

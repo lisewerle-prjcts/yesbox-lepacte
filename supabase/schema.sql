@@ -1978,3 +1978,15 @@ end $$;
 alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
 alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
   check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete', 'demarrage'));
+
+-- ============================================================
+-- DEMANDES D'AVIS APRÈS LE PREMIER MODULE ET APRÈS LE PACTE
+-- 2 jours après la fin du premier module, puis 2 jours après la signature
+-- du pacte, invitation à laisser un avis (bon de 10 € une fois publié),
+-- chacune une seule fois par couple : rappels_envoyes, type
+-- 'demande_avis', clé = slug du premier module, ou « pacte ».
+-- À exécuter AVANT le déploiement du code correspondant. Idempotent.
+-- ============================================================
+alter table public.rappels_envoyes drop constraint if exists rappels_envoyes_type_check;
+alter table public.rappels_envoyes add constraint rappels_envoyes_type_check
+  check (type in ('mensuel', 'bascule_annuelle', 'effacement_donnees', 'invitation', 'alerte_grande_date', 'renouvellement_annuel', 'fin_yesbox_offerte', 'fin_pack_initial', 'proposition_rdv_annuel', 'theme_mensuel', 'fete', 'demarrage', 'demande_avis'));
