@@ -9,7 +9,7 @@ import type { CoupleAbonnement } from '@/types'
 import { t, type Locale } from '@/lib/i18n/locale'
 import { languesDesProfils } from '@/lib/i18n/langue-profil'
 import { dechiffrerLignes } from '@/lib/chiffrement'
-import { envoyerModele, rendreModele } from '@/lib/modeles-email/serveur'
+import { contenuModele, envoyerModele, rendreModele } from '@/lib/modeles-email/serveur'
 import { CLES_THEMES_MENSUELS, themeMensuelParDefaut, type ContenuEmail } from '@/lib/modeles-email/catalogue'
 import type { Variables } from '@/lib/modeles-email/rendu'
 
@@ -88,6 +88,41 @@ export async function envoyerRappel(destinataire: Membre, cle: string, vars: Var
     etiquette,
     contenu,
   })
+}
+
+// ---------------------------------------------------------------------------
+// Textes modifiés à la main pour un e-mail prévu (Vue d'ensemble > Tâches >
+// Modifier) : réglage « email_prevu::<sorte>::<couple>::<clé de l'envoi> »
+// (JSON { fr?, en? }, chacun { objet, corps }). Utilisé à l'envoi, par la
+// tâche du matin comme par « Envoyer maintenant », puis effacé.
+// ---------------------------------------------------------------------------
+
+export type SortePrevue = 'inactivite' | 'demarrage' | 'avis' | 'parrainage'
+export type ContenuModifie = Partial<Record<Locale, ContenuEmail>>
+const PREFIXE_PREVU_MODIFIE = 'email_prevu::'
+
+export function cleEmailModifie(sorte: SortePrevue, coupleId: string, cleEnvoi: string) {
+  return `${PREFIXE_PREVU_MODIFIE}${sorte}::${coupleId}::${cleEnvoi}`
+}
+
+export async function lireEmailModifie(admin: AdminClient, sorte: SortePrevue, coupleId: string, cleEnvoi: string): Promise<ContenuModifie | null> {
+  const { data } = await admin.from('settings').select('value').eq('key', cleEmailModifie(sorte, coupleId, cleEnvoi)).maybeSingle()
+  if (!data?.value) return null
+  try {
+    return JSON.parse(data.value) as ContenuModifie
+  } catch {
+    return null
+  }
+}
+
+export async function oublierEmailModifie(admin: AdminClient, sorte: SortePrevue, coupleId: string, cleEnvoi: string) {
+  await admin.from('settings').delete().eq('key', cleEmailModifie(sorte, coupleId, cleEnvoi))
+}
+
+// Clés (« <sorte>::<couple>::<clé> ») des e-mails prévus modifiés à la main.
+export async function emailsModifies(admin: AdminClient): Promise<Set<string>> {
+  const { data } = await admin.from('settings').select('key').like('key', `${PREFIXE_PREVU_MODIFIE}%`)
+  return new Set((data ?? []).map(r => String(r.key).slice(PREFIXE_PREVU_MODIFIE.length)))
 }
 
 // ---------------------------------------------------------------------------
@@ -227,9 +262,11 @@ export async function envoyerRelancesInactivite(admin: AdminClient, liste?: Rela
         .eq('id', r.coupleId).eq('relances_inactivite', r.rang)
         .select('id')
       if (!reserve?.length) continue
+      const modifie = await lireEmailModifie(admin, 'inactivite', r.coupleId, `inactivite:${r.rang}`)
       for (const d of r.destinataires) {
-        if (await envoyerRappel(d, r.modele, r.vars.get(d.id))) envoyes++
+        if (await envoyerRappel(d, r.modele, r.vars.get(d.id), undefined, modifie?.[d.langue] ?? null)) envoyes++
       }
+      if (modifie) await oublierEmailModifie(admin, 'inactivite', r.coupleId, `inactivite:${r.rang}`)
     } catch (e) {
       console.error(`[rappels] relance du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -393,9 +430,11 @@ export async function envoyerRelancesDemarrage(admin: AdminClient, liste?: Relan
   for (const r of prevues) {
     try {
       if (!(await reserverEnvoi(admin, r.coupleId, 'demarrage', `${r.type}:${r.jours}`))) continue
+      const modifie = await lireEmailModifie(admin, 'demarrage', r.coupleId, `${r.type}:${r.jours}`)
       for (const d of r.membres) {
-        if (await envoyerRappel(d, r.modele, varsDemarrage(r, d, premier, base))) envoyes++
+        if (await envoyerRappel(d, r.modele, varsDemarrage(r, d, premier, base), undefined, modifie?.[d.langue] ?? null)) envoyes++
       }
+      if (modifie) await oublierEmailModifie(admin, 'demarrage', r.coupleId, `${r.type}:${r.jours}`)
     } catch (e) {
       console.error(`[rappels] relance de démarrage du couple ${r.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -998,9 +1037,12 @@ async function envoyerPrevus(admin: AdminClient, prevus: EnvoiPrevu[], type: str
   for (const p of prevus) {
     try {
       if (!(await reserverEnvoi(admin, p.coupleId, type, p.cle))) continue
+      const sorte: SortePrevue = type === 'parrainage' ? 'parrainage' : 'avis'
+      const modifie = await lireEmailModifie(admin, sorte, p.coupleId, p.cle)
       for (const d of p.destinataires) {
-        if (await envoyerRappel(d, p.modele, p.vars.get(d.id))) envoyes++
+        if (await envoyerRappel(d, p.modele, p.vars.get(d.id), undefined, modifie?.[d.langue] ?? null)) envoyes++
       }
+      if (modifie) await oublierEmailModifie(admin, sorte, p.coupleId, p.cle)
     } catch (e) {
       console.error(`[rappels] ${type} du couple ${p.coupleId} : ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -1066,8 +1108,6 @@ export async function envoyerEmailsParrainage(admin: AdminClient): Promise<numbe
 // Envoi immédiat d'un e-mail prévu (Vue d'ensemble > Tâches)
 // ---------------------------------------------------------------------------
 
-export type SortePrevue = 'inactivite' | 'demarrage' | 'avis' | 'parrainage'
-
 // Horizon de la liste des e-mails à venir (3 jours), avec un jour de marge.
 const HORIZON_ENVOI_IMMEDIAT_JOURS = 4
 
@@ -1078,6 +1118,8 @@ const HORIZON_ENVOI_IMMEDIAT_JOURS = 4
 // reste possible. null : l'e-mail n'est plus prévu (réponse enregistrée,
 // avis laissé, déjà envoyé…).
 interface PrevuPrepare {
+  /** Clé de l'envoi (textes modifiés à la main). */
+  cleEnvoi: string
   envois: { d: Membre; modele: string; vars: Variables | undefined }[]
   reserver: () => Promise<boolean>
   liberer: () => Promise<void>
@@ -1090,12 +1132,14 @@ async function preparerPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: s
   let envois: { d: Membre; modele: string; vars: Variables | undefined }[]
   let reserver: () => Promise<boolean>
   let liberer: () => Promise<void>
+  let cleModif: string
 
   if (sorte === 'inactivite') {
     const r = (await relancesInactivitePrevues(admin, horizon)).find(x => x.coupleId === coupleId)
     if (!r) return null
     const { data: avant } = await admin.from('couples').select('derniere_relance_le').eq('id', coupleId).single()
     envois = r.destinataires.map(d => ({ d, modele: r.modele, vars: r.vars.get(d.id) }))
+    cleModif = `inactivite:${r.rang}`
     reserver = async () => {
       const { data, error } = await admin.from('couples')
         .update({ relances_inactivite: r.rang + 1, derniere_relance_le: new Date().toISOString() })
@@ -1124,17 +1168,19 @@ async function preparerPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: s
       type = sorte === 'avis' ? 'demande_avis' : 'parrainage'
       cleEnvoi = r.cle
     }
+    cleModif = cleEnvoi
     reserver = () => reserverEnvoi(admin, coupleId, type, cleEnvoi)
     liberer = async () => { await admin.from('rappels_envoyes').delete().eq('couple_id', coupleId).eq('type', type).eq('cle', cleEnvoi) }
   }
 
-  return { envois, reserver, liberer }
+  return { cleEnvoi: cleModif, envois, reserver, liberer }
 }
 
 export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ envoyes: number; erreur?: string } | null> {
   const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
   if (!prevu) return null
   const { envois, reserver, liberer } = prevu
+  const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
   try {
     if (!(await reserver())) return { envoyes: 0, erreur: 'Cet e-mail est déjà parti (envoi déjà enregistré).' }
   } catch (e) {
@@ -1145,13 +1191,14 @@ export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePre
   const echecs: string[] = []
   for (const { d, modele, vars } of envois) {
     try {
-      if (await envoyerRappel(d, modele, vars)) { envoyes++; continue }
+      if (await envoyerRappel(d, modele, vars, undefined, modifie?.[d.langue] ?? null)) { envoyes++; continue }
       echecs.push(`${d.email} : ${await derniereErreurEnvoi(admin, d.email) ?? 'échec de l’envoi'}`)
     } catch (e) {
       echecs.push(`${d.email} : ${e instanceof Error ? e.message : String(e)}`)
     }
   }
   if (!envoyes) await liberer().catch(() => {})
+  else if (modifie) await oublierEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
   return echecs.length ? { envoyes, erreur: echecs.join(' · ') } : { envoyes }
 }
 
@@ -1161,7 +1208,9 @@ export async function envoyerPrevuMaintenant(admin: AdminClient, sorte: SortePre
 export async function annulerPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<boolean> {
   const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
   if (!prevu) return false
-  return prevu.reserver()
+  const ok = await prevu.reserver()
+  if (ok) await oublierEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+  return ok
 }
 
 // Aperçu d'un e-mail prévu, tel qu'il partira pour chaque destinataire
@@ -1171,8 +1220,9 @@ export async function apercuPrevu(admin: AdminClient, sorte: SortePrevue, couple
   const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
   if (!prevu) return null
   const apercus: { destinataire: string; langue: Locale; objet: string; html: string }[] = []
+  const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
   for (const { d, modele, vars } of prevu.envois) {
-    const { objet, html } = await rendreModele(modele, d.langue, { prenom: d.prenom ?? '', ...vars })
+    const { objet, html } = await rendreModele(modele, d.langue, { prenom: d.prenom ?? '', ...vars }, modifie?.[d.langue] ?? null)
     const pied = `<p style="margin:24px 0 0;font-size:12px;color:#8a8580;">${t(d.langue, 'Tu reçois ce rappel parce que votre couple suit le parcours YES BOX.', 'You are receiving this reminder because your couple is following the YES BOX program.')} <u>${t(d.langue, 'Ne plus recevoir ces rappels', 'Stop receiving these reminders')}</u></p>`
     apercus.push({ destinataire: d.prenom ? `${d.prenom} (${d.email})` : d.email ?? '', langue: d.langue, objet, html: mailHtml(html + pied) })
   }
@@ -1184,4 +1234,30 @@ async function derniereErreurEnvoi(admin: AdminClient, email: string | null): Pr
   if (!email) return 'adresse e-mail manquante'
   const { data } = await admin.from('emails_envoyes').select('ok, erreur').eq('destinataire', email).order('envoye_le', { ascending: false }).limit(1).maybeSingle()
   return data && !data.ok ? data.erreur ?? null : null
+}
+
+// Textes d'un e-mail prévu pour l'éditeur (Tâches > Modifier) : ceux modifiés
+// à la main, sinon ceux du modèle, pour les langues des destinataires.
+export async function textesPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle?: string): Promise<{ modele: string; langues: Locale[]; contenu: ContenuModifie; modifie: boolean } | null> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu?.envois.length) return null
+  const modele = prevu.envois[0].modele
+  const langues = [...new Set(prevu.envois.map(e => e.d.langue))]
+  const modifie = await lireEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+  const contenu: ContenuModifie = {}
+  for (const l of langues) contenu[l] = modifie?.[l] ?? await contenuModele(modele, l)
+  return { modele, langues, contenu, modifie: !!modifie }
+}
+
+// Enregistre (ou, avec null, efface) les textes modifiés d'un e-mail prévu.
+export async function enregistrerTextesPrevu(admin: AdminClient, sorte: SortePrevue, coupleId: string, cle: string | undefined, contenu: ContenuModifie | null): Promise<boolean> {
+  const prevu = await preparerPrevu(admin, sorte, coupleId, cle)
+  if (!prevu) return false
+  if (!contenu) {
+    await oublierEmailModifie(admin, sorte, coupleId, prevu.cleEnvoi)
+    return true
+  }
+  const { error } = await admin.from('settings').upsert({ key: cleEmailModifie(sorte, coupleId, prevu.cleEnvoi), value: JSON.stringify(contenu) }, { onConflict: 'key' })
+  if (error) throw new Error(error.message)
+  return true
 }

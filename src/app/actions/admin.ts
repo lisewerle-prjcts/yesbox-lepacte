@@ -18,7 +18,7 @@ import { MODULES } from '@/lib/modules-data'
 import { chargerPersonnesSegment } from '@/lib/segments-donnees'
 import { filtrerSegment, type FiltresSegment } from '@/lib/segments'
 import { piedDePageRappel, entetesDesinscription } from '@/lib/desinscription'
-import { annulerPrevu, apercuPrevu, envoyerPrevuMaintenant, envoyerRelancesDemarrage, relancesDemarragePrevues, type SortePrevue } from '@/lib/rappels-email'
+import { annulerPrevu, apercuPrevu, enregistrerTextesPrevu, textesPrevu, type ContenuModifie, envoyerPrevuMaintenant, envoyerRelancesDemarrage, relancesDemarragePrevues, type SortePrevue } from '@/lib/rappels-email'
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
@@ -213,6 +213,44 @@ export async function adminApercuPrevu(sorte: SortePrevue, coupleId: string, cle
   const apercus = await apercuPrevu(createAdminClient(), sorte, coupleId, cle)
   if (!apercus) return { error: 'Cet e-mail n’est plus prévu, ou il est déjà parti.' }
   return { success: true, apercus }
+}
+
+// Vue d'ensemble > Tâches > Modifier : textes de l'e-mail prévu (modifiés à
+// la main, sinon ceux du modèle), pour les langues des destinataires.
+export async function adminTextesPrevu(sorte: SortePrevue, coupleId: string, cle?: string) {
+  await assertAdmin()
+  if (!['inactivite', 'demarrage', 'avis', 'parrainage'].includes(sorte)) return { error: 'E-mail inconnu' }
+  const textes = await textesPrevu(createAdminClient(), sorte, coupleId, cle)
+  if (!textes) return { error: 'Cet e-mail n’est plus prévu, ou il est déjà parti.' }
+  const modele = modeleEmail(textes.modele)
+  return { success: true, ...textes, nom: modele.nom, variables: variablesDuModele(modele) }
+}
+
+// Enregistre les textes modifiés d'un e-mail prévu pour ce couple (null :
+// revient au texte du modèle). Mêmes contrôles que l'éditeur des modèles.
+export async function adminEnregistrerTextesPrevu(sorte: SortePrevue, coupleId: string, cle: string | undefined, contenu: ContenuModifie | null) {
+  await assertAdmin()
+  if (!['inactivite', 'demarrage', 'avis', 'parrainage'].includes(sorte)) return { error: 'E-mail inconnu' }
+  const admin = createAdminClient()
+  if (contenu) {
+    const textes = await textesPrevu(admin, sorte, coupleId, cle)
+    if (!textes) return { error: 'Cet e-mail n’est plus prévu, ou il est déjà parti.' }
+    const modele = modeleEmail(textes.modele)
+    const connues = new Set([...variablesDuModele(modele), 'prenom', 'site'])
+    for (const l of textes.langues) {
+      const c = contenu[l]
+      if (!c?.objet.trim() || !c.corps.trim()) return { error: `L’objet et le message (${l === 'en' ? 'anglais' : 'français'}) sont obligatoires.` }
+      const presentes = new Set([c.objet, c.corps].flatMap(variablesDuTexte))
+      const manquantes = (modele.obligatoires ?? []).filter(v => !presentes.has(v))
+      if (manquantes.length) return { error: `Cet e-mail doit contenir ${manquantes.map(v => `{${v}}`).join(', ')}.` }
+      const inconnues = [...presentes].filter(v => !connues.has(v))
+      if (inconnues.length) return { error: `Variables inconnues pour cet e-mail : ${inconnues.map(v => `{${v}}`).join(', ')}.` }
+    }
+  }
+  const ok = await enregistrerTextesPrevu(admin, sorte, coupleId, cle, contenu)
+  revalidatePath('/admin')
+  if (!ok) return { error: 'Cet e-mail n’est plus prévu, ou il est déjà parti.' }
+  return { success: true }
 }
 
 // Vue d'ensemble > Tâches : annule un e-mail prévu (noté comme traité, il
