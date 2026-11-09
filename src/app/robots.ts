@@ -26,6 +26,5 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: ROBOTS_IA, allow: '/', disallow: PRIVE },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
   }
 }
