@@ -2,11 +2,14 @@ import { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
 
 // Espaces réservés aux couples connectés, admin et API : rien à indexer.
+// Attention : une règle Disallow s'applique à toutes les adresses qui
+// COMMENCENT par ce chemin. « /pacte » bloquait donc aussi la page publique
+// /pacte-de-couple : on vise /pacte exactement (« $ ») et ses sous-pages.
 const PRIVE = [
-  '/admin', '/api/', '/auth/', '/tableau-de-bord', '/module/', '/pacte', '/journal',
+  '/admin', '/api/', '/auth/', '/tableau-de-bord', '/module/', '/pacte$', '/pacte/', '/journal',
   '/mon-compte', '/rdv-annuels', '/regles-du-jeu', '/consentement', '/abonnement',
   '/rejoindre', '/desinscription', '/nouveau-mot-de-passe', '/reset-password',
-  '/offrir/carte/', '/offrir/merci',
+  '/offrir/carte/', '/offrir/merci', '/mot-de-passe-oublie', '/avis',
 ]
 
 // Robots des moteurs de réponse IA, autorisés explicitement : un groupe
