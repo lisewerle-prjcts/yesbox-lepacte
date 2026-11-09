@@ -460,6 +460,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.footer.link.jeu': 'Couples game',
   'home.footer.link.therapie': 'Couples therapy',
   'home.footer.link.pacte': 'Couple’s pact',
+  'home.footer.link.voeux': 'Vow renewal',
   'home.etapes.accroche': 'Playful questions to talk, and take care of your relationship',
   'home.footer.link.confidentialite': 'Privacy',
 }

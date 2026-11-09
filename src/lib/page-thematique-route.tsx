@@ -7,7 +7,7 @@ import { pageThematique, type PageThematique } from '@/lib/pages-thematiques'
 import AccueilClient from '@/app/AccueilClient'
 
 // Routes des pages thématiques (/jeu-de-couple, /therapie-de-couple,
-// /pacte-de-couple) : tout l'accueil, avec leur titre et leur contenu.
+// /pacte-de-couple, /renouvellement-de-voeux) : tout l'accueil, avec leur titre et leur contenu.
 
 export function metadataThematique(slug: PageThematique['slug']): Metadata {
   const page = pageThematique(slug)
