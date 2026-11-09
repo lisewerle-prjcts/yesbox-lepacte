@@ -512,6 +512,7 @@ export default function LandingPage({ avis, page }: { avis: ResumeAvis; page?: P
             <Link href="/therapie-de-couple" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.therapie">Thérapie de couple</EditableText></Link>
             <Link href="/pacte-de-couple" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.pacte">Pacte de couple</EditableText></Link>
             <Link href="/renouvellement-de-voeux" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.voeux">Renouvellement de vœux</EditableText></Link>
+            <Link href="/a-propos" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.apropos">À propos</EditableText></Link>
             <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.mentions">Mentions légales</EditableText></Link>
             <Link href="/cgv" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.cgv">CGV</EditableText></Link>
             <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}><EditableText id="home.footer.link.confidentialite">Confidentialité</EditableText></Link>
