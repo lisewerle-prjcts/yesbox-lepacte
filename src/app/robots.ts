@@ -9,7 +9,7 @@ const PRIVE = [
   '/admin', '/api/', '/auth/', '/tableau-de-bord', '/module/', '/pacte$', '/pacte/', '/journal',
   '/mon-compte', '/rdv-annuels', '/regles-du-jeu', '/consentement', '/abonnement',
   '/rejoindre', '/desinscription', '/nouveau-mot-de-passe', '/reset-password',
-  '/offrir/carte/', '/offrir/merci', '/mot-de-passe-oublie', '/avis',
+  '/offrir/carte/', '/offrir/merci', '/avis',
 ]
 
 // Robots des moteurs de réponse IA, autorisés explicitement : un groupe
