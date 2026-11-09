@@ -1,5 +1,5 @@
 // Pages thématiques pour le référencement naturel : /jeu-de-couple,
-// /therapie-de-couple et /pacte-de-couple. Chacune reprend tout l'accueil
+// /therapie-de-couple, /pacte-de-couple et /renouvellement-de-voeux. Chacune reprend tout l'accueil
 // (AccueilClient), avec son propre titre, son introduction et une section de
 // contenu propre juste après. Textes modifiables en mode édition (ids
 // « theme.<slug>.… ») ; leur version anglaise par défaut est ajoutée à
@@ -21,7 +21,7 @@ export interface SectionThematique {
 }
 
 export interface PageThematique {
-  slug: 'jeu-de-couple' | 'therapie-de-couple' | 'pacte-de-couple'
+  slug: 'jeu-de-couple' | 'therapie-de-couple' | 'pacte-de-couple' | 'renouvellement-de-voeux'
   /** Titre affiché dans Google (balise <title>). */
   metaTitre: string
   /** Description affichée dans Google (160 caractères au plus). */
@@ -280,6 +280,91 @@ export const PAGES_THEMATIQUES: PageThematique[] = [
         r: tx(
           'Oui : chaque année, le rendez-vous annuel vous invite à faire le bilan et à renouveler vos engagements (abonnement facultatif à 19 €/an, sans engagement).',
           'Yes: every year, the yearly date invites you to take stock and renew your commitments (optional subscription at €19/year, cancel anytime).',
+        ),
+      },
+    ],
+  },
+  {
+    slug: 'renouvellement-de-voeux',
+    metaTitre: 'Renouvellement de vœux : se redire oui, chaque année',
+    metaDescription: 'Renouvelez vos vœux à deux, marié·es ou non : 8 modules de questions, un pacte de couple à signer, puis à renouveler chaque année. Module 1 gratuit.',
+    h1: tx('Renouveler ses vœux : se redire oui, en conscience', 'Renewing your vows: saying yes again, mindfully'),
+    intro: [
+      tx(
+        'Renouveler ses vœux, c’est prendre le temps de regarder le chemin parcouru à deux et de choisir à nouveau l’autre, en sachant mieux qui il ou elle est aujourd’hui. Pas besoin d’être marié·es, ni d’attendre un anniversaire rond, pour le faire.',
+        'Renewing your vows means taking time to look back on the road you have travelled together and choosing each other again, knowing better who your partner is today. You don’t need to be married, or to wait for a milestone anniversary, to do it.',
+      ),
+      tx(
+        'YES BOX – Le Pacte est un programme en ligne de développement personnel pour tous les couples, ensemble depuis 2 mois ou 20 ans, marié·es ou non. En 8 modules à faire à deux et à son rythme, chacun·e répond de son côté avant de découvrir les réponses de l’autre et d’en parler. À la fin, un pacte de couple à signer, à renouveler chaque année pour se redire oui, en conscience.',
+        'YES BOX – Le Pacte is an online personal development program for every couple, together for 2 months or 20 years, married or not. In 8 modules done together at your own pace, each of you answers separately before discovering the other’s answers and talking about them. At the end, a couple’s pact to sign, renewed every year to say yes again, mindfully.',
+      ),
+    ],
+    sections: [
+      {
+        titre: tx('Des vœux qui ont du sens, parce qu’ils sont préparés à deux', 'Vows that mean something, because you prepared them together'),
+        paragraphes: [
+          tx(
+            'Les plus beaux vœux ne s’improvisent pas. Avant d’écrire, chacun·e répond seul·e à des questions sur votre histoire, votre quotidien, vos rêves, vos disputes et votre tendresse. Puis vous découvrez les réponses de l’autre et vous en parlez.',
+            'The most beautiful vows aren’t improvised. Before writing, each of you answers questions alone about your story, your everyday life, your dreams, your arguments and your affection. Then you discover each other’s answers and talk about them.',
+          ),
+          tx(
+            'Au fil des modules, chacun·e garde des idées pour le pacte. Quand vient le moment de vous redire oui, vous savez exactement ce que vous voulez vous promettre.',
+            'Module after module, each of you keeps ideas for the pact. When the time comes to say yes again, you know exactly what you want to promise each other.',
+          ),
+        ],
+      },
+      {
+        titre: tx('Ce que vous vous redites', 'What you say to each other again'),
+        liste: [
+          tx('Ce pour quoi chacun·e dit merci à l’autre.', 'What each of you thanks the other for.'),
+          tx('Les principes de base de votre couple heureux.', 'The core principles of your happy relationship.'),
+          tx('Ce que chacun·e s’engage à faire, ou à faire plus souvent, pour l’autre cette année.', 'What each of you commits to doing, or doing more often, for the other this year.'),
+          tx('La date de votre rendez-vous annuel, pour vous redire oui l’an prochain.', 'The date of your yearly date, to say yes again next year.'),
+        ],
+      },
+      {
+        titre: tx('Chaque année, un nouveau oui', 'Every year, a new yes'),
+        paragraphes: [
+          tx(
+            'Plutôt qu’une seule cérémonie, YES BOX vous propose un rituel : à la date que vous avez choisie, le module « Notre rendez-vous annuel » vous invite à faire le bilan de l’année et à renouveler vos engagements (abonnement facultatif à 19 €/an, sans engagement).',
+            'Rather than a single ceremony, YES BOX offers you a ritual: on the date you chose, the “Our yearly date” module invites you to look back on the year and renew your commitments (optional subscription at €19/year, cancel anytime).',
+          ),
+          tx(
+            'Et si vous organisez une fête pour renouveler vos vœux, votre pacte peut vous inspirer les mots à prononcer devant vos proches.',
+            'And if you are planning a celebration to renew your vows, your pact can inspire the words you say in front of your loved ones.',
+          ),
+        ],
+      },
+      {
+        titre: tx('Rien que pour vous deux', 'Just for the two of you'),
+        paragraphes: [
+          tx(
+            'Ni thérapeute ni intelligence artificielle n’analyse vos réponses. Elles sont chiffrées et ne sont lues que par vous deux. Comptez 30 à 60 minutes à deux par module.',
+            'Neither a therapist nor artificial intelligence analyzes your answers. They are encrypted and read only by the two of you. Allow 30 to 60 minutes together per module.',
+          ),
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: tx('Faut-il être marié·es pour renouveler ses vœux ?', 'Do you need to be married to renew your vows?'),
+        r: tx(
+          'Non. YES BOX s’adresse à tous les couples, ensemble depuis 2 mois ou 20 ans, marié·es ou non. Se redire oui n’a pas besoin de cadre officiel.',
+          'No. YES BOX is for every couple, together for 2 months or 20 years, married or not. Saying yes again needs no official setting.',
+        ),
+      },
+      {
+        q: tx('Le renouvellement a-t-il une valeur juridique ?', 'Does the renewal have legal value?'),
+        r: tx(
+          'Non. Votre pacte est un engagement personnel entre vous deux, sans démarche administrative : sa force, c’est d’être choisi à deux.',
+          'No. Your pact is a personal commitment between the two of you, with no paperwork: its strength is that you choose it together.',
+        ),
+      },
+      {
+        q: tx('Combien ça coûte ?', 'How much does it cost?'),
+        r: tx(
+          'Le premier module est gratuit pour vous deux, sans carte bancaire. Le pack initial (les 8 modules et la signature du pacte) coûte ensuite 58 € en une fois. Le rendez-vous annuel, pour renouveler le pacte chaque année, est un abonnement facultatif à 19 €/an.',
+          'The first module is free for both of you, with no credit card. The starter pack (the 8 modules and signing the pact) then costs €58 once. The yearly date, to renew the pact every year, is an optional subscription at €19/year.',
         ),
       },
     ],
