@@ -76,7 +76,19 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
           </p>
         </section>
 
-        {/* 3. Renaissance en ligne */}
+        {/* 3. Parcours personnel */}
+        <section className="space-y-6">
+          <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.moi.eyebrow">Et moi</EditableText></div>
+          <h2 className={h2} style={h2Style}><EditableText id="apropos.moi.titre">Mariée depuis 2009.</EditableText></h2>
+          <p style={texteStyle}>
+            <EditableText id="apropos.moi.couple" multiline>Comme tous les couples, nous avons connu des hauts et des bas. C’est pour cela que YES BOX m’a paru essentielle.</EditableText>
+          </p>
+          <p style={texteStyle}>
+            <EditableText id="apropos.moi.parcours" multiline>J’ai aussi longtemps travaillé dans la formation et l’ingénierie pédagogique. Aujourd’hui, je suis fière de proposer des outils pratiques, mais aussi ludiques, pour prendre soin de son couple.</EditableText>
+          </p>
+        </section>
+
+        {/* 4. Renaissance en ligne */}
         <section className="space-y-6 text-center">
           <p className="font-serif italic" style={citationStyle}><EditableText id="apropos.renait.avant">Autrefois matérielle…</EditableText></p>
           <h2 className={h2} style={h2Style}><EditableText id="apropos.renait.titre">aujourd’hui, elle renaît en ligne.</EditableText></h2>
@@ -86,7 +98,7 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
           </p>
         </section>
 
-        {/* 4. Pourquoi */}
+        {/* 5. Pourquoi */}
         <section className="space-y-6">
           <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.pourquoi.eyebrow">Pourquoi</EditableText></div>
           <h2 className={h2} style={h2Style}><EditableText id="apropos.pourquoi.titre">Parce que les non-dits et le quotidien prennent vite toute la place.</EditableText></h2>
