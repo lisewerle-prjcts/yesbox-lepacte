@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Check, Gift, Mail, Printer, Ticket } from 'lucide-react'
-import YesBoxLogo from '@/components/YesBoxLogo'
+import SiteHeader from '@/components/SiteHeader'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
 import { acheterCarteCadeau } from '@/app/actions/cadeau'
 import type { PrixCarteCadeau } from '@/lib/cartes-cadeaux'
 
-export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix: PrixCarteCadeau[]; connecte: boolean; paiementAnnule: boolean }) {
+export default function OffrirClient({ prix, paiementAnnule }: { prix: PrixCarteCadeau[]; paiementAnnule: boolean }) {
   const t = useT()
   const { locale } = useLocale()
   // Une seule carte aujourd'hui : la YES BOX (58 €).
@@ -44,14 +44,7 @@ export default function OffrirClient({ prix, connecte, paiementAnnule }: { prix:
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
-      <header className="sticky top-0 z-40 border-b" style={{ background: 'rgba(251,248,243,0.92)', borderColor: 'var(--line)', backdropFilter: 'blur(12px)' }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <YesBoxLogo size="sm" />
-          {connecte
-            ? <Link href="/tableau-de-bord" className="btn-ghost text-sm py-2 px-4 whitespace-nowrap">{t('Mon espace', 'My space')}</Link>
-            : <Link href="/connexion" className="btn-ghost text-sm py-2 px-4 whitespace-nowrap">{t('Se connecter', 'Log in')}</Link>}
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="max-w-3xl mx-auto px-6 py-14">
         <div className="text-center mb-10">

@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import YesBoxLogo from '@/components/YesBoxLogo'
+import SiteHeader from '@/components/SiteHeader'
 import InscriptionModal from '@/components/InscriptionModal'
 import OffresTarifs from '@/components/OffresTarifs'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useLocale, useT } from '@/components/i18n/LocaleContext'
-import LocaleFlagToggle from '@/components/i18n/LocaleFlagToggle'
 import { MODULES } from '@/lib/modules-data'
 import { localizeModules } from '@/lib/i18n/module-text'
-import { ArrowRight, Check, Menu, Star, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { ArrowRight, Check, Star } from 'lucide-react'
 import { FAQ } from '@/lib/faq'
 import { AVIS_ACCUEIL, formaterMoisAvis, type ResumeAvis } from '@/lib/avis-constantes'
 import { idsPage, versionne, type PageThematique } from '@/lib/pages-thematiques'
@@ -24,15 +22,6 @@ const POUR_QUI = (t: (fr: string, en: string) => string) => [
   { titre: t('Le quotidien a pris toute la place', 'Everyday life has taken over'), desc: t('Travail, tâches, écrans. Vous voulez retrouver du temps rien qu\'à deux et vous redécouvrir.', 'Work, chores, screens. You want to find time just for the two of you and rediscover each other.') },
   { titre: t('Un nouveau cap arrive', 'A new chapter is coming'), desc: t("Emménagement, achat commun, enfant, PACS, mariage : une étape qui mérite qu'on s'y prépare ensemble.", 'Moving in, buying a home, a child, a civil union, a wedding: a milestone worth preparing for together.') },
   { titre: t("Consulter, ce n'est pas (encore) pour vous", "Therapy isn't for you (yet)"), desc: t("Pas envie de raconter votre vie à une personne extérieure pour l'instant ? Commencez par vous parler, entre vous.", "Not ready to share your life with an outsider just yet? Start by talking to each other.") },
-]
-
-const NAV_LINKS = (t: (fr: string, en: string) => string) => [
-  { href: '#forwhom', key: 'forwhom', label: t('Pour qui', "Who it's for") },
-  { href: '#modules', key: 'modules', label: t('Les modules', 'The modules') },
-  { href: '#tarifs', key: 'tarifs', label: t('Tarifs', 'Pricing') },
-  { href: '#faq', key: 'faq', label: t('FAQ', 'FAQ') },
-  { href: '/offrir', key: 'offrir', label: t('Offrir', 'Give as a gift') },
-  { href: '/a-propos', key: 'apropos', label: t('À propos', 'About') },
 ]
 
 const OPTIONS = (t: (fr: string, en: string) => string) => [
@@ -69,16 +58,8 @@ export default function LandingPage({ avis, page }: { avis: ResumeAvis; page?: P
   const t = useT()
   const { locale } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  // Personne connectée qui revient sur l'accueil (onglet « YES BOX ») : on lui
-  // propose de retourner à son espace plutôt que de se connecter / s'inscrire.
-  const [connecte, setConnecte] = useState(false)
-  useEffect(() => {
-    createClient().auth.getSession().then(({ data }) => setConnecte(!!data.session))
-  }, [])
 
   const modules = localizeModules(MODULES, locale)
-  const navLinks = NAV_LINKS(t)
   const pourQuiList = POUR_QUI(t)
   const optionsList = OPTIONS(t)
   const pacteList = PACTE_LIST(t)
@@ -89,66 +70,7 @@ export default function LandingPage({ avis, page }: { avis: ResumeAvis; page?: P
   return (
     <div className="min-h-screen">
       {/* NAV */}
-      <header className="sticky top-0 z-40 border-b" style={{ background: 'rgba(251,248,243,0.92)', borderColor: 'var(--line)', backdropFilter: 'blur(12px)' }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <YesBoxLogo size="sm" />
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map(({ href, key, label }) => (
-              <a key={href} href={href} className="text-sm font-medium transition-colors" style={{ color: 'var(--muted)' }}>
-                <EditableText id={`home.nav.${key}`}>{label}</EditableText>
-              </a>
-            ))}
-          </nav>
-          <div className="hidden md:flex items-center gap-3">
-            {connecte ? (
-              <Link href="/tableau-de-bord" className="btn-brand text-sm py-2 px-4">
-                <EditableText id="home.nav.monespace">Mon espace</EditableText> <ArrowRight className="w-4 h-4" />
-              </Link>
-            ) : (
-              <>
-                <Link href="/connexion" className="btn-ghost text-sm py-2 px-4">
-                  <EditableText id="home.nav.seconnecter">Se connecter</EditableText>
-                </Link>
-                <button onClick={() => setModalOpen(true)} className="btn-brand text-sm py-2 px-4">
-                  <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
-                </button>
-              </>
-            )}
-            <LocaleFlagToggle />
-          </div>
-          <div className="md:hidden flex items-center gap-1">
-            <LocaleFlagToggle />
-            <button className="p-2" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-        {menuOpen && (
-          <div className="md:hidden space-y-3" style={{ background: 'var(--paper)', borderTop: '1px solid var(--line)', padding: '16px 24px' }}>
-            {navLinks.map(({ href, key, label }) => (
-              <a key={href} href={href} className="block text-sm font-medium py-1" style={{ color: 'var(--ink)' }} onClick={() => setMenuOpen(false)}>
-                <EditableText id={`home.nav.${key}`}>{label}</EditableText>
-              </a>
-            ))}
-            <div className="flex gap-3 pt-2">
-              {connecte ? (
-                <Link href="/tableau-de-bord" className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
-                  <EditableText id="home.nav.monespace">Mon espace</EditableText> <ArrowRight className="w-4 h-4" />
-                </Link>
-              ) : (
-                <>
-                  <Link href="/connexion" className="btn-ghost text-sm py-2 px-4 flex-1 justify-center">
-                    <EditableText id="home.nav.connexion.mobile">Connexion</EditableText>
-                  </Link>
-                  <button onClick={() => { setMenuOpen(false); setModalOpen(true) }} className="btn-brand text-sm py-2 px-4 flex-1 justify-center">
-                    <EditableText id="home.nav.sinscrire">S&apos;inscrire</EditableText>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </header>
+      <SiteHeader sectionsSurPlace onInscription={() => setModalOpen(true)} />
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">

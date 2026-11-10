@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import YesBoxLogo from '@/components/YesBoxLogo'
+import SiteHeader from '@/components/SiteHeader'
 import EditableText from '@/components/edit-mode/EditableText'
 import { useT } from '@/components/i18n/LocaleContext'
 
@@ -30,12 +31,7 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
   const t = useT()
   return (
     <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
-      <header className="sticky top-0 z-40 border-b" style={{ background: 'rgba(251,248,243,0.92)', borderColor: 'var(--line)', backdropFilter: 'blur(12px)' }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <YesBoxLogo size="sm" />
-          <Link href="/" className="btn-ghost text-sm py-2 px-4">← {t('Accueil', 'Home')}</Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="max-w-3xl mx-auto px-6 py-14 space-y-20">
         {/* Titre */}
