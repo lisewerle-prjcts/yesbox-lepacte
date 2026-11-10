@@ -339,6 +339,7 @@ export const EN_CONTENT: Record<string, string> = {
   'home.nav.modules': 'The modules',
   'home.nav.tarifs': 'Pricing',
   'home.nav.offrir': 'Give as a gift',
+  'home.nav.apropos': 'About',
   'home.nav.monespace': 'My space',
   'home.nav.seconnecter': 'Log in',
   'home.nav.sinscrire': 'Sign up',

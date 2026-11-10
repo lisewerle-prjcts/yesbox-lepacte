@@ -32,6 +32,7 @@ const NAV_LINKS = (t: (fr: string, en: string) => string) => [
   { href: '#tarifs', key: 'tarifs', label: t('Tarifs', 'Pricing') },
   { href: '#faq', key: 'faq', label: t('FAQ', 'FAQ') },
   { href: '/offrir', key: 'offrir', label: t('Offrir', 'Give as a gift') },
+  { href: '/a-propos', key: 'apropos', label: t('À propos', 'About') },
 ]
 
 const OPTIONS = (t: (fr: string, en: string) => string) => [
