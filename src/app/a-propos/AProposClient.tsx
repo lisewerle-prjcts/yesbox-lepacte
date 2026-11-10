@@ -46,24 +46,33 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
           </h1>
         </div>
 
-        {/* 1. Wedding planner */}
+        {/* 1. Wedding planner : Cérémonies & Compagnie */}
         <section className="space-y-6">
           <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.histoire.eyebrow">Il y a plus de dix ans</EditableText></div>
           <h2 className={h2} style={h2Style}><EditableText id="apropos.histoire.titre">J’étais wedding planner.</EditableText></h2>
-          <Photo src="/a-propos/fondatrice-white-box.jpg" alt={t('Lise, fondatrice de YES BOX, tenant un coffret The White Box', 'Lise, founder of YES BOX, holding a The White Box gift box')} largeur={860} hauteur={564} />
-          <p className="font-serif italic" style={citationStyle}><EditableText id="apropos.histoire.texte">Et j’ai créé la White Box.</EditableText></p>
+          <Image src="/a-propos/logo-ceremonies-et-compagnie.png" alt="Cérémonies & Compagnie" width={1211} height={201} className="h-auto" style={{ width: 'min(100%, 420px)', mixBlendMode: 'multiply' }} />
+          <p style={texteStyle}>
+            <EditableText id="apropos.histoire.metier" multiline>Avec Cérémonies & Compagnie, j’organisais des mariages et j’écrivais des cérémonies laïques sur mesure. Pour chaque couple, tout commençait par de longues conversations : leur histoire, ce qui les avait réunis, ce qu’ils voulaient se promettre.</EditableText>
+          </p>
+          <Photo src="/a-propos/ceremonies-laiques.jpg" alt={t('Cérémonies & Compagnie : une cérémonie laïque en plein air et des décorations de mariage', 'Cérémonies & Compagnie: an outdoor secular ceremony and wedding decorations')} largeur={740} hauteur={492} />
+          <Photo src="/a-propos/mariages-organises.jpg" alt={t('Cérémonies & Compagnie : tables, fleurs et détails de mariages organisés', 'Cérémonies & Compagnie: tables, flowers and details from weddings I organized')} largeur={771} hauteur={495} />
+          <p style={texteStyle}>
+            <EditableText id="apropos.histoire.constat" multiline>J’ai vu combien ces échanges comptaient, parfois plus que le jour J lui-même. Ils méritaient d’exister au-delà de la cérémonie.</EditableText>
+          </p>
         </section>
 
-        {/* 2. Le coffret */}
+        {/* 2. The White Box */}
         <section className="space-y-6">
+          <Photo src="/a-propos/fondatrice-white-box.jpg" alt={t('Lise, fondatrice de YES BOX, tenant un coffret The White Box', 'Lise, founder of YES BOX, holding a The White Box gift box')} largeur={860} hauteur={564} />
+          <p className="font-serif italic" style={citationStyle}><EditableText id="apropos.histoire.texte">Et j’ai créé la White Box.</EditableText></p>
           <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.coffret.eyebrow">The White Box</EditableText></div>
-          <h2 className={h2} style={h2Style}><EditableText id="apropos.coffret.titre">Un coffret pour réfléchir à deux à son engagement.</EditableText></h2>
+          <h2 className={h2} style={h2Style}><EditableText id="apropos.coffret.titre.v2">Un coffret de préparation au mariage.</EditableText></h2>
           <div className="grid sm:grid-cols-2 gap-6 items-center">
             <Photo src="/a-propos/coffrets-white-box.jpg" alt={t('Des piles de coffrets The White Box', 'Stacks of The White Box gift boxes')} largeur={600} hauteur={600} />
             <Photo src="/a-propos/coffret-ouvert.jpg" alt={t('Un coffret The White Box ouvert : cartes de questions, bougie et cœur rouge', 'An open The White Box: question cards, a candle and a red heart')} largeur={749} hauteur={534} />
           </div>
           <p style={texteStyle}>
-            <EditableText id="apropos.coffret.texte" multiline>À l’origine pensé pour les futurs mariages, ce coffret aidait les couples à se poser, à se parler et à réfléchir ensemble à leur engagement : des cartes de questions, une bougie, et du temps rien qu’à deux.</EditableText>
+            <EditableText id="apropos.coffret.texte.v2" multiline>Pour aider les couples à se préparer et à réfléchir ensemble à leur engagement : des cartes de questions, une bougie, et du temps rien qu’à deux.</EditableText>
           </p>
         </section>
 

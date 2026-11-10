@@ -8,7 +8,7 @@
 
 ## Ce que YES BOX n'est pas
 
-- Pas une préparation au mariage : ne pas se positionner sur ce sujet.
+- Pas une préparation au mariage : ne pas se positionner sur ce sujet. Seule exception : la page À propos, qui raconte l’ancienne activité de la fondatrice (wedding planner, coffret de préparation au mariage The White Box).
 - Pas une thérapie : quand le sujet s'y prête, rappeler de consulter un·e professionnel·le en cas de crise, avec les numéros d'urgence (3919, 17, 112, SMS au 114).
 - Pas d'analyse des réponses par un·e thérapeute ni par une intelligence artificielle.
 
