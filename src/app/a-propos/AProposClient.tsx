@@ -48,7 +48,7 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
 
         {/* 1. Wedding planner : Cérémonies & Compagnie */}
         <section className="space-y-6">
-          <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.histoire.eyebrow">Il y a plus de dix ans</EditableText></div>
+          <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.histoire.eyebrow">Il y a 15 ans</EditableText></div>
           <h2 className={h2} style={h2Style}><EditableText id="apropos.histoire.titre">J’étais wedding planner.</EditableText></h2>
           <Image src="/a-propos/logo-ceremonies-et-compagnie.png" alt="Cérémonies & Compagnie" width={1211} height={201} className="h-auto" style={{ width: 'min(100%, 420px)', mixBlendMode: 'multiply' }} />
           <p style={texteStyle}>
@@ -69,32 +69,29 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
           <h2 className={h2} style={h2Style}><EditableText id="apropos.coffret.titre.v2">Un coffret de préparation au mariage.</EditableText></h2>
           <div className="grid sm:grid-cols-2 gap-6 items-center">
             <Photo src="/a-propos/coffrets-white-box.jpg" alt={t('Des piles de coffrets The White Box', 'Stacks of The White Box gift boxes')} largeur={600} hauteur={600} />
-            <Photo src="/a-propos/coffret-ouvert.jpg" alt={t('Un coffret The White Box ouvert : cartes de questions, bougie et cœur rouge', 'An open The White Box: question cards, a candle and a red heart')} largeur={749} hauteur={534} />
+            <Photo src="/a-propos/coffret-ouvert.jpg" alt={t('Un coffret The White Box ouvert : livrets, bougie et accessoires', 'An open The White Box: booklets, a candle and accessories')} largeur={749} hauteur={534} />
           </div>
           <p style={texteStyle}>
-            <EditableText id="apropos.coffret.texte.v2" multiline>Pour aider les couples à se préparer et à réfléchir ensemble à leur engagement : des cartes de questions, une bougie, et du temps rien qu’à deux.</EditableText>
+            <EditableText id="apropos.coffret.texte.v2" multiline>Pour aider les couples à se préparer et à réfléchir ensemble à leur engagement : des livrets de jeux et de questions, mais aussi des accessoires pour accompagner ces moments à deux, comme des bougies, des post-it ou un cadre souvenir.</EditableText>
           </p>
         </section>
 
-        {/* 3. Parcours personnel */}
-        <section className="space-y-6">
-          <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.moi.eyebrow">Et moi</EditableText></div>
-          <h2 className={h2} style={h2Style}><EditableText id="apropos.moi.titre">Mariée depuis 2009.</EditableText></h2>
-          <p style={texteStyle}>
-            <EditableText id="apropos.moi.couple" multiline>Comme tous les couples, nous avons connu des hauts et des bas. C’est pour cela que YES BOX m’a paru essentielle.</EditableText>
-          </p>
-          <p style={texteStyle}>
-            <EditableText id="apropos.moi.parcours" multiline>J’ai aussi longtemps travaillé dans la formation et l’ingénierie pédagogique. Aujourd’hui, je suis fière de proposer des outils pratiques, mais aussi ludiques, pour prendre soin de son couple.</EditableText>
-          </p>
-        </section>
-
-        {/* 4. Renaissance en ligne */}
+        {/* 3. Renaissance en ligne */}
         <section className="space-y-6 text-center">
           <p className="font-serif italic" style={citationStyle}><EditableText id="apropos.renait.avant">Autrefois matérielle…</EditableText></p>
           <h2 className={h2} style={h2Style}><EditableText id="apropos.renait.titre">aujourd’hui, elle renaît en ligne.</EditableText></h2>
           <div className="flex justify-center py-4"><YesBoxLogo size="lg" /></div>
-          <p className="text-left" style={texteStyle}>
-            <EditableText id="apropos.renait.texte" multiline>YES BOX – Le Pacte est un programme en ligne de développement personnel pour tous les couples, ensemble depuis 2 mois ou 20 ans, marié·es ou non. En 8 modules à faire à deux et à son rythme, chacun·e répond de son côté avant de découvrir les réponses de l’autre et d’en parler, pour consolider sa relation et renforcer son engagement. À la fin, un pacte de couple à signer, à renouveler chaque année pour se redire oui, en conscience.</EditableText>
+        </section>
+
+        {/* 4. Parcours personnel */}
+        <section className="space-y-6">
+          <div className={eyebrow} style={eyebrowStyle}><EditableText id="apropos.moi.eyebrow">Et moi</EditableText></div>
+          <h2 className={h2} style={h2Style}><EditableText id="apropos.moi.titre">Mariée depuis 2009.</EditableText></h2>
+          <p style={texteStyle}>
+            <EditableText id="apropos.moi.couple" multiline>Comme tous les couples, nous avons traversé des hauts et des bas. Et j’ai mesuré à quel point il est précieux de prendre régulièrement le temps de se parler, vraiment. C’est pour cela que YES BOX m’a paru essentielle : offrir ce temps à tous les couples, pas seulement à la veille d’un mariage.</EditableText>
+          </p>
+          <p style={texteStyle}>
+            <EditableText id="apropos.moi.parcours" multiline>Pour la concevoir, je me suis appuyée sur une autre partie de mon parcours : de longues années dans la formation et l’ingénierie pédagogique. J’y ai appris qu’on retient mieux ce qu’on vit, et qu’on s’engage plus volontiers quand on y prend plaisir. Aujourd’hui, je suis fière de proposer des outils à la fois pratiques et ludiques pour prendre soin de son couple.</EditableText>
           </p>
         </section>
 
