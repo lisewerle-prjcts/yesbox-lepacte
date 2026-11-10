@@ -467,7 +467,7 @@ export const EN_CONTENT: Record<string, string> = {
   'apropos.titre': 'From the White Box to YES BOX',
   'apropos.histoire.eyebrow': 'More than ten years ago',
   'apropos.histoire.titre': 'I was a wedding planner.',
-  'apropos.histoire.metier': 'With Cérémonies & Compagnie, I organized weddings and wrote tailor-made secular ceremonies. For each couple, everything started with long conversations: their story, what had brought them together, what they wanted to promise each other.',
+  'apropos.histoire.metier': 'With Cérémonies & Compagnie, I organized weddings and wrote tailor-made secular ceremonies. For each couple, everything started with long conversations: their story, how they met, what each of them wanted to promise the other.',
   'apropos.histoire.constat': 'I saw how much these conversations mattered, sometimes more than the big day itself. They deserved to live on beyond the ceremony.',
   'apropos.histoire.texte': 'And I created the White Box.',
   'apropos.coffret.eyebrow': 'The White Box',

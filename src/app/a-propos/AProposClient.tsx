@@ -52,7 +52,7 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
           <h2 className={h2} style={h2Style}><EditableText id="apropos.histoire.titre">J’étais wedding planner.</EditableText></h2>
           <Image src="/a-propos/logo-ceremonies-et-compagnie.png" alt="Cérémonies & Compagnie" width={1211} height={201} className="h-auto" style={{ width: 'min(100%, 420px)', mixBlendMode: 'multiply' }} />
           <p style={texteStyle}>
-            <EditableText id="apropos.histoire.metier" multiline>Avec Cérémonies & Compagnie, j’organisais des mariages et j’écrivais des cérémonies laïques sur mesure. Pour chaque couple, tout commençait par de longues conversations : leur histoire, ce qui les avait réunis, ce qu’ils voulaient se promettre.</EditableText>
+            <EditableText id="apropos.histoire.metier" multiline>Avec Cérémonies & Compagnie, j’organisais des mariages et j’écrivais des cérémonies laïques sur mesure. Pour chaque couple, tout commençait par de longues conversations : leur histoire, leur rencontre, ce que chacun·e voulait promettre à l’autre.</EditableText>
           </p>
           <Photo src="/a-propos/ceremonies-laiques.jpg" alt={t('Cérémonies & Compagnie : une cérémonie laïque en plein air et des décorations de mariage', 'Cérémonies & Compagnie: an outdoor secular ceremony and wedding decorations')} largeur={740} hauteur={492} />
           <Photo src="/a-propos/mariages-organises.jpg" alt={t('Cérémonies & Compagnie : tables, fleurs et détails de mariages organisés', 'Cérémonies & Compagnie: tables, flowers and details from weddings I organized')} largeur={771} hauteur={495} />
