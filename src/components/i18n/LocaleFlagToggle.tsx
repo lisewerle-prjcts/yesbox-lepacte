@@ -13,15 +13,16 @@ function DrapeauFR() {
   )
 }
 
-function DrapeauUK() {
+function DrapeauUS() {
+  // 13 bandes et un canton bleu ; les étoiles sont simplifiées (taille d'icône).
+  const bandes = Array.from({ length: 13 }, (_, i) => i)
+  const etoiles: [number, number][] = []
+  for (let l = 0; l < 5; l++) for (let c = 0; c < (l % 2 ? 5 : 6); c++) etoiles.push([l % 2 ? 3.8 + c * 3.8 : 1.9 + c * 3.8, 1.6 + l * 3])
   return (
-    <svg viewBox="0 0 60 30" width="24" height="16" preserveAspectRatio="none" aria-hidden="true" style={{ display: 'block' }}>
-      <clipPath id="drapeau-uk-clip"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" /></clipPath>
-      <rect width="60" height="30" fill="#012169" />
-      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" strokeWidth="6" />
-      <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#drapeau-uk-clip)" stroke="#C8102E" strokeWidth="4" />
-      <path d="M30,0 v30 M0,15 h60" stroke="#ffffff" strokeWidth="10" />
-      <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
+    <svg viewBox="0 0 57 30" width="24" height="16" preserveAspectRatio="none" aria-hidden="true" style={{ display: 'block' }}>
+      {bandes.map(i => <rect key={i} y={(i * 30) / 13} width="57" height={30 / 13 + 0.05} fill={i % 2 ? '#ffffff' : '#B22234'} />)}
+      <rect width="22.8" height={(30 * 7) / 13} fill="#3C3B6E" />
+      {etoiles.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.75" fill="#ffffff" />)}
     </svg>
   )
 }
@@ -44,7 +45,7 @@ export default function LocaleFlagToggle() {
       className="p-1 rounded transition-opacity hover:opacity-80"
     >
       <span style={{ display: 'block', borderRadius: 3, overflow: 'hidden', boxShadow: '0 0 0 1px var(--line)' }}>
-        {cible === 'en' ? <DrapeauUK /> : <DrapeauFR />}
+        {cible === 'en' ? <DrapeauUS /> : <DrapeauFR />}
       </span>
     </button>
   )
