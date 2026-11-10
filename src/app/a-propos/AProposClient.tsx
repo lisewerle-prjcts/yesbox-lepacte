@@ -91,7 +91,7 @@ export default function AProposClient({ connecte }: { connecte: boolean }) {
             <EditableText id="apropos.moi.couple" multiline>Comme tous les couples, nous avons traversé des hauts et des bas. Et j’ai mesuré à quel point il est précieux de prendre régulièrement le temps de se parler, vraiment. C’est pour cela que YES BOX m’a paru essentielle : offrir ce temps à tous les couples, pas seulement à la veille d’un mariage.</EditableText>
           </p>
           <p style={texteStyle}>
-            <EditableText id="apropos.moi.parcours" multiline>Pour la concevoir, je me suis appuyée sur une autre partie de mon parcours : de longues années dans la formation et l’ingénierie pédagogique. J’y ai appris qu’on retient mieux ce qu’on vit, et qu’on s’engage plus volontiers quand on y prend plaisir. Aujourd’hui, je suis fière de proposer des outils à la fois pratiques et ludiques pour prendre soin de son couple.</EditableText>
+            <EditableText id="apropos.moi.parcours" multiline>Pour la concevoir, je me suis appuyée sur une autre partie de mon parcours : de nombreuses années dans la formation et l’ingénierie pédagogique. J’y ai appris qu’on retient mieux ce qu’on vit, et qu’on s’engage plus volontiers quand on y prend plaisir. Aujourd’hui, je suis fière de proposer des outils à la fois pratiques et ludiques pour prendre soin de son couple.</EditableText>
           </p>
         </section>
 
