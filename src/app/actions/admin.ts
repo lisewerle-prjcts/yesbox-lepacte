@@ -22,7 +22,7 @@ import { annulerPrevu, apercuPrevu, enregistrerTextesPrevu, textesPrevu, type Co
 import { envoyerEmailsAnniversaires, type ContenuPerso, type TypeGrandeDate } from '@/lib/grandes-dates'
 import { ACCES_GRATUIT_ILLIMITE_ISO, ajouterMois, dateFinPassee } from '@/lib/dates'
 import { estModeleEmail, modeleEmail, variablesDuModele, type ContenuEmail } from '@/lib/modeles-email/catalogue'
-import { rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
+import { champsACompleter, messageChampsACompleter, rendreCorps, rendreObjet, variablesDuTexte, variablesNonRemplacees, type Variables } from '@/lib/modeles-email/rendu'
 import { adresseDuSite, cleReglageModele, envoyerModele, viderCacheModeles } from '@/lib/modeles-email/serveur'
 import { traductionConfiguree, traduireEmailEnAnglais } from '@/lib/traduction'
 import type { OffreCodeGratuit, QuestionType } from '@/types'
@@ -133,6 +133,9 @@ function verifierMessage(message: MessageManuel, mode: ModeEnvoi): string | null
   if (restantes.length) {
     return `Ces variables ne peuvent pas être remplies pour un envoi manuel : ${restantes.map(v => `{${v}}`).join(', ')}. Remplace-les par le texte voulu.`
   }
+  // [Prénom], {Prénom}, {{prenom}}… partiraient tels quels.
+  const champs = champsACompleter(langues.flatMap(l => [message[l].objet, message[l].corps]))
+  if (champs.length) return messageChampsACompleter(champs)
   return null
 }
 
