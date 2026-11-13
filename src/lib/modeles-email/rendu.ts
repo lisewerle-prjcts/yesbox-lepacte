@@ -137,3 +137,58 @@ export function corpsAvecMotPersonnel(corps: string, mot: string | null | undefi
 export function rendreObjet(objet: string, vars: Variables): string {
   return substituer(objet, vars, v => v).replace(/\*\*/g, '').replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim()
 }
+
+// ---------------------------------------------------------------------------
+// Champs à compléter laissés par erreur dans un e-mail écrit à la main :
+// [Prénom], [First name], {Prénom}, {{prenom}}… Ils ne sont pas des variables
+// (seules {prenom}, {code}… en minuscules sans accent le sont) et partiraient
+// tels quels. Les balises de mise en forme ([bouton: …], [lien: …],
+// [code: …], [image: …]) et les crochets de citation ([…], [sic]) sont
+// autorisés.
+// ---------------------------------------------------------------------------
+
+const CITATIONS = new Set(['sic', '...', '…', '.', '..'])
+
+function sansAccent(texte: string) {
+  return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[\s_-]+/g, ' ').trim()
+}
+
+// Variable à utiliser à la place du champ, quand on la devine.
+function variableProposee(interieur: string): string | null {
+  const n = sansAccent(interieur)
+  if (/partenaire|partner/.test(n)) return '{partenaire}'
+  if (/parrainage|referral/.test(n)) return '{code_parrainage}'
+  if (/\bcode\b/.test(n)) return '{code}'
+  if (/prenom|first ?name|\bname\b|\bnom\b/.test(n)) return '{prenom}'
+  return null
+}
+
+export interface ChampACompleter { texte: string; remplacement: string | null }
+
+export function champsACompleter(textes: string[]): ChampACompleter[] {
+  const trouves = new Map<string, ChampACompleter>()
+  const motifs = [
+    /\{\{\s*([^{}\n]{1,40}?)\s*\}\}/g,   // {{prenom}}
+    /\{([^{}\n]{1,40})\}/g,              // {Prénom}, {first name}
+    /\[([^\[\]\n]{1,40})\]/g,            // [Prénom], [First name]
+  ]
+  for (const texte of textes) {
+    for (const motif of motifs) {
+      for (const m of texte.matchAll(motif)) {
+        const brut = m[0]
+        const interieur = m[1].trim()
+        if (brut.startsWith('{') && !brut.startsWith('{{') && /^[a-z_0-9]+$/.test(interieur)) continue // vraie variable
+        if (brut.startsWith('[') && (interieur.includes(':') || CITATIONS.has(sansAccent(interieur)))) continue
+        if (!brut.startsWith('{{') && texte[m.index! - 1] === '{' && texte[m.index! + brut.length] === '}') continue // déjà compté comme {{…}}
+        if (!trouves.has(brut)) trouves.set(brut, { texte: brut, remplacement: variableProposee(interieur) })
+      }
+    }
+  }
+  return [...trouves.values()]
+}
+
+// Message à afficher (admin) quand des champs à compléter restent.
+export function messageChampsACompleter(champs: ChampACompleter[]): string {
+  const details = champs.map(c => (c.remplacement ? `${c.texte} → ${c.remplacement}` : c.texte)).join(', ')
+  return `Champs à compléter restés dans le message, qui partiraient tels quels : ${details}. Utilise les variables entre accolades ({prenom}, {partenaire}, {code}, {code_parrainage}) ou remplace-les par ton texte.`
+}

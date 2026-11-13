@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { Eye, EyeOff, Languages } from 'lucide-react'
 import { adminTraduireEmail } from '@/app/actions/admin'
 import { FAMILLES, type ContenuEmail, type FamilleEmail } from '@/lib/modeles-email/catalogue'
-import { rendreCorps, rendreObjet, variablesNonRemplacees } from '@/lib/modeles-email/rendu'
+import { champsACompleter, messageChampsACompleter, rendreCorps, rendreObjet, variablesNonRemplacees } from '@/lib/modeles-email/rendu'
 
 export type Langue = 'fr' | 'en'
 export type ModeEnvoi = 'fr' | 'en' | 'langue'
@@ -27,6 +27,12 @@ export function languesDuMode(mode: ModeEnvoi): Langue[] {
 export function messagePret(message: MessageManuel, mode: ModeEnvoi) {
   return languesDuMode(mode).every(l => message[l].objet.trim() && message[l].corps.trim())
     && variablesRestantes(message, languesDuMode(mode)).length === 0
+    && champsRestants(message, languesDuMode(mode)).length === 0
+}
+
+// [Prénom], {Prénom}, {{prenom}}… : pas des variables, ils partiraient tels quels.
+function champsRestants(message: MessageManuel, langues: Langue[]) {
+  return champsACompleter(langues.flatMap(l => [message[l].objet, message[l].corps]))
 }
 
 function variablesRestantes(message: MessageManuel, langues: Langue[]) {
@@ -57,6 +63,7 @@ export default function ComposeurEmail({
   const frRempli = !!(message.fr.objet.trim() || message.fr.corps.trim())
   const enVide = !message.en.objet.trim() && !message.en.corps.trim()
   const restantes = useMemo(() => variablesRestantes(message, ['fr', 'en']), [message])
+  const champs = useMemo(() => champsRestants(message, ['fr', 'en']), [message])
 
   function choisirModele(cle: string) {
     const avecTexte = ['fr', 'en'].some(l => message[l as Langue].objet.trim() || message[l as Langue].corps.trim())
@@ -150,6 +157,10 @@ export default function ComposeurEmail({
         <p style={{ fontSize: 12, color: '#b45309' }}>
           À remplacer par ton texte avant l’envoi (pas de valeur automatique pour un envoi manuel) : {restantes.map(v => `{${v}}`).join(', ')}
         </p>
+      )}
+
+      {champs.length > 0 && (
+        <p style={{ fontSize: 12, color: '#b45309' }}>{messageChampsACompleter(champs)}</p>
       )}
 
       <button type="button" onClick={() => setApercu(a => !a)} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--muted)' }}>
