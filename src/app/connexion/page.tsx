@@ -45,7 +45,12 @@ export default function ConnexionPage() {
     if (params.get('mfa_reset') === '1') setMfaResetNotice(true)
     if (params.get('mfa') === '1') setMfaRequired(true)
     if (params.get('error') === 'auth_callback_error') setCallbackNotice(true)
-    if (params.get('suite') === '/avis') setSuite('/avis')
+    // Pages qu'on peut retrouver après la connexion (liens des e-mails).
+    // L'ancre (#mois-3 : question du mois) survit à la redirection vers cette
+    // page : on la garde pour rouvrir la bonne question.
+    const suiteDemandee = params.get('suite')
+    if (suiteDemandee === '/avis') setSuite('/avis')
+    if (suiteDemandee === '/rdv-annuels') setSuite(`/rdv-annuels${/^#mois-\d+$/.test(window.location.hash) ? window.location.hash : ''}`)
   }, [])
 
   async function handleAction(formData: FormData) {
