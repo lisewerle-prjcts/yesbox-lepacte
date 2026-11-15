@@ -8,7 +8,7 @@ import { charteBetaManquante } from '@/lib/charte-beta'
 export default async function RdvAnnuelsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  if (!user) redirect('/connexion?suite=/rdv-annuels')
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!aDonneSonConsentement(profile)) redirect('/consentement')
   if (await charteBetaManquante(createAdminClient(), profile)) redirect('/charte-beta')

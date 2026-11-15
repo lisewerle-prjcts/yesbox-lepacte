@@ -18,7 +18,7 @@ export const metadata = { title: 'Nos rendez-vous annuels' }
 export default async function RdvAnnuelsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
+  if (!user) redirect('/connexion?suite=/rdv-annuels')
   const { data: profile } = await supabase.from('profiles').select('couple_id').eq('id', user.id).single()
   if (!profile?.couple_id) redirect('/tableau-de-bord')
 

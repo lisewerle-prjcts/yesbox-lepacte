@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { useT } from '@/components/i18n/LocaleContext'
 import { enregistrerReponseMois } from '@/app/actions/rdv-annuels'
@@ -11,6 +11,15 @@ export default function ReponseMois({ mois, prenom, initiale }: { mois: number; 
   const [enregistree, setEnregistree] = useState(initiale)
   const [statut, setStatut] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [erreur, setErreur] = useState('')
+  const zone = useRef<HTMLTextAreaElement>(null)
+
+  // Arrivée depuis le bouton de l'e-mail du mois (/rdv-annuels#mois-3) :
+  // on amène la question à l'écran et on place le curseur dans la réponse.
+  useEffect(() => {
+    if (window.location.hash !== `#mois-${mois}`) return
+    document.getElementById(`mois-${mois}`)?.scrollIntoView({ block: 'start' })
+    zone.current?.focus({ preventScroll: true })
+  }, [mois])
 
   async function enregistrer() {
     setErreur('')
@@ -28,6 +37,7 @@ export default function ReponseMois({ mois, prenom, initiale }: { mois: number; 
     <div>
       <label className="label">{prenom}</label>
       <textarea
+        ref={zone}
         className="input-field"
         rows={3}
         placeholder={t('Ta réponse…', 'Your answer…')}
